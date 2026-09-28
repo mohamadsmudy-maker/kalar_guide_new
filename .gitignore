@@ -1,0 +1,49 @@
+# 🔐 Security — هەرگیز push مەکە
+.env
+.env.local
+.env.production
+android/local.properties
+android/key.properties
+*.jks
+*.keystore
+
+# Firebase (حەساس)
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Android
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Node
+node_modules/
