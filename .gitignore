@@ -47,3 +47,6 @@ coverage/
 
 # Node
 node_modules/
+# Supabase Local Cache
+supabase/.temp/
+supabase/.branches/
