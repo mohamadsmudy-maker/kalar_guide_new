@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
-import '../../widgets/common/optimized_network_image.dart'; // ✅ زیاد بکە
-import 'admin_complaints.dart' show ComplaintDetailsDialog;
+import '../../widgets/common/optimized_network_image.dart';
+import 'complaint_details_pro_sheet.dart';   // ✅ چاککرا
 
 /// 🗺️ نەخشەی گشتی سکاڵاکان (Pro Version)
 class AllComplaintsMapScreen extends StatefulWidget {
@@ -29,6 +29,9 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
     _fetchComplaints();
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📡 هێنانی سکاڵاکان
+  // ═══════════════════════════════════════════════════════════
   Future<void> _fetchComplaints() async {
     setState(() => _isLoading = true);
     try {
@@ -50,11 +53,15 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
         });
         _updateMarkers();
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ Fetch error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 فلتەرکردن
+  // ═══════════════════════════════════════════════════════════
   List<Map<String, dynamic>> get _filteredComplaints {
     if (_selectedStatusFilter == 'all') return _allComplaints;
 
@@ -69,6 +76,9 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
         .toList();
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📍 دروستکردنی پینەکان
+  // ═══════════════════════════════════════════════════════════
   void _updateMarkers() {
     Set<gmaps.Marker> markers = {};
 
@@ -104,14 +114,20 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
       );
     }
 
-    setState(() => _markers = markers);
+    if (mounted) {
+      setState(() => _markers = markers);
+    }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📋 پیشاندانی وردەکاری
+  // ═══════════════════════════════════════════════════════════
   void _showComplaintDetails(Map<String, dynamic> complaint) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: true,
-      builder: (_) => ComplaintDetailsDialog(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ComplaintDetailsProSheet(   // ✅ چاککرا
         complaint: complaint,
         onStatusChanged: () {
           _fetchComplaints();
@@ -120,6 +136,9 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Helpers
+  // ═══════════════════════════════════════════════════════════
   Color _getStatusColor(String? status) {
     switch (status) {
       case 'pending':
@@ -153,6 +172,9 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -161,9 +183,6 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
         backgroundColor: const Color(0xFF1E1B2E),
         body: Stack(
           children: [
-            // ═══════════════════════════════════════
-            // 🗺️ نەخشە
-            // ═══════════════════════════════════════
             if (_isLoading)
               const Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
@@ -182,10 +201,6 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 compassEnabled: false,
                 onMapCreated: (controller) => _mapController = controller,
               ),
-
-            // ═══════════════════════════════════════
-            // 🎯 AppBar Floating
-            // ═══════════════════════════════════════
             Positioned(
               top: MediaQuery.of(context).padding.top + 10,
               left: 12,
@@ -266,10 +281,6 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 ),
               ),
             ),
-
-            // ═══════════════════════════════════════
-            // 🏷️ فلتەرەکان
-            // ═══════════════════════════════════════
             Positioned(
               top: MediaQuery.of(context).padding.top + 80,
               left: 12,
@@ -313,10 +324,6 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 ),
               ),
             ),
-
-            // ═══════════════════════════════════════
-            // 🎨 Legend
-            // ═══════════════════════════════════════
             Positioned(
               bottom: _selectedComplaintId != null ? 220 : 100,
               left: 12,
@@ -365,10 +372,6 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 ),
               ),
             ),
-
-            // ═══════════════════════════════════════
-            // 📍 دوگمەی Center
-            // ═══════════════════════════════════════
             Positioned(
               bottom: _selectedComplaintId != null ? 220 : 100,
               right: 16,
@@ -402,10 +405,6 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 ),
               ),
             ),
-
-            // ═══════════════════════════════════════
-            // 📋 کارتی سکاڵای هەڵبژێردراو
-            // ═══════════════════════════════════════
             if (_selectedComplaintId != null)
               Positioned(
                 bottom: 90,
@@ -413,10 +412,6 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 right: 16,
                 child: _buildSelectedComplaintCard(),
               ),
-
-            // ═══════════════════════════════════════
-            // 📊 کارتی ئامار
-            // ═══════════════════════════════════════
             Positioned(
               bottom: 16,
               left: 16,

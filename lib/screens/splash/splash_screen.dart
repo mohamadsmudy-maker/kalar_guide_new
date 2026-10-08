@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'dart:async';
 
-import '../../config/settings_provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_logger.dart';
 
-/// 🚀 شاشەی دەستپێک — بە Splash Animation + چاوەڕوانی Init
+/// 🌊 شاشەی دەستپێک — PRO EDITION
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -20,18 +19,20 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  bool _minTimeElapsed = false;
   bool _sessionReady = false;
+  bool _animationsDone = false;
   bool _navigated = false;
+
+  // ✅ Timer بۆ Fallback
+  Timer? _fallbackTimer;
 
   @override
   void initState() {
     super.initState();
-    _initAnimations();
-    _startInitWaiters();
-  }
 
-  void _initAnimations() {
+    // ═══════════════════════════════════════════
+    // 🎬 Animation Setup
+    // ═══════════════════════════════════════════
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
@@ -59,84 +60,119 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         );
 
-    _controller.forward();
-  }
-
-  void _startInitWaiters() {
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    _controller.forward().then((_) {
       if (mounted) {
-        _minTimeElapsed = true;
+        _animationsDone = true;
         _tryNavigate();
       }
     });
 
+    // ═══════════════════════════════════════════
+    // 🔄 Session Wait
+    // ═══════════════════════════════════════════
     _waitForSession();
+
+    // ═══════════════════════════════════════════
+    // ⏱️ Fallback Timer
+    // ═══════════════════════════════════════════
+    _fallbackTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted && !_navigated) {
+        AppLogger.w('⚠️ Splash: Fallback navigation (timeout)');
+        _navigate();
+      }
+    });
   }
 
+  @override
+  void dispose() {
+    // ✅ Timer.cancel
+    _fallbackTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ⏳ چاوەڕوانی بۆ دانیشتن
+  // ═══════════════════════════════════════════════════════════
   Future<void> _waitForSession() async {
     try {
-      final maxWait = const Duration(seconds: 5);
+      const maxWait = Duration(seconds: 3);
       final start = DateTime.now();
 
       while (!AuthSessionManager.isInitialized) {
         if (DateTime.now().difference(start) > maxWait) {
-          AppLogger.w('⚠️ Session init timeout — continuing anyway');
+          AppLogger.w('⚠️ Splash: Session wait timeout');
           break;
         }
         await Future.delayed(const Duration(milliseconds: 100));
       }
 
-      _sessionReady = true;
+      if (mounted) {
+        setState(() => _sessionReady = true);
+      }
       AppLogger.i('✅ Splash: Session ready');
     } catch (e) {
       AppLogger.e('⚠️ Splash session wait error', e);
-      _sessionReady = true;
+      if (mounted) {
+        setState(() => _sessionReady = true);
+      }
     } finally {
-      if (mounted) _tryNavigate();
+      _tryNavigate();
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🚀 گەیشتن بە شاشەی سەرەکی
+  // ═══════════════════════════════════════════════════════════
   void _tryNavigate() {
-    if (_navigated) return;
-    if (!_minTimeElapsed) return;
-    if (!_sessionReady) return;
-
-    _navigated = true;
-    AppLogger.i('🚀 Splash: navigating to /main');
-
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/main');
+    if (!mounted || _navigated) return;
+    if (_sessionReady && _animationsDone) {
+      _navigate();
     }
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void _navigate() {
+    if (!mounted || _navigated) return;
+    _navigated = true;
+
+    // ✅ Timer.cancel پێش چوونە دەرەوە
+    _fallbackTimer?.cancel();
+
+    try {
+      AppLogger.i('🚀 Splash → Main');
+      Navigator.pushReplacementNamed(context, '/main');
+    } catch (e) {
+      AppLogger.e('❌ Splash navigation error', e);
+      // ✅ ڕێگە بدە هەوڵدانەوە
+      _navigated = false;
+      _fallbackTimer?.cancel();
+      _fallbackTimer = Timer(const Duration(seconds: 2), () {
+        if (mounted && !_navigated) _navigate();
+      });
+    }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
     isDark ? const Color(0xFF0F0F14) : const Color(0xFF1E88E5);
 
-    final settings = context.watch<SettingsProvider>();
-
-    if (_sessionReady && !settings.isLoaded) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted && settings.isLoaded) _tryNavigate();
-      });
-    }
-
     return Scaffold(
       backgroundColor: backgroundColor,
       body: Stack(
         children: [
+          // ═══════════════════════════════════════════
+          // 🎨 ناوەڕۆکی سەرەکی
+          // ═══════════════════════════════════════════
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // 🖼️ لۆگۆکە
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: ScaleTransition(
@@ -172,7 +208,10 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 32),
+
+                // 📝 ناوی ئەپەکە
                 SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
@@ -188,7 +227,10 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
+                // 📝 دەقی بچووک
                 SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
@@ -204,7 +246,10 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 60),
+
+                // ⏳ Loading
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: const SizedBox(
@@ -220,6 +265,8 @@ class _SplashScreenState extends State<SplashScreen>
               ],
             ),
           ),
+
+          // 📌 وەشانی ئەپ
           Positioned(
             bottom: 30,
             left: 0,

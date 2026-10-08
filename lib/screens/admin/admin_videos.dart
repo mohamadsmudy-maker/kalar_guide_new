@@ -12,6 +12,7 @@ class AdminVideosScreen extends StatefulWidget {
 
 class _AdminVideosScreenState extends State<AdminVideosScreen> {
   bool _isLoading = true;
+  bool _isDeleting = false;
   List<Map<String, dynamic>> _videosList = [];
 
   @override
@@ -21,7 +22,9 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
   }
 
   Future<void> _fetchVideos() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
+
     try {
       final res = await Supabase.instance.client
           .from('videos')
@@ -34,17 +37,24 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ Fetch videos error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  // ✅ _deleteVideo چاککراو — بە mounted پشکنین
   Future<void> _deleteVideo(dynamic id) async {
-    bool confirm = await showDialog(
+    if (_isDeleting) return;
+
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Text("سڕینەوەی ڤیدیۆ"),
           content: const Text("ئایا دڵنیایت لە سڕینەوەی ئەم ڤیدیۆیە؟"),
           actions: [
@@ -63,14 +73,20 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
           ],
         ),
       ),
-    ) ??
-        false;
+    );
 
-    if (!confirm) return;
+    if (confirm != true) return;
+
+    if (mounted) setState(() => _isDeleting = true);
 
     try {
-      await Supabase.instance.client.from('videos').delete().eq('id', id);
-      _fetchVideos();
+      await Supabase.instance.client
+          .from('videos')
+          .delete()
+          .eq('id', id);
+
+      await _fetchVideos();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -80,21 +96,27 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
         );
       }
     } catch (e) {
+      debugPrint('❌ Delete video error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 
-  void _openAddDialog({Map<String, dynamic>? videoToEdit}) {
-    Navigator.push(
+  // ✅ _openAddDialog — بە await
+  Future<void> _openAddDialog({Map<String, dynamic>? videoToEdit}) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => _AddEditVideoScreen(videoToEdit: videoToEdit),
       ),
-    ).then((_) => _fetchVideos());
+    );
+
+    if (mounted) await _fetchVideos();
   }
 
   @override
@@ -127,7 +149,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
           padding: const EdgeInsets.all(16),
           itemCount: _videosList.length,
           itemBuilder: (context, index) {
-            var vid = _videosList[index];
+            final vid = _videosList[index];
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
@@ -178,8 +200,9 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
                         color: Colors.blue,
                         size: 20,
                       ),
-                      onPressed: () =>
-                          _openAddDialog(videoToEdit: vid),
+                      onPressed: _isDeleting
+                          ? null
+                          : () => _openAddDialog(videoToEdit: vid),
                     ),
                     IconButton(
                       icon: const Icon(
@@ -187,7 +210,9 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
                         color: Colors.red,
                         size: 20,
                       ),
-                      onPressed: () => _deleteVideo(vid['id']),
+                      onPressed: _isDeleting
+                          ? null
+                          : () => _deleteVideo(vid['id']),
                     ),
                   ],
                 ),
@@ -198,7 +223,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
         floatingActionButton: FloatingActionButton(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          onPressed: () => _openAddDialog(),
+          onPressed: _isDeleting ? null : () => _openAddDialog(),
           child: const Icon(Icons.add),
         ),
       ),
@@ -206,6 +231,9 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// ➕ شاشەی زیادکردن / دەستکاریکردنی ڤیدیۆ
+// ═══════════════════════════════════════════════════════════
 class _AddEditVideoScreen extends StatefulWidget {
   final Map<String, dynamic>? videoToEdit;
   const _AddEditVideoScreen({this.videoToEdit});
@@ -269,7 +297,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
       }
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("پاشەکەوتکرا ✅"),
@@ -278,6 +306,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
         );
       }
     } catch (e) {
+      debugPrint('❌ Save video error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
@@ -290,7 +319,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isEditing = widget.videoToEdit != null;
+    final isEditing = widget.videoToEdit != null;
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(

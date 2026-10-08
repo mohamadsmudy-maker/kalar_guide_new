@@ -96,7 +96,9 @@ class _AdminDatabaseViewerScreenState
   }
 
   Future<void> _fetchTableData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
+
     try {
       final res = await Supabase.instance.client
           .from(_selectedTable)
@@ -141,7 +143,32 @@ class _AdminDatabaseViewerScreenState
     }).toList();
   }
 
+  // ✅ دەرهێنانی ڕەنگ بە پارێزراوی
+  Color _getTableColor() {
+    final colorValue = _selectedTableInfo['color'];
+    if (colorValue is Color) return colorValue;
+    return AppColors.primary;
+  }
+
+  // ✅ دەرهێنانی ئایکۆن بە پارێزراوی
+  IconData _getTableIcon() {
+    final iconValue = _selectedTableInfo['icon'];
+    if (iconValue is IconData) return iconValue;
+    return Icons.table_chart_rounded;
+  }
+
+  // ✅ دەرهێنانی ناو بە پارێزراوی
+  String _getTableName() {
+    final nameValue = _selectedTableInfo['name'];
+    if (nameValue is String) return nameValue;
+    return 'خشتە';
+  }
+
   void _showRowDetailsDialog(Map<String, dynamic> row) {
+    final color = _getTableColor();
+    final icon = _getTableIcon();
+    final tableName = _getTableName();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -181,13 +208,12 @@ class _AdminDatabaseViewerScreenState
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: (_selectedTableInfo['color'] as Color)
-                              .withValues(alpha: 0.15),
+                          color: color.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
-                          _selectedTableInfo['icon'] as IconData,
-                          color: _selectedTableInfo['color'] as Color,
+                          icon,
+                          color: color,
                           size: 22,
                         ),
                       ),
@@ -206,7 +232,7 @@ class _AdminDatabaseViewerScreenState
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              "${_selectedTableInfo['name']} • ${row.length} ستوون",
+                              "$tableName • ${row.length} ستوون",
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey.shade600,
@@ -440,7 +466,9 @@ class _AdminDatabaseViewerScreenState
 
   @override
   Widget build(BuildContext context) {
-    final tableInfo = _selectedTableInfo;
+    final tableColor = _getTableColor();
+    final tableIcon = _getTableIcon();
+    final tableName = _getTableName();
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -482,13 +510,12 @@ class _AdminDatabaseViewerScreenState
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: (tableInfo['color'] as Color)
-                                      .withValues(alpha: 0.2),
+                                  color: tableColor.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Icon(
-                                  tableInfo['icon'] as IconData,
-                                  color: tableInfo['color'] as Color,
+                                  tableIcon,
+                                  color: tableColor,
                                   size: 24,
                                 ),
                               ),
@@ -508,7 +535,7 @@ class _AdminDatabaseViewerScreenState
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      "خشتەی: ${tableInfo['name']}",
+                                      "خشتەی: $tableName",
                                       style: const TextStyle(
                                         fontSize: 11,
                                         color: Colors.white70,
@@ -643,7 +670,6 @@ class _AdminDatabaseViewerScreenState
                         (context, index) => _buildDataCard(
                       _filteredData[index],
                       index,
-                      tableInfo,
                     ),
                     childCount: _filteredData.length,
                   ),
@@ -656,8 +682,13 @@ class _AdminDatabaseViewerScreenState
   }
 
   Widget _buildTableChip(Map<String, dynamic> table) {
-    bool isSelected = _selectedTable == table['key'];
-    Color color = table['color'] as Color;
+    final isSelected = _selectedTable == table['key'];
+    final colorValue = table['color'];
+    final color = colorValue is Color ? colorValue : AppColors.primary;
+    final iconValue = table['icon'];
+    final icon = iconValue is IconData ? iconValue : Icons.table_chart_rounded;
+    final nameValue = table['name'];
+    final name = nameValue is String ? nameValue : '';
 
     return GestureDetector(
       onTap: () {
@@ -708,14 +739,14 @@ class _AdminDatabaseViewerScreenState
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                table['icon'] as IconData,
+                icon,
                 color: isSelected ? Colors.white : color,
                 size: 18,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              table['name'] as String,
+              name,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -731,12 +762,9 @@ class _AdminDatabaseViewerScreenState
     );
   }
 
-  Widget _buildDataCard(
-      Map<String, dynamic> row,
-      int index,
-      Map<String, dynamic> tableInfo,
-      ) {
-    Color color = tableInfo['color'] as Color;
+  Widget _buildDataCard(Map<String, dynamic> row, int index) {
+    final color = _getTableColor();
+    final icon = _getTableIcon();
 
     String mainTitle = row['name'] ??
         row['title'] ??
@@ -791,11 +819,11 @@ class _AdminDatabaseViewerScreenState
                     height: 55,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) =>
-                        _buildDefaultIcon(tableInfo, color),
+                        _buildDefaultIcon(icon, color),
                   ),
                 )
               else
-                _buildDefaultIcon(tableInfo, color),
+                _buildDefaultIcon(icon, color),
               const SizedBox(width: 12),
 
               Expanded(
@@ -849,7 +877,7 @@ class _AdminDatabaseViewerScreenState
     );
   }
 
-  Widget _buildDefaultIcon(Map<String, dynamic> tableInfo, Color color) {
+  Widget _buildDefaultIcon(IconData icon, Color color) {
     return Container(
       width: 55,
       height: 55,
@@ -865,7 +893,7 @@ class _AdminDatabaseViewerScreenState
         borderRadius: BorderRadius.circular(14),
       ),
       child: Icon(
-        tableInfo['icon'] as IconData,
+        icon,
         color: Colors.white,
         size: 26,
       ),

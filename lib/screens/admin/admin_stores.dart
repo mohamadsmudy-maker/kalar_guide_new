@@ -5,7 +5,8 @@ import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
-import '../../screens/stores/add_store_screen.dart';  // ✅ چالاک کرا
+import '../stores/add_store_screen.dart';
+import 'admin_store_services_screen.dart';
 
 /// 🏪 شاشەی بەڕێوەبردنی شوێنەکان — PRO EDITION
 class AdminStoresScreen extends StatefulWidget {
@@ -145,7 +146,10 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
     if (!confirm) return;
 
     try {
-      await Supabase.instance.client.from('dukan').delete().eq('id', storeId);
+      await Supabase.instance.client
+          .from('dukan')
+          .delete()
+          .eq('id', storeId);
       _fetchStores();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -183,6 +187,19 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
         builder: (_) => AddStoreScreen(storeToEdit: store),
       ),
     ).then((_) => _fetchStores());
+  }
+
+  // 🆕 دوگمەی مامەڵەکان
+  void _openStoreServices(Map<String, dynamic> store) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminStoreServicesScreen(
+          storeId: int.tryParse(store['id'].toString()) ?? 0,
+          storeName: store['name']?.toString() ?? '',
+        ),
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -355,7 +372,8 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                 ),
               )
                   : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                padding:
+                const EdgeInsets.fromLTRB(16, 8, 16, 100),
                 itemCount: filteredStores.length,
                 itemBuilder: (context, index) {
                   return _buildStoreCard(
@@ -393,135 +411,204 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
           ),
         ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: OptimizedNetworkImage(
-            imageUrl: store['image'] ?? '',
-            width: 60,
-            height: 60,
-            fit: BoxFit.cover,
-          ),
-        ),
-        title: AutoTranslate(
-          text: store['name']?.toString() ?? '',
-          lang: lang,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-          maxLines: 1,
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AutoTranslate(
-                text: "📍 ${store['address'] ?? ''}",
-                lang: lang,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
-                maxLines: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: OptimizedNetworkImage(
+                    imageUrl: store['image'] ?? '',
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AutoTranslate(
+                        text: store['name']?.toString() ?? '',
+                        lang: lang,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                      ),
+                      const SizedBox(height: 4),
+                      AutoTranslate(
+                        text: "📍 ${store['address'] ?? ''}",
+                        lang: lang,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                        maxLines: 1,
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            "📞 ${store['phone'] ?? 'نییە'}",
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (hasLocation)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: Colors.green.shade200,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.location_on_rounded,
+                                    size: 10,
+                                    color: Colors.green.shade700,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'لۆکەیشن',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.green.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: Colors.orange.shade200,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.location_off_rounded,
+                                    size: 10,
+                                    color: Colors.orange.shade700,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'بێ لۆکەیشن',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.orange.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // ⚡ دوگمەکان
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 2),
-              Row(
+              child: Row(
                 children: [
-                  Text(
-                    "📞 ${store['phone'] ?? 'نییە'}",
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey,
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: Icons.description_rounded,
+                      label: 'مامەڵەکان',
+                      color: const Color(0xFF8B5CF6),
+                      onTap: () => _openStoreServices(store),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  if (hasLocation)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.green.shade200),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.location_on_rounded,
-                            size: 10,
-                            color: Colors.green.shade700,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            'لۆکەیشن',
-                            style: TextStyle(
-                              fontSize: 9,
-                              color: Colors.green.shade700,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.orange.shade200),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.location_off_rounded,
-                            size: 10,
-                            color: Colors.orange.shade700,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            'بێ لۆکەیشن',
-                            style: TextStyle(
-                              fontSize: 9,
-                              color: Colors.orange.shade700,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                  Container(
+                    width: 1,
+                    height: 30,
+                    color: Colors.grey.shade300,
+                  ),
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: Icons.edit_rounded,
+                      label: 'دەستکاری',
+                      color: Colors.blue,
+                      onTap: () => _openEditStore(store),
                     ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 30,
+                    color: Colors.grey.shade300,
+                  ),
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: Icons.delete_outline_rounded,
+                      label: 'سڕینەوە',
+                      color: Colors.red,
+                      onTap: () => _deleteStore(store['id']),
+                    ),
+                  ),
                 ],
               ),
-            ],
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.edit_rounded,
-                color: Colors.blue,
-                size: 22,
-              ),
-              tooltip: "دەستکاریکردن",
-              onPressed: () => _openEditStore(store),
             ),
-            IconButton(
-              icon: const Icon(
-                Icons.delete_outline_rounded,
-                color: Colors.red,
-                size: 22,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
-              tooltip: "سڕینەوە",
-              onPressed: () => _deleteStore(store['id']),
             ),
           ],
         ),

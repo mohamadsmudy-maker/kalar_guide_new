@@ -4,13 +4,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../config/app_colors.dart';
 import '../../services/image_service.dart';
 import 'map_picker.dart';
 
-/// 🏪 شاشەی زیادکردن / دەستکاریکردنی شوێن
+/// 🏪 شاشەی زیادکردن / دەستکاریکردنی شوێن — Full Pro Edition
 class AddStoreScreen extends StatefulWidget {
   final Map<String, dynamic>? storeToEdit;
 
@@ -32,8 +31,14 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
 
   List<String> _mainCategories = [];
   List<String> _subCategories = [];
-  List<XFile> _storeImages = [];
+
+  // ✅ وێنەکان
+  final List<XFile> _storeImages = [];
   XFile? _logoImage;
+
+  // ✅ وێنە کۆنەکان (لە کاتی دەستکاریکردن)
+  List<String> _existingImages = [];
+  String? _existingLogo;
 
   bool _loading = false;
   bool _gettingLocation = false;
@@ -58,6 +63,19 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       _longitude = double.tryParse(
         widget.storeToEdit!['longitude']?.toString() ?? '',
       );
+
+      // ✅ وێنەکانی کۆن
+      final oldImages = widget.storeToEdit!['images'];
+      if (oldImages is List) {
+        _existingImages = List<String>.from(
+          oldImages.map((e) => e.toString()),
+        );
+      } else if (widget.storeToEdit!['image'] != null &&
+          widget.storeToEdit!['image'].toString().isNotEmpty) {
+        _existingImages = [widget.storeToEdit!['image'].toString()];
+      }
+
+      _existingLogo = widget.storeToEdit!['logo']?.toString();
     }
     _fetchCategories();
   }
@@ -71,14 +89,12 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📡 هێنانی کاتێگۆرییەکان
-  // ═══════════════════════════════════════════════════════════
   Future<void> _fetchCategories() async {
     try {
       final res = await Supabase.instance.client
           .from('main_categories')
-          .select('name');
+          .select('name')
+          .order('name');
 
       final List<dynamic> rawList = res as List;
 
@@ -105,15 +121,15 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       final res = await Supabase.instance.client
           .from('sub_categories')
           .select('name')
-          .eq('parent', mainCategory);
+          .eq('parent', mainCategory)
+          .order('name');
 
       final List<dynamic> rawList = res as List;
 
       if (mounted) {
         setState(() {
-          _subCategories = rawList
-              .map((e) => e['name'].toString())
-              .toList();
+          _subCategories =
+              rawList.map((e) => e['name'].toString()).toList();
           if (_selectedSubCategory != null &&
               !_subCategories.contains(_selectedSubCategory)) {
             _selectedSubCategory = null;
@@ -125,9 +141,6 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🖼️ هەڵبژاردنی وێنە
-  // ═══════════════════════════════════════════════════════════
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     final pickedList = await picker.pickMultiImage(imageQuality: 70);
@@ -139,9 +152,6 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📍 GPS
-  // ═══════════════════════════════════════════════════════════
   Future<void> _getCurrentLocation() async {
     setState(() => _gettingLocation = true);
     try {
@@ -179,9 +189,6 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🗺️ نەخشەی هەڵبژاردن
-  // ═══════════════════════════════════════════════════════════
   Future<void> _openMapPicker() async {
     final result = await Navigator.push(
       context,
@@ -246,11 +253,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 💾 پاشەکەوتکردن
-  // ═══════════════════════════════════════════════════════════
   Future<void> _saveStore() async {
-    // پشکنینەکان
     if (_nameController.text.trim().isEmpty) {
       _showSnackBar('ناوی شوێن بنووسە ⚠', Colors.orange);
       return;
@@ -269,7 +272,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     try {
       final storeName = _nameController.text.trim();
 
-      // پشکنینی ناوی دووبارە
+      // ✅ پشکنینی ناوی دووبارە
       final existingStore = await Supabase.instance.client
           .from('dukan')
           .select('id')
@@ -283,26 +286,33 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         return;
       }
 
-      // وێنەکان
-      String imageUrl = '';
+      // ✅ ١. بارکردنی هەموو وێنە نوێیەکان
+      List<String> newImageUrls = [];
       if (_storeImages.isNotEmpty) {
-        imageUrl = await ImageCompressionService.uploadImage(
-          _storeImages.first,
-        );
-      } else if (widget.storeToEdit != null &&
-          widget.storeToEdit!['image'] != null) {
-        imageUrl = widget.storeToEdit!['image'];
+        for (var img in _storeImages) {
+          try {
+            final url = await ImageCompressionService.uploadImage(img);
+            newImageUrls.add(url);
+          } catch (e) {
+            debugPrint('❌ Image upload error: $e');
+          }
+        }
       }
 
-      String logoUrl = '';
+      // ✅ ٢. کۆکردنەوەی هەموو وێنەکان (کۆن + نوێ)
+      final allImages = [..._existingImages, ...newImageUrls];
+
+      // ✅ ٣. بارکردنی لۆگۆ
+      String logoUrl = _existingLogo ?? '';
       if (_logoImage != null) {
-        logoUrl = await ImageCompressionService.uploadImage(_logoImage!);
-      } else if (widget.storeToEdit != null &&
-          widget.storeToEdit!['logo'] != null) {
-        logoUrl = widget.storeToEdit!['logo'];
+        try {
+          logoUrl = await ImageCompressionService.uploadImage(_logoImage!);
+        } catch (e) {
+          debugPrint('❌ Logo upload error: $e');
+        }
       }
 
-      // داتا
+      // ✅ ٤. دروستکردنی داتا
       final storeData = {
         'name': storeName,
         'phone': _phoneController.text.trim().isNotEmpty
@@ -315,7 +325,8 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         'type': _storeType,
         'latitude': _latitude,
         'longitude': _longitude,
-        'image': imageUrl,
+        'image': allImages.isNotEmpty ? allImages.first : '',
+        'images': allImages, // ✅ هەموو وێنەکان
         'logo': logoUrl.isNotEmpty ? logoUrl : null,
       };
 
@@ -331,55 +342,49 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         _showSnackBar('نوێکرایەوە ✅', Colors.green);
       }
 
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
+      debugPrint('❌ Save store error: $e');
       _showSnackBar('هەڵە: $e', Colors.red);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Build
-  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.storeToEdit != null;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F6F9),
+        backgroundColor:
+        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
             isEditing ? 'دەستکاریکردنی شوێن' : 'زیادکردنی شوێن',
             style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
             ),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           centerTitle: true,
+          elevation: 0,
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🖼️ وێنە + لۆگۆ
-              _buildImageSection(),
+              _buildImageSection(isDark),
               const SizedBox(height: 12),
-
-              // 📝 زانیارییەکان
-              _buildInfoSection(),
+              _buildInfoSection(isDark),
               const SizedBox(height: 12),
-
-              // 📍 لۆکەیشن
-              _buildLocationSection(),
+              _buildLocationSection(isDark),
               const SizedBox(height: 20),
-
-              // 💾 دوگمەکان
               _buildActionButtons(isEditing),
             ],
           ),
@@ -388,11 +393,11 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     );
   }
 
-  Widget _buildImageSection() {
+  Widget _buildImageSection(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1A22) : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -408,7 +413,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                // لۆگۆ
+                // ✅ لۆگۆ
                 GestureDetector(
                   onTap: () async {
                     final picked = await ImagePicker().pickImage(
@@ -439,6 +444,35 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                         fit: BoxFit.cover,
                       ),
                     )
+                        : (_existingLogo != null &&
+                        _existingLogo!.isNotEmpty)
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        _existingLogo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Column(
+                          mainAxisAlignment:
+                          MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.business_rounded,
+                              color: Colors.purple.shade400,
+                              size: 28,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'لۆگۆ',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.purple.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
                         : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -461,7 +495,57 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                   ),
                 ),
 
-                // وێنەکان
+                // ✅ وێنە کۆنەکان
+                ..._existingImages.asMap().entries.map((entry) {
+                  return Container(
+                    width: 100,
+                    height: 100,
+                    margin: const EdgeInsets.only(left: 8),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.network(
+                            entry.value,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: Colors.grey.shade200,
+                              child: const Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => setState(
+                                  () => _existingImages.removeAt(entry.key),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+
+                // ✅ وێنە نوێیەکان
                 ..._storeImages.asMap().entries.map((entry) {
                   return Container(
                     width: 100,
@@ -504,15 +588,16 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                   );
                 }),
 
-                // زیادکردن
-                if (_storeImages.length < 3)
+                // ✅ دوگمەی زیادکردن
+                if (_storeImages.length + _existingImages.length < 3)
                   GestureDetector(
                     onTap: _pickImages,
                     child: Container(
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
+                        color:
+                        AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: AppColors.primary,
@@ -548,16 +633,15 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     );
   }
 
-  Widget _buildInfoSection() {
+  Widget _buildInfoSection(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1A22) : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
-          // کەرت + ژێربەش
           Row(
             children: [
               Expanded(
@@ -565,6 +649,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                   label: 'کەرت *',
                   value: _selectedMainCategory,
                   items: _mainCategories,
+                  isDark: isDark,
                   onChanged: (val) {
                     setState(() {
                       _selectedMainCategory = val;
@@ -580,6 +665,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                   label: 'ژێربەش',
                   value: _selectedSubCategory,
                   items: _subCategories,
+                  isDark: isDark,
                   onChanged: (val) =>
                       setState(() => _selectedSubCategory = val),
                 ),
@@ -587,8 +673,6 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             ],
           ),
           const SizedBox(height: 10),
-
-          // جۆر
           Row(
             children: [
               Expanded(
@@ -611,28 +695,33 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             ],
           ),
           const SizedBox(height: 10),
-
-          _buildTextField(_nameController, 'ناوی شوێن *'),
+          _buildTextField(_nameController, 'ناوی شوێن *', isDark: isDark),
           const SizedBox(height: 10),
           _buildTextField(
             _phoneController,
             'مۆبایل',
             keyboard: TextInputType.phone,
+            isDark: isDark,
           ),
           const SizedBox(height: 10),
-          _buildTextField(_addressController, 'ناونیشان *'),
+          _buildTextField(_addressController, 'ناونیشان *', isDark: isDark),
           const SizedBox(height: 10),
-          _buildTextField(_descController, 'وەسف', maxLines: 3),
+          _buildTextField(
+            _descController,
+            'وەسف',
+            maxLines: 3,
+            isDark: isDark,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildLocationSection() {
+  Widget _buildLocationSection(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1A22) : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -761,27 +850,31 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Helper Widgets
-  // ═══════════════════════════════════════════════════════════
   Widget _buildTextField(
       TextEditingController controller,
       String label, {
         int maxLines = 1,
         TextInputType? keyboard,
+        required bool isDark,
       }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboard,
-      style: const TextStyle(fontSize: 13),
+      style: TextStyle(
+        fontSize: 13,
+        color: isDark ? Colors.white : Colors.black87,
+      ),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(
+          color: isDark ? Colors.white54 : Colors.grey.shade700,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 14,
@@ -795,14 +888,18 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     required String label,
     required String? value,
     required List<String> items,
+    required bool isDark,
     required Function(String?) onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       isExpanded: true,
       hint: Text(
         'هەڵبژێرە',
-        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+        style: TextStyle(
+          fontSize: 11,
+          color: isDark ? Colors.white54 : Colors.grey.shade500,
+        ),
       ),
       items: items.map((item) {
         return DropdownMenuItem(
@@ -817,12 +914,15 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+        labelStyle: TextStyle(
+          fontSize: 12,
+          color: isDark ? Colors.white54 : Colors.grey.shade700,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 8,
@@ -838,35 +938,39 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : Colors.grey.shade300,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : Colors.grey.shade700,
-              size: 16,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
                 color: isSelected ? Colors.white : Colors.grey.shade700,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+                size: 16,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey.shade700,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -879,42 +983,46 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     required VoidCallback? onTap,
     bool isLoading = false,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isLoading)
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: color,
-                ),
-              )
-            else
-              Icon(icon, color: color, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withValues(alpha: 0.3),
+              width: 1.5,
             ),
-          ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (isLoading)
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: color,
+                  ),
+                )
+              else
+                Icon(icon, color: color, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

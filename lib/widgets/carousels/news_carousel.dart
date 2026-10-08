@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 
-/// 📰 Carousel ی هەواڵەکان — بە Auto-Scroll + لۆگۆی شوێن
+/// 📰 کاروسێلی هەواڵەکان — Compact Edition (220px)
 class NewsCarousel extends StatefulWidget {
   final List<Map<String, dynamic>> newsList;
   final Function(Map<String, dynamic>) onTap;
@@ -20,17 +20,27 @@ class NewsCarousel extends StatefulWidget {
 }
 
 class _NewsCarouselState extends State<NewsCarousel> {
-  final PageController _controller = PageController(viewportFraction: 0.78);
+  final PageController _controller = PageController(viewportFraction: 0.88);
   int _currentIndex = 0;
   Timer? _autoScrollTimer;
 
-  // 🏢 Cache بۆ زانیاری شوێنەکان
+  // ✅ سنووری _storeCache
   final Map<String, Map<String, dynamic>?> _storeCache = {};
+  static const int _maxCacheSize = 20;
 
   @override
   void initState() {
     super.initState();
     _startAutoScroll();
+  }
+
+  @override
+  void didUpdateWidget(NewsCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ✅ ئەگەر newsList گۆڕا، دەستپێکردنەوە
+    if (oldWidget.newsList.length != widget.newsList.length) {
+      _startAutoScroll();
+    }
   }
 
   @override
@@ -40,31 +50,26 @@ class _NewsCarouselState extends State<NewsCarousel> {
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔄 Auto-Scroll
-  // ═══════════════════════════════════════════════════════════
   void _startAutoScroll() {
     _autoScrollTimer?.cancel();
-    _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!mounted || widget.newsList.isEmpty) return;
+    // ✅ ئەگەر 1 یان کەمتر هەواڵ هەیە، هیچ Timer پێویست نییە
+    if (widget.newsList.length <= 1) return;
 
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (!mounted || widget.newsList.isEmpty) return;
       final nextPage = (_currentIndex + 1) % widget.newsList.length;
       if (_controller.hasClients) {
         _controller.animateToPage(
           nextPage,
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 500),
           curve: Curves.easeInOut,
         );
       }
     });
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🖼️ Helper: Extract First Image
-  // ═══════════════════════════════════════════════════════════
   String _extractImage(Map<String, dynamic> news) {
     final raw = news['images'] ?? news['img'] ?? news['image'];
-
     if (raw == null) return '';
     if (raw is List) {
       if (raw.isEmpty) return '';
@@ -81,16 +86,10 @@ class _NewsCarouselState extends State<NewsCarousel> {
     return raw.toString().trim();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📡 Helper: هێنانی زانیاری شوێن (بە Cache)
-  // ═══════════════════════════════════════════════════════════
+  // ✅ سنووردانان بۆ _storeCache
   Future<Map<String, dynamic>?> _getStoreInfo(String? storeId) async {
     if (storeId == null || storeId.isEmpty) return null;
-
-    // پشکنینی Cache
-    if (_storeCache.containsKey(storeId)) {
-      return _storeCache[storeId];
-    }
+    if (_storeCache.containsKey(storeId)) return _storeCache[storeId];
 
     try {
       final res = await Supabase.instance.client
@@ -99,33 +98,33 @@ class _NewsCarouselState extends State<NewsCarousel> {
           .eq('id', storeId)
           .maybeSingle();
 
+      // ✅ سنووردانان — ئەگەر زۆر بوو، کۆنترین بسڕەوە
+      if (_storeCache.length >= _maxCacheSize) {
+        _storeCache.remove(_storeCache.keys.first);
+      }
       _storeCache[storeId] = res;
       return res;
     } catch (e) {
-      debugPrint('❌ هەڵە لە هێنانی شوێن: $e');
-      _storeCache[storeId] = null;
       return null;
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Build
-  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     if (widget.newsList.isEmpty) return const SizedBox.shrink();
 
     return Column(
       children: [
+        // ✅ بەرزی ٢٢٠px — Compact
         SizedBox(
-          height: 340, // ✅ زیادکرا لە 290
+          height: 220,
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.newsList.length,
             onPageChanged: (index) {
               setState(() => _currentIndex = index);
+              _startAutoScroll();
             },
             itemBuilder: (context, index) {
               return AnimatedBuilder(
@@ -134,19 +133,15 @@ class _NewsCarouselState extends State<NewsCarousel> {
                   double value = 1.0;
                   if (_controller.position.haveDimensions) {
                     value = _controller.page! - index;
-                    value = (1 - (value.abs() * 0.25)).clamp(0.75, 1.0);
+                    value = (1 - (value.abs() * 0.15)).clamp(0.85, 1.0);
                   }
                   return Center(
-                    child: SizedBox(
-                      height: Curves.easeOut.transform(value) * 340,
-                      width: Curves.easeOut.transform(value) * 320,
-                      child: Transform.scale(
-                        scale: Curves.easeOut.transform(value),
-                        child: _buildNewsCard(
-                          widget.newsList[index],
-                          index,
-                          isDark,
-                        ),
+                    child: Transform.scale(
+                      scale: Curves.easeOut.transform(value),
+                      child: _buildNewsCard(
+                        widget.newsList[index],
+                        index,
+                        isDark,
                       ),
                     ),
                   );
@@ -155,15 +150,12 @@ class _NewsCarouselState extends State<NewsCarousel> {
             },
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildIndicator(isDark),
       ],
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎴 News Card — بە لۆگۆی شوێن
-  // ═══════════════════════════════════════════════════════════
   Widget _buildNewsCard(Map<String, dynamic> news, int index, bool isDark) {
     final imageUrl = _extractImage(news);
     final title = news['title']?.toString() ??
@@ -173,7 +165,6 @@ class _NewsCarouselState extends State<NewsCarousel> {
     final views = news['views'] ?? 0;
     final likes = news['likes'] ?? 0;
 
-    // 🏢 زانیاری شوێن لە join ەکەوە
     final storeFromJoin = news['dukan'];
     final storeId = news['store_id']?.toString();
 
@@ -183,29 +174,28 @@ class _NewsCarouselState extends State<NewsCarousel> {
         margin: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ═══════════════════════════════════════════════
-              // 🖼️ وێنەی گەورە
-              // ═══════════════════════════════════════════════
+              // ═══════════════════════════════════════
+              // 🖼️ وێنە — flex: 4 (کەمتر)
+              // ═══════════════════════════════════════
               Expanded(
-                flex: 4, // ✅ زیادکرا لە 3 بۆ 4
+                flex: 4,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // وێنەکە
                     imageUrl.isNotEmpty
                         ? CachedNetworkImage(
                       imageUrl: imageUrl,
@@ -215,9 +205,13 @@ class _NewsCarouselState extends State<NewsCarousel> {
                             ? const Color(0xFF2A2A35)
                             : AppColors.backgroundGrey,
                         child: const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                            strokeWidth: 2,
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                              strokeWidth: 2,
+                            ),
                           ),
                         ),
                       ),
@@ -226,57 +220,55 @@ class _NewsCarouselState extends State<NewsCarousel> {
                     )
                         : _buildPlaceholder(),
 
-                    // 🌈 Gradient بۆ خوێندنەوە
+                    // 🌈 گرادیێنت
                     Positioned(
                       bottom: 0,
                       left: 0,
                       right: 0,
                       child: Container(
-                        height: 100,
+                        height: 60,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withValues(alpha: 0.8),
+                              Colors.black.withValues(alpha: 0.7),
                             ],
                           ),
                         ),
                       ),
                     ),
 
-                    // ═══════════════════════════════════════════════
-                    // 🏢 لۆگۆی شوێن + ناو (PRO)
-                    // ═══════════════════════════════════════════════
+                    // 🏢 لۆگۆی شوێن
                     if (storeFromJoin != null || storeId != null)
                       Positioned(
-                        top: 12,
-                        right: 12,
-                        left: 12,
+                        top: 8,
+                        right: 8,
+                        left: 8,
                         child: _buildStoreBadge(
                           storeFromJoin: storeFromJoin,
                           storeId: storeId,
                         ),
                       ),
 
-                    // 🔴 Badge گرنگ
+                    // 🔴 باجی گرنگ
                     if (isImportant)
                       Positioned(
-                        top: 12,
-                        left: 12,
+                        top: 8,
+                        left: 8,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.red.shade600,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.red.withValues(alpha: 0.4),
-                                blurRadius: 8,
+                                blurRadius: 6,
                               ),
                             ],
                           ),
@@ -286,14 +278,14 @@ class _NewsCarouselState extends State<NewsCarousel> {
                               Icon(
                                 Icons.warning_rounded,
                                 color: Colors.white,
-                                size: 12,
+                                size: 10,
                               ),
-                              SizedBox(width: 4),
+                              SizedBox(width: 3),
                               Text(
                                 'گرنگ',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 10,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -302,17 +294,17 @@ class _NewsCarouselState extends State<NewsCarousel> {
                         ),
                       ),
 
-                    // 📊 ئامار
+                    // 📊 ئامارەکان
                     Positioned(
-                      bottom: 12,
-                      left: 12,
+                      bottom: 8,
+                      left: 8,
                       child: Row(
                         children: [
                           _buildStatChip(
                             Icons.visibility_rounded,
                             '$views',
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           _buildStatChip(
                             Icons.thumb_up_rounded,
                             '$likes',
@@ -324,21 +316,28 @@ class _NewsCarouselState extends State<NewsCarousel> {
                 ),
               ),
 
-              // ═══════════════════════════════════════════════
-              // 📝 ناونیشانی هەواڵ
-              // ═══════════════════════════════════════════════
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                    height: 1.4,
+              // ═══════════════════════════════════════
+              // 📝 ناونیشان — flex: 2
+              // ═══════════════════════════════════════
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                    ),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -348,14 +347,10 @@ class _NewsCarouselState extends State<NewsCarousel> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🏢 لۆگۆی شوێن (PRO)
-  // ═══════════════════════════════════════════════════════════
   Widget _buildStoreBadge({
     Map<String, dynamic>? storeFromJoin,
     String? storeId,
   }) {
-    // ئەگەر زانیاری لە join هەبوو، بەکاری بهێنە
     if (storeFromJoin != null) {
       final name = storeFromJoin['name']?.toString() ?? '';
       final logo = storeFromJoin['logo']?.toString() ??
@@ -364,20 +359,16 @@ class _NewsCarouselState extends State<NewsCarousel> {
       return _buildBadge(name: name, logo: logo);
     }
 
-    // ئەگەر نەبوو، لە DB بهێنە
     return FutureBuilder<Map<String, dynamic>?>(
       future: _getStoreInfo(storeId),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
-
         final store = snapshot.data;
         final name = store?['name']?.toString() ?? '';
         final logo = store?['logo']?.toString() ??
             store?['image']?.toString() ??
             '';
-
         if (name.isEmpty && logo.isEmpty) return const SizedBox.shrink();
-
         return _buildBadge(name: name, logo: logo);
       },
     );
@@ -386,20 +377,19 @@ class _NewsCarouselState extends State<NewsCarousel> {
   Widget _buildBadge({required String name, required String logo}) {
     return Row(
       children: [
-        // لۆگۆ
         if (logo.isNotEmpty)
           Container(
-            width: 40,
-            height: 40,
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white,
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: Colors.white, width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -410,30 +400,29 @@ class _NewsCarouselState extends State<NewsCarousel> {
                 placeholder: (_, __) => const Icon(
                   Icons.storefront_rounded,
                   color: AppColors.primary,
-                  size: 20,
+                  size: 14,
                 ),
                 errorWidget: (_, __, ___) => const Icon(
                   Icons.storefront_rounded,
                   color: AppColors.primary,
-                  size: 20,
+                  size: 14,
                 ),
               ),
             ),
           ),
-        // ناوی شوێن
         if (name.isNotEmpty) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Flexible(
             child: Container(
               padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 5,
+                horizontal: 8,
+                vertical: 3,
               ),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.black.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: Colors.white.withValues(alpha: 0.25),
                 ),
               ),
               child: Row(
@@ -442,15 +431,15 @@ class _NewsCarouselState extends State<NewsCarousel> {
                   const Icon(
                     Icons.verified_rounded,
                     color: Colors.white,
-                    size: 12,
+                    size: 10,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 3),
                   Flexible(
                     child: Text(
                       name,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 9,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -482,7 +471,7 @@ class _NewsCarouselState extends State<NewsCarousel> {
         child: Icon(
           Icons.newspaper_rounded,
           color: AppColors.primary,
-          size: 48,
+          size: 36,
         ),
       ),
     );
@@ -490,21 +479,21 @@ class _NewsCarouselState extends State<NewsCarousel> {
 
   Widget _buildStatChip(IconData icon, String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 12),
-          const SizedBox(width: 4),
+          Icon(icon, color: Colors.white, size: 10),
+          const SizedBox(width: 3),
           Text(
             text,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -520,9 +509,9 @@ class _NewsCarouselState extends State<NewsCarousel> {
         widget.newsList.length,
             (index) => AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          height: 6,
-          width: _currentIndex == index ? 24 : 6,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          height: 5,
+          width: _currentIndex == index ? 22 : 5,
           decoration: BoxDecoration(
             color: _currentIndex == index
                 ? AppColors.primary

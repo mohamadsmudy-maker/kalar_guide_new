@@ -69,9 +69,12 @@ class FuelStation {
 
   String getName(String lang) {
     switch (lang) {
-      case 'ar': return nameAr.isEmpty ? nameKu : nameAr;
-      case 'en': return nameEn.isEmpty ? nameKu : nameEn;
-      default: return nameKu;
+      case 'ar':
+        return nameAr.isEmpty ? nameKu : nameAr;
+      case 'en':
+        return nameEn.isEmpty ? nameKu : nameEn;
+      default:
+        return nameKu;
     }
   }
 

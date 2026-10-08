@@ -56,15 +56,17 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
   Future<void> _save() async {
     setState(() => _loading = true);
     try {
+      final conditionText = _conditionCtrl.text.trim().isEmpty
+          ? 'ساماڵ'
+          : _conditionCtrl.text.trim();
+
       final data = {
         'city': 'کەلار',
         'temperature': int.tryParse(_tempCtrl.text.trim()) ?? 25,
-        'condition_text': _conditionCtrl.text.trim().isEmpty
-            ? 'ساماڵ'
-            : _conditionCtrl.text.trim(),
+        'condition_text': conditionText,
         'humidity': int.tryParse(_humidityCtrl.text.trim()) ?? 30,
         'wind_speed': int.tryParse(_windCtrl.text.trim()) ?? 10,
-        'icon_emoji': '🌤️',
+        'icon_emoji': _getEmojiForCondition(conditionText),
         'updated_at': DateTime.now().toIso8601String(),
       };
 
@@ -97,6 +99,21 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
     }
   }
 
+  /// 🎨 وەرگرتنی ئیمۆجی گونجاو بۆ دۆخ
+  String _getEmojiForCondition(String condition) {
+    final c = condition.trim();
+    if (c.contains('ساماڵ') || c.contains('خۆر')) return '☀️';
+    if (c.contains('هەور') || c.contains('کەمێک هەور')) return '🌤️';
+    if (c.contains('تەم') || c.contains('تەمومژ')) return '🌫️';
+    if (c.contains('نم') || c.contains('نم نم')) return '🌦️';
+    if (c.contains('باران')) return '🌧️';
+    if (c.contains('بەفر') || c.contains('سەهۆڵ')) return '❄️';
+    if (c.contains('بروسکە') || c.contains('هەورەبروسکە')) return '⛈️';
+    if (c.contains('گەرم')) return '🔥';
+    if (c.contains('سارد')) return '🥶';
+    return '🌤️';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -125,6 +142,36 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: Colors.blue.shade700,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'ئەم داتایە بۆ ئەپی بەکارهێنەر پیشان دەدرێت. '
+                              'ئەگەر بەتاڵ بێت، ئەپ خۆی لە Live دەهێنێت.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blue.shade900,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _tempCtrl,
                   keyboardType: TextInputType.number,
@@ -143,7 +190,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
                 TextField(
                   controller: _conditionCtrl,
                   decoration: InputDecoration(
-                    labelText: "دۆخ (ساماڵ، هەور...)",
+                    labelText: "دۆخ (ساماڵ، هەور، باران...)",
                     prefixIcon: const Icon(
                       Icons.cloud,
                       color: AppColors.primary,

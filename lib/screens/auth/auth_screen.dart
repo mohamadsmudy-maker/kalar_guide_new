@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../config/translations.dart';
+import '../../services/auth_service.dart';
+import '../../utils/password_hasher.dart';
 
 /// 🔐 شاشەی چوونەژوورەوە و دروستکردنی ئەکاونت
 class AuthScreen extends StatefulWidget {
@@ -42,16 +45,14 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📡 هێنانی شوێنەکان
-  // ═══════════════════════════════════════════════════════════
   Future<void> _fetchStores() async {
     setState(() => _loadingStores = true);
     try {
       final res = await Supabase.instance.client
           .from('dukan')
-          .select('id, name, phone')
+          .select('id, name, phone, category')
           .order('name');
+
       if (mounted) {
         setState(() {
           _allStores = List<Map<String, dynamic>>.from(res);
@@ -64,14 +65,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔑 پشتڕاستکردنەوەی کۆدی شوێن
-  // ═══════════════════════════════════════════════════════════
   void _verifyStoreCode() {
-    debugPrint('🔍 پشتڕاستکردنەوە دەستیپێکرد');
-    debugPrint('🏪 شوێنی هەڵبژێردراو: ${_selectedStore?['name']}');
-    debugPrint('📝 کۆدی نووسراو: ${_storeCodeCtrl.text}');
-
     if (_selectedStore == null) {
       _showSnackBar('تکایە سەرەتا شوێنێک هەڵبژێرە', Colors.orange);
       return;
@@ -79,8 +73,6 @@ class _AuthScreenState extends State<AuthScreen> {
 
     final enteredCode = _storeCodeCtrl.text.trim();
     final realCode = _selectedStore!['phone']?.toString().trim() ?? '';
-
-    debugPrint('🔑 کۆدی ڕاستەقینە: $realCode');
 
     if (enteredCode.isEmpty) {
       _showSnackBar('تکایە کۆدەکە بنووسە', Colors.orange);
@@ -111,26 +103,26 @@ class _AuthScreenState extends State<AuthScreen> {
   // 📤 ناردنی فۆرم
   // ═══════════════════════════════════════════════════════════
   Future<void> _submit() async {
-    debugPrint('🚀 _submit دەستیپێکرد');
-
     final phone = _phoneCtrl.text.trim();
     final pass = _passCtrl.text.trim();
     final name = _nameCtrl.text.trim();
-
-    debugPrint('📱 phone: $phone');
-    debugPrint('🔑 pass: ${pass.length} کاراکتەر');
-    debugPrint('👤 name: $name');
-    debugPrint('🎭 role: $_selectedRole');
-    debugPrint('📝 isSignUp: $_isSignUp');
 
     // ✅ پشکنینەکان
     if (phone.isEmpty || pass.isEmpty) {
       _showSnackBar('مۆبایل و پاسۆرد پێویستە ⚠', Colors.orange);
       return;
     }
+    if (pass.length < 6) {
+      _showSnackBar('پاسۆرد دەبێت لانیکەم ٦ پیت بێت ⚠', Colors.orange);
+      return;
+    }
+    if (phone.length < 10) {
+      _showSnackBar('ژمارەی مۆبایل دروست نییە ⚠', Colors.orange);
+      return;
+    }
 
     if (_isSignUp) {
-      if (_selectedRole == 'vendor') {
+      if (_selectedRole == 'vendor' || _selectedRole == 'department') {
         if (_selectedStore == null) {
           _showSnackBar('تکایە شوێنەکەت هەڵبژێرە 🏪', Colors.orange);
           return;
@@ -149,119 +141,141 @@ class _AuthScreenState extends State<AuthScreen> {
 
     setState(() => _loading = true);
 
+    final hashedPass = PasswordHasher.hash(pass);
+
     try {
       if (_isSignUp) {
-        debugPrint('📝 دەستپێکردنی دروستکردنی ئەکاونت...');
-
-        // پشکنینی ئەگەر مۆبایلەکە پێشتر هەبێت
-        final existing = await Supabase.instance.client
-            .from('app_users')
-            .select()
-            .eq('phone', phone)
-            .maybeSingle();
-
-        debugPrint('🔍 پشکنینی بەکارهێنەری پێشوو: ${existing != null}');
-
-        if (existing != null) {
-          if (existing['role'] == 'vendor' &&
-              existing['is_approved'] == false) {
-            _showSnackBar(
-                'داواکاریەکەت پێشتر نێردراوە و چاوەڕێی ئەدمینە ⏳',
-                Colors.orange);
-            setState(() => _loading = false);
-            return;
-          }
-          _showSnackBar('ئەم ژمارەیە پێشتر تۆمار کراوە ⚠', Colors.orange);
-          setState(() => _loading = false);
-          return;
-        }
-
-        // ✅ دروستکردنی داتا
-        final insertData = {
-          'name': _selectedRole == 'vendor' ? _selectedStore!['name'] : name,
-          'phone': phone,
-          'password': pass,
-          'role': _selectedRole,
-          'is_approved': _selectedRole == 'vendor' ? false : true,
-        };
-
-        debugPrint('📤 داتای ناردن: $insertData');
-
-        await Supabase.instance.client.from('app_users').insert(insertData);
-
-        debugPrint('✅ ئەکاونت دروستکرا');
-
-        if (_selectedRole == 'vendor') {
-          _showSnackBar(
-              'داواکاریت بۆ ${_selectedStore!['name']} نێردرا ⏳\nچاوەڕێی پەسەندی ئەدمین بە',
-              Colors.green);
-          setState(() {
-            _isSignUp = false;
-            _storeCodeVerified = false;
-            _selectedStore = null;
-            _storeCodeCtrl.clear();
-            _loading = false;
-          });
-          return;
-        }
-
-        // ✅ بۆ Customer
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('logged_phone', phone);
-        if (mounted) Navigator.pop(context);
+        await _handleSignUp(phone, pass, name, hashedPass);
       } else {
-        // 🔐 چوونەژوورەوە
-        debugPrint('🔐 دەستپێکردنی چوونەژوورەوە...');
-
-        final res = await Supabase.instance.client
-            .from('app_users')
-            .select()
-            .eq('phone', phone)
-            .eq('password', pass)
-            .maybeSingle();
-
-        debugPrint('🔍 ئەنجامی گەڕان: ${res != null}');
-
-        if (res == null) {
-          _showSnackBar('مۆبایل یان پاسۆرد هەڵەیە ❌', Colors.red);
-          setState(() => _loading = false);
-          return;
-        }
-
-        if (res['role'] == 'vendor' && res['is_approved'] == false) {
-          if (mounted) {
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text("چاوەڕێ بە ⏳"),
-                content: const Text("هێشتا پەسەند نەکراوی"),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text("باشە"),
-                  ),
-                ],
-              ),
-            );
-          }
-          setState(() => _loading = false);
-          return;
-        }
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('logged_phone', phone);
-        debugPrint('✅ چوونەژوورەوە سەرکەوتوو');
-        if (mounted) Navigator.pop(context);
+        await _handleLogin(phone, pass);
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       debugPrint('❌ هەڵە: $e');
-      debugPrint('📍 Stack: $stackTrace');
-      if (mounted) {
-        _showSnackBar('هەڵە: $e', Colors.red);
-      }
+      if (mounted) _showSnackBar('هەڵە: $e', Colors.red);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ✍️ دروستکردنی ئەکاونت
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _handleSignUp(
+      String phone,
+      String pass,
+      String name,
+      String hashedPass,
+      ) async {
+    // پشکنینی مۆبایل
+    final dukanExists = await Supabase.instance.client
+        .from('dukan')
+        .select('id')
+        .eq('user_phone', phone)
+        .maybeSingle();
+
+    final userExists = await Supabase.instance.client
+        .from('app_users')
+        .select('id')
+        .eq('phone', phone)
+        .maybeSingle();
+
+    if (dukanExists != null || userExists != null) {
+      _showSnackBar('ئەم ژمارەیە پێشتر تۆمار کراوە ⚠', Colors.orange);
+      return;
+    }
+
+    if (_selectedRole == 'vendor' || _selectedRole == 'department') {
+      // ڤێندەر / فەرمانگە — لە `dukan` نوێکردنەوە
+      await Supabase.instance.client.from('dukan').update({
+        'user_phone': phone,
+        'password': hashedPass,
+        'is_approved': false,
+        'vendor_role': _selectedRole,
+      }).eq('id', _selectedStore!['id']);
+
+      _showSnackBar(
+        'داواکاریت بۆ ${_selectedStore!['name']} نێردرا ⏳\nچاوەڕێی پەسەندی ئەدمین بە',
+        Colors.green,
+      );
+
+      setState(() {
+        _isSignUp = false;
+        _storeCodeVerified = false;
+        _selectedStore = null;
+        _storeCodeCtrl.clear();
+        _phoneCtrl.clear();
+        _passCtrl.clear();
+      });
+      return;
+    }
+
+    // کڕیار — لە `app_users` تۆمار
+    await Supabase.instance.client.from('app_users').insert({
+      'name': name,
+      'phone': phone,
+      'password': hashedPass,
+      'role': 'customer',
+      'is_approved': true,
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('logged_phone', phone);
+    await AuthSessionManager.fetchUserProfile();
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🔑 چوونەژوورەوە — بە پشتگیری هەموو جۆرەکان
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _handleLogin(String phone, String pass) async {
+    final result = await AuthSessionManager.login(
+      phone: phone,
+      password: pass,
+    );
+
+    if (result == null) {
+      _showSnackBar('مۆبایل یان پاسۆرد هەڵەیە ❌', Colors.red);
+      return;
+    }
+
+    // ⚠️ چاوەڕوانی پەسەندکردن
+    if (result['__pending_approval__'] == true) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.hourglass_top_rounded, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text('چاوەڕوان بە ⏳'),
+                ],
+              ),
+              content: const Text(
+                'هێشتا داواکاریت لەلایەن ئەدمینەوە پەسەند نەکراوە.\n\n'
+                    'تکایە چاوەڕوان بە تا پەسەند دەکرێیت.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('باشە'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // ✅ سەرکەوتوو
+    if (mounted) Navigator.pop(context);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -274,7 +288,7 @@ class _AuthScreenState extends State<AuthScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFFFF5F7),
         appBar: AppBar(
-          title: Text(_isSignUp ? "دروستکردنی ئەکاونت" : "چوونەژوورەوە"),
+          title: Text(_isSignUp ? 'دروستکردنی ئەکاونت' : 'چوونەژوورەوە'),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           centerTitle: true,
@@ -288,11 +302,43 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               child: Column(
                 children: [
+                  // لۆگۆ
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(15),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/kalar.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.explore_rounded,
+                            size: 50,
+                            color: AppColors.primary,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
                   if (_isSignUp) ...[
                     DropdownButtonFormField<String>(
                       initialValue: _selectedRole,
                       decoration: InputDecoration(
-                        labelText: "جۆری ئەکاونت",
+                        labelText: 'جۆری ئەکاونت',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
                           borderSide: BorderSide.none,
@@ -307,11 +353,15 @@ class _AuthScreenState extends State<AuthScreen> {
                       items: const [
                         DropdownMenuItem(
                           value: 'customer',
-                          child: Text("👤 بەکارهێنەر"),
+                          child: Text('👤 بەکارهێنەر'),
                         ),
                         DropdownMenuItem(
                           value: 'vendor',
-                          child: Text("👑 ئەدمین"),
+                          child: Text('🏪 فرۆشیار / شوێن'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'department',
+                          child: Text('🏛️ فەرمانگە'),
                         ),
                       ],
                       onChanged: (v) => setState(() {
@@ -321,22 +371,29 @@ class _AuthScreenState extends State<AuthScreen> {
                       }),
                     ),
                     const SizedBox(height: 14),
-                    if (_selectedRole == 'vendor') ...[
+
+                    if (_selectedRole == 'vendor' ||
+                        _selectedRole == 'department') ...[
                       _loadingStores
                           ? const CircularProgressIndicator(
-                          color: AppColors.primary)
+                        color: AppColors.primary,
+                      )
                           : DropdownButtonFormField<Map<String, dynamic>>(
                         isExpanded: true,
                         decoration: InputDecoration(
-                          labelText: "شوێنەکەت هەڵبژێرە *",
+                          labelText: _selectedRole == 'department'
+                              ? 'فەرمانگەکەت هەڵبژێرە *'
+                              : 'شوێنەکەت هەڵبژێرە *',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
                           fillColor: Colors.white,
-                          prefixIcon: const Icon(
-                            Icons.storefront_rounded,
+                          prefixIcon: Icon(
+                            _selectedRole == 'department'
+                                ? Icons.business_rounded
+                                : Icons.storefront_rounded,
                             color: AppColors.primary,
                           ),
                         ),
@@ -345,9 +402,9 @@ class _AuthScreenState extends State<AuthScreen> {
                           return DropdownMenuItem<Map<String, dynamic>>(
                             value: store,
                             child: Text(
-                              "${store['name']}",
+                              '${store['name']} (${store['category'] ?? ''})',
                               style: const TextStyle(
-                                fontSize: 15,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w900,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -361,13 +418,14 @@ class _AuthScreenState extends State<AuthScreen> {
                         }),
                       ),
                       const SizedBox(height: 14),
+
                       if (_selectedStore != null) ...[
                         TextField(
                           controller: _storeCodeCtrl,
                           onChanged: (_) =>
                               setState(() => _storeCodeVerified = false),
                           decoration: InputDecoration(
-                            labelText: "کۆدی نهێنی شوێن *",
+                            labelText: 'کۆدی نهێنی شوێن *',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(18),
                               borderSide: BorderSide.none,
@@ -398,8 +456,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             onPressed: _verifyStoreCode,
                             child: Text(
                               _storeCodeVerified
-                                  ? "کۆد ڕاستە ✅"
-                                  : "پشتڕاستکردنەوەی کۆد",
+                                  ? 'کۆد ڕاستە ✅'
+                                  : 'پشتڕاستکردنەوەی کۆد',
                               style: TextStyle(
                                 color: _storeCodeVerified
                                     ? Colors.green
@@ -415,7 +473,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       TextField(
                         controller: _nameCtrl,
                         decoration: InputDecoration(
-                          labelText: "ناوی تەواو",
+                          labelText: 'ناوی تەواو',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(18),
                             borderSide: BorderSide.none,
@@ -431,13 +489,15 @@ class _AuthScreenState extends State<AuthScreen> {
                       const SizedBox(height: 14),
                     ],
                   ],
+
+                  // مۆبایل
                   TextField(
                     controller: _phoneCtrl,
                     decoration: InputDecoration(
                       labelText: _selectedRole == 'vendor' && _isSignUp
-                          ? "ژمارەی مۆبایلی خۆت * (بۆ لۆگین)"
-                          : "ژمارەی مۆبایل *",
-                      hintText: "0770xxxxxxx",
+                          ? 'ژمارەی مۆبایلی خۆت * (بۆ لۆگین)'
+                          : 'ژمارەی مۆبایل *',
+                      hintText: '0770xxxxxxx',
                       prefixIcon: const Icon(
                         Icons.phone_iphone_rounded,
                         color: AppColors.primary,
@@ -452,10 +512,12 @@ class _AuthScreenState extends State<AuthScreen> {
                     keyboardType: TextInputType.phone,
                   ),
                   const SizedBox(height: 14),
+
+                  // پاسۆرد
                   TextField(
                     controller: _passCtrl,
                     decoration: InputDecoration(
-                      labelText: "پاسۆرد *",
+                      labelText: 'پاسۆرد * (لانیکەم ٦ پیت)',
                       prefixIcon: const Icon(
                         Icons.lock_outline_rounded,
                         color: AppColors.primary,
@@ -479,9 +541,12 @@ class _AuthScreenState extends State<AuthScreen> {
                     obscureText: _obscurePass,
                   ),
                   const SizedBox(height: 28),
+
+                  // دوگمەی ناردن
                   _loading
                       ? const CircularProgressIndicator(
-                      color: AppColors.primary)
+                    color: AppColors.primary,
+                  )
                       : SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -496,8 +561,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       onPressed: _submit,
                       child: Text(
                         _isSignUp
-                            ? "دروستکردنی ئەکاونت"
-                            : "چوونەژوورەوە",
+                            ? 'دروستکردنی ئەکاونت'
+                            : 'چوونەژوورەوە',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -506,12 +571,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // گۆڕین
                   TextButton(
                     onPressed: () => setState(() => _isSignUp = !_isSignUp),
                     child: Text(
                       _isSignUp
-                          ? "ئەکاونتت هەیە؟ بچۆ ژوورەوە"
-                          : "ئەکاونتت نییە؟ دروستبکە",
+                          ? 'ئەکاونتت هەیە؟ بچۆ ژوورەوە'
+                          : 'ئەکاونتت نییە؟ دروستبکە',
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,

@@ -38,12 +38,13 @@ class LoadingWidget extends StatelessWidget {
   }
 }
 
-/// ❌ ویجێتی هەڵە
-class ErrorWidget extends StatelessWidget {
+/// ❌ ویجێتی هەڵە — ✅ ناوی گشتی AppErrorWidget
+/// (ناوی ErrorWidget ی Flutter ـە، نابێت بەکاربهێنین)
+class AppErrorWidget extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
 
-  const ErrorWidget({
+  const AppErrorWidget({
     super.key,
     required this.message,
     this.onRetry,

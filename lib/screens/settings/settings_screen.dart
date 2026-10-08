@@ -230,7 +230,6 @@ class SettingsScreen extends StatelessWidget {
               isDark: isDark,
               child: Column(
                 children: [
-                  // ✅ ئاگادارکردنەوەی گشتی
                   _buildSwitchOption(
                     icon: Icons.notifications_active_rounded,
                     title: 'چالاککردنی ئاگادارکردنەوە',
@@ -241,8 +240,6 @@ class SettingsScreen extends StatelessWidget {
                     onChanged: (value) =>
                         settings.setNotificationsEnabled(value),
                   ),
-
-                  // 📰 هەواڵەکان
                   _buildSwitchOption(
                     icon: Icons.newspaper_rounded,
                     title: 'هەواڵەکان',
@@ -253,8 +250,6 @@ class SettingsScreen extends StatelessWidget {
                     enabled: settings.notificationsEnabled,
                     onChanged: (value) => settings.setNewsNotifications(value),
                   ),
-
-                  // 📝 سکاڵاکان
                   _buildSwitchOption(
                     icon: Icons.report_rounded,
                     title: 'سکاڵاکان',
@@ -266,8 +261,6 @@ class SettingsScreen extends StatelessWidget {
                     onChanged: (value) =>
                         settings.setComplaintNotifications(value),
                   ),
-
-                  // 🛒 داواکارییەکان
                   _buildSwitchOption(
                     icon: Icons.shopping_bag_rounded,
                     title: 'داواکارییەکان',
@@ -278,8 +271,6 @@ class SettingsScreen extends StatelessWidget {
                     enabled: settings.notificationsEnabled,
                     onChanged: (value) => settings.setOrderNotifications(value),
                   ),
-
-                  // 🔇 دەنگ
                   _buildSwitchOption(
                     icon: Icons.volume_up_rounded,
                     title: 'دەنگ',
@@ -290,8 +281,6 @@ class SettingsScreen extends StatelessWidget {
                     enabled: settings.notificationsEnabled,
                     onChanged: (value) => settings.setSoundEnabled(value),
                   ),
-
-                  // 📳 لەرینەوە
                   _buildSwitchOption(
                     icon: Icons.vibration_rounded,
                     title: 'لەرینەوە',
@@ -309,7 +298,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // ═══════════════════════════════════════════════
-            // 🔄 گەڕاندنەوە بۆ دۆخی سەرەتا
+            // 🔄 گەڕاندنەوە
             // ═══════════════════════════════════════════════
             GestureDetector(
               onTap: () => _showResetDialog(context, settings, isDark),
@@ -391,9 +380,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════
-  // 🌍 زمان
-  // ═══════════════════════════════════════════════════
   Widget _buildLanguageOption({
     required String languageId,
     required String languageName,
@@ -471,9 +457,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════
-  // 📏 قەبارە
-  // ═══════════════════════════════════════════════════
   Widget _buildFontSizeOption({
     required String sizeId,
     required String sizeName,
@@ -544,9 +527,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════
-  // 🌙 ڕەنگ
-  // ═══════════════════════════════════════════════════
   Widget _buildThemeOption(
       BuildContext context, {
         required ThemeMode mode,
@@ -621,9 +601,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════
-  // 🔔 ئاگادارکردنەوە
-  // ═══════════════════════════════════════════════════
   Widget _buildSwitchOption({
     required IconData icon,
     required String title,
@@ -679,10 +656,11 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
+            // ✅ activeThumbColor (نوێ) — لە جیاتی activeColor ی deprecated
             Switch(
               value: value,
               onChanged: enabled ? onChanged : null,
-              activeColor: AppColors.primary,
+              activeThumbColor: AppColors.primary,
             ),
           ],
         ),
@@ -690,9 +668,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════
-  // 🔄 گەڕاندنەوە
-  // ═══════════════════════════════════════════════════
   void _showResetDialog(
       BuildContext context,
       SettingsProvider settings,

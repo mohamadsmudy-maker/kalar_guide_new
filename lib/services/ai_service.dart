@@ -8,25 +8,65 @@ import 'package:image_picker/image_picker.dart';
 /// 🤖 خزمەتگوزاری AI بە Gemini
 class AiService {
   // ═══════════════════════════════════════════════════════════
-  // 🔐 API Key - لە .env
+  // 🔐 API Key — لە .env یان --dart-define
   // ═══════════════════════════════════════════════════════════
   static String get _geminiKey {
-    // ✅ لە .env بخوێنەرەوە
-    final key = dotenv.env['GEMINI_API_KEY'] ?? '';
+    // ✅ ١. لە .env هەوڵ بدە
+    final envKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    if (envKey.isNotEmpty) return envKey;
 
-    // ✅ ئەگەر .env نەبوو، لە --dart-define هەوڵ بدە
-    if (key.isEmpty) {
-      return const String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
-    }
+    // ✅ ٢. لە --dart-define هەوڵ بدە (بۆ Release)
+    const dartDefineKey = String.fromEnvironment(
+      'GEMINI_API_KEY',
+      defaultValue: '',
+    );
+    if (dartDefineKey.isNotEmpty) return dartDefineKey;
 
-    return key;
+    // ❌ هیچ کلیلێک نەدۆزرایەوە
+    return '';
   }
 
   // ═══════════════════════════════════════════════════════════
-  // ⚙️ ڕێکخستن
+  // ⚙️ ڕێکخستن — ✅ لە .env
   // ═══════════════════════════════════════════════════════════
-  static const String _model = "gemini-2.0-flash-exp";
-  static const String _apiVersion = "v1beta";
+  static String get _model {
+    // ✅ ١. لە .env هەوڵ بدە
+    final envModel = dotenv.env['GEMINI_MODEL'] ?? '';
+    if (envModel.isNotEmpty) return envModel;
+
+    // ✅ ٢. لە --dart-define هەوڵ بدە
+    const dartDefineModel = String.fromEnvironment(
+      'GEMINI_MODEL',
+      defaultValue: '',
+    );
+    if (dartDefineModel.isNotEmpty) return dartDefineModel;
+
+    // ❌ Fallback — مۆدێلی جێگیر
+    return 'gemini-1.5-flash';
+  }
+
+  static String get _apiVersion {
+    final envVersion = dotenv.env['GEMINI_API_VERSION'] ?? '';
+    if (envVersion.isNotEmpty) return envVersion;
+
+    return 'v1beta';
+  }
+
+  static int get _maxTokens {
+    final envTokens = dotenv.env['GEMINI_MAX_TOKENS'] ?? '';
+    final parsed = int.tryParse(envTokens);
+    if (parsed != null && parsed > 0) return parsed;
+
+    return 2048;
+  }
+
+  static double get _temperature {
+    final envTemp = dotenv.env['GEMINI_TEMPERATURE'] ?? '';
+    final parsed = double.tryParse(envTemp);
+    if (parsed != null && parsed >= 0 && parsed <= 2) return parsed;
+
+    return 0.7;
+  }
 
   // ═══════════════════════════════════════════════════════════
   // 🎯 فەنکشنی سەرەکی
@@ -34,6 +74,7 @@ class AiService {
   static Future<String> _callGemini(
       String text, {
         String? base64Image,
+        Duration timeout = const Duration(seconds: 30),
       }) async {
     try {
       if (_geminiKey.isEmpty) {
@@ -59,7 +100,8 @@ class AiService {
 
       debugPrint('🤖 بانگکردنی AI: $_model');
 
-      final res = await http.post(
+      final res = await http
+          .post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -67,34 +109,46 @@ class AiService {
             {"parts": parts}
           ],
           "generationConfig": {
-            "temperature": 0.7,
-            "maxOutputTokens": 1024,
+            "temperature": _temperature,
+            "maxOutputTokens": _maxTokens,
           }
         }),
-      );
+      )
+          .timeout(timeout);
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
 
         if (data['candidates'] != null &&
             data['candidates'].isNotEmpty &&
-            data['candidates'][0]['content'] != null) {
+            data['candidates'][0]['content'] != null &&
+            data['candidates'][0]['content']['parts'] != null &&
+            data['candidates'][0]['content']['parts'].isNotEmpty) {
           return data['candidates'][0]['content']['parts'][0]['text']
               .toString();
         }
         return "⚠️ وەڵام بەتاڵە";
+      } else if (res.statusCode == 429) {
+        debugPrint('⚠️ AI Rate limit: ${res.statusCode}');
+        return "⚠️ زۆر داواکاریت ناردووە — تکایە کەمێک چاوەڕوان بە";
+      } else if (res.statusCode == 401 || res.statusCode == 403) {
+        debugPrint('❌ AI Auth error: ${res.statusCode}');
+        return "⚠️ API Key هەڵەیە یان کۆتایی هاتووە";
       } else {
         debugPrint('❌ AI Error: ${res.statusCode} - ${res.body}');
         return "⚠️ هەڵەی AI: ${res.statusCode}";
       }
     } catch (e) {
       debugPrint('❌ AI Connection Error: $e');
+      if (e.toString().contains('TimeoutException')) {
+        return "⚠️ کاتەکە تێپەڕی — تکایە دووبارە هەوڵ بدە";
+      }
       return "⚠️ کێشەی پەیوەندی";
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📝 فەنکشنەکانی تر (هەمان کۆن)
+  // 📝 فەنکشنەکانی تر
   // ═══════════════════════════════════════════════════════════
 
   /// دروستکردنی وەسفی کاڵا
@@ -139,6 +193,7 @@ class AiService {
         base64Image: base64Image,
       );
     } catch (e) {
+      debugPrint('❌ Search by image error: $e');
       return "";
     }
   }
@@ -153,7 +208,8 @@ class AiService {
         "ئەم وێنەیە شیکار بکە و تەنها 1 بۆ 2 وشەی سەرەکی کوردی دەربخە بۆ مەبەستی گەڕان لە داتابەیس. هیچ ڕستەیەک مێنوسە.",
         base64Image: base64Image,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ searchByImageGivenFile error: $e');
       return "گشتی";
     }
   }

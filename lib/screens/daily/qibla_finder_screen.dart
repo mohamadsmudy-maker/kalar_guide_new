@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 
-/// 🕋 شاشەی قیبلە دۆزەرەوە - PRO EDITION
+/// 🕋 شاشەی قیبلە دۆزەرەوە — FULL PRO EDITION
 class QiblaFinderScreen extends StatefulWidget {
   const QiblaFinderScreen({super.key});
 
@@ -14,20 +14,20 @@ class QiblaFinderScreen extends StatefulWidget {
 
 class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     with TickerProviderStateMixin {
-  // ═══════════════════════════════════════════════
-  // 📍 کۆئۆردینەیتی کەعبە
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 📍 Constants
+  // ═══════════════════════════════════════════════════════════
   static const double kaabaLat = 21.4225;
   static const double kaabaLng = 39.8262;
 
-  // 🎨 ڕەنگی زێڕین
   static const Color _goldPrimary = Color(0xFFC9A227);
   static const Color _goldLight = Color(0xFFE5C76B);
-  static const Color _goldDark = Color(0xFF8B6F1F);
   static const Color _bgDark = Color(0xFF0F1521);
   static const Color _cardDark = Color(0xFF1A2332);
 
+  // ═══════════════════════════════════════════════════════════
   // 📊 State
+  // ═══════════════════════════════════════════════════════════
   double? _compassHeading;
   double? _qiblaAngle;
   double? _distanceToKaaba;
@@ -38,13 +38,14 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   bool _hasLocation = false;
   bool _gettingLocation = true;
   String _statusMessage = 'خەریکی دۆزینەوەی شوێن...';
-  String _accuracyMessage = '';
 
   // ✨ Animations
   late AnimationController _pulseController;
   late AnimationController _successController;
+  late AnimationController _rotateController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _successAnimation;
+  late Animation<double> _rotateAnimation;
 
   @override
   void initState() {
@@ -54,7 +55,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
-
     _pulseAnimation = Tween<double>(begin: 0.3, end: 0.8).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -63,10 +63,18 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-
     _successAnimation = CurvedAnimation(
       parent: _successController,
       curve: Curves.elasticOut,
+    );
+
+    _rotateController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    )..repeat();
+
+    _rotateAnimation = Tween<double>(begin: 0, end: 2 * math.pi).animate(
+      CurvedAnimation(parent: _rotateController, curve: Curves.linear),
     );
 
     _initLocation();
@@ -78,12 +86,13 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     _compassSubscription?.cancel();
     _pulseController.dispose();
     _successController.dispose();
+    _rotateController.dispose();
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════
-  // 📍 دەستپێکردنی GPS
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 📍 GPS
+  // ═══════════════════════════════════════════════════════════
   Future<void> _initLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -135,16 +144,16 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _statusMessage = 'هەڵە لە GPS: $e';
+          _statusMessage = 'هەڵە لە GPS';
           _gettingLocation = false;
         });
       }
     }
   }
 
-  // ═══════════════════════════════════════════════
-  // 🧭 دەستپێکردنی Compass
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 🧭 Compass
+  // ═══════════════════════════════════════════════════════════
   void _initCompass() {
     try {
       if (FlutterCompass.events == null) {
@@ -160,7 +169,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           if (event.heading != null && mounted) {
             setState(() {
               _compassHeading = event.heading;
-              _accuracyMessage = 'ئامادەیە ✅';
             });
           }
         },
@@ -168,7 +176,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           if (mounted) {
             setState(() {
               _hasCompass = false;
-              _statusMessage = 'هەڵە لە کۆمپاس: $error';
+              _statusMessage = 'هەڵە لە کۆمپاس';
             });
           }
         },
@@ -177,15 +185,15 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
       if (mounted) {
         setState(() {
           _hasCompass = false;
-          _statusMessage = 'هەڵە: $e';
+          _statusMessage = 'هەڵە';
         });
       }
     }
   }
 
-  // ═══════════════════════════════════════════════
-  // 📐 هەژمارکردنەکان
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 📐 Calculations
+  // ═══════════════════════════════════════════════════════════
   double _calculateQiblaAngle(double lat, double lng) {
     final latRad = lat * math.pi / 180;
     final lngRad = lng * math.pi / 180;
@@ -193,14 +201,12 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     final kaabaLngRad = kaabaLng * math.pi / 180;
 
     final dLng = kaabaLngRad - lngRad;
-
     final y = math.sin(dLng);
     final x = math.cos(latRad) * math.tan(kaabaLatRad) -
         math.sin(latRad) * math.cos(dLng);
 
     double qiblaRad = math.atan2(y, x);
     double qiblaDeg = qiblaRad * 180 / math.pi;
-
     qiblaDeg = (qiblaDeg + 360) % 360;
     return qiblaDeg;
   }
@@ -211,7 +217,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
 
   double? _getDeviceQiblaDirection() {
     if (_compassHeading == null || _qiblaAngle == null) return null;
-
     double direction = _qiblaAngle! - _compassHeading!;
     while (direction < 0) {
       direction += 360;
@@ -224,22 +229,19 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
 
   bool _isFacingQibla() {
     if (_compassHeading == null || _qiblaAngle == null) return false;
-
     double diff = (_qiblaAngle! - _compassHeading!).abs();
     if (diff > 180) diff = 360 - diff;
-
     return diff < 5;
   }
 
-  // ═══════════════════════════════════════════════
-  // 🎨 BUILD
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isFacingQibla = _isFacingQibla();
     final deviceQiblaDir = _getDeviceQiblaDirection();
 
-    // Animation بۆ کاتی گەیشتن بە قیبلە
     if (isFacingQibla && !_successController.isAnimating) {
       _successController.forward(from: 0);
     } else if (!isFacingQibla && _successController.value > 0) {
@@ -268,9 +270,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
         ),
         body: Stack(
           children: [
-            // ═══════════════════════════════════════════
-            // 🌌 Background Gradient
-            // ═══════════════════════════════════════════
+            // Background
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -285,7 +285,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
               ),
             ),
 
-            // ✨ Success Glow Background
+            // Success Glow
             if (isFacingQibla)
               Positioned.fill(
                 child: AnimatedBuilder(
@@ -308,20 +308,15 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                 ),
               ),
 
-            // 📜 Main Content
+            // Content
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
                     const SizedBox(height: 8),
-
-                    // 📊 Status Bar (PRO)
                     _buildStatusBar(isFacingQibla),
-
                     const SizedBox(height: 16),
-
-                    // 🧭 Compass (PRO)
                     Expanded(
                       child: Center(
                         child: LayoutBuilder(
@@ -348,17 +343,10 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
-                    // 📊 Info Card (PRO)
                     _buildInfoCard(isFacingQibla),
-
                     const SizedBox(height: 12),
-
-                    // 💡 Tip
                     _buildTipCard(),
-
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -370,9 +358,9 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 📊 Status Bar
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   Widget _buildStatusBar(bool isFacingQibla) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
@@ -454,9 +442,9 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════
-  // 🧭 Compass (PRO VERSION)
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 🧭 Compass
+  // ═══════════════════════════════════════════════════════════
   Widget _buildCompass({
     required double size,
     required bool isFacingQibla,
@@ -467,9 +455,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     return Stack(
       alignment: Alignment.center,
       children: [
-        // ═══════════════════════════════════════════
-        // 🌟 Outer Glow
-        // ═══════════════════════════════════════════
+        // Outer Glow
         AnimatedBuilder(
           animation: _pulseAnimation,
           builder: (context, child) {
@@ -489,9 +475,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           },
         ),
 
-        // ═══════════════════════════════════════════
-        // 🔵 Outer Ring
-        // ═══════════════════════════════════════════
+        // Outer Ring
         Container(
           width: size,
           height: size,
@@ -525,9 +509,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           ),
         ),
 
-        // ═══════════════════════════════════════════
-        // 🎯 Inner Decorative Ring
-        // ═══════════════════════════════════════════
+        // Inner Ring
         Container(
           width: size * 0.88,
           height: size * 0.88,
@@ -540,14 +522,10 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           ),
         ),
 
-        // ═══════════════════════════════════════════
-        // 📏 Tick Marks (60 ticks)
-        // ═══════════════════════════════════════════
+        // Tick Marks
         ..._buildTickMarks(size: size, color: ringColor),
 
-        // ═══════════════════════════════════════════
-        // 🎯 Direction Markers (N, E, S, W)
-        // ═══════════════════════════════════════════
+        // Direction Markers
         _buildDirectionMarker(
           angle: 0,
           size: size,
@@ -577,9 +555,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           isMain: true,
         ),
 
-        // ═══════════════════════════════════════════
-        // 🕋 Kaaba Center (PRO)
-        // ═══════════════════════════════════════════
+        // Kaaba Center
         AnimatedBuilder(
           animation: _pulseAnimation,
           builder: (context, child) {
@@ -618,9 +594,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           },
         ),
 
-        // ═══════════════════════════════════════════
-        // 🧭 Qibla Direction Indicator (PRO)
-        // ═══════════════════════════════════════════
+        // Qibla Arrow
         if (deviceQiblaDir != null)
           AnimatedRotation(
             turns: deviceQiblaDir / 360,
@@ -631,7 +605,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Arrow
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 400),
                     width: 56,
@@ -662,14 +635,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                           blurRadius: 25,
                           spreadRadius: 4,
                         ),
-                        BoxShadow(
-                          color: (isFacingQibla
-                              ? Colors.green
-                              : _goldPrimary)
-                              .withValues(alpha: 0.3),
-                          blurRadius: 40,
-                          spreadRadius: 8,
-                        ),
                       ],
                     ),
                     child: Icon(
@@ -681,7 +646,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                     ),
                   ),
                   const SizedBox(height: 6),
-                  // Label
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -691,14 +655,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                       color: (isFacingQibla ? Colors.green : _goldPrimary)
                           .withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isFacingQibla ? Colors.green : _goldPrimary)
-                              .withValues(alpha: 0.4),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
                     ),
                     child: Text(
                       isFacingQibla ? 'دروست ✅' : 'قیبلە',
@@ -717,9 +673,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════
-  // 📏 Tick Marks
-  // ═══════════════════════════════════════════════
   List<Widget> _buildTickMarks({required double size, required Color color}) {
     final ticks = <Widget>[];
     for (int i = 0; i < 60; i++) {
@@ -752,9 +705,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     return ticks;
   }
 
-  // ═══════════════════════════════════════════════
-  // 🎯 Direction Markers
-  // ═══════════════════════════════════════════════
   Widget _buildDirectionMarker({
     required double angle,
     required double size,
@@ -773,9 +723,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
         width: isMain ? 28 : 20,
         height: isMain ? 28 : 20,
         decoration: BoxDecoration(
-          color: isMain
-              ? color.withValues(alpha: 0.15)
-              : Colors.transparent,
+          color: isMain ? color.withValues(alpha: 0.15) : Colors.transparent,
           shape: BoxShape.circle,
           border: isMain
               ? Border.all(color: color.withValues(alpha: 0.4), width: 1)
@@ -795,9 +743,9 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════
-  // 📊 Info Card (PRO VERSION)
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Info Card
+  // ═══════════════════════════════════════════════════════════
   Widget _buildInfoCard(bool isFacingQibla) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -826,7 +774,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
       ),
       child: Column(
         children: [
-          // Header
           Row(
             children: [
               Container(
@@ -855,7 +802,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           ),
           const SizedBox(height: 12),
 
-          // Info Rows
           if (_qiblaAngle != null)
             _buildInfoRow(
               icon: Icons.explore_rounded,
@@ -946,9 +892,9 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 💡 Tip Card
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   Widget _buildTipCard() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -982,7 +928,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
-              'بۆ وردبینی باشتر، مۆبایلەکەت بە شێوەی 8 بجوڵێنە و لە نزیک کەرەستەی ئاسنین دوور بکەوە',
+              'بۆ وردبینی باشتر، مۆبایلەکەت بە شێوەی ٨ بجوڵێنە و لە نزیک کەرەستەی ئاسنین دوور بکەوە',
               style: TextStyle(
                 color: Colors.white54,
                 fontSize: 10,

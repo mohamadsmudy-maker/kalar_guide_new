@@ -1,4 +1,4 @@
-name: katar_guide
+name: kalar_guide
 description: ڕێبەری کەلار - ئەپی فەرمی شاری کەلار
 publish_to: 'none'
 version: 1.0.0+1
@@ -38,6 +38,7 @@ dependencies:
   http: ^1.2.2
   image: ^4.2.0
   path_provider: ^2.1.4
+  package_info_plus: ^8.1.2
 
   # ═══════════════════════════════════════════════
   # 🗺️ Maps & Location
@@ -53,15 +54,22 @@ dependencies:
   cached_network_image: ^3.3.1
 
   # ═══════════════════════════════════════════════
-  # 🤖 AI
+  # 🎤 Audio (Voice Recording + Playback)
   # ═══════════════════════════════════════════════
-  google_generative_ai: ^0.2.2
+  record: ^6.1.1
+  just_audio: ^0.9.40
+  permission_handler: ^11.3.1
 
   # ═══════════════════════════════════════════════
-  # 📄 PDF & Reports (بۆ ڕاپۆرتی سووتەمەنی)
+  # 📄 PDF & Reports
   # ═══════════════════════════════════════════════
-  pdf: ^3.10.7
-  printing: ^5.11.1
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
+  # ═══════════════════════════════════════════════
+  # 📊 Charts
+  # ═══════════════════════════════════════════════
+  fl_chart: ^0.69.0
 
   # ═══════════════════════════════════════════════
   # 📊 Others
@@ -69,6 +77,7 @@ dependencies:
   url_launcher: ^6.2.5
   flutter_compass: ^0.8.0
   hijri: ^3.0.0
+  share_plus: ^10.1.0                # ✅ نوێ
 
 dev_dependencies:
   flutter_test:

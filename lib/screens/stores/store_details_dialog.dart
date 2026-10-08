@@ -5,9 +5,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/store_service_service.dart';
 import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import 'store_products_screen.dart';
+import 'store_services_screen.dart';
 
 /// 🏪 دیالۆگی وردەکاری شوێن
 class StoreDetailsDialog {
@@ -29,14 +31,29 @@ class _StoreDetailsDialogContent extends StatefulWidget {
       _StoreDetailsDialogContentState();
 }
 
-class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> {
+class _StoreDetailsDialogContentState
+    extends State<_StoreDetailsDialogContent> {
   bool _isFav = false;
   bool _loadingFav = false;
+  int _servicesCount = 0;
+  bool _loadingServices = true;
 
   @override
   void initState() {
     super.initState();
     _checkIsFav();
+    _loadServicesCount();
+  }
+
+  Future<void> _loadServicesCount() async {
+    final storeId = int.tryParse(widget.store['id'].toString()) ?? 0;
+    final count = await StoreServiceService.getCount(storeId);
+    if (mounted) {
+      setState(() {
+        _servicesCount = count;
+        _loadingServices = false;
+      });
+    }
   }
 
   Future<void> _checkIsFav() async {
@@ -116,16 +133,21 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
       rawName = rawName.replaceFirst("فرۆشگای", "").trim();
     }
 
-    final double? lat = double.tryParse(store['latitude']?.toString() ?? '');
-    final double? lng = double.tryParse(store['longitude']?.toString() ?? '');
+    final double? lat =
+    double.tryParse(store['latitude']?.toString() ?? '');
+    final double? lng =
+    double.tryParse(store['longitude']?.toString() ?? '');
     final bool hasValidLocation =
         lat != null && lng != null && lat != 0.0 && lng != 0.0;
 
     final String imageUrl = (store['image'] ?? '').toString().trim();
-    final String description = (store['description'] ?? '').toString().trim();
+    final String description =
+    (store['description'] ?? '').toString().trim();
     final String phone = (store['phone'] ?? '').toString().trim();
-    final String address = (store['address'] ?? 'کەلار').toString().trim();
-    final String storeType = (store['type'] ?? 'حکومی').toString().trim();
+    final String address =
+    (store['address'] ?? 'کەلار').toString().trim();
+    final String storeType =
+    (store['type'] ?? 'حکومی').toString().trim();
     final String category = (store['category'] ?? '').toString().trim();
     final bool isGov = storeType == 'حکومی';
 
@@ -243,7 +265,6 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                           ),
                         ),
                       ),
-
                       // 🏷️ جۆری شوێن
                       Positioned(
                         bottom: 12,
@@ -296,7 +317,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ✅ ناوی شوێن — بە AutoTranslate
+                      // ✅ ناوی شوێن
                       Center(
                         child: AutoTranslate(
                           text: rawName,
@@ -348,7 +369,8 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
+                              color:
+                              Colors.black.withValues(alpha: 0.03),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -371,7 +393,8 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
                                 children: [
                                   const Text(
                                     "ناونیشان",
@@ -382,7 +405,6 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  // ✅ AutoTranslate بۆ ناونیشان
                                   AutoTranslate(
                                     text: address,
                                     lang: lang,
@@ -400,6 +422,113 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // 📋 دوگمەی مامەڵەکان و تێچووی
+                      if (!_loadingServices && _servicesCount > 0) ...[
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => StoreServicesScreen(
+                                  storeId: int.tryParse(
+                                    store['id'].toString(),
+                                  ) ??
+                                      0,
+                                  storeName: rawName,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF8B5CF6),
+                                  Color(0xFFEC4899),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF8B5CF6)
+                                      .withValues(alpha: 0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white
+                                        .withValues(alpha: 0.2),
+                                    borderRadius:
+                                    BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.description_rounded,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '📋 مامەڵەکان و تێچووی',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'پێداویستی و نرخی مامەڵەکان',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius:
+                                    BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '$_servicesCount',
+                                    style: const TextStyle(
+                                      color: Color(0xFF8B5CF6),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
 
                       // 📱 مۆبایل و واتسئاپ
                       if (phone.isNotEmpty)
@@ -423,7 +552,8 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                   ),
                                   decoration: BoxDecoration(
                                     color: Colors.green.shade50,
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius:
+                                    BorderRadius.circular(16),
                                     border: Border.all(
                                       color: Colors.green
                                           .withValues(alpha: 0.2),
@@ -459,7 +589,8 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                 onTap: () async {
                                   String cleanPhone = phone;
                                   if (cleanPhone.startsWith('0')) {
-                                    cleanPhone = cleanPhone.substring(1);
+                                    cleanPhone =
+                                        cleanPhone.substring(1);
                                   }
                                   if (!cleanPhone.startsWith('964')) {
                                     cleanPhone = '964$cleanPhone';
@@ -481,7 +612,8 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                   ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFE8F8EF),
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius:
+                                    BorderRadius.circular(16),
                                     border: Border.all(
                                       color: const Color(0xFF25D366)
                                           .withValues(alpha: 0.2),
@@ -579,7 +711,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                           ),
                         ),
 
-                      // ✅ وەسف — بە AutoTranslate
+                      // ✅ وەسف
                       if (description.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Container(

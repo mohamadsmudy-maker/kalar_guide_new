@@ -23,6 +23,10 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
   int _currentImageIndex = 0;
   Map<String, dynamic>? _storeInfo;
 
+  // ✅ Flag ی نوێ بۆ ڕێگریکردن لە Race Condition
+  bool _isLiking = false;
+  bool _isFavoriting = false;
+
   @override
   void initState() {
     super.initState();
@@ -51,7 +55,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
   Future<void> _checkUserStatus() async {
     final user = AuthSessionManager.currentUser;
     if (user == null || user['id'] == null) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
       return;
     }
 
@@ -59,24 +63,25 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
       String userId = user['id'].toString();
       int newsId = widget.newsItem['id'];
 
-      final likeRes = await Supabase.instance.client
-          .from('news_likes')
-          .select()
-          .eq('user_id', userId)
-          .eq('news_id', newsId)
-          .maybeSingle();
-
-      final favRes = await Supabase.instance.client
-          .from('news_favorites')
-          .select()
-          .eq('user_id', userId)
-          .eq('news_id', newsId)
-          .maybeSingle();
+      final results = await Future.wait([
+        Supabase.instance.client
+            .from('news_likes')
+            .select()
+            .eq('user_id', userId)
+            .eq('news_id', newsId)
+            .maybeSingle(),
+        Supabase.instance.client
+            .from('news_favorites')
+            .select()
+            .eq('user_id', userId)
+            .eq('news_id', newsId)
+            .maybeSingle(),
+      ]);
 
       if (mounted) {
         setState(() {
-          isLiked = likeRes != null;
-          isFavorite = favRes != null;
+          isLiked = results[0] != null;
+          isFavorite = results[1] != null;
           _loading = false;
         });
       }
@@ -85,15 +90,34 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     }
   }
 
+  // ✅ چاککراو — بێ Race Condition
   Future<void> _toggleLike() async {
+    if (_isLiking) return;
+
     final user = AuthSessionManager.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("تکایە سەرەتا بچۆ ژوورەوە ⚠"),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isLiking = true);
 
     String userId = user['id'].toString();
     int newsId = widget.newsItem['id'];
 
+    // ✅ Optimistic Update
+    final wasLiked = isLiked;
+    final oldLikes = likes;
+
     setState(() {
-      if (isLiked) {
+      if (wasLiked) {
         likes = (likes > 0) ? likes - 1 : 0;
         isLiked = false;
       } else {
@@ -103,7 +127,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     });
 
     try {
-      if (!isLiked) {
+      if (wasLiked) {
         await Supabase.instance.client
             .from('news_likes')
             .delete()
@@ -120,20 +144,47 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
           .from('news')
           .update({'likes': likes})
           .eq('id', newsId);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('❌ Like error: $e');
+      if (mounted) {
+        setState(() {
+          isLiked = wasLiked;
+          likes = oldLikes;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isLiking = false);
+    }
   }
 
+  // ✅ چاککراو — بێ Race Condition
   Future<void> _toggleFavorite() async {
+    if (_isFavoriting) return;
+
     final user = AuthSessionManager.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("تکایە سەرەتا بچۆ ژوورەوە ⚠"),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isFavoriting = true);
 
     String userId = user['id'].toString();
     int newsId = widget.newsItem['id'];
 
+    // ✅ Optimistic Update
+    final wasFavorite = isFavorite;
     setState(() => isFavorite = !isFavorite);
 
     try {
-      if (!isFavorite) {
+      if (wasFavorite) {
         await Supabase.instance.client
             .from('news_favorites')
             .delete()
@@ -145,7 +196,14 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
           'news_id': newsId,
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('❌ Favorite error: $e');
+      if (mounted) {
+        setState(() => isFavorite = wasFavorite);
+      }
+    } finally {
+      if (mounted) setState(() => _isFavoriting = false);
+    }
   }
 
   List<String> _extractAllImages(dynamic rawImages) {
@@ -390,7 +448,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                             ),
                           )
                               : GestureDetector(
-                            onTap: _toggleLike,
+                            onTap: _isLiking ? null : _toggleLike,
                             child: _buildStatItem(
                               icon: isLiked
                                   ? Icons.thumb_up_rounded
@@ -411,7 +469,8 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                             ),
                           )
                               : GestureDetector(
-                            onTap: _toggleFavorite,
+                            onTap:
+                            _isFavoriting ? null : _toggleFavorite,
                             child: Icon(
                               isFavorite
                                   ? Icons.favorite_rounded

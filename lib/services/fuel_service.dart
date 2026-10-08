@@ -1,121 +1,216 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/fuel_price.dart';
-import '../models/fuel_price_history.dart';
-import '../models/fuel_station.dart';
 
-/// 🛢️ خزمەتگوزاری سووتەمەنی — PRO
+/// 🛢️ خزمەتگوزاری سووتەمەنی — Single Source of Truth
 class FuelService {
   static SupabaseClient get _client => Supabase.instance.client;
 
-  // ═══════════════════════════════════════════════════
-  // 🏢 بەنزینخانەکان
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 جۆرەکانی سووتەمەنی — یەک سەرچاوە بۆ هەموو شوێنێک
+  // ═══════════════════════════════════════════════════════════
+  static const List<Map<String, dynamic>> fuelTypes = [
+    {
+      'key': 'normal',
+      'name_ku': 'ئاسایی',
+      'name_ar': 'عادي',
+      'name_en': 'Normal',
+      'color': '#1E88E5',
+      'order': 1,
+    },
+    {
+      'key': 'super',
+      'name_ku': 'سوپەر',
+      'name_ar': 'سوبر',
+      'name_en': 'Super',
+      'color': '#EF4444',
+      'order': 2,
+    },
+    {
+      'key': 'muhassen',
+      'name_ku': 'محەسەن',
+      'name_ar': 'محسن',
+      'name_en': 'Muhassen',
+      'color': '#F59E0B',
+      'order': 3,
+    },
+    {
+      'key': 'oil',
+      'name_ku': 'زەیت',
+      'name_ar': 'زيت',
+      'name_en': 'Oil',
+      'color': '#14B8A6',
+      'order': 4,
+    },
+    {
+      'key': 'iraqi_gas',
+      'name_ku': 'گازی عێراقی',
+      'name_ar': 'غاز عراقي',
+      'name_en': 'Iraqi Gas',
+      'color': '#10B981',
+      'order': 5,
+    },
+    {
+      'key': 'iranian_gas',
+      'name_ku': 'گازی ئێرانی',
+      'name_ar': 'غاز إيراني',
+      'name_en': 'Iranian Gas',
+      'color': '#8B5CF6',
+      'order': 6,
+    },
+    {
+      'key': 'gas',
+      'name_ku': 'گاز',
+      'name_ar': 'غاز',
+      'name_en': 'Gas',
+      'color': '#EC4899',
+      'order': 7,
+    },
+  ];
 
-  static Future<List<FuelStation>> getAllStations() async {
+  /// ✅ وەرگرتنی جۆرەکان بەپێی زمان
+  static List<Map<String, String>> getFuelTypesForLang(String lang) {
+    return fuelTypes.map((t) {
+      String name;
+      switch (lang) {
+        case 'ar':
+          name = t['name_ar'] as String;
+          break;
+        case 'en':
+          name = t['name_en'] as String;
+          break;
+        default:
+          name = t['name_ku'] as String;
+      }
+      return {
+        'key': t['key'] as String,
+        'name': name,
+        'color': t['color'] as String,
+      };
+    }).toList();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏢 بەنزینخانەکان لە `dukan`
+  // ═══════════════════════════════════════════════════════════
+
+  static Future<List<Map<String, dynamic>>> getAllStations() async {
     try {
       final res = await _client
-          .from('fuel_stations')
+          .from('dukan')
           .select()
-          .order('is_featured', ascending: false)
-          .order('name_ku');
+          .eq('category', 'سوتەمەنی')
+          .order('name');
 
-      return (res as List)
-          .map((e) => FuelStation.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return List<Map<String, dynamic>>.from(res as List);
     } catch (e) {
       debugPrint('❌ هەڵە: $e');
       return [];
     }
   }
 
-  static Stream<List<FuelStation>> streamStations() {
-    return _client
-        .from('fuel_stations')
-        .stream(primaryKey: ['id'])
-        .order('name_ku')
-        .map((data) => data.map((e) => FuelStation.fromJson(e)).toList());
-  }
-
-  static Future<bool> addStation(FuelStation station) async {
+  static Future<List<Map<String, dynamic>>> getVendorStations(
+      String phone,
+      ) async {
     try {
-      await _client.from('fuel_stations').insert(station.toJson());
-      return true;
+      final res = await _client
+          .from('dukan')
+          .select()
+          .eq('category', 'سوتەمەنی')
+          .eq('phone', phone)
+          .order('name');
+
+      return List<Map<String, dynamic>>.from(res as List);
     } catch (e) {
-      debugPrint('❌ $e');
-      return false;
+      debugPrint('❌ هەڵە: $e');
+      return [];
     }
   }
 
-  static Future<bool> updateStation(FuelStation station) async {
-    if (station.id == null) return false;
-    try {
-      await _client
-          .from('fuel_stations')
-          .update(station.toJson())
-          .eq('id', station.id!);
-      return true;
-    } catch (e) {
-      debugPrint('❌ $e');
-      return false;
-    }
-  }
-
-  static Future<bool> deleteStation(int id) async {
-    try {
-      await _client.from('fuel_stations').delete().eq('id', id);
-      return true;
-    } catch (e) {
-      debugPrint('❌ $e');
-      return false;
-    }
-  }
-
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 💰 نرخەکان
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
-  static Future<List<FuelPriceHistory>> getCurrentPrices({
+  static Future<List<Map<String, dynamic>>> getCurrentPrices({
     String? fuelType,
   }) async {
     try {
-      var query = _client.from('current_fuel_prices').select();
+      final res = await _client
+          .from('dukan')
+          .select('id, name, phone, address, logo, image, fuel_prices')
+          .eq('category', 'سوتەمەنی');
 
-      if (fuelType != null && fuelType.isNotEmpty) {
-        query = query.eq('fuel_type', fuelType);
+      final list = <Map<String, dynamic>>[];
+
+      for (final station in (res as List)) {
+        final stationMap = Map<String, dynamic>.from(station);
+        final prices = stationMap['fuel_prices'];
+
+        if (prices is! Map) continue;
+
+        if (fuelType != null && fuelType.isNotEmpty) {
+          final price = prices[fuelType];
+          if (price != null && price is num && price > 0) {
+            list.add({
+              'station_id': stationMap['id'],
+              'station_name': stationMap['name'],
+              'station_phone': stationMap['phone'],
+              'station_address': stationMap['address'],
+              'station_logo': stationMap['logo'],
+              'station_image': stationMap['image'],
+              'fuel_type': fuelType,
+              'price': price.toDouble(),
+              'unit': 'لیتر',
+            });
+          }
+        } else {
+          for (final entry in prices.entries) {
+            final price = entry.value;
+            if (price != null && price is num && price > 0) {
+              list.add({
+                'station_id': stationMap['id'],
+                'station_name': stationMap['name'],
+                'station_phone': stationMap['phone'],
+                'station_address': stationMap['address'],
+                'station_logo': stationMap['logo'],
+                'station_image': stationMap['image'],
+                'fuel_type': entry.key.toString(),
+                'price': price.toDouble(),
+                'unit': 'لیتر',
+              });
+            }
+          }
+        }
       }
 
-      final res = await query.order('price', ascending: true);
+      list.sort((a, b) =>
+          (a['price'] as double).compareTo(b['price'] as double));
 
-      return (res as List)
-          .map((e) => FuelPriceHistory.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return list;
     } catch (e) {
       debugPrint('❌ هەڵە: $e');
       return [];
     }
   }
 
-  static Future<List<FuelPriceHistory>> getStationPrices(int stationId) async {
+  /// ✅ وەرگرتنی نرخی بەنزینخانەیەک — بە هەموو جۆرەکان (تەنانەت بەتاڵیش)
+  static Future<Map<String, dynamic>?> getStationPrices(int stationId) async {
     try {
       final res = await _client
-          .from('current_fuel_prices')
-          .select()
-          .eq('station_id', stationId)
-          .order('price');
+          .from('dukan')
+          .select('id, name, phone, address, logo, image, fuel_prices')
+          .eq('id', stationId)
+          .maybeSingle();
 
-      return (res as List)
-          .map((e) => FuelPriceHistory.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return res;
     } catch (e) {
       debugPrint('❌ هەڵە: $e');
-      return [];
+      return null;
     }
   }
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 💾 نوێکردنەوەی نرخ
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
   static Future<bool> updatePrice({
     required int stationId,
@@ -125,13 +220,35 @@ class FuelService {
     String? notes,
   }) async {
     try {
-      await _client.from('fuel_prices_history').insert({
+      final station = await _client
+          .from('dukan')
+          .select('fuel_prices')
+          .eq('id', stationId)
+          .maybeSingle();
+
+      if (station == null) return false;
+
+      final currentPrices = station['fuel_prices'] is Map
+          ? Map<String, dynamic>.from(station['fuel_prices'] as Map)
+          : <String, dynamic>{};
+
+      final oldPrice = (currentPrices[fuelType] as num?)?.toDouble();
+      currentPrices[fuelType] = newPrice;
+
+      await _client
+          .from('dukan')
+          .update({'fuel_prices': currentPrices})
+          .eq('id', stationId);
+
+      await _client.from('fuel_price_history').insert({
         'station_id': stationId,
         'fuel_type': fuelType,
-        'price': newPrice,
+        'old_price': oldPrice,
+        'new_price': newPrice,
         'updated_by_name': updatedByName ?? 'نەناسراو',
         'notes': notes,
       });
+
       return true;
     } catch (e) {
       debugPrint('❌ هەڵە: $e');
@@ -139,7 +256,11 @@ class FuelService {
     }
   }
 
-  static Future<List<FuelPriceHistory>> getStationPriceHistory({
+  // ═══════════════════════════════════════════════════════════
+  // 📜 مێژوو
+  // ═══════════════════════════════════════════════════════════
+
+  static Future<List<Map<String, dynamic>>> getStationPriceHistory({
     required int stationId,
     String? fuelType,
     DateTime? from,
@@ -147,7 +268,7 @@ class FuelService {
   }) async {
     try {
       var query = _client
-          .from('fuel_prices_history')
+          .from('fuel_price_history')
           .select()
           .eq('station_id', stationId);
 
@@ -160,70 +281,76 @@ class FuelService {
       }
 
       final res = await query.order('created_at', ascending: false);
-
-      return (res as List)
-          .map((e) => FuelPriceHistory.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return List<Map<String, dynamic>>.from(res as List);
     } catch (e) {
       debugPrint('❌ هەڵە: $e');
       return [];
     }
   }
 
-  static Future<List<FuelPriceHistory>> getMonthlyHistory({
+  static Future<List<Map<String, dynamic>>> getMonthlyHistory({
     int monthsBack = 3,
   }) async {
     try {
       final from = DateTime.now().subtract(Duration(days: monthsBack * 30));
 
       final res = await _client
-          .from('fuel_prices_history')
-          .select()
+          .from('fuel_price_history')
+          .select('*, dukan(name)')
           .gte('created_at', from.toIso8601String())
           .order('created_at', ascending: false);
 
-      return (res as List)
-          .map((e) => FuelPriceHistory.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return List<Map<String, dynamic>>.from(res as List);
     } catch (e) {
       debugPrint('❌ هەڵە: $e');
       return [];
     }
   }
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 🎨 Helpers
-  // ═══════════════════════════════════════════════════
-
-  static double? getPriceChangePercent(
-      List<FuelPriceHistory> history,
-      int index,
-      ) {
-    if (index >= history.length - 1) return null;
-    final current = history[index].price;
-    final previous = history[index + 1].price;
-    if (previous == 0) return null;
-    return ((current - previous) / previous) * 100;
-  }
+  // ═══════════════════════════════════════════════════════════
 
   static String getColorForType(String fuelType) {
-    switch (fuelType) {
-      case 'normal':
-        return '#1E88E5';
-      case 'muhassen':
-        return '#F59E0B';
-      case 'super':
-        return '#EF4444';
-      case 'iraqi_gas':
-        return '#10B981';
-      case 'iranian_gas':
-        return '#8B5CF6';
-      case 'oil':
-        return '#14B8A6';
-      case 'gas':
-        return '#EC4899';
+    final type = fuelTypes.firstWhere(
+          (t) => t['key'] == fuelType,
+      orElse: () => {'color': '#1E88E5'},
+    );
+    return type['color'] as String;
+  }
+
+  static String getNameKu(String fuelType) {
+    final type = fuelTypes.firstWhere(
+          (t) => t['key'] == fuelType,
+      orElse: () => {'name_ku': fuelType},
+    );
+    return type['name_ku'] as String;
+  }
+
+  static String getNameAr(String fuelType) {
+    final type = fuelTypes.firstWhere(
+          (t) => t['key'] == fuelType,
+      orElse: () => {'name_ar': fuelType},
+    );
+    return type['name_ar'] as String;
+  }
+
+  static String getNameEn(String fuelType) {
+    final type = fuelTypes.firstWhere(
+          (t) => t['key'] == fuelType,
+      orElse: () => {'name_en': fuelType},
+    );
+    return type['name_en'] as String;
+  }
+
+  static String getNameByLang(String fuelType, String lang) {
+    switch (lang) {
+      case 'ar':
+        return getNameAr(fuelType);
+      case 'en':
+        return getNameEn(fuelType);
       default:
-        return '#1E88E5';
+        return getNameKu(fuelType);
     }
   }
 }

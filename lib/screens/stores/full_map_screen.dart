@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
@@ -10,7 +9,7 @@ import '../../widgets/common/optimized_network_image.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'store_details_dialog.dart';
 
-/// 🗺️ شاشەی نەخشەی تەواو
+/// 🗺️ شاشەی نەخشەی تەواو — Full Pro Edition
 class FullMapScreen extends StatefulWidget {
   const FullMapScreen({super.key});
 
@@ -31,26 +30,21 @@ class _FullMapScreenState extends State<FullMapScreen> {
   String _selectedCategory = 'هەموو';
   final TextEditingController _searchCtrl = TextEditingController();
 
-  Position? _currentPosition;
   gmaps.Marker? _selectedMarker;
 
   @override
   void initState() {
     super.initState();
-    _determinePosition();
-    _fetchStores();
+    // ✅ دەستپێکردنی داتا
     _fetchCategories();
+    _fetchStores();
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    // ✅ MapController dispose نەکراوە چونکە Google Maps خۆی بەڕێوەی دەبات
     super.dispose();
-  }
-
-  Future<void> _determinePosition() async {
-    final pos = await LocationService.getCurrentPosition();
-    if (mounted) setState(() => _currentPosition = pos);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -60,7 +54,8 @@ class _FullMapScreenState extends State<FullMapScreen> {
     try {
       final res = await Supabase.instance.client
           .from('main_categories')
-          .select();
+          .select()
+          .order('name');
 
       Map<String, Map<String, dynamic>> uniqueMap = {};
       for (var cat in res) {
@@ -84,9 +79,15 @@ class _FullMapScreenState extends State<FullMapScreen> {
   // 📡 هێنانی شوێنەکان
   // ═══════════════════════════════════════════════════════════
   Future<void> _fetchStores() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
+
     try {
-      final res = await Supabase.instance.client.from('dukan').select();
+      final res = await Supabase.instance.client
+          .from('dukan')
+          .select()
+          .order('name');
+
       final stores = List<Map<String, dynamic>>.from(res);
 
       debugPrint('📊 کۆی شوێنەکان: ${stores.length}');
@@ -96,7 +97,11 @@ class _FullMapScreenState extends State<FullMapScreen> {
           _allStores = stores;
           _isLoading = false;
         });
-        _updateMarkers(_filteredStores);
+
+        // ✅ setState ی مارکەرەکان دوای Frame یەکەم
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _updateMarkers(_filteredStores);
+        });
       }
     } catch (e) {
       debugPrint('❌ هەڵە: $e');
@@ -130,6 +135,8 @@ class _FullMapScreenState extends State<FullMapScreen> {
   // 📍 دروستکردنی پینەکان
   // ═══════════════════════════════════════════════════════════
   void _updateMarkers(List<Map<String, dynamic>> stores) {
+    if (!mounted) return;
+
     Set<gmaps.Marker> markers = {};
     int validCount = 0;
 
@@ -174,7 +181,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
 
       validCount++;
 
-      // 🎨 ڕەنگی پین
+      // 🎨 ڕەنگی پین بەپێی جۆر
       double markerHue = gmaps.BitmapDescriptor.hueAzure;
       String type = (store['type'] ?? '').toString().trim();
       String category = (store['category'] ?? '').toString();
@@ -188,7 +195,8 @@ class _FullMapScreenState extends State<FullMapScreen> {
         markerHue = gmaps.BitmapDescriptor.hueRed;
       } else if (category.contains('پەروەردە')) {
         markerHue = gmaps.BitmapDescriptor.hueViolet;
-      } else if (category.contains('بازاڕ') || category.contains('دوکان')) {
+      } else if (category.contains('بازاڕ') ||
+          category.contains('دوکان')) {
         markerHue = gmaps.BitmapDescriptor.hueYellow;
       }
 
@@ -236,11 +244,10 @@ class _FullMapScreenState extends State<FullMapScreen> {
   // ═══════════════════════════════════════════════════════════
   // 📍 دوگمەکان
   // ═══════════════════════════════════════════════════════════
-  void _goToCurrentLocation() async {
+  Future<void> _goToCurrentLocation() async {
     final pos = await LocationService.getCurrentPosition();
-    if (pos != null) {
-      setState(() => _currentPosition = pos);
-      _mapController?.animateCamera(
+    if (pos != null && _mapController != null && mounted) {
+      _mapController!.animateCamera(
         gmaps.CameraUpdate.newLatLngZoom(
           gmaps.LatLng(pos.latitude, pos.longitude),
           16,
@@ -249,6 +256,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
     }
   }
 
+  // ✅ چاککراو — پشکنینی _mapController
   Future<void> _goToStore(Map<String, dynamic> store) async {
     final lat = double.tryParse(store['latitude']?.toString() ?? '');
     final lng = double.tryParse(store['longitude']?.toString() ?? '');
@@ -265,7 +273,10 @@ class _FullMapScreenState extends State<FullMapScreen> {
       return;
     }
 
-    _mapController?.animateCamera(
+    // ✅ پشکنینی _mapController
+    if (_mapController == null) return;
+
+    _mapController!.animateCamera(
       gmaps.CameraUpdate.newLatLngZoom(gmaps.LatLng(lat, lng), 17.0),
     );
 
@@ -280,7 +291,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
           title: store['name'] ?? 'شوێن',
           snippet: store['address'] ?? 'کەلار',
         ),
-        zIndex: 10,
+        zIndexInt: 10,
       );
     });
 
@@ -310,9 +321,13 @@ class _FullMapScreenState extends State<FullMapScreen> {
   // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor:
+        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         body: Stack(
           children: [
             // 🗺️ نەخشە
@@ -357,136 +372,10 @@ class _FullMapScreenState extends State<FullMapScreen> {
             ),
 
             // 🔍 بەشی سەرەوە
-            Positioned(
-              top: 40,
-              left: 16,
-              right: 16,
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Colors.black87,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: _searchCtrl,
-                        onChanged: (val) {
-                          setState(() => _searchQuery = val.trim());
-                          _updateMarkers(_filteredStores);
-                        },
-                        decoration: InputDecoration(
-                          hintText: "گەڕان بەدوای شوێنەکان...",
-                          hintStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            color: AppColors.primary,
-                            size: 22,
-                          ),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                            icon: const Icon(
-                              Icons.close,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () {
-                              _searchCtrl.clear();
-                              setState(() => _searchQuery = '');
-                              _updateMarkers(_filteredStores);
-                            },
-                          )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildSearchBar(isDark),
 
             // 🏷️ فلتەری کاتێگۆری
-            Positioned(
-              top: 105,
-              left: 16,
-              right: 16,
-              child: SizedBox(
-                height: 42,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final cat = _categories[index];
-                    final isSelected = _selectedCategory == cat;
-
-                    return Padding(
-                      padding: const EdgeInsetsDirectional.only(end: 8),
-                      child: ChoiceChip(
-                        label: Text(cat),
-                        selected: isSelected,
-                        selectedColor: AppColors.primary,
-                        labelStyle: TextStyle(
-                          color:
-                          isSelected ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                        backgroundColor: Colors.white,
-                        elevation: isSelected ? 3 : 1,
-                        shadowColor: Colors.black.withValues(alpha: 0.1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        onSelected: (_) {
-                          setState(() => _selectedCategory = cat);
-                          _updateMarkers(_filteredStores);
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
+            _buildCategoriesFilter(isDark),
 
             // 📍 دوگمەی شوێنی ئێستا
             Positioned(
@@ -503,63 +392,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
             Positioned(
               bottom: 160,
               right: 16,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _currentMapType =
-                    _currentMapType == gmaps.MapType.satellite
-                        ? gmaps.MapType.normal
-                        : gmaps.MapType.satellite;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _currentMapType == gmaps.MapType.satellite
-                        ? Colors.blueGrey.shade700
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _currentMapType == gmaps.MapType.satellite
-                            ? Icons.map_rounded
-                            : Icons.satellite_rounded,
-                        color: _currentMapType == gmaps.MapType.satellite
-                            ? Colors.white
-                            : Colors.blueGrey,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _currentMapType == gmaps.MapType.satellite
-                            ? "ئاسایی"
-                            : "ساتەلایت",
-                        style: TextStyle(
-                          color:
-                          _currentMapType == gmaps.MapType.satellite
-                              ? Colors.white
-                              : Colors.blueGrey,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              child: _buildSatelliteButton(isDark),
             ),
 
             // 📊 کارتی ئاماری شوێنەکان
@@ -567,94 +400,208 @@ class _FullMapScreenState extends State<FullMapScreen> {
               bottom: 20,
               left: 16,
               right: 16,
-              child: GestureDetector(
-                onTap: _showStoreListSheet,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+              child: _buildStatsCard(isDark),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🔍 Search Bar
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildSearchBar(bool isDark) {
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 12,
+      left: 16,
+      right: 16,
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+                ],
+              ),
+              child: Icon(
+                Icons.arrow_forward_rounded,
+                color: isDark ? Colors.white : Colors.black87,
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.storefront_rounded,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "شوێنەکانی نەخشە",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Text(
-                                  "${_filteredStores.length} شوێن",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 14,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                if (_markers.isNotEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.shade100,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      "${_markers.length} پین",
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green.shade800,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.list_rounded,
-                        size: 20,
-                        color: AppColors.primary,
-                      ),
-                    ],
+                ],
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (val) {
+                  setState(() => _searchQuery = val.trim());
+                  _updateMarkers(_filteredStores);
+                },
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'گەڕان بەدوای شوێنەکان...',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white54 : Colors.grey,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      size: 18,
+                      color: isDark ? Colors.white54 : Colors.grey,
+                    ),
+                    onPressed: () {
+                      _searchCtrl.clear();
+                      setState(() => _searchQuery = '');
+                      _updateMarkers(_filteredStores);
+                    },
+                  )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 10,
                   ),
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏷️ Categories Filter
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildCategoriesFilter(bool isDark) {
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 78,
+      left: 16,
+      right: 16,
+      child: SizedBox(
+        height: 42,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: _categories.length,
+          itemBuilder: (context, index) {
+            final cat = _categories[index];
+            final isSelected = _selectedCategory == cat;
+
+            return Padding(
+              padding: const EdgeInsetsDirectional.only(end: 8),
+              child: ChoiceChip(
+                label: Text(cat),
+                selected: isSelected,
+                selectedColor: AppColors.primary,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+                backgroundColor:
+                isDark ? const Color(0xFF1A1A22) : Colors.white,
+                elevation: isSelected ? 3 : 1,
+                shadowColor: Colors.black.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                onSelected: (_) {
+                  setState(() => _selectedCategory = cat);
+                  _updateMarkers(_filteredStores);
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🛰️ Satellite Button
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildSatelliteButton(bool isDark) {
+    final isSatellite = _currentMapType == gmaps.MapType.satellite;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentMapType = isSatellite
+              ? gmaps.MapType.normal
+              : gmaps.MapType.satellite;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          color: isSatellite
+              ? Colors.blueGrey.shade700
+              : (isDark ? const Color(0xFF1A1A22) : Colors.white),
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSatellite ? Icons.map_rounded : Icons.satellite_rounded,
+              color: isSatellite
+                  ? Colors.white
+                  : (isDark ? Colors.white : Colors.blueGrey),
+              size: 20,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              isSatellite ? 'ئاسایی' : 'ساتەلایت',
+              style: TextStyle(
+                color: isSatellite
+                    ? Colors.white
+                    : (isDark ? Colors.white : Colors.blueGrey),
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
             ),
           ],
@@ -663,18 +610,124 @@ class _FullMapScreenState extends State<FullMapScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Stats Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildStatsCard(bool isDark) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _showStoreListSheet,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.storefront_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'شوێنەکانی نەخشە',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          '${_filteredStores.length} شوێن',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            color:
+                            isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (_markers.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade100,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${_markers.length} پین',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade800,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.list_rounded,
+                size: 20,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 Map Button
+  // ═══════════════════════════════════════════════════════════
   Widget _buildMapButton({
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 50,
         height: 50,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -690,7 +743,9 @@ class _FullMapScreenState extends State<FullMapScreen> {
   }
 }
 
-/// 📋 لیستی شوێنەکان (Bottom Sheet)
+// ═══════════════════════════════════════════════════════════
+// 📋 لیستی شوێنەکان (Bottom Sheet)
+// ═══════════════════════════════════════════════════════════
 class _StoreListSheet extends StatelessWidget {
   final List<Map<String, dynamic>> stores;
 
@@ -699,34 +754,40 @@ class _StoreListSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<SettingsProvider>().languageId;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
         height: MediaQuery.sizeOf(context).height * 0.6,
         padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(24),
+          ),
         ),
         child: Column(
           children: [
+            // Handle
             Container(
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: isDark ? Colors.white24 : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 16),
+
+            // Title
             const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.location_on, color: Colors.red, size: 20),
                 SizedBox(width: 6),
                 Text(
-                  "شوێنەکانی نەخشە",
+                  'شوێنەکانی نەخشە',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
@@ -735,11 +796,13 @@ class _StoreListSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+
+            // List
             Expanded(
               child: stores.isEmpty
                   ? const Center(
                 child: Text(
-                  "هیچ شوێنێک نەدۆزرایەوە",
+                  'هیچ شوێنێک نەدۆزرایەوە',
                   style: TextStyle(color: Colors.grey),
                 ),
               )
@@ -750,9 +813,15 @@ class _StoreListSheet extends StatelessWidget {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark
+                          ? const Color(0xFF0F0F14)
+                          : Colors.white,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white12
+                            : Colors.grey.shade200,
+                      ),
                     ),
                     child: ListTile(
                       leading: ClipRRect(

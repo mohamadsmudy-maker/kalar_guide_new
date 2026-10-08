@@ -8,8 +8,10 @@ import '../../config/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../../services/image_service.dart';
 import '../../services/location_service.dart';
+import '../../services/audio_service.dart';
+import '../../widgets/voice_recorder_widget.dart';
 
-/// 📝 شاشەی ناردنی سکاڵای هاوڵاتی (Pro Design)
+/// 📝 شاشەی ناردنی سکاڵای هاوڵاتی — Pro Edition v2
 class SubmitComplaintScreen extends StatefulWidget {
   const SubmitComplaintScreen({super.key});
 
@@ -18,16 +20,20 @@ class SubmitComplaintScreen extends StatefulWidget {
 }
 
 class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
+  // ═══════════════════════════════════════════════════════════
+  // 📊 State
+  // ═══════════════════════════════════════════════════════════
   final _descCtrl = TextEditingController();
 
   String? _selectedComplaintType;
   String? _responsibleAuthority;
+  String? _voicePath;
 
   final Map<String, String> _complaintTypesMap = {
     'خۆڵ و خاشاک و ژینگە': 'شارەوانی کەلار',
     'ناڕێکی شار و سیفەتی گشتی': 'قایمقامیەتی قەزای کەلار',
     'کێشەی پچڕانی کارەبا': 'بەڕێوەبەرایەتی کارەبای گەرمیان',
-    'کێشەی پچڕان یان لێچوونی ئاو': 'فەرمانگەی ئاوی کەلار',
+    'کێشەی پچڕان یان لێچوونی ئاو': 'فەرمەنگەی ئاوی کەلار',
     'کێشەی ڕێگاوبان و چاڵ و چۆڵی':
     'سەرۆکایەتی شارەوانی کەلار (بەشی ڕێگاوبان)',
     'تەندروستی و خاوێنی مۆڵ و ڕێستۆرانت':
@@ -54,6 +60,9 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     super.dispose();
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📍 GPS
+  // ═══════════════════════════════════════════════════════════
   Future<void> _getAutomaticLocation() async {
     setState(() => _loadingLocation = true);
     try {
@@ -104,14 +113,12 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📸 وێنەکان
+  // ═══════════════════════════════════════════════════════════
   Future<void> _handleImagePicking() async {
     if (_images.length >= 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تەنها دەتوانیت تا ٢ وێنە زیاد بکەیت ⚠"),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _showSnackBar("تەنها دەتوانیت تا ٢ وێنە زیاد بکەیت ⚠", Colors.orange);
       return;
     }
 
@@ -241,26 +248,30 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           setState(() => _images.add(pickedFile));
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('❌ Image pick error: $e');
+    }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🚀 ناردن — بە چاکسازی بۆ دەنگ
+  // ═══════════════════════════════════════════════════════════
   Future<void> _submitComplaint() async {
-    if (_selectedComplaintType == null || _images.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تکایە جۆری کێشە و وێنەیەک دیاری بکە ⚠"),
-          backgroundColor: Colors.orange,
-        ),
-      );
+    // ═══ پشکنینەکان ═══
+    if (_selectedComplaintType == null) {
+      _showSnackBar("تکایە جۆری کێشە دیاری بکە ⚠", Colors.orange);
+      return;
+    }
+
+    if (_images.isEmpty) {
+      _showSnackBar("تکایە لانیکەم یەک وێنە هەڵبژێرە ⚠", Colors.orange);
       return;
     }
 
     if (_lat == null || _lng == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تکایە چاوەڕێ بکە تا لۆکەیشن دەدۆزرێتەوە 📍"),
-          backgroundColor: Colors.orange,
-        ),
+      _showSnackBar(
+        "تکایە چاوەڕێ بکە تا لۆکەیشن دەدۆزرێتەوە 📍",
+        Colors.orange,
       );
       return;
     }
@@ -272,16 +283,91 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     }
 
     setState(() => _isSubmitting = true);
+
     try {
       final user = AuthSessionManager.currentUser;
 
+      // ═══════════════════════════════════════════════════════
+      // ١. بارکردنی وێنەکان
+      // ═══════════════════════════════════════════════════════
+      debugPrint('📸 ========== دەستپێکردنی بارکردن ==========');
+      debugPrint('📸 کۆی وێنەکان: ${_images.length}');
+
       List<String> uploadedUrls = [];
-      for (var img in _images) {
-        String url = await ImageCompressionService.uploadImage(img);
-        uploadedUrls.add(url);
+      for (int i = 0; i < _images.length; i++) {
+        debugPrint('📸 بارکردنی وێنەی ${i + 1}/${_images.length}...');
+        try {
+          String url = await ImageCompressionService.uploadImage(_images[i]);
+          uploadedUrls.add(url);
+          debugPrint('✅ وێنەی ${i + 1} بارکرا: $url');
+        } catch (e) {
+          debugPrint('❌ هەڵە لە بارکردنی وێنەی ${i + 1}: $e');
+          rethrow;
+        }
+      }
+      debugPrint('✅ هەموو وێنەکان بارکران: ${uploadedUrls.length}');
+
+      // ═══════════════════════════════════════════════════════
+      // ٢. بارکردنی دەنگ
+      // ═══════════════════════════════════════════════════════
+      String? voiceUrl;
+
+      debugPrint('🎤 ========== پشکنینی دەنگ ==========');
+      debugPrint('🎤 _voicePath: $_voicePath');
+
+      if (_voicePath != null && _voicePath!.isNotEmpty) {
+        debugPrint('🎤 دەنگ هەیە — دەستپێکردنی بارکردن...');
+
+        // ✅ پشکنینی هەبوونی فایل
+        final voiceFile = File(_voicePath!);
+        if (!await voiceFile.exists()) {
+          debugPrint('❌ فایلی دەنگ نەدۆزرایەوە: $_voicePath');
+          _showSnackBar(
+            "⚠️ فایلی دەنگ نەدۆزرایەوە — بەبێ دەنگ بەردەوام دەبین",
+            Colors.orange,
+          );
+        } else {
+          final fileSize = await voiceFile.length();
+          debugPrint('📁 قەبارەی فایل: ${(fileSize / 1024).toStringAsFixed(1)} KB');
+
+          if (fileSize < 1000) {
+            debugPrint('⚠️ فایلی دەنگ زۆر بچووکە');
+            _showSnackBar(
+              "⚠️ دەنگەکە زۆر کورتە — بەبێ دەنگ بەردەوام دەبین",
+              Colors.orange,
+            );
+          } else {
+            // ✅ بارکردن
+            try {
+              voiceUrl = await AudioService.uploadAudio(_voicePath!);
+
+              if (voiceUrl == null || voiceUrl.isEmpty) {
+                debugPrint('❌ بارکردنی دەنگ شکست هێنا');
+                _showSnackBar(
+                  "⚠️ بارکردنی دەنگ شکست هێنا — بەبێ دەنگ بەردەوام دەبین",
+                  Colors.orange,
+                );
+                voiceUrl = null;
+              } else {
+                debugPrint('✅ دەنگ بارکرا بە سەرکەوتوویی');
+                debugPrint('✅ URL: $voiceUrl');
+              }
+            } catch (e) {
+              debugPrint('❌ هەڵە لە بارکردنی دەنگ: $e');
+              voiceUrl = null;
+            }
+          }
+        }
+      } else {
+        debugPrint('ℹ️ هیچ دەنگێک تۆمار نەکراوە');
       }
 
-      await Supabase.instance.client.from('complaints').insert({
+      // ═══════════════════════════════════════════════════════
+      // ٣. پاشەکەوتکردن لە داتابەیس
+      // ═══════════════════════════════════════════════════════
+      debugPrint('💾 ========== پاشەکەوتکردن ==========');
+
+      final complaintData = <String, dynamic>{
         'user_id': user?['id']?.toString(),
         'title': _selectedComplaintType,
         'description': _descCtrl.text.trim(),
@@ -292,25 +378,56 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
         'images': uploadedUrls,
         'status': 'pending',
         'created_at': DateTime.now().toIso8601String(),
-      });
+      };
+
+      // ✅ تەنها ئەگەر دەنگ هەبوو زیاد بکە
+      if (voiceUrl != null && voiceUrl.isNotEmpty) {
+        complaintData['voice_url'] = voiceUrl;
+        debugPrint('🎤 voice_url زیادکرا: $voiceUrl');
+      } else {
+        debugPrint('ℹ️ voice_url زیاد نەکرا (هیچ دەنگێک نییە)');
+      }
+
+      debugPrint('📤 داتای کۆتایی: $complaintData');
+
+      await Supabase.instance.client
+          .from('complaints')
+          .insert(complaintData);
+
+      debugPrint('✅ سکاڵا نێردرا بە سەرکەوتوویی');
 
       if (mounted) {
         _showSuccessDialog();
       }
-    } catch (e) {
+    } on PostgrestException catch (e) {
+      debugPrint('❌ Postgrest error: ${e.message}');
+      debugPrint('❌ Details: ${e.details}');
+      debugPrint('❌ Hint: ${e.hint}');
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("هەڵە ڕووی دا: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (e.message.contains('voice_url')) {
+          _showSnackBar(
+            "⚠️ ستوونی voice_url لە داتابەیس نییە.\n"
+                "تکایە لە Supabase ستوونەکە زیاد بکە.",
+            Colors.red,
+          );
+        } else {
+          _showSnackBar("هەڵەی داتابەیس: ${e.message}", Colors.red);
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ هەڵە: $e');
+      if (mounted) {
+        _showSnackBar("هەڵە ڕووی دا: $e", Colors.red);
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📢 دیالۆگەکان
+  // ═══════════════════════════════════════════════════════════
   void _showOutOfBoundaryDialog() {
     showDialog(
       context: context,
@@ -336,10 +453,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [
-                        Colors.red.shade400,
-                        Colors.red.shade700,
-                      ],
+                      colors: [Colors.red.shade400, Colors.red.shade700],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -457,10 +571,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [
-                        Colors.green.shade400,
-                        Colors.green.shade700,
-                      ],
+                      colors: [Colors.green.shade400, Colors.green.shade700],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -532,6 +643,30 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🔔 SnackBar Helper
+  // ═══════════════════════════════════════════════════════════
+  void _showSnackBar(String message, Color color) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     bool isGarbageSelected = _selectedComplaintType != null &&
@@ -560,526 +695,61 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 🎯 هەنگاوی ١
+              // ═══ هەنگاوی ١: جۆری کێشە ═══
               _buildStepHeader("١", "جۆری کێشە هەڵبژێرە"),
               const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: _selectedComplaintType != null
-                      ? Colors.green.shade50
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _selectedComplaintType != null
-                        ? Colors.green.shade400
-                        : AppColors.primary.withValues(alpha: 0.3),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedComplaintType,
-                    isExpanded: true,
-                    hint: const Row(
-                      children: [
-                        Icon(
-                          Icons.search_rounded,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          "جۆری کێشە هەڵبژێرە...",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    items: _complaintTypesMap.keys.map((type) {
-                      return DropdownMenuItem<String>(
-                        value: type,
-                        child: Row(
-                          children: [
-                            Icon(
-                              _getComplaintIcon(type),
-                              color: _selectedComplaintType == type
-                                  ? Colors.green.shade800
-                                  : AppColors.primary,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              type,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: _selectedComplaintType == type
-                                    ? Colors.green.shade800
-                                    : Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: _selectedComplaintType != null
-                        ? null
-                        : (v) {
-                      setState(() {
-                        _selectedComplaintType = v;
-                        _responsibleAuthority = _complaintTypesMap[v];
-                      });
-                    },
-                  ),
-                ),
-              ),
+              _buildComplaintTypeDropdown(),
               const SizedBox(height: 20),
 
               if (_selectedComplaintType == null) ...[
-                Container(
-                  padding: const EdgeInsets.all(30),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.grey.shade200,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 50,
-                        color: Colors.grey.shade400,
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        "تکایە سەرەتا جۆری کێشە هەڵبژێرە",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
+                _buildEmptyStateInfo(),
               ] else ...[
                 // 🏛️ لایەنی پەیوەندیدار
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.green.shade400,
-                        Colors.green.shade600,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.green.withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.verified_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "لایەنی پەیوەندیدار",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _responsibleAuthority ?? '',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildAuthorityCard(),
                 const SizedBox(height: 20),
 
-                // 📸 هەنگاوی ٢
+                // ═══ هەنگاوی ٢: وێنەکان ═══
                 _buildStepHeader("٢", "وێنەی کێشەکە"),
                 const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: _handleImagePicking,
-                  child: Container(
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color:
-                        const Color(0xFF2196F3).withValues(alpha: 0.4),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: _images.isEmpty
-                        ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2196F3)
-                                .withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isGarbageSelected
-                                ? Icons.camera_alt_rounded
-                                : Icons.add_a_photo_rounded,
-                            color: const Color(0xFF2196F3),
-                            size: 30,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          isGarbageSelected
-                              ? "وێنەگرتن بە کامێرا"
-                              : "وێنە بگرە (کامێرا یان گەلەری)",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2196F3),
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isGarbageSelected
-                              ? "مەرجە وێنەی ڕاستەوخۆ بێت"
-                              : "تا ٢ وێنە",
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    )
-                        : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ..._images.map((img) => Container(
-                          width: 85,
-                          height: 105,
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                          ),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              ClipRRect(
-                                borderRadius:
-                                BorderRadius.circular(12),
-                                child: Image.file(
-                                  File(img.path),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: GestureDetector(
-                                  onTap: () => setState(
-                                        () => _images.remove(img),
-                                  ),
-                                  child: Container(
-                                    padding:
-                                    const EdgeInsets.all(3),
-                                    decoration:
-                                    const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      size: 12,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )),
-                        if (_images.length < 2)
-                          Container(
-                            width: 45,
-                            height: 45,
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.add_a_photo,
-                              color: Color(0xFF2196F3),
-                              size: 20,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+                _buildImageSection(isGarbageSelected),
                 const SizedBox(height: 20),
 
-                // 🗺️ هەنگاوی ٣
+                // ═══ هەنگاوی ٣: نەخشە ═══
                 _buildStepHeader("٣", "شوێنی کێشە لەسەر نەخشە"),
                 const SizedBox(height: 10),
-                Container(
-                  height: 160,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: AbsorbPointer(
-                      child: gmaps.GoogleMap(
-                        initialCameraPosition: gmaps.CameraPosition(
-                          target: _lat != null && _lng != null
-                              ? gmaps.LatLng(_lat!, _lng!)
-                              : const gmaps.LatLng(34.6189, 45.3156),
-                          zoom: 16,
-                        ),
-                        zoomControlsEnabled: false,
-                        scrollGesturesEnabled: false,
-                        markers: _lat != null && _lng != null
-                            ? {
-                          gmaps.Marker(
-                            markerId: const gmaps.MarkerId(
-                              'current_loc',
-                            ),
-                            position: gmaps.LatLng(_lat!, _lng!),
-                            icon: gmaps.BitmapDescriptor
-                                .defaultMarkerWithHue(
-                              gmaps.BitmapDescriptor.hueRed,
-                            ),
-                          ),
-                        }
-                            : {},
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _lat != null
-                        ? Colors.green.shade50
-                        : Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _lat != null
-                            ? Icons.check_circle_rounded
-                            : Icons.access_time_rounded,
-                        color: _lat != null
-                            ? Colors.green.shade700
-                            : Colors.orange.shade700,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _locationStatusText,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: _lat != null
-                                ? Colors.green.shade800
-                                : Colors.orange.shade800,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildMapSection(),
                 const SizedBox(height: 20),
 
-                // 📝 هەنگاوی ٤
-                _buildStepHeader("٤", "وەسفی کێشە (ئارەزوومەندانە)"),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _descCtrl,
-                  maxLines: 4,
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: "ڕووداوەکە لێرە زیاتر باس بکەرەوە...",
-                    hintStyle: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(bottom: 60),
-                      child: Icon(
-                        Icons.description_outlined,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.5,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 1.5,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.all(16),
-                  ),
+                // ═══ هەنگاوی ٤: دەنگ ═══
+                _buildStepHeader(
+                  "٤",
+                  "تۆمارکردنی دەنگ (ئارەزوومەندانە) 🎤",
                 ),
+                const SizedBox(height: 10),
+                VoiceRecorderWidget(
+                  onRecorded: (path) {
+                    debugPrint('🎤 دەنگ تۆمارکرا: $path');
+                    setState(() => _voicePath = path);
+                  },
+                ),
+                if (_voicePath != null) ...[
+                  const SizedBox(height: 8),
+                  _buildVoiceConfirmation(),
+                ],
+                const SizedBox(height: 20),
+
+                // ═══ هەنگاوی ٥: وەسف ═══
+                _buildStepHeader("٥", "وەسفی کێشە (ئارەزوومەندانە)"),
+                const SizedBox(height: 10),
+                _buildDescriptionField(),
                 const SizedBox(height: 28),
 
                 // 🚀 دوگمەی ناردن
-                SizedBox(
-                  height: 56,
-                  child: _isSubmitting
-                      ? const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                    ),
-                  )
-                      : ElevatedButton.icon(
-                    onPressed: _submitComplaint,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      elevation: 4,
-                      shadowColor:
-                      AppColors.primary.withValues(alpha: 0.4),
-                    ),
-                    icon: const Icon(
-                      Icons.send_rounded,
-                      size: 22,
-                    ),
-                    label: const Text(
-                      "ناردنی سکاڵا",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildSubmitButton(),
                 const SizedBox(height: 12),
 
                 // ❌ پەشیمانبوونەوە
-                SizedBox(
-                  height: 50,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      side: BorderSide(
-                        color: Colors.red.shade300,
-                        width: 1.5,
-                      ),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: Colors.red.shade700,
-                      size: 20,
-                    ),
-                    label: Text(
-                      "پەشیمانبوونەوە",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red.shade700,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildCancelButton(),
               ],
               const SizedBox(height: 20),
             ],
@@ -1089,7 +759,9 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     );
   }
 
-  // 🎯 هێدەری هەنگاوەکان
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 UI Widgets
+  // ═══════════════════════════════════════════════════════════
   Widget _buildStepHeader(String step, String title) {
     return Row(
       children: [
@@ -1119,19 +791,585 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF1A1A2E),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1A1A2E),
+            ),
           ),
         ),
       ],
     );
   }
 
-  // 🎯 ئایکۆنی جۆری سکاڵا
+  Widget _buildComplaintTypeDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: _selectedComplaintType != null
+            ? Colors.green.shade50
+            : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _selectedComplaintType != null
+              ? Colors.green.shade400
+              : AppColors.primary.withValues(alpha: 0.3),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedComplaintType,
+          isExpanded: true,
+          hint: const Row(
+            children: [
+              Icon(
+                Icons.search_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Text(
+                "جۆری کێشە هەڵبژێرە...",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          items: _complaintTypesMap.keys.map((type) {
+            return DropdownMenuItem<String>(
+              value: type,
+              child: Row(
+                children: [
+                  Icon(
+                    _getComplaintIcon(type),
+                    color: _selectedComplaintType == type
+                        ? Colors.green.shade800
+                        : AppColors.primary,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    type,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: _selectedComplaintType == type
+                          ? Colors.green.shade800
+                          : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: _selectedComplaintType != null
+              ? null
+              : (v) {
+            setState(() {
+              _selectedComplaintType = v;
+              _responsibleAuthority = _complaintTypesMap[v];
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateInfo() {
+    return Container(
+      padding: const EdgeInsets.all(30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.grey.shade200,
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 50,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "تکایە سەرەتا جۆری کێشە هەڵبژێرە",
+            style: TextStyle(
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuthorityCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.green.shade400,
+            Colors.green.shade600,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.verified_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "لایەنی پەیوەندیدار",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _responsibleAuthority ?? '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageSection(bool isGarbageSelected) {
+    return GestureDetector(
+      onTap: _handleImagePicking,
+      child: Container(
+        height: 140,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: const Color(0xFF2196F3).withValues(alpha: 0.4),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: _images.isEmpty
+            ? Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2196F3).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isGarbageSelected
+                    ? Icons.camera_alt_rounded
+                    : Icons.add_a_photo_rounded,
+                color: const Color(0xFF2196F3),
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isGarbageSelected
+                  ? "وێنەگرتن بە کامێرا"
+                  : "وێنە بگرە (کامێرا یان گەلەری)",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2196F3),
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isGarbageSelected ? "مەرجە وێنەی ڕاستەوخۆ بێت" : "تا ٢ وێنە",
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        )
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ..._images.map((img) => Container(
+              width: 85,
+              height: 105,
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      File(img.path),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () => setState(
+                            () => _images.remove(img),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            if (_images.length < 2)
+              Container(
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add_a_photo,
+                  color: Color(0xFF2196F3),
+                  size: 20,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapSection() {
+    return Column(
+      children: [
+        Container(
+          height: 160,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.grey.shade300,
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: AbsorbPointer(
+              child: gmaps.GoogleMap(
+                initialCameraPosition: gmaps.CameraPosition(
+                  target: _lat != null && _lng != null
+                      ? gmaps.LatLng(_lat!, _lng!)
+                      : const gmaps.LatLng(34.6189, 45.3156),
+                  zoom: 16,
+                ),
+                zoomControlsEnabled: false,
+                scrollGesturesEnabled: false,
+                markers: _lat != null && _lng != null
+                    ? {
+                  gmaps.Marker(
+                    markerId: const gmaps.MarkerId('current_loc'),
+                    position: gmaps.LatLng(_lat!, _lng!),
+                    icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(
+                      gmaps.BitmapDescriptor.hueRed,
+                    ),
+                  ),
+                }
+                    : {},
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            color: _lat != null ? Colors.green.shade50 : Colors.orange.shade50,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _lat != null
+                    ? Icons.check_circle_rounded
+                    : Icons.access_time_rounded,
+                color: _lat != null
+                    ? Colors.green.shade700
+                    : Colors.orange.shade700,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _locationStatusText,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _lat != null
+                        ? Colors.green.shade800
+                        : Colors.orange.shade800,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVoiceConfirmation() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Colors.green.shade200,
+        ),
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.check_circle_rounded,
+            color: Colors.green,
+            size: 18,
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'دەنگەکە تۆمارکرا و ئامادەیە بۆ ناردن',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return TextFormField(
+      controller: _descCtrl,
+      maxLines: 4,
+      textAlign: TextAlign.right,
+      style: const TextStyle(fontSize: 14),
+      decoration: InputDecoration(
+        hintText: "ڕووداوەکە لێرە زیاتر باس بکەرەوە...",
+        hintStyle: const TextStyle(
+          fontSize: 13,
+          color: Colors.grey,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: const Padding(
+          padding: EdgeInsets.only(bottom: 60),
+          child: Icon(
+            Icons.description_outlined,
+            color: AppColors.primary,
+          ),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: AppColors.primary,
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      height: 56,
+      child: _isSubmitting
+          ? Container(
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 2.5,
+                ),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'خەریکی ناردن...',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+          : ElevatedButton.icon(
+        onPressed: _submitComplaint,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          elevation: 4,
+          shadowColor: AppColors.primary.withValues(alpha: 0.4),
+        ),
+        icon: const Icon(
+          Icons.send_rounded,
+          size: 22,
+        ),
+        label: const Text(
+          "ناردنی سکاڵا",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return SizedBox(
+      height: 50,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          side: BorderSide(
+            color: Colors.red.shade300,
+            width: 1.5,
+          ),
+        ),
+        onPressed: () => Navigator.pop(context),
+        icon: Icon(
+          Icons.close_rounded,
+          color: Colors.red.shade700,
+          size: 20,
+        ),
+        label: Text(
+          "پەشیمانبوونەوە",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.red.shade700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 Helpers
+  // ═══════════════════════════════════════════════════════════
   IconData _getComplaintIcon(String type) {
     if (type.contains('خۆڵ') || type.contains('خاشاک')) {
       return Icons.delete_rounded;

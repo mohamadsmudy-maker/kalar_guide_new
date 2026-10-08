@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/ai_service.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
+// (CountOption لە Supabase Flutter هەیە)
 /// 🤖 شاشەی ڕاپۆرتی زیرەک بە چات
 class AdminAiChatScreen extends StatefulWidget {
   const AdminAiChatScreen({super.key});
@@ -32,21 +33,44 @@ class _AdminAiChatScreenState extends State<AdminAiChatScreen> {
 
     try {
       final supa = Supabase.instance.client;
-      final res = await supa.from('orders').select();
-      List<Map<String, dynamic>> orders = List<Map<String, dynamic>>.from(res);
 
-      double totalRev = 0;
-      for (var o in orders) {
-        totalRev += double.tryParse(o['total_price']?.toString() ?? '0') ?? 0;
+      // ⭐ ١. کۆی ئۆردەرەکان (تەنها Count، بێ داتا)
+      final countRes = await supa
+          .from('orders')
+          .select('id')
+          .count(CountOption.exact);
+      final totalOrders = countRes.count ?? 0;
+
+      // ⭐ ٢. کۆی داهات (تەنها ١٠٠ دوایین)
+      final recentRes = await supa
+          .from('orders')
+          .select('total_price, store_name, status, created_at')
+          .order('created_at', ascending: false)
+          .limit(100);
+
+      final recentOrders = List<Map<String, dynamic>>.from(recentRes);
+
+      // ⭐ ٣. حسابی داهاتی گشتی لە Supabase
+      // (بەکارهێنانی RPC یان Views دەتوانێت خێراتر بێت)
+      double recentRevenue = 0;
+      for (var o in recentOrders) {
+        recentRevenue +=
+            double.tryParse(o['total_price']?.toString() ?? '0') ?? 0;
       }
 
-      String dataSummary = "کۆی داواکارییەکان: ${orders.length}\n"
-          "کۆی داهات: ${totalRev.toStringAsFixed(0)} د.ع\n"
-          "تێکڕای داهات: ${(orders.isNotEmpty ? totalRev / orders.length : 0).toStringAsFixed(0)} د.ع\n"
-          "دوایین ١٠ داواکاری:\n"
-          "${orders.take(10).map((o) => "- ${o['store_name']}: ${o['total_price']} د.ع (${o['status']})").join('\n')}";
+      // ⭐ ٤. ئامادەکردنی کورتە (بە کوردی)
+      final dataSummary = '''
+📊 ئاماری گشتی:
+- کۆی داواکارییەکان: $totalOrders
+- کۆی داهات (دوایین ١٠٠): ${recentRevenue.toStringAsFixed(0)} د.ع
+- تێکڕای داهات: ${(recentOrders.isNotEmpty ? recentRevenue / recentOrders.length : 0).toStringAsFixed(0)} د.ع
 
-      String aiResponse = await AiService.askAdminAI(query, dataSummary);
+📋 دوایین ١٠ داواکاری:
+${recentOrders.take(10).map((o) => "- ${o['store_name']}: ${o['total_price']} د.ع (${o['status']})").join('\n')}
+''';
+
+      // ⭐ ٥. پرسیار لە AI
+      final aiResponse = await AiService.askAdminAI(query, dataSummary);
 
       if (mounted) {
         setState(() {
@@ -57,7 +81,10 @@ class _AdminAiChatScreenState extends State<AdminAiChatScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add({'role': 'ai', 'text': 'هەڵەیەک ڕووی دا: $e'});
+          _messages.add({
+            'role': 'ai',
+            'text': 'هەڵەیەک ڕووی دا: $e',
+          });
           _loading = false;
         });
       }

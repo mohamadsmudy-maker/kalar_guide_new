@@ -87,16 +87,33 @@ class SettingsProvider extends ChangeNotifier {
 
   bool get isRtl => _languageId != 'en';
 
+  // ═══════════════════════════════════════════════════════════
+  // 🌍 Locale — ✅ چاککراو
+  // ═══════════════════════════════════════════════════════════
+  /// ⚠️ گرنگ: Flutter بە فەرمی Kurdish پشتگیری ناکات
+  /// بۆیە بۆ کوردی، `ar_AE` بەکاردەهێنین (چونکە RTLـە)
   Locale get locale {
     switch (_languageId) {
       case 'ar':
         return const Locale('ar', 'AE');
       case 'en':
         return const Locale('en', 'US');
+      case 'ku':
       default:
-        return const Locale('ku', 'IQ');
+      // ✅ کوردی — عەرەبی بەکاردەهێنین چونکە:
+      // 1. RTLـە (وەک کوردی)
+      // 2. Flutter MaterialLocalizations پشتگیری دەکات
+      // 3. مێژوو و کاتەکان دروست کار دەکەن
+        return const Locale('ar', 'AE');
     }
   }
+
+  /// 🎯 زمانەکانی پشتگیریکراو لە Flutter
+  static const List<Locale> supportedLocales = [
+    Locale('ku', 'IQ'),  // کوردی (custom delegate)
+    Locale('ar', 'AE'),  // عەرەبی
+    Locale('en', 'US'),  // ئینگلیزی
+  ];
 
   // ═══════════════════════════════════════════════════
   // 🚀 دەستپێکردن

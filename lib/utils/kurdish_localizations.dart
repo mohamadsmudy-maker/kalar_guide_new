@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 // ═══════════════════════════════════════════════════════════
-// 🇮🇶 Kurdish Material Localizations Delegate
+// 🇮🇶 Kurdish Material Localizations
 // ═══════════════════════════════════════════════════════════
 class KurdishMaterialLocalizationsDelegate
     extends LocalizationsDelegate<MaterialLocalizations> {
@@ -14,6 +14,7 @@ class KurdishMaterialLocalizationsDelegate
 
   @override
   Future<MaterialLocalizations> load(Locale locale) {
+    // ✅ عەرەبی وەک بنەڕەت بەکاربهێنە
     return GlobalMaterialLocalizations.delegate.load(
       const Locale('ar', 'AE'),
     );
@@ -24,7 +25,7 @@ class KurdishMaterialLocalizationsDelegate
 }
 
 // ═══════════════════════════════════════════════════════════
-// 🍎 Kurdish Cupertino Localizations Delegate — نوێ
+// 🍎 Kurdish Cupertino Localizations
 // ═══════════════════════════════════════════════════════════
 class KurdishCupertinoLocalizationsDelegate
     extends LocalizationsDelegate<CupertinoLocalizations> {
@@ -45,7 +46,7 @@ class KurdishCupertinoLocalizationsDelegate
 }
 
 // ═══════════════════════════════════════════════════════════
-// 🌍 Kurdish Widgets Localizations Delegate — نوێ
+// 🌍 Kurdish Widgets Localizations
 // ═══════════════════════════════════════════════════════════
 class KurdishWidgetsLocalizationsDelegate
     extends LocalizationsDelegate<WidgetsLocalizations> {

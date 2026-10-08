@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 
-/// 🖼️ وێنەی ئۆنلاین بە کاش و کوالیتی باش
+/// 🖼️ وێنەی ئۆنلاین بە کاش — Memory ی کەم
 class OptimizedNetworkImage extends StatelessWidget {
   final String imageUrl;
   final double? width;
@@ -28,8 +28,9 @@ class OptimizedNetworkImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit ?? BoxFit.cover,
-      memCacheWidth: 600,
-      maxWidthDiskCache: 800,
+      // ✅ کەمکردنەوەی Memory بۆ ئیمۆلاتۆر
+      memCacheWidth: 400,
+      maxWidthDiskCache: 600,
       placeholder: (context, url) => Container(
         width: width,
         height: height,

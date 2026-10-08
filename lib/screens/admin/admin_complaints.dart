@@ -1,65 +1,272 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import '../../config/app_colors.dart';
-import '../../widgets/common/optimized_network_image.dart';
-import '../../services/ai_service.dart';
-import 'all_complaints_map.dart';
+import 'package:provider/provider.dart';
 
-/// 📋 شاشەی بەڕێوەبردنی سکاڵاکان (Pro Version)
-class AdminComplaintsScreen extends StatefulWidget {
-  const AdminComplaintsScreen({super.key});
+import '../../config/app_colors.dart';
+import '../../config/translations.dart';
+import '../../config/settings_provider.dart';
+import '../../widgets/common/optimized_network_image.dart';
+import '../../services/complaints_pdf_service.dart';
+import '../../services/storage_service.dart';
+import 'all_complaints_map.dart';
+import 'complaint_details_pro_sheet.dart';
+import 'complaint_filter_sheet.dart';
+
+/// 📋 شاشەی بەڕێوەبردنی سکاڵاکان — ULTRA PRO
+class AdminComplaintsProScreen extends StatefulWidget {
+  const AdminComplaintsProScreen({super.key});
 
   @override
-  State<AdminComplaintsScreen> createState() => _AdminComplaintsScreenState();
+  State<AdminComplaintsProScreen> createState() =>
+      _AdminComplaintsProScreenState();
 }
 
-class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
+class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
+    with TickerProviderStateMixin {
+  late TabController _tabController;
   String _filter = 'all';
+  String _sortBy = 'priority';
   String _q = '';
   List<Map<String, dynamic>> _complaints = [];
+  List<Map<String, dynamic>> _filtered = [];
   bool _loading = true;
+  bool _isDeleting = false;
   bool _generatingPdf = false;
+  bool _isRefreshing = false;
+  bool _selectMode = false;
+
   final TextEditingController _searchCtrl = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
+  final Set<String> _selectedIds = {};
+  final Set<String> _hiddenIds = {};
+
+  DateTime _fromDate = DateTime.now().subtract(const Duration(days: 30));
+  DateTime _toDate = DateTime.now();
+  String? _filterAuthority;
+  Set<String> _filterStatuses = {};
+  bool _onlyWithVoice = false;
+  bool _onlyWithImages = false;
+
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+  late AnimationController _staggerController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+    _tabController.addListener(_onTabChange);
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _staggerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
     _fetchComplaints();
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChange);
+    _tabController.dispose();
     _searchCtrl.dispose();
+    _scrollCtrl.dispose();
+    _pulseController.dispose();
+    _staggerController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchComplaints() async {
-    setState(() => _loading = true);
+  void _onTabChange() {
+    // ✅ پشکنینی mounted بۆ ڕێگریکردن لە Error
+    if (!mounted) return;
+
+    // ✅ پشکنینی dispose بوونی TabController
+    if (_tabController.indexIsChanging) return;
+
+    // ✅ پشکنینی سنووری index
+    final index = _tabController.index;
+    if (index < 0 || index >= 5) return;
+
+    const filters = ['all', 'pending', 'approved', 'completed', 'rejected'];
+
+    // ✅ تەنها ئەگەر گۆڕانکاری هەبوو، setState بانگ بکە
+    if (_filter != filters[index]) {
+      setState(() => _filter = filters[index]);
+      _applyFilters();
+    }
+  }
+
+  Future<void> _fetchComplaints({bool showLoader = true}) async {
+    if (!mounted) return;
+    if (showLoader) setState(() => _loading = true);
+
     try {
       final res = await Supabase.instance.client
           .from('complaints')
           .select()
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .limit(500);
 
-      final List<dynamic> rawList = res as List;
-      final complaints = rawList
+      final complaints = (res as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
+
+      // ✅ دۆزینەوەی ID ی ئەوانەی لە داتابەیس نەماون
+      final fetchedIds = complaints.map((c) => c['id'].toString()).toSet();
+      final idsToRemove = _hiddenIds
+          .where((id) => !fetchedIds.contains(id))
+          .toList();
+
+      // ✅ پاککردنەوەی _hiddenIds لەوانەی نەماون
+      _hiddenIds.removeAll(idsToRemove);
+
+      // ✅ پاککردنەوەی _selectedIds لەوانەی نەماون
+      _selectedIds.removeWhere((id) => !fetchedIds.contains(id));
+
+      // ✅ ئەگەر هیچ هەڵبژێردراو نەما، _selectMode دابخە
+      if (_selectedIds.isEmpty && _selectMode) {
+        _selectMode = false;
+      }
+
+      // ✅ سنوور بۆ _hiddenIds — ئەگەر ١٠٠٠ تێپەڕی، بەتاڵی بکەرەوە
+      if (_hiddenIds.length > 1000) {
+        debugPrint('⚠️ _hiddenIds گەورە بوو — پاککردنەوە');
+        _hiddenIds.clear();
+      }
 
       if (mounted) {
         setState(() {
           _complaints = complaints;
           _loading = false;
+          _isRefreshing = false;
+        });
+        _applyFilters();
+        _staggerController.forward(from: 0);
+      }
+    } catch (e) {
+      debugPrint('❌ Fetch error: $e');
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _isRefreshing = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _applyFilters() {
+    var list = List<Map<String, dynamic>>.from(_complaints);
+
+    if (_filter != 'all') {
+      if (_filter == 'approved') {
+        list = list
+            .where((c) =>
+        c['status'] == 'approved' || c['status'] == 'in_progress')
+            .toList();
+      } else {
+        list = list.where((c) => c['status'] == _filter).toList();
+      }
+    }
+
+    if (_filterStatuses.isNotEmpty) {
+      list = list
+          .where((c) => _filterStatuses.contains(c['status']))
+          .toList();
+    }
+
+    if (_filterAuthority != null) {
+      list = list
+          .where((c) => c['responsible_authority'] == _filterAuthority)
+          .toList();
+    }
+
+    if (_onlyWithVoice) {
+      list = list
+          .where((c) =>
+      c['voice_url'] != null &&
+          c['voice_url'].toString().isNotEmpty)
+          .toList();
+    }
+
+    if (_onlyWithImages) {
+      list = list.where((c) {
+        final imgs = c['images'];
+        return imgs is List && imgs.isNotEmpty;
+      }).toList();
+    }
+
+    if (_q.isNotEmpty) {
+      list = list.where((c) {
+        final text =
+        "${c['title']}${c['description']}${c['responsible_authority']}"
+            .toLowerCase();
+        return text.contains(_q);
+      }).toList();
+    }
+
+    switch (_sortBy) {
+      case 'oldest':
+        list.sort(_sortByDate);
+        break;
+      case 'priority':
+        list.sort((a, b) {
+          final pa = _priorityScore(a);
+          final pb = _priorityScore(b);
+          if (pa != pb) return pb.compareTo(pa);
+          return _sortByDateDesc(a, b);
+        });
+        break;
+      case 'newest':
+      default:
+        list.sort(_sortByDateDesc);
+    }
+
+    if (mounted) setState(() => _filtered = list);
+  }
+
+  int _sortByDate(Map<String, dynamic> a, Map<String, dynamic> b) {
+    final da = DateTime.tryParse(a['created_at']?.toString() ?? '');
+    final db = DateTime.tryParse(b['created_at']?.toString() ?? '');
+    if (da == null || db == null) return 0;
+    return da.compareTo(db);
+  }
+
+  int _sortByDateDesc(Map<String, dynamic> a, Map<String, dynamic> b) {
+    return _sortByDate(b, a);
+  }
+
+  int _priorityScore(Map<String, dynamic> c) {
+    int score = 0;
+    final s = c['status']?.toString();
+    if (s == 'pending') score += 100;
+    if (s == 'in_progress') score += 60;
+
+    final created = DateTime.tryParse(c['created_at']?.toString() ?? '');
+    if (created != null) {
+      final hours = DateTime.now().difference(created).inHours;
+      if (hours < 6) score += 50;
+      else if (hours < 24) score += 30;
+      else if (hours < 72) score += 15;
+    }
+
+    final voice = c['voice_url']?.toString() ?? '';
+    if (voice.isNotEmpty) score += 20;
+
+    final imgs = c['images'];
+    if (imgs is List && imgs.isNotEmpty) score += 10;
+
+    return score;
   }
 
   int get _allCount => _complaints.length;
@@ -74,27 +281,9 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
   int get _completedCount =>
       _complaints.where((c) => c['status'] == 'completed').length;
 
-  List<Map<String, dynamic>> get _list {
-    var l = _complaints;
-    if (_filter != 'all') {
-      if (_filter == 'approved') {
-        l = l
-            .where((c) =>
-        c['status'] == 'approved' || c['status'] == 'in_progress')
-            .toList();
-      } else {
-        l = l.where((c) => c['status'] == _filter).toList();
-      }
-    }
-    if (_q.isNotEmpty) {
-      l = l.where((c) {
-        final searchText =
-        "${c['title']}${c['description']}${c['responsible_authority']}"
-            .toLowerCase();
-        return searchText.contains(_q);
-      }).toList();
-    }
-    return l;
+  double get _completionRate {
+    if (_allCount == 0) return 0;
+    return (_completedCount / _allCount) * 100;
   }
 
   Color _color(String? s) {
@@ -129,7 +318,7 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
     }
   }
 
-  String _text(String? s) {
+  String _statusText(String? s) {
     switch (s) {
       case 'pending':
         return 'چاوەڕوان';
@@ -138,7 +327,7 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
       case 'in_progress':
         return 'لە ئارادایە';
       case 'rejected':
-        return 'ڕەتکراوە';
+        return 'ڕەتکراو';
       case 'completed':
         return 'جێبەجێکرا';
       default:
@@ -146,887 +335,1116 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
     }
   }
 
-  Future<void> _generatePdfReport() async {
-    setState(() => _generatingPdf = true);
-    try {
-      String summaryContext = _list
-          .map((c) =>
-      "جۆر: ${c['title']}, لایەن: ${c['responsible_authority']}, دۆخ: ${_text(c['status'])}")
-          .join('\n');
+  String _timeAgo(String? dateStr) {
+    if (dateStr == null) return '';
+    final date = DateTime.tryParse(dateStr);
+    if (date == null) return '';
 
-      String aiAnalysis = "شیکردنەوە بەردەست نییە";
-      try {
-        aiAnalysis = await AiService.askAdminAI(
-          "ئەم کورتەیەی سکاڵاکان شیکار بکە و تەنها ٣ خاڵی گرنگ بە کوردی سۆرانی بنووسە:",
-          summaryContext,
-        );
-      } catch (_) {}
+    final diff = DateTime.now().difference(date);
 
-      final pdf = pw.Document();
-      final font = await PdfGoogleFonts.amiriRegular();
-      final fontBold = await PdfGoogleFonts.amiriBold();
-
-      final headers = [
-        'ژمارە',
-        'جۆری سکاڵا',
-        'لایەنی پەیوەندیدار',
-        'بەروار',
-        'دۆخ',
-      ];
-
-      final data = _list.asMap().entries.map((entry) {
-        int index = entry.key + 1;
-        var c = entry.value;
-        String dateStr = c['created_at'] != null
-            ? c['created_at'].toString().substring(0, 10)
-            : '';
-
-        return [
-          index.toString(),
-          c['title'] ?? '-',
-          c['responsible_authority'] ?? '-',
-          dateStr,
-          _text(c['status']),
-        ];
-      }).toList();
-
-      pdf.addPage(
-        pw.MultiPage(
-          textDirection: pw.TextDirection.rtl,
-          theme: pw.ThemeData.withFont(base: font, bold: fontBold),
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(30),
-          header: (context) => pw.Container(
-            alignment: pw.Alignment.centerRight,
-            margin: const pw.EdgeInsets.only(bottom: 15),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  'ڕاپۆرتی زیرەکی سکاڵاکان - ڕێبەری کەلار',
-                  style: pw.TextStyle(
-                    font: fontBold,
-                    fontSize: 16,
-                    color: PdfColors.indigo900,
-                  ),
-                ),
-                pw.SizedBox(height: 5),
-                pw.Divider(color: PdfColors.grey400),
-              ],
-            ),
-          ),
-          build: (context) => [
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(
-                  'کۆی گشتی: ${_list.length} سکاڵا',
-                  style: pw.TextStyle(font: fontBold, fontSize: 11),
-                ),
-                pw.Text(
-                  'بەروار: ${DateTime.now().toString().substring(0, 10)}',
-                  style: pw.TextStyle(font: font, fontSize: 10),
-                ),
-              ],
-            ),
-            pw.SizedBox(height: 12),
-            pw.Container(
-              padding: const pw.EdgeInsets.all(10),
-              decoration: pw.BoxDecoration(
-                color: PdfColors.purple50,
-                borderRadius: pw.BorderRadius.circular(8),
-                border: pw.Border.all(color: PdfColors.purple200),
-              ),
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    '🤖 شیکردنەوەی زیرەک (AI Summary):',
-                    style: pw.TextStyle(
-                      font: fontBold,
-                      fontSize: 11,
-                      color: PdfColors.purple900,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  pw.Text(
-                    aiAnalysis,
-                    style: pw.TextStyle(font: font, fontSize: 10),
-                  ),
-                ],
-              ),
-            ),
-            pw.SizedBox(height: 16),
-            pw.TableHelper.fromTextArray(
-              headers: headers,
-              data: data,
-              border: pw.TableBorder.all(color: PdfColors.grey300),
-              headerStyle: pw.TextStyle(
-                font: fontBold,
-                color: PdfColors.white,
-                fontSize: 10,
-              ),
-              headerDecoration:
-              const pw.BoxDecoration(color: PdfColors.indigo900),
-              cellAlignment: pw.Alignment.centerRight,
-              cellStyle: pw.TextStyle(font: font, fontSize: 9),
-              oddRowDecoration:
-              const pw.BoxDecoration(color: PdfColors.grey100),
-            ),
-          ],
-        ),
-      );
-
-      await Printing.layoutPdf(
-        onLayout: (format) async => pdf.save(),
-        name: 'ڕاپۆرتی_سکاڵاکان_${DateTime.now().millisecondsSinceEpoch}.pdf',
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("هەڵە: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _generatingPdf = false);
-    }
-  }
-
-  Future<void> _deleteComplaint(Map<String, dynamic> complaint) async {
-    bool? confirm = await showDialog(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text("سڕینەوەی سکاڵا 🗑"),
-          content: const Text("ئایا دڵنیایت لە سڕینەوەی ئەم سکاڵایە؟"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text("نەخێر"),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("سڕینەوە"),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (confirm == true) {
-      try {
-        await Supabase.instance.client
-            .from('complaints')
-            .delete()
-            .eq('id', complaint['id']);
-        setState(() {
-          _complaints.removeWhere(
-                (c) => c['id'].toString() == complaint['id'].toString(),
-          );
-        });
-      } catch (_) {}
-    }
-  }
-
-  void _showComplaintDetails(Map<String, dynamic> c) {
-    showDialog(
-      context: context,
-      builder: (ctx) => ComplaintDetailsDialog(
-        complaint: c,
-        onStatusChanged: _fetchComplaints,
-      ),
-    );
+    if (diff.inMinutes < 1) return 'ئێستا';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} خولەک لەمەوبەر';
+    if (diff.inHours < 24) return '${diff.inHours} کاتژمێر لەمەوبەر';
+    if (diff.inDays < 7) return '${diff.inDays} ڕۆژ لەمەوبەر';
+    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} هەفتە لەمەوبەر';
+    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} مانگ لەمەوبەر';
+    return '${(diff.inDays / 365).floor()} ساڵ لەمەوبەر';
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lang = context.watch<SettingsProvider>().languageId;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F6F9),
-        body: CustomScrollView(
-          slivers: [
-            // ═══════════════════════════════════════
-            // 🎨 AppBar + Stats
-            // ═══════════════════════════════════════
-            SliverAppBar(
-              expandedHeight: 220,
-              pinned: true,
-              backgroundColor: const Color(0xFF1E1B2E),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              actions: [
-                // 🗺️ دوگمەی نەخشە
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AllComplaintsMapScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF3498DB)
-                                .withValues(alpha: 0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.map_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            "نەخشە",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+        backgroundColor:
+        isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF4F6F9),
+        body: _loading
+            ? _buildSkeleton(isDark)
+            : NestedScrollView(
+          headerSliverBuilder: (context, inner) => [
+            _buildSliverAppBar(isDark),
+            _buildSliverTabBar(isDark),
+            _buildSliverStats(isDark),
+            _buildSliverSearch(isDark),
+          ],
+          body: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              setState(() => _isRefreshing = true);
+              await _fetchComplaints(showLoader: false);
+            },
+            child: TabBarView(
+              controller: _tabController,
+              children:
+              List.generate(5, (i) => _buildList(isDark, lang)),
+            ),
+          ),
+        ),
+        floatingActionButton: _selectMode
+            ? _buildBulkActionsFab(isDark)
+            : _buildFilterFab(isDark),
+      ),
+    );
+  }
+
+  Widget _buildSliverAppBar(bool isDark) {
+    return SliverAppBar(
+      expandedHeight: 140,
+      pinned: true,
+      backgroundColor: const Color(0xFF0A0A0F),
+      foregroundColor: Colors.white,
+      elevation: 0,
+      leading: _selectMode
+          ? IconButton(
+        icon: const Icon(Icons.close_rounded),
+        onPressed: () {
+          setState(() {
+            _selectMode = false;
+            _selectedIds.clear();
+          });
+        },
+      )
+          : null,
+      title: _selectMode
+          ? Text(
+        '${_selectedIds.length} هەڵبژێردراو',
+        style: const TextStyle(
+          fontWeight: FontWeight.w900,
+          fontSize: 16,
+        ),
+      )
+          : null,
+      actions: [
+        if (!_selectMode) ...[
+          IconButton(
+            icon: const Icon(Icons.map_rounded),
+            tooltip: 'نەخشە',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AllComplaintsMapScreen(),
                 ),
-                // 📄 دوگمەی PDF
-                IconButton(
-                  icon: _generatingPdf
-                      ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
+              );
+            },
+          ),
+          IconButton(
+            icon: _generatingPdf
+                ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+                : const Icon(Icons.picture_as_pdf_rounded),
+            tooltip: 'ڕاپۆرتی PDF',
+            onPressed: _generatingPdf ? null : _generatePdf,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            onSelected: (v) {
+              switch (v) {
+                case 'select':
+                  setState(() => _selectMode = true);
+                  break;
+                case 'refresh':
+                  _fetchComplaints(showLoader: false);
+                  break;
+                case 'sort':
+                  _showSortSheet(isDark);
+                  break;
+              }
+            },
+            itemBuilder: (_) => [
+              _popupItem(
+                'select',
+                'هەڵبژاردنی چەند',
+                Icons.checklist_rounded,
+              ),
+              _popupItem('sort', 'ڕیزبەندکردن', Icons.sort_rounded),
+              _popupItem('refresh', 'نوێکردنەوە', Icons.refresh_rounded),
+            ],
+          ),
+        ] else ...[
+          IconButton(
+            icon: Icon(
+              _selectedIds.length == _filtered.length
+                  ? Icons.deselect_rounded
+                  : Icons.select_all_rounded,
+            ),
+            onPressed: () {
+              setState(() {
+                if (_selectedIds.length == _filtered.length) {
+                  _selectedIds.clear();
+                } else {
+                  _selectedIds.addAll(
+                    _filtered.map((c) => c['id'].toString()),
+                  );
+                }
+              });
+            },
+          ),
+        ],
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0A0A0F), Color(0xFF1E1B2E)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFE91E63)
+                              .withValues(alpha: 0.5),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.assignment_late_rounded,
                       color: Colors.white,
+                      size: 26,
                     ),
-                  )
-                      : const Icon(
-                    Icons.picture_as_pdf_rounded,
-                    color: Colors.redAccent,
                   ),
-                  tooltip: "ڕاپۆرتی PDF",
-                  onPressed: _generatingPdf ? null : _generatePdfReport,
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'بەڕێوەبردنی سکاڵاکان',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 12,
+                              color: Color(0xFF4CAF50),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'ULTRA PRO • ADMIN',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF4CAF50),
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _popupItem(
+      String value, String label, IconData icon) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliverTabBar(bool isDark) {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _SliverTabBarDelegate(
+        TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          labelColor: AppColors.primary,
+          unselectedLabelColor: Colors.white60,
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 13,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+          indicatorColor: AppColors.primary,
+          indicatorWeight: 3,
+          indicatorSize: TabBarIndicatorSize.label,
+          dividerColor: Colors.transparent,
+          tabs: [
+            _buildTab('هەموو', _allCount, Icons.apps_rounded),
+            _buildTab('چاوەڕوان', _pendingCount, Icons.hourglass_top_rounded),
+            _buildTab('پەسەند', _approvedCount, Icons.verified_rounded),
+            _buildTab('تەواو', _completedCount, Icons.check_circle_rounded),
+            _buildTab('ڕەتکراو', _rejectedCount, Icons.cancel_rounded),
+          ],
+        ),
+        isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF4F6F9),
+      ),
+    );
+  }
+
+  Tab _buildTab(String label, int count, IconData icon) {
+    return Tab(
+      height: 56,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 6),
+          Text(label),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliverStats(bool isDark) {
+    return SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                _buildMiniStat(
+                  'کۆی',
+                  _allCount,
+                  Icons.assignment_rounded,
+                  const Color(0xFF6C5CE7),
+                  isDark,
                 ),
-                // 🔄 دوگمەی نوێکردنەوە
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded),
-                  onPressed: _fetchComplaints,
+                const SizedBox(width: 8),
+                _buildMiniStat(
+                  'چاوەڕوان',
+                  _pendingCount,
+                  Icons.hourglass_top_rounded,
+                  const Color(0xFFFF9800),
+                  isDark,
+                ),
+                const SizedBox(width: 8),
+                _buildMiniStat(
+                  'تەواو',
+                  _completedCount,
+                  Icons.check_circle_rounded,
+                  const Color(0xFF3498DB),
+                  isDark,
                 ),
               ],
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF1E1B2E), Color(0xFF2D2A45)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary
-                                      .withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: const Icon(
-                                  Icons.assignment_late_rounded,
-                                  color: AppColors.primary,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                "بەڕێوەبردنی سکاڵاکان",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 18,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 18),
-                          Row(
-                            children: [
-                              _buildStatItem(
-                                _allCount.toString(),
-                                "هەموو",
-                                Colors.white,
-                                'all',
-                              ),
-                              _buildStatItem(
-                                _pendingCount.toString(),
-                                "چاوەڕوان",
-                                const Color(0xFFFF9800),
-                                'pending',
-                              ),
-                              _buildStatItem(
-                                _approvedCount.toString(),
-                                "پەسەندکراو",
-                                const Color(0xFF2ECC71),
-                                'approved',
-                              ),
-                              _buildStatItem(
-                                _rejectedCount.toString(),
-                                "ڕەتکراو",
-                                const Color(0xFFE74C3C),
-                                'rejected',
-                              ),
-                              _buildStatItem(
-                                _completedCount.toString(),
-                                "جێبەجێکرا",
-                                const Color(0xFF3498DB),
-                                'completed',
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             ),
-
-            // ═══════════════════════════════════════
-            // 🔍 گەڕان
-            // ═══════════════════════════════════════
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    onChanged: (v) => setState(() => _q = v.toLowerCase()),
-                    decoration: InputDecoration(
-                      hintText: "گەڕان بەدوای ناوەڕۆک، لایەنی پەیوەندیدار...",
-                      hintStyle: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: AppColors.primary,
-                        size: 22,
-                      ),
-                      suffixIcon: _q.isNotEmpty
-                          ? IconButton(
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          size: 18,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          _searchCtrl.clear();
-                          setState(() => _q = '');
-                        },
-                      )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 14,
-                        horizontal: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // ═══════════════════════════════════════
-            // 📊 ژمارەی ئەنجام
-            // ═══════════════════════════════════════
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.assignment_rounded,
-                            color: AppColors.primary,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            "${_list.length} سکاڵا",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    if (_filter != 'all')
-                      GestureDetector(
-                        onTap: () => setState(() => _filter = 'all'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.close_rounded,
-                                size: 14,
-                                color: Colors.black54,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                "لابردنی فلتەر",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF10B981).withValues(alpha: 0.15),
+                    const Color(0xFF10B981).withValues(alpha: 0.05),
                   ],
                 ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.trending_up_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ڕێژەی جێبەجێکردن',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              '${_completionRate.toStringAsFixed(1)}%',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '$_completedCount لە $_allCount',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            // ═══════════════════════════════════════
-            // 📋 لیستی سکاڵاکان
-            // ═══════════════════════════════════════
-            if (_loading)
-              const SliverFillRemaining(
-                child: Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-              )
-            else if (_list.isEmpty)
-              SliverFillRemaining(child: _buildEmptyState())
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) => _buildComplaintCard(_list[index]),
-                    childCount: _list.length,
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatItem(
-      String count,
-      String label,
-      Color color,
-      String filterKey,
-      ) {
-    final bool isSelected = _filter == filterKey;
+  Widget _buildMiniStat(
+      String label, int value, IconData icon, Color color, bool isDark) {
     return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _filter = filterKey),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? Colors.white.withValues(alpha: 0.15)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: isSelected
-                ? Border.all(color: color, width: 1.5)
-                : null,
-          ),
-          child: Column(
-            children: [
-              Text(
-                count,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildComplaintCard(Map<String, dynamic> complaint) {
-    final status = complaint['status'] ?? 'pending';
-    final color = _color(status);
-    final icon = _icon(status);
-    final statusText = _text(status);
-
-    List images = [];
-    try {
-      if (complaint['images'] is List) {
-        images = complaint['images'];
-      } else if (complaint['images'] is String) {
-        images = [complaint['images']];
-      }
-    } catch (_) {}
-
-    String date = complaint['created_at'] != null
-        ? complaint['created_at'].toString().substring(0, 10)
-        : '';
-
-    String authority = complaint['responsible_authority'] ?? 'نەدیاریکراو';
-
-    return GestureDetector(
-      onTap: () => _showComplaintDetails(complaint),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 12,
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (images.isNotEmpty)
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                    child: OptimizedNetworkImage(
-                      imageUrl: images.first.toString(),
-                      width: double.infinity,
-                      height: 160,
-                      fit: BoxFit.cover,
-                    ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 16),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$value',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: color,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: isDark ? Colors.white54 : Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSliverSearch(bool isDark) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                    Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      height: 70,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.6),
-                            Colors.transparent,
-                          ],
+                ],
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (v) {
+                  setState(() => _q = v.toLowerCase());
+                  _applyFilters();
+                },
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'گەڕان بەدوای ناونیشان، وەسف، لایەن...',
+                  hintStyle: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white54 : Colors.grey,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 22,
+                  ),
+                  suffixIcon: _q.isNotEmpty
+                      ? IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: () {
+                      _searchCtrl.clear();
+                      setState(() => _q = '');
+                      _applyFilters();
+                    },
+                  )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 16,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.filter_alt_rounded,
+                        size: 12,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_filtered.length} ئەنجام',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  Positioned(
-                    top: 12,
-                    right: 12,
+                ),
+                const Spacer(),
+                if (_sortBy != 'newest' ||
+                    _filterAuthority != null ||
+                    _filterStatuses.isNotEmpty ||
+                    _onlyWithVoice ||
+                    _onlyWithImages)
+                  GestureDetector(
+                    onTap: _clearAllFilters,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      child: const Row(
                         children: [
-                          Icon(icon, color: Colors.white, size: 13),
-                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.filter_alt_off_rounded,
+                            size: 12,
+                            color: Colors.red,
+                          ),
+                          SizedBox(width: 4),
                           Text(
-                            statusText,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
+                            'سڕینەوەی فلتەر',
+                            style: TextStyle(
+                              fontSize: 11,
                               fontWeight: FontWeight.w900,
+                              color: Colors.red,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  Positioned(
-                    bottom: 10,
-                    right: 12,
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_today_rounded,
-                          color: Colors.white,
-                          size: 12,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          date,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              )
-            else
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _clearAllFilters() {
+    _searchCtrl.clear();
+    setState(() {
+      _q = '';
+      _sortBy = 'newest';
+      _filterAuthority = null;
+      _filterStatuses.clear();
+      _onlyWithVoice = false;
+      _onlyWithImages = false;
+    });
+    _applyFilters();
+  }
+
+  Widget _buildList(bool isDark, String lang) {
+    if (_filtered.isEmpty) return _buildEmpty(isDark);
+
+    return ListView.builder(
+      controller: _scrollCtrl,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: _filtered.length,
+      itemBuilder: (context, i) {
+        final c = _filtered[i];
+        if (_hiddenIds.contains(c['id'].toString())) {
+          return const SizedBox.shrink();
+        }
+        return AnimatedBuilder(
+          animation: _staggerController,
+          builder: (context, child) {
+            final delay = (i * 0.05).clamp(0.0, 1.0);
+            final progress =
+            ((_staggerController.value - delay) / 0.5).clamp(0.0, 1.0);
+            return Transform.translate(
+              offset: Offset(0, 30 * (1 - progress)),
+              child: Opacity(opacity: progress, child: child),
+            );
+          },
+          child: _buildCard(c, isDark, lang),
+        );
+      },
+    );
+  }
+
+  Widget _buildCard(
+      Map<String, dynamic> c, bool isDark, String lang) {
+    final id = c['id'].toString();
+    final status = c['status'] ?? 'pending';
+    final color = _color(status);
+    final icon = _icon(status);
+    final statusText = _statusText(status);
+    final priority = _priorityScore(c);
+    final isSelected = _selectedIds.contains(id);
+    final isPending = status == 'pending';
+    final isInProgress = status == 'in_progress' || status == 'approved';
+
+    List images = [];
+    try {
+      if (c['images'] is List) images = c['images'];
+      else if (c['images'] is String) images = [c['images']];
+    } catch (_) {}
+
+    final voiceUrl = c['voice_url']?.toString() ?? '';
+    final hasVoice = voiceUrl.isNotEmpty;
+    final timeAgo = _timeAgo(c['created_at']?.toString());
+
+    return GestureDetector(
+      onLongPress: () {
+        if (!_selectMode) {
+          HapticFeedback.mediumImpact();
+          setState(() {
+            _selectMode = true;
+            _selectedIds.add(id);
+          });
+        }
+      },
+      onTap: () {
+        if (_selectMode) {
+          HapticFeedback.selectionClick();
+          setState(() {
+            if (isSelected) {
+              _selectedIds.remove(id);
+              if (_selectedIds.isEmpty) _selectMode = false;
+            } else {
+              _selectedIds.add(id);
+            }
+          });
+        } else {
+          _showDetails(c);
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: isSelected
+              ? Border.all(color: AppColors.primary, width: 2.5)
+              : isPending
+              ? Border.all(
+            color: color.withValues(alpha: 0.4),
+            width: 1.5,
+          )
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+            if (isPending && !isSelected)
+              BoxShadow(
+                color: color.withValues(alpha: 0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            if (isSelected)
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
+              ),
+          ],
+        ),
+        child: Column(
+          children: [
+            if (isPending)
               Container(
-                padding: const EdgeInsets.all(14),
+                height: 4,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withValues(alpha: 0.3),
+                      color,
+                      color.withValues(alpha: 0.3),
+                    ],
+                  ),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(20),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
+              ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  if (_selectMode)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : (isDark
+                                ? Colors.white38
+                                : Colors.grey.shade400),
+                            width: 2,
+                          ),
+                        ),
+                        child: isSelected
+                            ? const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        )
+                            : null,
                       ),
-                      child: Icon(icon, color: Colors.white, size: 16),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        statusText,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
+                  if (priority >= 100 && !_selectMode)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, _) => Transform.scale(
+                          scale: _pulseAnimation.value,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade600,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                  Colors.red.withValues(alpha: 0.5),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.priority_high_rounded,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    Text(
-                      date,
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    complaint['title'] ?? 'بێ ناونیشان',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                      color: Color(0xFF1A1A2E),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.indigo.shade50,
+                      color: color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: color.withValues(alpha: 0.4),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.account_balance_rounded,
-                          color: Colors.indigo,
-                          size: 13,
-                        ),
+                        Icon(icon, color: color, size: 12),
                         const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            authority,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.indigo,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: color,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  if (complaint['description'] != null &&
-                      complaint['description'].toString().isNotEmpty)
-                    Text(
-                      complaint['description'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade700,
-                        height: 1.4,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  const Spacer(),
+                  Text(
+                    timeAgo,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white54 : Colors.grey.shade600,
                     ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => _showComplaintDetails(complaint),
-                          child: Container(
-                            padding:
-                            const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary
-                                  .withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.visibility_rounded,
-                                  color: AppColors.primary,
-                                  size: 16,
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  "وردەکاری",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _deleteComplaint(complaint),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.delete_rounded,
-                            color: Colors.red,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (images.isNotEmpty)
+                    Hero(
+                      tag: 'complaint_img_$id',
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Stack(
+                          children: [
+                            OptimizedNetworkImage(
+                              imageUrl: images.first.toString(),
+                              width: 70,
+                              height: 70,
+                              fit: BoxFit.cover,
+                            ),
+                            if (images.length > 1)
+                              Positioned(
+                                bottom: 4,
+                                left: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                    Colors.black.withValues(alpha: 0.7),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '+${images.length - 1}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            color.withValues(alpha: 0.2),
+                            color.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Icon(icon, color: color, size: 30),
+                    ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          c['title'] ?? 'بێ ناونیشان',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1A1A2E),
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            if (hasVoice)
+                              _buildTag(
+                                'دەنگ',
+                                Icons.mic_rounded,
+                                const Color(0xFF1E88E5),
+                              ),
+                            if (c['responsible_authority'] != null)
+                              _buildTag(
+                                c['responsible_authority'].toString(),
+                                Icons.account_balance_rounded,
+                                Colors.indigo,
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!_selectMode)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF0F0F14)
+                      : const Color(0xFFF8F9FA),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    if (isPending) ...[
+                      Expanded(
+                        child: _buildAction(
+                          icon: Icons.check_circle_rounded,
+                          label: 'پەسەند',
+                          color: const Color(0xFF2ECC71),
+                          onTap: () => _quickUpdate(c, 'in_progress'),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: _buildAction(
+                          icon: Icons.cancel_rounded,
+                          label: 'ڕەتکردنەوە',
+                          color: const Color(0xFFE74C3C),
+                          onTap: () => _quickUpdate(c, 'rejected'),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ] else if (isInProgress) ...[
+                      Expanded(
+                        child: _buildAction(
+                          icon: Icons.check_circle_rounded,
+                          label: 'تەواوکردن',
+                          color: const Color(0xFF3498DB),
+                          onTap: () => _quickUpdate(c, 'completed'),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    _buildIconBtn(
+                      Icons.visibility_rounded,
+                      AppColors.primary,
+                          () => _showDetails(c),
+                    ),
+                    const SizedBox(width: 6),
+                    _buildIconBtn(
+                      Icons.delete_rounded,
+                      Colors.red,
+                      _isDeleting ? null : () => _delete(c),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTag(String label, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 3),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 120),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [color, color.withValues(alpha: 0.8)],
+          ),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
               ),
             ),
           ],
@@ -1035,797 +1453,417 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.15),
-                  AppColors.primary.withValues(alpha: 0.05),
-                ],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.assignment_outlined,
-              size: 70,
-              color: AppColors.primary,
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "هیچ سکاڵایەک نەدۆزرایەوە 📭",
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-              color: Color(0xFF1A1A2E),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "لەم فلتەرەدا هیچ سکاڵایەک نییە",
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// 🎨 دیالۆگی وردەکاری سکاڵا (PUBLIC)
-// ═══════════════════════════════════════════════════════════
-class ComplaintDetailsDialog extends StatelessWidget {
-  final Map<String, dynamic> complaint;
-  final VoidCallback? onStatusChanged;
-
-  const ComplaintDetailsDialog({
-    super.key,
-    required this.complaint,
-    this.onStatusChanged,
-  });
-
-  /// 🖼️ پیشاندانی وێنە بە گەورەی (Full Screen + Zoom)
-  void _showFullScreenImage(
-      BuildContext context,
-      String imageUrl,
-      ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FullScreenImageViewer(
-          imageUrl: imageUrl,
+  Widget _buildIconBtn(IconData icon, Color color, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
+        child: Icon(icon, color: color, size: 16),
       ),
     );
   }
 
-  /// ✅ پەسەندکردن + ناردنی WhatsApp + Notification خۆکار
-  Future<void> _approveAndSend(BuildContext context) async {
-    try {
-      String imageUrl = '';
-      if (complaint['images'] != null) {
-        List imgs = complaint['images'] is List
-            ? complaint['images']
-            : [complaint['images']];
-        if (imgs.isNotEmpty) imageUrl = imgs.first.toString();
-      }
-
-      double? lat = double.tryParse(complaint['latitude']?.toString() ?? '');
-      double? lng = double.tryParse(complaint['longitude']?.toString() ?? '');
-      String mapLink = (lat != null && lng != null)
-          ? 'https://maps.google.com/?q=$lat,$lng'
-          : 'لۆکەیشن بەردەست نییە';
-
-      String message = "📢 *سکاڵای نوێ بۆ جێبەجێکردن*\n\n"
-          "🔹 جۆر: ${complaint['title']}\n"
-          "📝 ڕوونکردنەوە: ${complaint['description']}\n\n"
-          "🖼 وێنەی کێشە: $imageUrl\n\n"
-          "📍 لۆکەیشن: $mapLink";
-
-      final whatsappUrl = Uri.parse(
-        "https://wa.me/?text=${Uri.encodeComponent(message)}",
-      );
-      if (await canLaunchUrl(whatsappUrl)) {
-        await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-      }
-
-      // ✅ گۆڕینی status — Trigger لە Supabase خۆکار Notification دەنێرێت
-      await Supabase.instance.client
-          .from('complaints')
-          .update({'status': 'in_progress'}).eq('id', complaint['id']);
-
-      if (context.mounted) {
-        Navigator.pop(context);
-        onStatusChanged?.call();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "سکاڵا پەسەندکرا ✅ — Notification نێردرا بۆ هاوڵاتی",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  /// ✅ تەواوکردن + Notification خۆکار
-  Future<void> _markCompleted(BuildContext context) async {
-    try {
-      await Supabase.instance.client
-          .from('complaints')
-          .update({'status': 'completed'}).eq('id', complaint['id']);
-
-      if (context.mounted) {
-        Navigator.pop(context);
-        onStatusChanged?.call();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "سکاڵا جێبەجێکرا ✅ — Notification نێردرا",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  /// ❌ ڕەتکردنەوە + Notification خۆکار
-  Future<void> _reject(BuildContext context) async {
-    try {
-      await Supabase.instance.client
-          .from('complaints')
-          .update({'status': 'rejected'}).eq('id', complaint['id']);
-
-      if (context.mounted) {
-        Navigator.pop(context);
-        onStatusChanged?.call();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.cancel_rounded, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "سکاڵا ڕەتکرایەوە ❌ — Notification نێردرا",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final String status = complaint['status'] ?? 'pending';
-    double? lat = double.tryParse(complaint['latitude']?.toString() ?? '');
-    double? lng = double.tryParse(complaint['longitude']?.toString() ?? '');
-
-    List images = [];
-    try {
-      if (complaint['images'] is List) {
-        images = complaint['images'];
-      } else if (complaint['images'] is String) {
-        images = [complaint['images']];
-      }
-    } catch (_) {}
-
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        insetPadding: const EdgeInsets.all(16),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.9,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 🎯 Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E1B2E), Color(0xFF2D2A45)],
-                  ),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.assignment_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        "وردەکاری سکاڵا",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // 📄 ناوەڕۆک
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 🖼️ وێنەکان
-                      if (images.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.photo_library_rounded,
-                              color: AppColors.primary,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              "وێنەکانی کێشە (کلیک بکە بۆ گەورەکردنەوە)",
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          height: 140,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: images.length,
-                            itemBuilder: (ctx, i) => GestureDetector(
-                              onTap: () => _showFullScreenImage(
-                                context,
-                                images[i].toString(),
-                              ),
-                              child: Container(
-                                width: 140,
-                                margin: const EdgeInsets.only(left: 8),
-                                child: Stack(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius:
-                                      BorderRadius.circular(12),
-                                      child: OptimizedNetworkImage(
-                                        imageUrl: images[i].toString(),
-                                        width: 140,
-                                        height: 140,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: Container(
-                                        padding:
-                                        const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.6),
-                                          borderRadius:
-                                          BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          Icons.zoom_in_rounded,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // 🗺️ نەخشە
-                      if (lat != null && lng != null) ...[
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on_rounded,
-                              color: Colors.red,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              "شوێن لەسەر نەخشە",
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          height: 160,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                                color: Colors.grey.shade300),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: gmaps.GoogleMap(
-                              initialCameraPosition: gmaps.CameraPosition(
-                                target: gmaps.LatLng(lat, lng),
-                                zoom: 16,
-                              ),
-                              markers: {
-                                gmaps.Marker(
-                                  markerId: const gmaps.MarkerId('loc'),
-                                  position: gmaps.LatLng(lat, lng),
-                                  icon: gmaps.BitmapDescriptor
-                                      .defaultMarkerWithHue(
-                                    gmaps.BitmapDescriptor.hueRed,
-                                  ),
-                                ),
-                              },
-                              zoomControlsEnabled: false,
-                              scrollGesturesEnabled: false,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // 📋 زانیاری
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildInfoRow(
-                              'جۆری سکاڵا',
-                              complaint['title'] ?? '-',
-                              Icons.category_rounded,
-                              Colors.purple,
-                            ),
-                            const Divider(height: 16),
-                            _buildInfoRow(
-                              'لایەنی پەیوەندیدار',
-                              complaint['responsible_authority'] ?? '-',
-                              Icons.account_balance_rounded,
-                              Colors.indigo,
-                            ),
-                            if (complaint['description'] != null &&
-                                complaint['description']
-                                    .toString()
-                                    .isNotEmpty) ...[
-                              const Divider(height: 16),
-                              _buildInfoRow(
-                                'ڕوونکردنەوە',
-                                complaint['description'],
-                                Icons.description_rounded,
-                                Colors.teal,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 🎯 دوگمەکانی کردار
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    if (status == 'pending') ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2ECC71),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12),
-                              ),
-                              onPressed: () => _approveAndSend(context),
-                              icon: const Icon(Icons.check_rounded,
-                                  size: 18),
-                              label: const Text(
-                                "پەسەندکردن",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12),
-                              ),
-                              onPressed: () => _reject(context),
-                              icon: const Icon(Icons.close_rounded,
-                                  size: 18),
-                              label: const Text(
-                                "ڕەتکردنەوە",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else if (status == 'in_progress' ||
-                        status == 'approved') ...[
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3498DB),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () => _markCompleted(context),
-                          icon: const Icon(
-                              Icons.check_circle_rounded,
-                              size: 18),
-                          label: const Text(
-                            "تەواوکردن و جێبەجێکردن ✅",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ] else if (status == 'completed') ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: Colors.green,
-                              size: 20,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              "ئەم سکاڵایە جێبەجێکراوە ✅",
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else if (status == 'rejected') ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cancel_rounded,
-                              color: Colors.red,
-                              size: 20,
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              "ئەم سکاڵایە ڕەتکراوەتەوە ❌",
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(
-      String label,
-      String value,
-      IconData icon,
-      Color color,
-      ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildEmpty(bool isDark) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 14),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
+        SizedBox(height: MediaQuery.sizeOf(context).height * 0.15),
+        Center(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(30),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.assignment_outlined,
+                  size: 70,
+                  color: isDark ? Colors.white24 : AppColors.primary,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 20),
               Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 13,
+                'هیچ سکاڵایەک نەدۆزرایەوە',
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF1A1A2E),
+                  fontSize: 16,
+                  color: isDark ? Colors.white70 : const Color(0xFF1A1A2E),
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'لەم فلتەر و بەروارەدا هیچ ئەنجامێک نییە',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white38 : Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (_q.isNotEmpty ||
+                  _filterAuthority != null ||
+                  _filterStatuses.isNotEmpty)
+                ElevatedButton.icon(
+                  onPressed: _clearAllFilters,
+                  icon: const Icon(Icons.filter_alt_off_rounded),
+                  label: const Text('سڕینەوەی فلتەرەکان'),
+                ),
             ],
           ),
         ),
       ],
     );
   }
-}
 
-// ═══════════════════════════════════════════════════════════
-// 🖼️ شاشەی بینینی وێنە بە گەورەی (PUBLIC)
-// ═══════════════════════════════════════════════════════════
-class FullScreenImageViewer extends StatefulWidget {
-  final String imageUrl;
-
-  const FullScreenImageViewer({super.key, required this.imageUrl});
-
-  @override
-  State<FullScreenImageViewer> createState() =>
-      _FullScreenImageViewerState();
-}
-
-class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
-  final TransformationController _transformationController =
-  TransformationController();
-  bool _isZoomed = false;
-
-  @override
-  void dispose() {
-    _transformationController.dispose();
-    super.dispose();
-  }
-
-  void _resetZoom() {
-    _transformationController.value = Matrix4.identity();
-    setState(() => _isZoomed = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          "بینینی وێنە",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+  Widget _buildSkeleton(bool isDark) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 6,
+      itemBuilder: (_, i) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        height: 160,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
         ),
-        actions: [
-          if (_isZoomed)
-            IconButton(
-              icon: const Icon(Icons.zoom_out_map_rounded),
-              tooltip: "گەڕاندنەوە بۆ شێوازی ئاسایی",
-              onPressed: _resetZoom,
-            ),
-          IconButton(
-            icon: const Icon(Icons.close_rounded),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-      body: GestureDetector(
-        onDoubleTap: () {
-          if (_isZoomed) {
-            _resetZoom();
-          } else {
-            _transformationController.value = Matrix4.identity()
-              ..scale(2.5);
-            setState(() => _isZoomed = true);
-          }
-        },
-        child: Center(
-          child: InteractiveViewer(
-            transformationController: _transformationController,
-            minScale: 0.5,
-            maxScale: 5.0,
-            panEnabled: true,
-            scaleEnabled: true,
-            child: OptimizedNetworkImage(
-              imageUrl: widget.imageUrl,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(12),
-        color: Colors.black,
-        child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.pinch_rounded,
-                      color: Colors.white70,
-                      size: 14,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      "بە دوو پەنجە گەورە بکە • دوو کلیک بۆ Zoom",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
       ),
     );
   }
+
+  Widget _buildFilterFab(bool isDark) {
+    return FloatingActionButton.extended(
+      onPressed: () => _showFilterSheet(isDark),
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      icon: const Icon(Icons.tune_rounded),
+      label: const Text(
+        'فلتەر',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+
+  Widget _buildBulkActionsFab(bool isDark) {
+    return FloatingActionButton.extended(
+      onPressed: _showBulkActions,
+      backgroundColor: Colors.red.shade600,
+      foregroundColor: Colors.white,
+      icon: const Icon(Icons.delete_sweep_rounded),
+      label: Text(
+        'سڕینەوە (${_selectedIds.length})',
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+
+  void _showFilterSheet(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ComplaintFilterSheet(
+        initialSortBy: _sortBy,
+        initialFromDate: _fromDate,
+        initialToDate: _toDate,
+        initialAuthority: _filterAuthority,
+        initialStatuses: _filterStatuses,
+        onlyWithVoice: _onlyWithVoice,
+        onlyWithImages: _onlyWithImages,
+        complaints: _complaints,
+        onApply: (result) {
+          setState(() {
+            _sortBy = result.sortBy;
+            _fromDate = result.fromDate;
+            _toDate = result.toDate;
+            _filterAuthority = result.authority;
+            _filterStatuses = result.statuses;
+            _onlyWithVoice = result.onlyWithVoice;
+            _onlyWithImages = result.onlyWithImages;
+          });
+          _applyFilters();
+        },
+      ),
+    );
+  }
+
+  void _showSortSheet(bool isDark) {
+    _showFilterSheet(isDark);
+  }
+
+  void _showDetails(Map<String, dynamic> c) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ComplaintDetailsProSheet(
+        complaint: c,
+        onStatusChanged: () => _fetchComplaints(showLoader: false),
+      ),
+    );
+  }
+
+  Future<void> _quickUpdate(
+      Map<String, dynamic> c, String newStatus) async {
+    try {
+      await Supabase.instance.client
+          .from('complaints')
+          .update({'status': newStatus}).eq('id', c['id']);
+
+      if (mounted) {
+        setState(() => c['status'] = newStatus);
+        _applyFilters();
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ گۆڕدرا بۆ: ${_statusText(newStatus)}'),
+            backgroundColor: _color(newStatus),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('هەڵە: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _delete(Map<String, dynamic> c) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red),
+              SizedBox(width: 8),
+              Text('سڕینەوەی سکاڵا'),
+            ],
+          ),
+          content: const Text(
+            'ئایا دڵنیایت؟ هەموو وێنە و دەنگەکانیشی دەسڕدرێنەوە.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('نەخێر'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('بەڵێ، بسڕەوە'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (ok != true) return;
+    setState(() => _isDeleting = true);
+
+    try {
+      // ✅ سڕینەوە لە DB سەرەتا
+      await Supabase.instance.client
+          .from('complaints')
+          .delete()
+          .eq('id', c['id']);
+
+      // ⭐ دوای DB، فایلەکان بسڕەوە
+      try {
+        await StorageService.deleteComplaintFiles(complaint: c);
+      } catch (_) {}
+
+      if (mounted) {
+        setState(() {
+          _hiddenIds.add(c['id'].toString());
+          _complaints.removeWhere(
+                (x) => x['id'].toString() == c['id'].toString(),
+          );
+        });
+        _applyFilters();
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ سکاڵا سڕایەوە'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('هەڵە: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
+  }
+
+  Future<void> _showBulkActions() async {
+    if (_selectedIds.isEmpty) return;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text('سڕینەوەی ${_selectedIds.length} سکاڵا'),
+          content: const Text(
+            'ئایا دڵنیایت لە سڕینەوەی هەموو ئەم سکاڵایانە؟',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('نەخێر'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('بەڵێ'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (ok != true) return;
+
+    try {
+      final ids = _selectedIds.toList();
+
+      // ⭐ ١. کۆکردنەوەی داتای سکاڵاکان بۆ سڕینەوەی فایلەکان
+      final complaintsToDelete = _complaints
+          .where((c) => ids.contains(c['id'].toString()))
+          .toList();
+
+      // ⭐ ٢. سڕینەوە لە DB (بە یەکجار)
+      await Supabase.instance.client
+          .from('complaints')
+          .delete()
+          .inFilter('id', ids);
+
+      // ⭐ ٣. سڕینەوەی فایلەکان (دوای DB)
+      for (final c in complaintsToDelete) {
+        try {
+          await StorageService.deleteComplaintFiles(complaint: c);
+        } catch (_) {}
+      }
+
+      if (mounted) {
+        setState(() {
+          _hiddenIds.addAll(ids);
+          _complaints.removeWhere((c) => ids.contains(c['id'].toString()));
+          _selectMode = false;
+          _selectedIds.clear();
+        });
+        _applyFilters();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ ${ids.length} سکاڵا سڕانەوە'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('هەڵە: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _generatePdf() async {
+    if (_generatingPdf) return;
+    setState(() => _generatingPdf = true);
+    try {
+      if (_filtered.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('هیچ سکاڵایەک نییە'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      await ComplaintsPdfService.generateReport(
+        context: context,
+        complaints: _filtered,
+        fromDate: _fromDate,
+        toDate: _toDate,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generatingPdf = false);
+    }
+  }
+}
+
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  final Color backgroundColor;
+
+  _SliverTabBarDelegate(this.tabBar, this.backgroundColor);
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) {
+    return Container(color: backgroundColor, child: tabBar);
+  }
+
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate old) =>
+      old.tabBar != tabBar || old.backgroundColor != backgroundColor;
 }

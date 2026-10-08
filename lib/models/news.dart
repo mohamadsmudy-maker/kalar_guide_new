@@ -1,6 +1,8 @@
 /// 📰 مۆدێلی هەواڵ
 class News {
-  final dynamic id;
+  // ✅ dynamic → String?
+  final String? id;
+
   final String? storeId;
   final String title;
   final String description;
@@ -21,7 +23,7 @@ class News {
   });
 
   factory News.fromJson(Map<String, dynamic> json) {
-    // وەرگرتنی وێنەکان بە شێوازی پارێزراو
+    // ✅ وەرگرتنی وێنەکان بە شێوازی پارێزراو
     List<String> imgList = [];
     final raw = json['images'] ?? json['img'];
 
@@ -44,18 +46,36 @@ class News {
       }
     }
 
+    // ✅ پارسکردنی id بۆ String?
+    String? parsedId;
+    if (json['id'] != null) {
+      parsedId = json['id'].toString();
+    }
+
+    // ✅ پارسکردنی likes
+    int parsedLikes = 0;
+    if (json['likes'] is int) {
+      parsedLikes = json['likes'];
+    } else if (json['likes'] != null) {
+      parsedLikes = int.tryParse(json['likes'].toString()) ?? 0;
+    }
+
+    // ✅ پارسکردنی views
+    int parsedViews = 0;
+    if (json['views'] is int) {
+      parsedViews = json['views'];
+    } else if (json['views'] != null) {
+      parsedViews = int.tryParse(json['views'].toString()) ?? 0;
+    }
+
     return News(
-      id: json['id'],
+      id: parsedId,
       storeId: json['store_id']?.toString(),
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       images: imgList,
-      likes: json['likes'] is int
-          ? json['likes']
-          : int.tryParse(json['likes']?.toString() ?? '0') ?? 0,
-      views: json['views'] is int
-          ? json['views']
-          : int.tryParse(json['views']?.toString() ?? '0') ?? 0,
+      likes: parsedLikes,
+      views: parsedViews,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -75,10 +95,13 @@ class News {
     };
   }
 
-  /// وێنەی سەرەکی
+  /// ✅ وێنەی سەرەکی
   String? get primaryImage => images.isNotEmpty ? images.first : null;
 
-  /// وەرگرتنی کاتی "چەند لەمەوبەر"
+  /// ✅ ئایا وێنەی هەیە؟
+  bool get hasImage => primaryImage != null && primaryImage!.isNotEmpty;
+
+  /// ✅ وەرگرتنی کاتی "چەند لەمەوبەر"
   String getTimeAgo() {
     if (createdAt == null) return 'کەمێک پێش ئێستا';
 
@@ -95,5 +118,28 @@ class News {
     } else {
       return '${(diff.inDays / 30).floor()} مانگ لەمەوبەر';
     }
+  }
+
+  /// ✅ کۆپی لەگەڵ گۆڕانکاری
+  News copyWith({
+    String? id,
+    String? storeId,
+    String? title,
+    String? description,
+    List<String>? images,
+    int? likes,
+    int? views,
+    DateTime? createdAt,
+  }) {
+    return News(
+      id: id ?? this.id,
+      storeId: storeId ?? this.storeId,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      images: images ?? this.images,
+      likes: likes ?? this.likes,
+      views: views ?? this.views,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }

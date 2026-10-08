@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
-import '../../models/fuel_price_history.dart';
-import '../../models/fuel_station.dart';
 import '../../services/fuel_service.dart';
 
 /// 🏢 شاشەی وردەکاری بەنزینخانە
@@ -17,7 +15,10 @@ class StationDetailsScreen extends StatefulWidget {
 }
 
 class _StationDetailsScreenState extends State<StationDetailsScreen> {
-  FuelStation? _station;
+  // ✅ بە Map کار دەکەین نەک FuelStation
+  Map<String, dynamic>? _station;
+  Map<String, dynamic> _fuelPrices = {};
+  bool _loadingStation = true;
 
   @override
   void initState() {
@@ -26,14 +27,22 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
   }
 
   Future<void> _loadStation() async {
-    final stations = await FuelService.getAllStations();
-    if (mounted) {
-      setState(() {
-        _station = stations.firstWhere(
-              (s) => s.id == widget.stationId,
-          orElse: () => stations.first,
-        );
-      });
+    setState(() => _loadingStation = true);
+    try {
+      final station = await FuelService.getStationPrices(widget.stationId);
+
+      if (mounted) {
+        setState(() {
+          _station = station;
+          _fuelPrices = (station?['fuel_prices'] is Map)
+              ? Map<String, dynamic>.from(station!['fuel_prices'] as Map)
+              : <String, dynamic>{};
+          _loadingStation = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ $e');
+      if (mounted) setState(() => _loadingStation = false);
     }
   }
 
@@ -42,88 +51,118 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lang = context.watch<SettingsProvider>().languageId;
 
-    return Scaffold(
-      backgroundColor:
-      isDark ? const Color(0xFF0F0F14) : const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        title: Text(
-          _station?.getName(lang) ?? 'بەنزینخانە',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor:
+        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF5F6FA),
+        appBar: AppBar(
+          title: Text(
+            _station?['name']?.toString() ?? 'بەنزینخانە',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+          ),
+          backgroundColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          foregroundColor: isDark ? Colors.white : AppColors.primary,
+          elevation: 0,
+          centerTitle: true,
         ),
-        backgroundColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
-        foregroundColor: isDark ? Colors.white : AppColors.primary,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: FutureBuilder<List<FuelPriceHistory>>(
-        future: FuelService.getStationPrices(widget.stationId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            );
-          }
+        body: _loadingStation
+            ? const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        )
+            : _station == null
+            ? const Center(
+          child: Text(
+            'بەنزینخانە نەدۆزرایەوە',
+            style: TextStyle(color: Colors.grey),
+          ),
+        )
+            : ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // 🏢 کارتی بەنزینخانە
+            _buildStationInfoCard(_station!, isDark, lang),
+            const SizedBox(height: 16),
 
-          final prices = snapshot.data ?? [];
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // 🏢 کارتی بەنزینخانە
-              if (_station != null) _buildStationInfoCard(_station!, isDark, lang),
-              const SizedBox(height: 16),
-
-              // 💰 نرخەکانی ئێستا
-              Text(
-                'نرخەکانی ئێستا',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
+            // 💰 نرخەکانی ئێستا
+            Text(
+              'نرخەکانی ئێستا',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
               ),
-              const SizedBox(height: 12),
-              ...prices.map((p) => _buildPriceTile(p, isDark, lang)),
-              const SizedBox(height: 20),
-
-              // 📊 دوگمەی نوێکردنەوەی نرخ
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            ),
+            const SizedBox(height: 12),
+            if (_fuelPrices.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(20),
+                child: Center(
+                  child: Text(
+                    'هیچ نرخێک نییە',
+                    style: TextStyle(color: Colors.grey),
                   ),
                 ),
-                onPressed: () => _showUpdatePriceDialog(isDark),
-                icon: const Icon(Icons.edit_rounded),
-                label: const Text(
-                  'نوێکردنەوەی نرخ',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              )
+            else
+              ..._fuelPrices.entries.map(
+                    (entry) => _buildPriceTile(
+                  entry.key,
+                  (entry.value as num?)?.toDouble() ?? 0,
+                  isDark,
                 ),
               ),
-              const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
-              // 📜 مێژووی نرخەکان
-              Text(
-                'مێژووی نرخەکان',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
+            // 📊 دوگمەی نوێکردنەوەی نرخ
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              const SizedBox(height: 12),
-              _buildHistoryList(isDark),
-            ],
-          );
-        },
+              onPressed: _fuelPrices.isEmpty
+                  ? null
+                  : () => _showUpdatePriceDialog(isDark),
+              icon: const Icon(Icons.edit_rounded),
+              label: const Text(
+                'نوێکردنەوەی نرخ',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 📜 مێژووی نرخەکان
+            Text(
+              'مێژووی نرخەکان',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildHistoryList(isDark),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStationInfoCard(FuelStation station, bool isDark, String lang) {
+  // ═══════════════════════════════════════════════════════════
+  // 🏢 کارتی زانیاری بەنزینخانە
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildStationInfoCard(
+      Map<String, dynamic> station, bool isDark, String lang) {
+    final name = station['name']?.toString() ?? 'بەنزینخانە';
+    final address = station['address']?.toString();
+    final phone = station['phone']?.toString();
+    final isVerified = station['is_verified'] == true;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -164,14 +203,14 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      station.getName(lang),
+                      name,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    if (station.isVerified)
+                    if (isVerified)
                       const Padding(
                         padding: EdgeInsets.only(top: 4),
                         child: Row(
@@ -198,7 +237,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
               ),
             ],
           ),
-          if (station.address != null) ...[
+          if (address != null && address.isNotEmpty) ...[
             const SizedBox(height: 12),
             Row(
               children: [
@@ -210,7 +249,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    station.address!,
+                    address,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
@@ -220,18 +259,15 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
               ],
             ),
           ],
-          if (station.phone != null) ...[
+          if (phone != null && phone.isNotEmpty) ...[
             const SizedBox(height: 8),
             Row(
               children: [
                 const Icon(Icons.phone_rounded, color: Colors.white, size: 16),
                 const SizedBox(width: 6),
                 Text(
-                  station.phone!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                  ),
+                  phone,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
                 ),
               ],
             ),
@@ -241,8 +277,11 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
     );
   }
 
-  Widget _buildPriceTile(FuelPriceHistory price, bool isDark, String lang) {
-    final color = _hexToColor(FuelService.getColorForType(price.fuelType));
+  // ═══════════════════════════════════════════════════════════
+  // 💰 کارتی نرخ
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildPriceTile(String fuelType, double price, bool isDark) {
+    final color = _hexToColor(FuelService.getColorForType(fuelType));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -273,7 +312,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              price.fuelType,
+              FuelService.getNameKu(fuelType),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -282,7 +321,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
             ),
           ),
           Text(
-            '${price.price.toStringAsFixed(0)} د.ع',
+            '${price.toStringAsFixed(0)} د.ع',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w900,
@@ -294,25 +333,46 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📜 مێژوو
+  // ═══════════════════════════════════════════════════════════
   Widget _buildHistoryList(bool isDark) {
-    return FutureBuilder<List<FuelPriceHistory>>(
+    return FutureBuilder<List<Map<String, dynamic>>>(
       future: FuelService.getStationPriceHistory(
         stationId: widget.stationId,
       ),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: Text(
-              'هیچ مێژوویەک نییە',
-              style: TextStyle(color: Colors.grey),
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: CircularProgressIndicator(color: AppColors.primary),
             ),
           );
         }
 
-        final history = snapshot.data!;
+        final history = snapshot.data ?? [];
+
+        if (history.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Text(
+                'هیچ مێژوویەک نییە',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          );
+        }
 
         return Column(
           children: history.take(20).map((item) {
+            final fuelType = item['fuel_type']?.toString() ?? '';
+            final price = (item['new_price'] as num?)?.toDouble() ?? 0;
+            final createdAt = item['created_at'] != null
+                ? DateTime.tryParse(item['created_at'].toString())
+                : null;
+
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
@@ -327,7 +387,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.fuelType,
+                          FuelService.getNameKu(fuelType),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -335,7 +395,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                           ),
                         ),
                         Text(
-                          _formatDate(item.createdAt),
+                          _formatDate(createdAt),
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark ? Colors.white54 : Colors.grey,
@@ -345,7 +405,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                     ),
                   ),
                   Text(
-                    '${item.price.toStringAsFixed(0)} د.ع',
+                    '${price.toStringAsFixed(0)} د.ع',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -361,15 +421,17 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📊 دیالۆگی نوێکردنەوەی نرخ
+  // ═══════════════════════════════════════════════════════════
   Future<void> _showUpdatePriceDialog(bool isDark) async {
-    final prices = await FuelService.getStationPrices(widget.stationId);
+    if (_fuelPrices.isEmpty) return;
 
-    if (prices.isEmpty) return;
-    if (!mounted) return;
-
-    String selectedFuel = prices.first.fuelType;
+    final fuelTypes = _fuelPrices.keys.toList();
+    String selectedFuel = fuelTypes.first;
     final priceCtrl = TextEditingController(
-      text: prices.first.price.toStringAsFixed(0),
+      text: ((_fuelPrices[selectedFuel] as num?)?.toDouble() ?? 0)
+          .toStringAsFixed(0),
     );
 
     final result = await showDialog<bool>(
@@ -396,20 +458,19 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  items: prices.map((p) {
+                  items: fuelTypes.map((type) {
                     return DropdownMenuItem(
-                      value: p.fuelType,
-                      child: Text(p.fuelType),
+                      value: type,
+                      child: Text(FuelService.getNameKu(type)),
                     );
                   }).toList(),
                   onChanged: (v) {
                     if (v != null) {
                       setStateDialog(() {
                         selectedFuel = v;
-                        final p = prices.firstWhere(
-                              (e) => e.fuelType == v,
-                        );
-                        priceCtrl.text = p.price.toStringAsFixed(0);
+                        priceCtrl.text =
+                            ((_fuelPrices[v] as num?)?.toDouble() ?? 0)
+                                .toStringAsFixed(0);
                       });
                     }
                   },
@@ -462,13 +523,15 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
     );
 
     if (result == true && mounted) {
-      setState(() {});
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('نرخ نوێکرایەوە ✅'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      await _loadStation();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('نرخ نوێکرایەوە ✅'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 

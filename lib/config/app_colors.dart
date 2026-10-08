@@ -5,8 +5,8 @@ class AppColors {
   // ═══════════════════════════════════════════════
   // 🎯 ڕەنگە سەرەکییەکان
   // ═══════════════════════════════════════════════
-  static const Color primary = Color(0xFF1E88E5); // شینی سەرەکی
-  static const Color secondary = Color(0xFF6C5CE7); // مۆر
+  static const Color primary = Color(0xFF1E88E5);
+  static const Color secondary = Color(0xFF6C5CE7);
   static const Color background = Color(0xFFF5F6FA);
   static const Color text = Color(0xFF1A1A22);
 
@@ -30,20 +30,21 @@ class AppColors {
 
   // ═══════════════════════════════════════════════
   // 🎨 ڕەنگە نەرمەکان
+  // ✅ با withValues() بەکارهێنراوە (withOpacity deprecated)
   // ═══════════════════════════════════════════════
-  static Color primarySoft = primary.withOpacity(0.10);
-  static Color secondarySoft = secondary.withOpacity(0.10);
-  static Color redSoft = red.withOpacity(0.10);
-  static Color greenSoft = green.withOpacity(0.10);
-  static Color orangeSoft = orange.withOpacity(0.10);
-  static Color purpleSoft = purple.withOpacity(0.10);
+  static Color primarySoft = primary.withValues(alpha: 0.10);
+  static Color secondarySoft = secondary.withValues(alpha: 0.10);
+  static Color redSoft = red.withValues(alpha: 0.10);
+  static Color greenSoft = green.withValues(alpha: 0.10);
+  static Color orangeSoft = orange.withValues(alpha: 0.10);
+  static Color purpleSoft = purple.withValues(alpha: 0.10);
 
   // ═══════════════════════════════════════════════
   // 🔲 سنوور و جیاکەرەوە
   // ═══════════════════════════════════════════════
   static const Color border = Color(0xFFE5E7EB);
   static const Color divider = Color(0xFFF3F4F6);
-  static const Color backgroundGrey = Color(0xFFF5F6FA); // ✅ زیادکرا
+  static const Color backgroundGrey = Color(0xFFF5F6FA);
 
   // ═══════════════════════════════════════════════
   // 🌙 Dark Theme Colors
@@ -57,7 +58,7 @@ class AppColors {
   static const Color darkTextTertiary = Color(0xFF6B6B75);
 
   // ═══════════════════════════════════════════════
-  // 🌈 Gradients (بۆ سلایدەر و کارتەکان)
+  // 🌈 Gradients
   // ═══════════════════════════════════════════════
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
@@ -71,7 +72,6 @@ class AppColors {
     end: Alignment.bottomRight,
   );
 
-  // ✅ ئەم دوو گرادیێنتە زیادکرا بۆ چارەسەری هەڵەکان
   static const LinearGradient complaintGradient = LinearGradient(
     colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
     begin: Alignment.topLeft,
@@ -85,13 +85,12 @@ class AppColors {
   );
 
   // ═══════════════════════════════════════════════
-  // 🏷️ ڕەنگەکانی بەشەکان (Categories)
-  // ✅ ئەم ڕەنگانە زیادکرا بۆ چارەسەری هەڵەکانی home_screen
+  // 🏷️ ڕەنگەکانی بەشەکان
   // ═══════════════════════════════════════════════
-  static const Color catHealth = Color(0xFFEF4444);      // تەندروستی - سوور
-  static const Color catEducation = Color(0xFF1E88E5);   // پەروەردە - شین
-  static const Color catGovernment = Color(0xFF8B5CF6);  // بەڕێوەبەرایەتی - مۆر
-  static const Color catHigherEd = Color(0xFF10B981);    // خوێندنی باڵا - سەوز
-  static const Color catFood = Color(0xFFF59E0B);        // خواردن - نارنجی
-  static const Color catShopping = Color(0xFFEC4899);    // بازاڕگەری - پەمەیی
+  static const Color catHealth = Color(0xFFEF4444);
+  static const Color catEducation = Color(0xFF1E88E5);
+  static const Color catGovernment = Color(0xFF8B5CF6);
+  static const Color catHigherEd = Color(0xFF10B981);
+  static const Color catFood = Color(0xFFF59E0B);
+  static const Color catShopping = Color(0xFFEC4899);
 }

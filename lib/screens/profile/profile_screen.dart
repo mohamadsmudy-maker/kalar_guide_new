@@ -3,6 +3,9 @@ import '../../config/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../auth/auth_screen.dart';
 
+import '../favorites/favorites_screen.dart';
+import '../videos/user_videos.dart';
+
 /// 👤 شاشەی پرۆفایل
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,6 +15,22 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // ✅ Future وەک State Variable
+  late Future<Map<String, dynamic>?> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = AuthSessionManager.fetchUserProfile();
+  }
+
+  // ✅ دووبارە هێنانەوەی پرۆفایل
+  void _refreshProfile() {
+    setState(() {
+      _profileFuture = AuthSessionManager.fetchUserProfile();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -26,10 +45,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: _refreshProfile,
+              tooltip: 'نوێکردنەوە',
+            ),
+          ],
         ),
         body: FutureBuilder<Map<String, dynamic>?>(
-          future: AuthSessionManager.fetchUserProfile(),
+          future: _profileFuture,
           builder: (context, snapshot) {
+            // ✅ پشکنینی Loading
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              );
+            }
+
             final userProfile = snapshot.data;
             final user = AuthSessionManager.currentUser;
 
@@ -68,25 +101,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                   const SizedBox(height: 40),
-                  _buildMenuItem(
-                    icon: Icons.receipt_long_rounded,
-                    title: "داواکارییەکانم",
-                    color: Colors.teal,
-                    onTap: () {},
-                  ),
+
+
                   _buildMenuItem(
                     icon: Icons.favorite_rounded,
                     title: "دڵخوازەکانم",
                     color: Colors.pink,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FavoritesScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuItem(
                     icon: Icons.video_library_rounded,
                     title: "ڤیدیۆ و ڕێنماییەکان",
                     color: Colors.indigo,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const UserVideosScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 30),
+
+                  // ✅ دوگمەی چوونەژوورەوە/دەرچوون
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -102,21 +147,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       onPressed: () async {
                         if (user == null) {
-                          Navigator.push(
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => const AuthScreen(),
                             ),
-                          ).then((_) => setState(() {}));
+                          );
+                          // ✅ دوای چوونەژوورەوە، پرۆفایل نوێ بکەرەوە
+                          _refreshProfile();
                         } else {
                           await AuthSessionManager.clearSession();
                           if (context.mounted) {
-                            setState(() {});
+                            _refreshProfile();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   "بە سەرکەوتوویی چوویتە دەرەوە 👋",
                                 ),
+                                backgroundColor: Colors.green,
                               ),
                             );
                           }
