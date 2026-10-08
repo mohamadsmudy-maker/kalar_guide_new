@@ -1,52 +1,64 @@
-# 🔐 Security — هەرگیز push مەکە
-.env
-.env.local
-.env.production
-android/local.properties
-android/key.properties
-*.jks
-*.keystore
-
-# Firebase (حەساس)
-google-services.json
-GoogleService-Info.plist
-firebase_options.dart
-
 # Flutter/Dart
 .dart_tool/
 .packages
-.pub-cache/
-.pub/
 build/
 .flutter-plugins
 .flutter-plugins-dependencies
+*.iml
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
 
 # IDE
 .idea/
 .vscode/
-*.iml
-*.ipr
 *.iws
 
 # Android
 android/.gradle/
-android/captures/
-android/gradlew
-android/gradlew.bat
+android/local.properties
+android/key.properties
+*.jks
+*.keystore
+app-release.apk
+app-debug.apk
+*.apk
+*.aab
 
 # iOS
 ios/Pods/
 ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
 
-# macOS / Windows
+# macOS
+macos/Flutter/ephemeral/
+
+# Windows
+windows/flutter/ephemeral/
+
+# Linux
+linux/flutter/ephemeral/
+
+# Coverage
+coverage/
+
+# OS
 .DS_Store
 Thumbs.db
 
-# Testing
-coverage/
+# Secrets
+.env
+*.env
+secrets.json
+google-services.json
+GoogleService-Info.plist
 
-# Node
-node_modules/
-# Supabase Local Cache
-supabase/.temp/
-supabase/.branches/
+# Local config
+local.properties
+
+# Logs
+*.log
