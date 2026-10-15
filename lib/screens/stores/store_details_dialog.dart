@@ -8,7 +8,7 @@ import '../../services/auth_service.dart';
 import '../../services/store_service_service.dart';
 import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
-import 'store_products_screen.dart';
+import 'store_news_screen.dart';
 import 'store_services_screen.dart';
 
 /// 🏪 دیالۆگی وردەکاری شوێن
@@ -789,7 +789,7 @@ class _StoreDetailsDialogContentState
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
-                                    StoreProductsScreen(store: store),
+                                    StoreNewsScreen(store: store),
                               ),
                             );
                           },

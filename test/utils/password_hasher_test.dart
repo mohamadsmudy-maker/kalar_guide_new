@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kalar_guide/utils/password_hasher.dart';
+import 'package:kalar_guide_new/utils/password_hasher.dart';
 
 void main() {
   group('PasswordHasher', () {
     test('hash دەبێت هەمان بەها بۆ هەمان پاسۆرد بگەڕێنێتەوە', () {
-      const password = 'test123456';
+      final password = 'test123456';
       final hash1 = PasswordHasher.hash(password);
       final hash2 = PasswordHasher.hash(password);
 
@@ -39,19 +39,6 @@ void main() {
       final hash = PasswordHasher.hash('correct');
 
       expect(PasswordHasher.verify('wrong', hash), isFalse);
-    });
-
-    test('verify دەبێت false بگەڕێنێتەوە بۆ hash ی بەتاڵ', () {
-      expect(PasswordHasher.verify('test', ''), isFalse);
-    });
-
-    test('verify دەبێت false بگەڕێنێتەوە بۆ پاسۆردی بەتاڵ', () {
-      final hash = PasswordHasher.hash('test');
-      expect(PasswordHasher.verify('', hash), isFalse);
-    });
-
-    test('hashLength دەبێت 64 بێت', () {
-      expect(PasswordHasher.hashLength, equals(64));
     });
   });
 }

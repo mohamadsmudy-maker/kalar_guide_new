@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kalar_guide/models/news.dart';
+import 'package:kalar_guide_new/models/news.dart';
 
 
 void main() {

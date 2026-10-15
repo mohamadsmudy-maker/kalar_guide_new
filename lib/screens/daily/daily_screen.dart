@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart' as intl;
-import '../emergency/emergency_screen.dart';
 
+import '../emergency/emergency_main_screen.dart';
+import '../departments/departments_screen.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../services/auth_service.dart';
@@ -15,10 +17,9 @@ import '../videos/user_videos.dart';
 import '../fuel/fuel_types_screen.dart';
 import '../currency/currency_rates_screen.dart';
 
-/// ⚡ شاشەی ڕۆژانە — ULTRA PRO EDITION
+/// ⚡ شاشەی ڕۆژانە — ULTRA PRO V3
 class DailyScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
-
   const DailyScreen({super.key, this.onMenuTap});
 
   @override
@@ -27,9 +28,6 @@ class DailyScreen extends StatefulWidget {
 
 class _DailyScreenState extends State<DailyScreen>
     with TickerProviderStateMixin {
-  // ═══════════════════════════════════════════════════════════
-  // 📊 State
-  // ═══════════════════════════════════════════════════════════
   late Timer _clockTimer;
   DateTime _now = DateTime.now();
 
@@ -42,19 +40,14 @@ class _DailyScreenState extends State<DailyScreen>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _pulseAnimation;
 
-  // ═══════════════════════════════════════════════════════════
-  // 🚀 Lifecycle
-  // ═══════════════════════════════════════════════════════════
   @override
   void initState() {
     super.initState();
 
-    // ⏰ کاتژمێری زیندوو
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _now = DateTime.now());
     });
 
-    // ✨ ئەنیمەیشنەکان
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -80,9 +73,9 @@ class _DailyScreenState extends State<DailyScreen>
 
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 2200),
     )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+    _pulseAnimation = Tween<double>(begin: 0.96, end: 1.04).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
@@ -105,9 +98,6 @@ class _DailyScreenState extends State<DailyScreen>
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Build
-  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -117,17 +107,18 @@ class _DailyScreenState extends State<DailyScreen>
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
+        isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
             _buildUltraAppBar(isDark, lang),
             _buildWeatherSection(isDark),
+            _buildQuickInfoRow(isDark),
             _buildServicesHeader(isDark),
-            _buildServicesGrid(isDark, lang),
-            _buildStatsSection(isDark, lang),
+            _buildServicesGrid(isDark),
+            _buildDepartmentsSection(isDark),   // ⭐ نوێ
             _buildVideoCard(isDark),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
       ),
@@ -135,38 +126,53 @@ class _DailyScreenState extends State<DailyScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎯 ULTRA AppBar — بە کاتژمێری زیندوو و ئاماری ڕۆژ
+  // 🎯 ULTRA AppBar
   // ═══════════════════════════════════════════════════════════
   Widget _buildUltraAppBar(bool isDark, String lang) {
     return SliverAppBar(
       floating: true,
       pinned: true,
-      expandedHeight: 180,
-      backgroundColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
+      expandedHeight: 100,
+      backgroundColor: isDark ? const Color(0xFF0A0A0F) : Colors.white,
       elevation: 0,
-      scrolledUnderElevation: 0.5,
-      leading: IconButton(
-        icon: Icon(
-          Icons.menu_rounded,
-          color: isDark ? Colors.white : AppColors.primary,
+      scrolledUnderElevation: 0,
+      leading: widget.onMenuTap != null
+          ? IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF6C5CE7).withValues(alpha: 0.15),
+                const Color(0xFFE91E63).withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            Icons.menu_rounded,
+            color: isDark ? Colors.white : const Color(0xFF6C5CE7),
+            size: 20,
+          ),
         ),
-        onPressed: () => widget.onMenuTap?.call(),
-      ),
+        onPressed: widget.onMenuTap,
+      )
+          : null,
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(7),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
               ),
-              borderRadius: BorderRadius.circular(11),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF6C5CE7).withValues(alpha: 0.4),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -176,20 +182,19 @@ class _DailyScreenState extends State<DailyScreen>
               size: 18,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Text(
             'ڕۆژانە',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : AppColors.primary,
+              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
               letterSpacing: 0.3,
             ),
           ),
         ],
       ),
       actions: [
-        // 🔔 ئاگاداری
         AnimatedBuilder(
           animation: _pulseAnimation,
           builder: (context, child) {
@@ -202,16 +207,23 @@ class _DailyScreenState extends State<DailyScreen>
                     Icon(
                       Icons.notifications_none_rounded,
                       color: isDark ? Colors.white : AppColors.primary,
+                      size: 26,
                     ),
                     Positioned(
                       top: -2,
                       right: -2,
                       child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
                           color: Colors.red,
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withValues(alpha: 0.6),
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -222,50 +234,61 @@ class _DailyScreenState extends State<DailyScreen>
             );
           },
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
       ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [const Color(0xFF1A1A22), const Color(0xFF252530)]
-                  : [Colors.white, const Color(0xFF6C5CE7).withValues(alpha: 0.08)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 70, 16, 12),
-              child: Row(
-                children: [
-                  // ⏰ کارتی کاتژمێر
-                  Expanded(
-                    child: _buildInfoCard(
-                      icon: Icons.access_time_filled_rounded,
-                      iconColor: const Color(0xFF6C5CE7),
-                      title: 'کاتی ئێستا',
-                      value: intl.DateFormat('HH:mm').format(_now),
-                      subtitle: intl.DateFormat('EEEE').format(_now),
-                      isDark: isDark,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
+    );
+  }
 
-                  // 👤 کارتی بەکارهێنەر
-                  Expanded(
-                    child: _buildInfoCard(
-                      icon: Icons.person_rounded,
-                      iconColor: const Color(0xFFE91E63),
-                      title: 'بەکارهێنەر',
-                      value: _getRoleLabel(),
-                      subtitle: _getUserName(),
-                      isDark: isDark,
-                    ),
+  // ═══════════════════════════════════════════════════════════
+  // 🌤️ Weather
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildWeatherSection(bool isDark) {
+    return SliverToBoxAdapter(
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: WeatherWidget(),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ⚡ Quick Info Row (Time + User)
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildQuickInfoRow(bool isDark) {
+    return SliverToBoxAdapter(
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildQuickCard(
+                    icon: Icons.access_time_filled_rounded,
+                    iconColor: const Color(0xFF6C5CE7),
+                    title: 'کاتی ئێستا',
+                    value: intl.DateFormat('HH:mm').format(_now),
+                    subtitle: intl.DateFormat('EEEE').format(_now),
+                    isDark: isDark,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildQuickCard(
+                    icon: Icons.person_rounded,
+                    iconColor: const Color(0xFFE91E63),
+                    title: 'بەکارهێنەر',
+                    value: _getRoleLabel(),
+                    subtitle: _getUserName(),
+                    isDark: isDark,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -273,10 +296,7 @@ class _DailyScreenState extends State<DailyScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📇 Info Card (بۆ AppBar)
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildInfoCard({
+  Widget _buildQuickCard({
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -285,33 +305,62 @@ class _DailyScreenState extends State<DailyScreen>
     required bool isDark,
   }) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F0F14) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1A1A22), const Color(0xFF1F1F2A)]
+              : [Colors.white, const Color(0xFFFAFBFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: iconColor.withValues(alpha: 0.2),
-          width: 1.2,
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: iconColor.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: iconColor.withValues(alpha: 0.15),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -8,
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(7),
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(9),
+              gradient: LinearGradient(
+                colors: [
+                  iconColor,
+                  Color.lerp(iconColor, Colors.white, 0.3)!,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: iconColor.withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                  spreadRadius: -2,
+                ),
+              ],
             ),
-            child: Icon(icon, color: iconColor, size: 16),
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,15 +369,17 @@ class _DailyScreenState extends State<DailyScreen>
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white54 : Colors.grey.shade600,
+                    letterSpacing: 0.3,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w900,
                     color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                     height: 1.1,
@@ -336,11 +387,12 @@ class _DailyScreenState extends State<DailyScreen>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     color: iconColor,
                   ),
                   maxLines: 1,
@@ -355,22 +407,7 @@ class _DailyScreenState extends State<DailyScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🌤️ Weather Section
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildWeatherSection(bool isDark) {
-    return SliverToBoxAdapter(
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: const WeatherWidget(),
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 📝 Section Header
+  // 📝 Services Header
   // ═══════════════════════════════════════════════════════════
   Widget _buildServicesHeader(bool isDark) {
     return SliverToBoxAdapter(
@@ -383,7 +420,7 @@ class _DailyScreenState extends State<DailyScreen>
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(9),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -391,7 +428,7 @@ class _DailyScreenState extends State<DailyScreen>
                         AppColors.primary.withValues(alpha: 0.05),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: AppColors.primary.withValues(alpha: 0.25),
                       width: 1.2,
@@ -399,11 +436,11 @@ class _DailyScreenState extends State<DailyScreen>
                   ),
                   child: const Icon(
                     Icons.apps_rounded,
-                    size: 18,
+                    size: 20,
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,7 +449,7 @@ class _DailyScreenState extends State<DailyScreen>
                       Text(
                         'خزمەتگوزارییەکان',
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 18,
                           fontWeight: FontWeight.w900,
                           color: isDark
                               ? Colors.white
@@ -422,9 +459,9 @@ class _DailyScreenState extends State<DailyScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '٤ خزمەتگوزاری بۆ ڕۆژانەت',
+                        '٥ خزمەتگوزاری بۆ ڕۆژانەت',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: isDark
                               ? Colors.white54
@@ -443,9 +480,9 @@ class _DailyScreenState extends State<DailyScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎨 Services Grid — Ultra Pro
+  // 🎨 Services Grid — ULTRA
   // ═══════════════════════════════════════════════════════════
-  Widget _buildServicesGrid(bool isDark, String lang) {
+  Widget _buildServicesGrid(bool isDark) {
     return SliverToBoxAdapter(
       child: SlideTransition(
         position: _slideAnimation,
@@ -459,7 +496,7 @@ class _DailyScreenState extends State<DailyScreen>
               mainAxisSpacing: 12,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.0,
+              childAspectRatio: 0.95,
               children: [
                 _buildUltraServiceCard(
                   title: 'کاتەکانی نوێژ',
@@ -534,9 +571,6 @@ class _DailyScreenState extends State<DailyScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎴 ULTRA Service Card — بە Shimmer Effect
-  // ═══════════════════════════════════════════════════════════
   Widget _buildUltraServiceCard({
     required String title,
     required String subtitle,
@@ -548,416 +582,224 @@ class _DailyScreenState extends State<DailyScreen>
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: color.withValues(alpha: 0.25),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: isDark ? 0.18 : 0.15),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-                spreadRadius: -3,
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF1A1A22), const Color(0xFF1F1F2A)]
+                      : [Colors.white, const Color(0xFFFAFBFF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: color.withValues(alpha: 0.25),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black
+                        .withValues(alpha: isDark ? 0.35 : 0.06),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                    spreadRadius: -6,
+                  ),
+                  BoxShadow(
+                    color: color.withValues(alpha: isDark ? 0.25 : 0.15),
+                    blurRadius: 28,
+                    offset: const Offset(0, 12),
+                    spreadRadius: -10,
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // ✨ Shimmer Effect (Top)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: AnimatedBuilder(
-                    animation: _shimmerController,
-                    builder: (context, child) {
-                      return Container(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
                           gradient: LinearGradient(
-                            begin: Alignment(-1.0 + _shimmerController.value * 2, -1.0),
-                            end: Alignment(1.0 + _shimmerController.value * 2, 1.0),
                             colors: [
-                              Colors.transparent,
-                              color.withValues(alpha: 0.08),
-                              Colors.transparent,
+                              color,
+                              Color.lerp(color, Colors.white, 0.3)!,
                             ],
-                            stops: const [0.0, 0.5, 1.0],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.45),
+                              blurRadius: 14,
+                              offset: const Offset(0, 6),
+                              spreadRadius: -2,
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              // ✨ Decorative circle (top-right)
-              Positioned(
-                top: -25,
-                right: -25,
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        color.withValues(alpha: 0.18),
-                        color.withValues(alpha: 0.0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // ✨ Decorative circle (bottom-left)
-              Positioned(
-                bottom: -30,
-                left: -30,
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: color.withValues(alpha: 0.06),
-                  ),
-                ),
-              ),
-
-              // 🎯 Content
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Icon + Badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(11),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                color,
-                                Color.lerp(color, Colors.white, 0.2)!,
+                        child: Icon(icon, color: Colors.white, size: 24),
+                      ),
+                      AnimatedBuilder(
+                        animation: _pulseAnimation,
+                        builder: (context, _) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: color.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: color.withValues(
+                                          alpha: _pulseAnimation.value * 0.8,
+                                        ),
+                                        blurRadius: 6,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'زیندوو',
+                                  style: TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w900,
+                                    color: color,
+                                  ),
+                                ),
                               ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: color.withValues(alpha: 0.5),
-                                blurRadius: 14,
-                                offset: const Offset(0, 5),
-                                spreadRadius: -2,
-                              ),
-                            ],
-                          ),
-                          child: Icon(icon, color: Colors.white, size: 22),
-                        ),
-                        // 🔴 Badge ی زیندوو
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: color.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 5,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                'زیندوو',
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w900,
-                                  color: color,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: isDark
+                          ? Colors.white
+                          : const Color(0xFF1A1A2E),
+                      height: 1.2,
                     ),
-
-                    const Spacer(),
-
-                    // Text
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? Colors.white54
+                          : Colors.grey.shade600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1A1A2E),
-                            height: 1.2,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
+                          'بینین',
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? Colors.white54
-                                : Colors.grey.shade600,
+                            fontWeight: FontWeight.w900,
+                            color: color,
+                            letterSpacing: 0.3,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 6),
-                        // ➡️ دوگمە
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'بینین',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w900,
-                                      color: color,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Icon(
-                                    Icons.arrow_back_ios_rounded,
-                                    size: 8,
-                                    color: color,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: 3),
+                        Icon(
+                          Icons.arrow_back_ios_rounded,
+                          size: 8,
+                          color: color,
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _shimmerController,
+                  builder: (context, _) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: LinearGradient(
+                          begin: Alignment(
+                            -1.0 + _shimmerController.value * 3,
+                            -1.0,
+                          ),
+                          end: Alignment(
+                            1.0 + _shimmerController.value * 3,
+                            1.0,
+                          ),
+                          colors: [
+                            Colors.transparent,
+                            color.withValues(alpha: 0.05),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.5, 1.0],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📊 Stats Section — ئاماری ڕۆژانە
+  // 🏛️ مامەڵەی فەرمانگەکان — نوێ
   // ═══════════════════════════════════════════════════════════
-  Widget _buildStatsSection(bool isDark, String lang) {
-    // ✅ وەرگرتنی بەرواری هیجری
-    final hijri = HijriCalendar.fromDate(_now);
-    final hijriString =
-        '${hijri.hYear}/${hijri.hMonth}/${hijri.hDay}';
-
-    return SliverToBoxAdapter(
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(9),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFFF39C12).withValues(alpha: 0.2),
-                            const Color(0xFFF39C12).withValues(alpha: 0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFF39C12).withValues(alpha: 0.25),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.event_rounded,
-                        size: 18,
-                        color: Color(0xFFF39C12),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'ئاماری ڕۆژانە',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.calendar_today_rounded,
-                        label: 'ڕۆژی ئەمڕۆ',
-                        value: intl.DateFormat('dd').format(_now),
-                        subValue: intl.DateFormat('MMM').format(_now),
-                        color: const Color(0xFF1E88E5),
-                        isDark: isDark,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.brightness_2_rounded,
-                        label: 'مانگی هیجری',
-                        value: '${hijri.hMonth}',
-                        subValue: '${hijri.hYear} هـ',
-                        color: const Color(0xFF8B5CF6),
-                        isDark: isDark,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.today_rounded,
-                        label: 'ڕۆژی هەفتە',
-                        value: intl.DateFormat('EEEE').format(_now).substring(0, 3),
-                        subValue: 'هەفتە',
-                        color: const Color(0xFF10B981),
-                        isDark: isDark,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required String subValue,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.25),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Icon(icon, color: color, size: 14),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: color,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subValue,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white54 : Colors.grey.shade600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 1),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 8,
-              fontWeight: FontWeight.w500,
-              color: isDark ? Colors.white38 : Colors.grey.shade500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🎬 ULTRA Video Card
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildVideoCard(bool isDark) {
+  Widget _buildDepartmentsSection(bool isDark) {
     return SliverToBoxAdapter(
       child: SlideTransition(
         position: _slideAnimation,
@@ -968,34 +810,39 @@ class _DailyScreenState extends State<DailyScreen>
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const UserVideosScreen(),
-                  ),
-                ),
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DepartmentsScreen(),
+                    ),
+                  );
+                },
                 borderRadius: BorderRadius.circular(24),
                 child: Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                      colors: [Color(0xFF10B981), Color(0xFF059669)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFE91E63).withValues(alpha: 0.4),
+                        color:
+                        const Color(0xFF10B981).withValues(alpha: 0.45),
                         blurRadius: 24,
-                        offset: const Offset(0, 10),
+                        offset: const Offset(0, 12),
                         spreadRadius: -4,
                       ),
                       BoxShadow(
-                        color: const Color(0xFF9C27B0).withValues(alpha: 0.2),
-                        blurRadius: 32,
-                        offset: const Offset(0, 16),
-                        spreadRadius: -8,
+                        color:
+                        const Color(0xFF10B981).withValues(alpha: 0.25),
+                        blurRadius: 40,
+                        offset: const Offset(0, 20),
+                        spreadRadius: -10,
                       ),
                     ],
                   ),
@@ -1003,11 +850,11 @@ class _DailyScreenState extends State<DailyScreen>
                     clipBehavior: Clip.none,
                     children: [
                       Positioned(
-                        top: -35,
-                        right: -35,
+                        top: -40,
+                        right: -40,
                         child: Container(
-                          width: 120,
-                          height: 120,
+                          width: 140,
+                          height: 140,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.white.withValues(alpha: 0.08),
@@ -1018,8 +865,8 @@ class _DailyScreenState extends State<DailyScreen>
                         bottom: -30,
                         left: -30,
                         child: Container(
-                          width: 90,
-                          height: 90,
+                          width: 100,
+                          height: 100,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Colors.white.withValues(alpha: 0.06),
@@ -1034,17 +881,190 @@ class _DailyScreenState extends State<DailyScreen>
                               return Transform.scale(
                                 scale: _pulseAnimation.value,
                                 child: Container(
-                                  padding: const EdgeInsets.all(14),
+                                  width: 60,
+                                  height: 60,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.25),
+                                    color:
+                                    Colors.white.withValues(alpha: 0.25),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.4),
+                                      color: Colors.white
+                                          .withValues(alpha: 0.4),
                                       width: 2,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.white.withValues(alpha: 0.3),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.3),
+                                        blurRadius: 20,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.business_rounded,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '🏛️ مامەڵەی فەرمانگەکان',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 17,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'هاتووچۆ • پاسپۆرت • شارەوانی • ...',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎬 Video Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildVideoCard(bool isDark) {
+    return SliverToBoxAdapter(
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const UserVideosScreen(),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                        const Color(0xFFE91E63).withValues(alpha: 0.45),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                        spreadRadius: -4,
+                      ),
+                      BoxShadow(
+                        color:
+                        const Color(0xFF9C27B0).withValues(alpha: 0.3),
+                        blurRadius: 40,
+                        offset: const Offset(0, 20),
+                        spreadRadius: -10,
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        top: -40,
+                        right: -40,
+                        child: Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.08),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -30,
+                        left: -30,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.06),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          AnimatedBuilder(
+                            animation: _pulseAnimation,
+                            builder: (context, child) {
+                              return Transform.scale(
+                                scale: _pulseAnimation.value,
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color:
+                                    Colors.white.withValues(alpha: 0.25),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white
+                                          .withValues(alpha: 0.4),
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.3),
                                         blurRadius: 20,
                                         spreadRadius: 2,
                                       ),
@@ -1053,7 +1073,7 @@ class _DailyScreenState extends State<DailyScreen>
                                   child: const Icon(
                                     Icons.play_arrow_rounded,
                                     color: Colors.white,
-                                    size: 30,
+                                    size: 32,
                                   ),
                                 ),
                               );
@@ -1070,15 +1090,8 @@ class _DailyScreenState extends State<DailyScreen>
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 16,
+                                    fontSize: 17,
                                     letterSpacing: 0.3,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black26,
-                                        blurRadius: 6,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
                                   ),
                                 ),
                                 SizedBox(height: 4),
@@ -1086,7 +1099,7 @@ class _DailyScreenState extends State<DailyScreen>
                                   'بینینی ڕێنماییە ڤیدیۆییەکان',
                                   style: TextStyle(
                                     color: Colors.white70,
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1094,7 +1107,7 @@ class _DailyScreenState extends State<DailyScreen>
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.all(9),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,

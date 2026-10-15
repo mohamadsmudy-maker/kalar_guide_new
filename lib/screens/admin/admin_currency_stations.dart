@@ -73,7 +73,7 @@ class _AdminCurrencyStationsScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lang = context.watch<SettingsProvider>().languageId;
+
     final role = AuthSessionManager.userRole;
     final isVendor = role == 'vendor';
 

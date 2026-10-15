@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../config/app_colors.dart';
+
 
 /// 📋 شاشەی ڕێنمایی مامەڵە فەرمانگەکان
 class InstructionsScreen extends StatelessWidget {

@@ -1,20 +1,15 @@
-import 'dart:convert';
-
-import 'package:crypto/crypto.dart';
+// lib/services/auth_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/app_logger.dart';
 import '../utils/password_hasher.dart';
+import 'notification_service.dart';
 import 'rate_limiter.dart';
 
-/// 🔐 بەڕێوەبردنی دانیشتن و ئەکاونتی بەکارهێنەر — PRO EDITION v4
-/// ✅ Security fixes: Plaintext (Debug only) + Rate Limiting + Auto-upgrade
+/// 🔐 بەڕێوەبردنی دانیشتن و ئەکاونتی بەکارهێنەر
 class AuthSessionManager {
-  // ═══════════════════════════════════════════════════════════
-  // 📊 State
-  // ═══════════════════════════════════════════════════════════
   static String? _cachedPhone;
   static bool _isInitialized = false;
 
@@ -25,11 +20,9 @@ class AuthSessionManager {
   static String? _userName;
   static dynamic _currentId;
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔍 Getters
-  // ═══════════════════════════════════════════════════════════
-  static bool get isInitialized => _isInitialized;
+  static const Duration _supabaseTimeout = Duration(seconds: 5);
 
+  static bool get isInitialized => _isInitialized;
   static String get userRole => _userRole;
   static String? get userName => _userName;
   static dynamic get currentId => _currentId;
@@ -38,8 +31,6 @@ class AuthSessionManager {
   static bool get isVendor => _userRole == 'vendor' || isAdmin;
   static bool get isCustomer => _userRole == 'customer';
   static bool get isLoggedIn => _cachedPhone != null || _currentId != null;
-
-  /// ✅ ڕێگەدان بە دەستکاریکردنی نرخ
   static bool get canEditPrices => isAdmin || isVendor;
 
   static Map<String, dynamic>? get currentUser {
@@ -54,55 +45,11 @@ class AuthSessionManager {
 
   static Map<String, dynamic>? get cachedProfile => userNotifier.value;
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔐 پشکنینی پاسۆرد — ✅ Security Fix
-  // ═══════════════════════════════════════════════════════════
   static bool verifyPassword(String inputPassword, String storedPassword) {
     if (storedPassword.isEmpty || inputPassword.isEmpty) return false;
-
-    // ═══════════════════════════════════════════════════════════
-    // 🔓 Plaintext Match — ⚠️ تەنها لە Debug Mode کار دەکات
-    // ═══════════════════════════════════════════════════════════
-    // ⚠️ لە Release دا ئەم کۆدە ناکارا دەبێت — پاراستن لە Backdoor
-    // ⚠️ پاسۆردی ڕووت لە داتابەیس نابێت هەبێت
-    if (kDebugMode && storedPassword == inputPassword) {
-      AppLogger.w('⚠️ Plaintext password found in DB! Upgrade needed');
-      return true;
-    }
-
-    // ⭐ ١. SHA-256 + Salt (نوێترین)
-    try {
-      final sha256Hash = PasswordHasher.hash(inputPassword);
-      if (storedPassword == sha256Hash) {
-        AppLogger.d('🔐 SHA-256 + Salt match');
-        return true;
-      }
-    } catch (e) {
-      AppLogger.w('SHA-256 error: $e');
-    }
-
-    // ⭐ ٢. Legacy SHA-256 (بەبێ Salt)
-    try {
-      final legacyHash = _legacySha256(inputPassword);
-      if (storedPassword == legacyHash) {
-        AppLogger.d('🔐 Legacy SHA-256 match');
-        return true;
-      }
-    } catch (_) {}
-
-    AppLogger.w('❌ No password match found');
-    return false;
+    return PasswordHasher.verify(inputPassword, storedPassword);
   }
 
-  static String _legacySha256(String password) {
-    final bytes = utf8.encode(password);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🔄 نوێکردنەوەی پاسۆردی کۆن بۆ SHA-256 + Salt
-  // ═══════════════════════════════════════════════════════════
   static Future<void> _upgradePasswordIfNeeded({
     required String userId,
     required String plainPassword,
@@ -110,38 +57,51 @@ class AuthSessionManager {
     String tableName = 'app_users',
   }) async {
     try {
-      final currentHash = PasswordHasher.hash(plainPassword);
-      if (storedPassword == currentHash) {
-        AppLogger.d('✅ Password already upgraded');
+      if (!PasswordHasher.needsUpgrade(storedPassword)) {
+        AppLogger.d('✅ Password already bcrypt');
         return;
       }
 
-      await Supabase.instance.client
-          .from(tableName)
-          .update({'password': currentHash})
-          .eq('id', userId);
+      AppLogger.i('🔄 Upgrading password');
+      final newHash = await PasswordHasher.hash(plainPassword);
 
-      AppLogger.i('🔄 Password upgraded to SHA-256 + Salt');
+      if (tableName == 'app_users') {
+        await Supabase.instance.client.rpc(
+          'upgrade_user_password',
+          params: {
+            'user_id_param': userId,
+            'new_hash_param': newHash,
+          },
+        ).timeout(_supabaseTimeout);
+      } else if (tableName == 'dukan') {
+        await Supabase.instance.client.rpc(
+          'upgrade_dukan_password',
+          params: {
+            'dukan_id_param': userId,
+            'new_hash_param': newHash,
+          },
+        ).timeout(_supabaseTimeout);
+      }
+
+      AppLogger.i('✅ Password upgraded');
     } catch (e) {
-      AppLogger.w('⚠️ Upgrade password error: $e');
+      AppLogger.w('⚠️ Upgrade error: $e');
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🚀 initSession
-  // ═══════════════════════════════════════════════════════════
   static Future<void> initSession() async {
     try {
-      AppLogger.i('🔐 initSession: دەستیپێکرد');
+      AppLogger.i('🔐 initSession');
 
       final prefs = await SharedPreferences.getInstance();
       _cachedPhone = prefs.getString('logged_phone');
 
       if (_cachedPhone != null && _cachedPhone!.isNotEmpty) {
-        AppLogger.i('🔐 initSession: بەکارهێنەر دۆزرایەوە');
-        await fetchUserProfile();
+        await fetchUserProfile().timeout(
+          _supabaseTimeout,
+          onTimeout: () => null,
+        );
       } else {
-        AppLogger.i('🔐 initSession: هیچ بەکارهێنەرێک نەدۆزرایەوە');
         _userRole = 'customer';
         userNotifier.value = null;
       }
@@ -149,12 +109,11 @@ class AuthSessionManager {
       AppLogger.e('⚠️ initSession error', e, st);
     } finally {
       _isInitialized = true;
-      AppLogger.i('✅ AuthSessionManager initialized');
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📥 fetchUserProfile
+  // 📥 fetchUserProfile — بە RPC
   // ═══════════════════════════════════════════════════════════
   static Future<Map<String, dynamic>?> fetchUserProfile() async {
     try {
@@ -168,21 +127,22 @@ class AuthSessionManager {
       }
 
       final res = await Supabase.instance.client
-          .from('app_users')
-          .select('id, name, phone, role, is_approved, created_at')
-          .eq('phone', phone)
-          .maybeSingle();
+          .rpc('get_user_for_login', params: {'phone_param': phone})
+          .timeout(_supabaseTimeout);
 
-      if (res != null) {
-        _userRole = res['role']?.toString() ?? 'customer';
-        _userName = res['name']?.toString();
-        _currentId = res['id']?.toString();
-        userNotifier.value = res;
+      if (res is List && res.isNotEmpty) {
+        final userData = Map<String, dynamic>.from(res.first);
 
-        AppLogger.i('✅ fetchUserProfile: ${_userName ?? "?"} ($_userRole)');
-        return res;
+        _userRole = userData['role']?.toString() ?? 'customer';
+        _userName = userData['name']?.toString();
+        _currentId = userData['id']?.toString();
+        userNotifier.value = userData;
+
+        AppLogger.i('✅ fetchUserProfile: $_userName ($_userRole)');
+        return userData;
       } else {
-        await _clearLocalSession();
+        _userRole = 'customer';
+        userNotifier.value = null;
         return null;
       }
     } catch (e, st) {
@@ -193,7 +153,7 @@ class AuthSessionManager {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🔑 login — ✅ بە Rate Limiting
+  // 🔑 login — بە RPC
   // ═══════════════════════════════════════════════════════════
   static Future<Map<String, dynamic>?> login({
     required String phone,
@@ -202,43 +162,44 @@ class AuthSessionManager {
     try {
       AppLogger.i('🔑 Login attempt: $phone');
 
-      // ═══════════════════════════════════════════════════════
-      // 🚦 Rate Limiting — پشکنینی بلۆک
-      // ═══════════════════════════════════════════════════════
       final rateLimitKey = 'login_$phone';
 
-      if (await RateLimiter.isBlocked(rateLimitKey)) {
-        final minutes = await RateLimiter.getRemainingBlockMinutes(rateLimitKey);
-        AppLogger.w('🚫 Login blocked for $minutes minutes');
-        return {
-          '__rate_limited__': true,
-          '__minutes__': minutes,
-        };
+      try {
+        if (await RateLimiter.isBlocked(rateLimitKey)) {
+          final minutes =
+          await RateLimiter.getRemainingBlockMinutes(rateLimitKey);
+          AppLogger.w('🚫 Login blocked for $minutes minutes');
+          return {'__rate_limited__': true, '__minutes__': minutes};
+        }
+      } catch (e) {
+        AppLogger.w('⚠️ RateLimiter error: $e');
       }
 
-      // ═══════════════════════════════════════════════════════
-      // ⭐ ١. app_users
-      // ═══════════════════════════════════════════════════════
-      final userRes = await Supabase.instance.client
-          .from('app_users')
-          .select()
-          .eq('phone', phone)
-          .maybeSingle();
+      // ⭐ ١. app_users — بە RPC
+      Map<String, dynamic>? userRes;
+      try {
+        final res = await Supabase.instance.client
+            .rpc('get_user_for_login', params: {'phone_param': phone})
+            .timeout(_supabaseTimeout);
+
+        if (res is List && res.isNotEmpty) {
+          userRes = Map<String, dynamic>.from(res.first);
+        }
+      } catch (e) {
+        AppLogger.w('⚠️ app_users RPC error: $e');
+      }
 
       if (userRes != null) {
         final storedPassword = userRes['password']?.toString() ?? '';
 
-        // ❌ پاسۆرد هەڵە
         if (!verifyPassword(password, storedPassword)) {
           await RateLimiter.recordFailedAttempt(rateLimitKey);
           AppLogger.w('❌ Login: پاسۆرد هەڵەیە (app_users)');
           return null;
         }
 
-        // ✅ پاسۆرد دروستە — Rate limit reset
         await RateLimiter.reset(rateLimitKey);
 
-        // 🔄 Auto-upgrade password
         await _upgradePasswordIfNeeded(
           userId: userRes['id'].toString(),
           plainPassword: password,
@@ -246,7 +207,6 @@ class AuthSessionManager {
           tableName: 'app_users',
         );
 
-        // ⚠️ پشکنینی پەسەندکردن
         if (userRes['role'] == 'vendor' && userRes['is_approved'] != true) {
           AppLogger.w('⏳ Login: چاوەڕوانی پەسەندکردن');
           return {'__pending_approval__': true};
@@ -263,29 +223,31 @@ class AuthSessionManager {
         return userRes;
       }
 
-      // ═══════════════════════════════════════════════════════
-      // ⭐ ٢. dukan
-      // ═══════════════════════════════════════════════════════
-      final dukanRes = await Supabase.instance.client
-          .from('dukan')
-          .select()
-          .eq('user_phone', phone)
-          .maybeSingle();
+      // ⭐ ٢. dukan — بە RPC
+      Map<String, dynamic>? dukanRes;
+      try {
+        final res = await Supabase.instance.client
+            .rpc('get_dukan_for_login', params: {'phone_param': phone})
+            .timeout(_supabaseTimeout);
+
+        if (res is List && res.isNotEmpty) {
+          dukanRes = Map<String, dynamic>.from(res.first);
+        }
+      } catch (e) {
+        AppLogger.w('⚠️ dukan RPC error: $e');
+      }
 
       if (dukanRes != null) {
         final storedPassword = dukanRes['password']?.toString() ?? '';
 
-        // ❌ پاسۆرد هەڵە
         if (!verifyPassword(password, storedPassword)) {
           await RateLimiter.recordFailedAttempt(rateLimitKey);
           AppLogger.w('❌ Login: پاسۆرد هەڵەیە (dukan)');
           return null;
         }
 
-        // ✅ پاسۆرد دروستە — Rate limit reset
         await RateLimiter.reset(rateLimitKey);
 
-        // 🔄 Auto-upgrade password
         await _upgradePasswordIfNeeded(
           userId: dukanRes['id'].toString(),
           plainPassword: password,
@@ -293,9 +255,8 @@ class AuthSessionManager {
           tableName: 'dukan',
         );
 
-        // ⚠️ پشکنینی پەسەندکردن
         if (dukanRes['is_approved'] != true) {
-          AppLogger.w('⏳ Login: چاوەڕوانی پەسەندکردن (dukan)');
+          AppLogger.w('⏳ Login: چاوەڕوانی پەسەندکردن');
           return {'__pending_approval__': true};
         }
 
@@ -310,9 +271,6 @@ class AuthSessionManager {
         return dukanRes;
       }
 
-      // ═══════════════════════════════════════════════════════
-      // ❌ هیچ بەکارهێنەرێک نەدۆزرایەوە
-      // ═══════════════════════════════════════════════════════
       await RateLimiter.recordFailedAttempt(rateLimitKey);
       AppLogger.w('❌ Login: هیچ بەکارهێنەرێک نەدۆزرایەوە');
       return null;
@@ -322,9 +280,6 @@ class AuthSessionManager {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 💾 saveSession
-  // ═══════════════════════════════════════════════════════════
   static Future<void> saveSession({
     required String phone,
     String? name,
@@ -345,31 +300,35 @@ class AuthSessionManager {
         'phone': phone,
         'name': name,
         'role': role,
-        'is_approved': true,
       };
 
-      AppLogger.i('✅ saveSession: $name ($role) — $phone');
+      AppLogger.i('✅ saveSession: $name ($role)');
+
+      try {
+        await NotificationService.refreshToken();
+      } catch (e) {
+        AppLogger.w('⚠️ refreshToken error: $e');
+      }
     } catch (e, st) {
       AppLogger.e('❌ saveSession error', e, st);
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🚪 clearSession
-  // ═══════════════════════════════════════════════════════════
   static Future<void> clearSession() async {
     try {
-      AppLogger.i('🚪 clearSession: دەستیپێکرد');
+      try {
+        await NotificationService.clearToken();
+      } catch (e) {
+        AppLogger.w('⚠️ clearToken error: $e');
+      }
 
       await _clearLocalSession();
 
       try {
-        await Supabase.instance.client.auth.signOut();
+        await Supabase.instance.client.auth.signOut().timeout(_supabaseTimeout);
       } catch (e) {
         AppLogger.w('⚠️ signOut error: $e');
       }
-
-      AppLogger.i('✅ clearSession: تەواو بوو');
     } catch (e, st) {
       AppLogger.e('❌ clearSession error', e, st);
     }
@@ -386,20 +345,19 @@ class AuthSessionManager {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('logged_phone');
     } catch (e) {
-      AppLogger.w('⚠️ Clear session error: $e');
+      AppLogger.w('⚠️ Clear error: $e');
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔄 refreshProfile
-  // ═══════════════════════════════════════════════════════════
   static Future<Map<String, dynamic>?> refreshProfile() async {
-    return await fetchUserProfile();
+    try {
+      return await fetchUserProfile().timeout(_supabaseTimeout);
+    } catch (e) {
+      AppLogger.w('⚠️ refreshProfile error: $e');
+      return null;
+    }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🧪 Testing
-  // ═══════════════════════════════════════════════════════════
   @visibleForTesting
   static Future<void> resetForTesting() async {
     _isInitialized = false;

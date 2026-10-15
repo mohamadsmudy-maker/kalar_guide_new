@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kalar_guide/models/emergency_service.dart';
+import 'package:kalar_guide_new/models/emergency_service.dart';
 
 void main() {
   group('EmergencyService Model', () {

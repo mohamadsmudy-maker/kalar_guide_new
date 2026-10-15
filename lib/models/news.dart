@@ -1,8 +1,6 @@
 /// 📰 مۆدێلی هەواڵ
 class News {
-  // ✅ dynamic → String?
   final String? id;
-
   final String? storeId;
   final String title;
   final String description;
@@ -10,6 +8,11 @@ class News {
   final int likes;
   final int views;
   final DateTime? createdAt;
+
+  // ⭐ خانەی نوێ — زانیاری شوێن
+  final String? storeName;
+  final String? storeLogo;
+  final String? storeImage;
 
   News({
     this.id,
@@ -20,13 +23,15 @@ class News {
     this.likes = 0,
     this.views = 0,
     this.createdAt,
+    this.storeName,
+    this.storeLogo,
+    this.storeImage,
   });
 
   factory News.fromJson(Map<String, dynamic> json) {
-    // ✅ وەرگرتنی وێنەکان بە شێوازی پارێزراو
+    // وێنەکان
     List<String> imgList = [];
     final raw = json['images'] ?? json['img'];
-
     if (raw is List) {
       imgList = raw
           .map((e) => e.toString().trim())
@@ -46,39 +51,37 @@ class News {
       }
     }
 
-    // ✅ پارسکردنی id بۆ String?
-    String? parsedId;
-    if (json['id'] != null) {
-      parsedId = json['id'].toString();
+    // ⭐ پارسکردنی زانیاری شوێن
+    String? storeName;
+    String? storeLogo;
+    String? storeImage;
+
+    final storeData = json['dukan'];
+    if (storeData is Map) {
+      storeName = storeData['name']?.toString();
+      storeLogo = storeData['logo']?.toString();
+      storeImage = storeData['image']?.toString();
     }
 
-    // ✅ پارسکردنی likes
-    int parsedLikes = 0;
-    if (json['likes'] is int) {
-      parsedLikes = json['likes'];
-    } else if (json['likes'] != null) {
-      parsedLikes = int.tryParse(json['likes'].toString()) ?? 0;
-    }
-
-    // ✅ پارسکردنی views
-    int parsedViews = 0;
-    if (json['views'] is int) {
-      parsedViews = json['views'];
-    } else if (json['views'] != null) {
-      parsedViews = int.tryParse(json['views'].toString()) ?? 0;
-    }
+    // پشکنین: ئەگەر store_name ڕاستەوخۆ هەبوو (لە cache یان join ی تر)
+    storeName ??= json['store_name']?.toString();
+    storeLogo ??= json['store_logo']?.toString();
+    storeImage ??= json['store_image']?.toString();
 
     return News(
-      id: parsedId,
+      id: json['id']?.toString(),
       storeId: json['store_id']?.toString(),
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       images: imgList,
-      likes: parsedLikes,
-      views: parsedViews,
+      likes: int.tryParse(json['likes']?.toString() ?? '0') ?? 0,
+      views: int.tryParse(json['views']?.toString() ?? '0') ?? 0,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
+      storeName: storeName,
+      storeLogo: storeLogo,
+      storeImage: storeImage,
     );
   }
 
@@ -92,35 +95,42 @@ class News {
       'likes': likes,
       'views': views,
       if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
+      // ⭐ زانیاری شوێن
+      if (storeName != null) 'store_name': storeName,
+      if (storeLogo != null) 'store_logo': storeLogo,
+      if (storeImage != null) 'store_image': storeImage,
     };
   }
 
-  /// ✅ وێنەی سەرەکی
+  /// وێنەی سەرەکی
   String? get primaryImage => images.isNotEmpty ? images.first : null;
 
-  /// ✅ ئایا وێنەی هەیە؟
+  /// ئایا وێنەی هەیە؟
   bool get hasImage => primaryImage != null && primaryImage!.isNotEmpty;
 
-  /// ✅ وەرگرتنی کاتی "چەند لەمەوبەر"
+  /// ⭐ ئایا شوێن هەیە؟
+  bool get hasStore => storeName != null && storeName!.isNotEmpty;
+
+  /// ⭐ لۆگۆ یان وێنەی شوێن
+  String? get storeAvatar {
+    if (storeLogo != null && storeLogo!.isNotEmpty) return storeLogo;
+    if (storeImage != null && storeImage!.isNotEmpty) return storeImage;
+    return null;
+  }
+
+  /// کاتی "چەند لەمەوبەر"
   String getTimeAgo() {
     if (createdAt == null) return 'کەمێک پێش ئێستا';
 
     final diff = DateTime.now().difference(createdAt!);
 
-    if (diff.inSeconds < 60) {
-      return 'چەند چرکەیەک پێش ئێستا';
-    } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes} دەقیقە لەمەوبەر';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours} سەعات لەمەوبەر';
-    } else if (diff.inDays < 30) {
-      return '${diff.inDays} ڕۆژ لەمەوبەر';
-    } else {
-      return '${(diff.inDays / 30).floor()} مانگ لەمەوبەر';
-    }
+    if (diff.inSeconds < 60) return 'چەند چرکەیەک پێش ئێستا';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} دەقیقە لەمەوبەر';
+    if (diff.inHours < 24) return '${diff.inHours} سەعات لەمەوبەر';
+    if (diff.inDays < 30) return '${diff.inDays} ڕۆژ لەمەوبەر';
+    return '${(diff.inDays / 30).floor()} مانگ لەمەوبەر';
   }
 
-  /// ✅ کۆپی لەگەڵ گۆڕانکاری
   News copyWith({
     String? id,
     String? storeId,
@@ -130,6 +140,9 @@ class News {
     int? likes,
     int? views,
     DateTime? createdAt,
+    String? storeName,
+    String? storeLogo,
+    String? storeImage,
   }) {
     return News(
       id: id ?? this.id,
@@ -140,6 +153,9 @@ class News {
       likes: likes ?? this.likes,
       views: views ?? this.views,
       createdAt: createdAt ?? this.createdAt,
+      storeName: storeName ?? this.storeName,
+      storeLogo: storeLogo ?? this.storeLogo,
+      storeImage: storeImage ?? this.storeImage,
     );
   }
 }

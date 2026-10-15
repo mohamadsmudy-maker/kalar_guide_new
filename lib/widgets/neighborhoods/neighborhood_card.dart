@@ -1,7 +1,12 @@
+// lib/widgets/neighborhoods/neighborhood_card.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+import '../../config/settings_provider.dart';
 import '../../models/neighborhood.dart';
 
-/// 🏘️ کارتی گەڕەک
+/// 🏘️ کارتی گەڕەک — Ultra Pro (Style ی بەشەکان)
 class NeighborhoodCard extends StatelessWidget {
   final Neighborhood neighborhood;
   final VoidCallback? onTap;
@@ -25,260 +30,172 @@ class NeighborhoodCard extends StatelessWidget {
   }
 
   IconData get _icon {
-    switch (neighborhood.icon) {
-      case 'apartment':
-        return Icons.apartment_rounded;
-      case 'home_work':
-        return Icons.home_work_rounded;
-      case 'location_on':
-        return Icons.location_on_rounded;
-      case 'school':
-        return Icons.school_rounded;
-      case 'flag':
-        return Icons.flag_rounded;
-      case 'celebration':
-        return Icons.celebration_rounded;
-      case 'military_tech':
-        return Icons.military_tech_rounded;
-      case 'location_city':
-      default:
-        return Icons.location_city_rounded;
+    final name = neighborhood.nameKu;
+    if (name.contains('پیشەسازی') || name.contains('کارگە')) {
+      return Icons.factory_rounded;
     }
+    if (name.contains('زانکۆ') || name.contains('قوتابخانە')) {
+      return Icons.school_rounded;
+    }
+    if (name.contains('مامۆستا')) return Icons.school_rounded;
+    if (name.contains('شەهید')) return Icons.military_tech_rounded;
+    if (name.contains('باخ') || name.contains('پارک')) {
+      return Icons.park_rounded;
+    }
+    if (name.contains('مۆڵ') || name.contains('بازاڕ')) {
+      return Icons.shopping_bag_rounded;
+    }
+    if (name.contains('مەطار') || name.contains('وێستگە')) {
+      return Icons.local_gas_station_rounded;
+    }
+    if (name.contains('شاری') || name.contains('سیتی')) {
+      return Icons.apartment_rounded;
+    }
+    if (name.contains('ناوچە')) return Icons.location_city_rounded;
+    return Icons.location_city_rounded;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lang = context.watch<SettingsProvider>().languageId;
     final color = _color;
 
-    if (compact) {
-      return _buildCompact(isDark, color);
-    }
+    if (compact) return _buildCompact(isDark, color, lang);
+    return _buildFull(isDark, color, lang);
+  }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎴 Ultra Pro Card — Style ی بەشەکان (باریک)
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildFull(bool isDark, Color color, String lang) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A1A22) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: color.withValues(alpha: 0.2),
-            width: 1.5,
+            color: color.withValues(alpha: 0.15),
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.1),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
+              color: color.withValues(alpha: isDark ? 0.15 : 0.10),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+              spreadRadius: -6,
             ),
           ],
-        ),
-        child: Column(
-          children: [
-            // 🖼️ وێنە یان Icon
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                  child: neighborhood.coverUrl != null &&
-                      neighborhood.coverUrl!.isNotEmpty
-                      ? Image.network(
-                    neighborhood.coverUrl!,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        _buildGradientBg(color),
-                  )
-                      : _buildGradientBg(color),
-                ),
-                // 🌈 Gradient
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ),
-                // 🎯 ئایکۆن
-                Positioned(
-                  bottom: 12,
-                  right: 14,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                    child: Icon(_icon, color: color, size: 20),
-                  ),
-                ),
-              ],
-            ),
-
-            // 📝 ناوەڕۆک
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          neighborhood.nameKu,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1A1A2E),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      // 📊 ژمارەی شوێن
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.storefront_rounded,
-                              size: 12,
-                              color: color,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${neighborhood.totalStores}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w900,
-                                color: color,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (neighborhood.descriptionKu != null &&
-                      neighborhood.descriptionKu!.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      neighborhood.descriptionKu!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? Colors.white54
-                            : Colors.grey.shade600,
-                        height: 1.5,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompact(bool isDark, Color color) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: color.withValues(alpha: 0.2),
-          ),
         ),
         child: Row(
           children: [
+            // ═══ Icon Box (لای ڕاست) ═══
             Container(
-              width: 44,
-              height: 44,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color, color.withValues(alpha: 0.7)],
+                  colors: [
+                    color,
+                    Color.lerp(color, Colors.white, 0.25)!,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                    spreadRadius: -2,
+                  ),
+                ],
               ),
-              child: Icon(_icon, color: Colors.white, size: 22),
+              child: Icon(_icon, color: Colors.white, size: 26),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
+
+            // ═══ Info (ناو + Stats) ═══
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // ناوی گەڕەک
                   Text(
                     neighborhood.nameKu,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                      color: isDark
+                          ? Colors.white
+                          : const Color(0xFF1A1A2E),
+                      letterSpacing: 0.2,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
+
+                  // ═══ Stats Row ═══
                   Row(
                     children: [
-                      Icon(
-                        Icons.storefront_rounded,
-                        size: 11,
+                      // شوێن
+                      _buildMiniStat(
+                        icon: Icons.storefront_rounded,
+                        value: '${neighborhood.totalStores}',
                         color: color,
+                        isDark: isDark,
                       ),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${neighborhood.totalStores} شوێن',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white54 : Colors.grey.shade600,
+                      if (neighborhood.population > 0) ...[
+                        const SizedBox(width: 10),
+                        _buildMiniStat(
+                          icon: Icons.people_rounded,
+                          value: '${neighborhood.population}',
+                          color: const Color(0xFF10B981),
+                          isDark: isDark,
                         ),
-                      ),
+                      ],
+                      if (neighborhood.areaKm2 > 0) ...[
+                        const SizedBox(width: 10),
+                        _buildMiniStat(
+                          icon: Icons.square_foot_rounded,
+                          value:
+                          neighborhood.areaKm2.toStringAsFixed(1),
+                          color: const Color(0xFFF59E0B),
+                          isDark: isDark,
+                        ),
+                      ],
                     ],
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_left_rounded,
-              color: color,
-              size: 20,
+
+            const SizedBox(width: 8),
+
+            // ═══ Arrow ═══
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: color.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Icon(
+                lang == 'en'
+                    ? Icons.chevron_right_rounded
+                    : Icons.chevron_left_rounded,
+                color: color,
+                size: 20,
+              ),
             ),
           ],
         ),
@@ -286,25 +203,95 @@ class NeighborhoodCard extends StatelessWidget {
     );
   }
 
-  Widget _buildGradientBg(Color color) {
-    return Container(
-      height: 120,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.7),
-            color.withValues(alpha: 0.4),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Mini Stat (بچووک)
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildMiniStat({
+    required IconData icon,
+    required String value,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 3),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white70 : Colors.grey.shade700,
+          ),
         ),
-      ),
-      child: Center(
-        child: Icon(
-          _icon,
-          color: Colors.white.withValues(alpha: 0.5),
-          size: 60,
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎴 Compact Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildCompact(bool isDark, Color color, String lang) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: color.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    color,
+                    Color.lerp(color, Colors.white, 0.25)!,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(_icon, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                neighborhood.nameKu,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color:
+                  isDark ? Colors.white : const Color(0xFF1A1A2E),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              '${neighborhood.totalStores}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              lang == 'en'
+                  ? Icons.chevron_right_rounded
+                  : Icons.chevron_left_rounded,
+              color: color,
+              size: 18,
+            ),
+          ],
         ),
       ),
     );

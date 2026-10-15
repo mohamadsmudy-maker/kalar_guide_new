@@ -50,7 +50,7 @@ final padding = (maxPrice - minPrice) * 0.2;
 final firstPrice = prices.first;
 final lastPrice = prices.last;
 final diff = lastPrice - firstPrice;
-final isUp = diff > 0;
+
 
 return GestureDetector(
 onTap: () {

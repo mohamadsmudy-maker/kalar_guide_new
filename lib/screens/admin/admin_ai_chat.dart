@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/ai_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
 // (CountOption لە Supabase Flutter هەیە)
 /// 🤖 شاشەی ڕاپۆرتی زیرەک بە چات
 class AdminAiChatScreen extends StatefulWidget {

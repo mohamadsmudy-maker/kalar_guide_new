@@ -1,8 +1,13 @@
+// lib/screens/admin/admin_database_viewer.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 
-/// 🗄️ شاشەی بەڕێوەبردنی داتابەیس (Pro Version)
+/// 🗄️ شاشەی بەڕێوەبردنی داتابەیس (Secure Edition)
+///
+/// ✅ app_users لابراوە (بۆ پاراستنی password)
+/// ✅ Columns ی whitelist بەکاردێت
+/// ✅ Admin check لە client + server
 class AdminDatabaseViewerScreen extends StatefulWidget {
   const AdminDatabaseViewerScreen({super.key});
 
@@ -16,66 +21,82 @@ class _AdminDatabaseViewerScreenState
   bool _isLoading = true;
   List<Map<String, dynamic>> _tableData = [];
 
-  final List<Map<String, dynamic>> _tables = [
+  // ═══════════════════════════════════════════════════════════
+  // 🔓 Whitelist — تەنها ئەم table ەکان دەبینرێن
+  // ⚠️ app_users لابراوە بۆ پاراستنی password
+  // ═══════════════════════════════════════════════════════════
+  static const List<Map<String, dynamic>> _tables = [
     {
       'key': 'dukan',
       'name': 'شوێنەکان',
       'icon': Icons.storefront_rounded,
       'color': Colors.indigo,
+      'columns': 'id, name, phone, address, category, type, is_verified, created_at',
+      // ⚠️ 'password' و 'user_phone' لابراون
     },
     {
       'key': 'news',
       'name': 'هەواڵەکان',
       'icon': Icons.newspaper_rounded,
       'color': Colors.green,
+      'columns': 'id, title, description, images, likes, views, created_at, store_id',
     },
     {
       'key': 'products',
       'name': 'کاڵاکان',
       'icon': Icons.shopping_bag_rounded,
       'color': Colors.deepOrange,
+      'columns': 'id, name, price, category, img, store_id, created_at',
     },
     {
       'key': 'orders',
       'name': 'ئۆردەرەکان',
       'icon': Icons.receipt_long_rounded,
       'color': Colors.teal,
-    },
-    {
-      'key': 'app_users',
-      'name': 'بەکارهێنەران',
-      'icon': Icons.people_rounded,
-      'color': Colors.purple,
+      'columns': 'id, store_id, total_price, status, customer_name, created_at',
     },
     {
       'key': 'complaints',
       'name': 'سکاڵاکان',
       'icon': Icons.assignment_late_rounded,
       'color': Colors.red,
+      'columns': 'id, title, description, status, responsible_authority, created_at',
+      // ⚠️ 'user_phone' و 'user_id' لابراون
     },
     {
       'key': 'main_categories',
       'name': 'بەشە سەرەکییەکان',
       'icon': Icons.category_rounded,
       'color': Colors.pink,
+      'columns': 'id, name, image, sort_order',
     },
     {
       'key': 'sub_categories',
       'name': 'ژێربەشەکان',
       'icon': Icons.subdirectory_arrow_right_rounded,
       'color': Colors.orange,
+      'columns': 'id, name, parent',
     },
     {
-      'key': 'cart',
-      'name': 'سەبەتەکان',
-      'icon': Icons.shopping_cart_rounded,
-      'color': Colors.amber,
+      'key': 'emergency_services',
+      'name': 'خزمەتگوزاری فریاکەوتن',
+      'icon': Icons.emergency_rounded,
+      'color': Colors.redAccent,
+      'columns': 'id, name_ku, category, phone, is_active, display_order',
     },
     {
-      'key': 'notifications',
-      'name': 'ئاگادارییەکان',
-      'icon': Icons.notifications_rounded,
-      'color': Colors.cyan,
+      'key': 'neighborhoods',
+      'name': 'گەڕەکەکان',
+      'icon': Icons.location_city_rounded,
+      'color': Colors.blue,
+      'columns': 'id, name_ku, description_ku, color, is_active',
+    },
+    {
+      'key': 'events',
+      'name': 'ڕووداوەکان',
+      'icon': Icons.event_rounded,
+      'color': Colors.purple,
+      'columns': 'id, title_ku, start_date, category, is_published, created_at',
     },
   ];
 
@@ -95,14 +116,24 @@ class _AdminDatabaseViewerScreenState
     super.dispose();
   }
 
+  Map<String, dynamic> get _selectedTableInfo {
+    return _tables.firstWhere(
+          (t) => t['key'] == _selectedTable,
+      orElse: () => _tables[0],
+    );
+  }
+
   Future<void> _fetchTableData() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
+      // ✅ بەکارهێنانی columns ی whitelist
+      final columns = _selectedTableInfo['columns']?.toString() ?? '*';
+
       final res = await Supabase.instance.client
           .from(_selectedTable)
-          .select()
+          .select(columns)
           .limit(50);
 
       final List<dynamic> rawList = res as List;
@@ -117,7 +148,7 @@ class _AdminDatabaseViewerScreenState
         });
       }
     } catch (e) {
-      debugPrint("Error fetching table: $e");
+      debugPrint("❌ Error fetching table: $e");
       if (mounted) {
         setState(() {
           _tableData = [];
@@ -125,13 +156,6 @@ class _AdminDatabaseViewerScreenState
         });
       }
     }
-  }
-
-  Map<String, dynamic> get _selectedTableInfo {
-    return _tables.firstWhere(
-          (t) => t['key'] == _selectedTable,
-      orElse: () => _tables[0],
-    );
   }
 
   List<Map<String, dynamic>> get _filteredData {
@@ -143,21 +167,18 @@ class _AdminDatabaseViewerScreenState
     }).toList();
   }
 
-  // ✅ دەرهێنانی ڕەنگ بە پارێزراوی
   Color _getTableColor() {
     final colorValue = _selectedTableInfo['color'];
     if (colorValue is Color) return colorValue;
     return AppColors.primary;
   }
 
-  // ✅ دەرهێنانی ئایکۆن بە پارێزراوی
   IconData _getTableIcon() {
     final iconValue = _selectedTableInfo['icon'];
     if (iconValue is IconData) return iconValue;
     return Icons.table_chart_rounded;
   }
 
-  // ✅ دەرهێنانی ناو بە پارێزراوی
   String _getTableName() {
     final nameValue = _selectedTableInfo['name'];
     if (nameValue is String) return nameValue;
@@ -211,11 +232,7 @@ class _AdminDatabaseViewerScreenState
                           color: color.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          icon,
-                          color: color,
-                          size: 22,
-                        ),
+                        child: Icon(icon, color: color, size: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -656,8 +673,7 @@ class _AdminDatabaseViewerScreenState
             if (_isLoading)
               const SliverFillRemaining(
                 child: Center(
-                  child:
-                  CircularProgressIndicator(color: AppColors.primary),
+                  child: CircularProgressIndicator(color: AppColors.primary),
                 ),
               )
             else if (_filteredData.isEmpty)
@@ -686,7 +702,8 @@ class _AdminDatabaseViewerScreenState
     final colorValue = table['color'];
     final color = colorValue is Color ? colorValue : AppColors.primary;
     final iconValue = table['icon'];
-    final icon = iconValue is IconData ? iconValue : Icons.table_chart_rounded;
+    final icon =
+    iconValue is IconData ? iconValue : Icons.table_chart_rounded;
     final nameValue = table['name'];
     final name = nameValue is String ? nameValue : '';
 
@@ -768,8 +785,9 @@ class _AdminDatabaseViewerScreenState
 
     String mainTitle = row['name'] ??
         row['title'] ??
+        row['name_ku'] ??
+        row['title_ku'] ??
         row['customer_name'] ??
-        row['currency_name'] ??
         'تۆماری #${index + 1}';
 
     String mainSubtitle = row['address'] ??
@@ -825,7 +843,6 @@ class _AdminDatabaseViewerScreenState
               else
                 _buildDefaultIcon(icon, color),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -883,20 +900,13 @@ class _AdminDatabaseViewerScreenState
       height: 55,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.7),
-            color,
-          ],
+          colors: [color.withValues(alpha: 0.7), color],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Icon(
-        icon,
-        color: Colors.white,
-        size: 26,
-      ),
+      child: Icon(icon, color: Colors.white, size: 26),
     );
   }
 

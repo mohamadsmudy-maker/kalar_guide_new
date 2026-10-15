@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kalar_guide/widgets/reviews/rating_stars.dart';
+import 'package:kalar_guide_new/widgets/reviews/rating_stars.dart';
 
 void main() {
   group('RatingStars', () {

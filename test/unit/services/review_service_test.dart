@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kalar_guide/models/review.dart';
+import 'package:kalar_guide_new/models/review.dart';
 
 void main() {
   group('Review Model', () {

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../config/app_colors.dart';
+
 import '../../widgets/common/optimized_network_image.dart';
 import 'submit_complaint.dart';
 

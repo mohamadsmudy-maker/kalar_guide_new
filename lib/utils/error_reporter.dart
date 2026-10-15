@@ -1,22 +1,21 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
-/// 📊 تۆمارکردنی هەڵە لە Crashlytics و Sentry
+/// 📊 تۆمارکردنی هەڵە لە Crashlytics
+///
+/// ✅ Sentry لابرا — تەنها Crashlytics بەکاردەهێنرێت
+/// ✅ ئەگەر دەتەوێت Sentry زیاد بکەیت، لە pubspec.yaml
+///    `sentry_flutter: ^8.11.0` زیاد بکە و کۆدی Sentry بگەڕێنەوە.
 class ErrorReporter {
   ErrorReporter._();
 
   static bool _crashlyticsEnabled = false;
-  static bool _sentryEnabled = false;
 
   /// ✅ دەستپێکردن — لە main.dart بانگ بکە
   static void initialize({
     bool crashlytics = true,
-    bool sentry = false,
-    String? sentryDsn,
   }) {
     _crashlyticsEnabled = crashlytics && !kDebugMode;
-    _sentryEnabled = sentry && sentryDsn != null && sentryDsn.isNotEmpty;
 
     if (kDebugMode) {
       debugPrint('📊 ErrorReporter: Debug Mode — هەڵە نانێردرێت');
@@ -42,11 +41,6 @@ class ErrorReporter {
 
       debugPrint('✅ Crashlytics چالاکە');
     }
-
-    // ✅ Sentry
-    if (_sentryEnabled) {
-      debugPrint('✅ Sentry چالاکە');
-    }
   }
 
   /// ✅ تۆمارکردنی هەڵە
@@ -65,37 +59,22 @@ class ErrorReporter {
     // ✅ Crashlytics
     if (_crashlyticsEnabled) {
       try {
+        List<String>? info;
+        if (extras != null && extras.isNotEmpty) {
+          info = extras.entries
+              .map((e) => '${e.key}: ${e.value}')
+              .toList();
+        }
+
         await FirebaseCrashlytics.instance.recordError(
           error,
           stackTrace,
           reason: reason,
           fatal: fatal,
-          information: extras?.entries
-              .map((e) => '${e.key}: ${e.value}')
-              .toList(),
+          information: info ?? const <String>[],
         );
       } catch (e) {
         debugPrint('❌ Crashlytics recordError: $e');
-      }
-    }
-
-    // ✅ Sentry
-    if (_sentryEnabled) {
-      try {
-        await Sentry.captureException(
-          error,
-          stackTrace: stackTrace,
-          withScope: (scope) {
-            if (reason != null) scope.setTag('reason', reason);
-            if (extras != null) {
-              extras.forEach((key, value) {
-                scope.setExtra(key, value);
-              });
-            }
-          },
-        );
-      } catch (e) {
-        debugPrint('❌ Sentry recordError: $e');
       }
     }
   }
@@ -112,17 +91,13 @@ class ErrorReporter {
         FirebaseCrashlytics.instance.log(message);
         if (data != null) {
           data.forEach((key, value) {
-            FirebaseCrashlytics.instance.setCustomKey(key, value);
+            if (value is String || value is num || value is bool) {
+              FirebaseCrashlytics.instance.setCustomKey(key, value);
+            } else {
+              FirebaseCrashlytics.instance.setCustomKey(key, value.toString());
+            }
           });
         }
-      } catch (_) {}
-    }
-
-    if (_sentryEnabled) {
-      try {
-        Sentry.addBreadcrumb(
-          Breadcrumb(message: message, data: data),
-        );
       } catch (_) {}
     }
   }
@@ -144,14 +119,6 @@ class ErrorReporter {
         if (phone != null) {
           await FirebaseCrashlytics.instance.setCustomKey('user_phone', phone);
         }
-      } catch (_) {}
-    }
-
-    if (_sentryEnabled) {
-      try {
-        Sentry.configureScope((scope) {
-          scope.setUser(SentryUser(id: id, username: name));
-        });
       } catch (_) {}
     }
   }

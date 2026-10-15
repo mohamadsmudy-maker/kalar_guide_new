@@ -1,12 +1,11 @@
+// lib/screens/auth/auth_screen.dart
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
-import '../../config/translations.dart';
 import '../../services/auth_service.dart';
 import '../../utils/password_hasher.dart';
 
-/// 🔐 شاشەی چوونەژوورەوە و دروستکردنی ئەکاونت
+/// 🔐 شاشەی چوونەژوورەوە و دروستکردنی ئەکاونت — SECURE EDITION
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -15,6 +14,9 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  // ═══════════════════════════════════════════════════════════
+  // 📊 State
+  // ═══════════════════════════════════════════════════════════
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -28,7 +30,6 @@ class _AuthScreenState extends State<AuthScreen> {
   List<Map<String, dynamic>> _allStores = [];
   Map<String, dynamic>? _selectedStore;
   bool _loadingStores = false;
-  bool _storeCodeVerified = false;
 
   @override
   void initState() {
@@ -45,12 +46,16 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🏪 هێنانی شوێنەکان
+  // ═══════════════════════════════════════════════════════════
   Future<void> _fetchStores() async {
     setState(() => _loadingStores = true);
     try {
       final res = await Supabase.instance.client
           .from('dukan')
-          .select('id, name, phone, category')
+          .select('id, name, category, invite_code')
+          .not('invite_code', 'is', null)
           .order('name');
 
       if (mounted) {
@@ -65,36 +70,23 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  void _verifyStoreCode() {
-    if (_selectedStore == null) {
-      _showSnackBar('تکایە سەرەتا شوێنێک هەڵبژێرە', Colors.orange);
-      return;
-    }
-
-    final enteredCode = _storeCodeCtrl.text.trim();
-    final realCode = _selectedStore!['phone']?.toString().trim() ?? '';
-
-    if (enteredCode.isEmpty) {
-      _showSnackBar('تکایە کۆدەکە بنووسە', Colors.orange);
-      return;
-    }
-
-    if (enteredCode == realCode) {
-      setState(() => _storeCodeVerified = true);
-      _showSnackBar('کۆد ڕاستە ✅', Colors.green);
-    } else {
-      setState(() => _storeCodeVerified = false);
-      _showSnackBar('کۆد هەڵەیە ❌', Colors.red);
-    }
-  }
-
+  // ═══════════════════════════════════════════════════════════
+  // 🔔 SnackBar Helper
+  // ═══════════════════════════════════════════════════════════
   void _showSnackBar(String msg, Color color) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
+        content: Text(
+          msg,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: color,
-        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -107,13 +99,13 @@ class _AuthScreenState extends State<AuthScreen> {
     final pass = _passCtrl.text.trim();
     final name = _nameCtrl.text.trim();
 
-    // ✅ پشکنینەکان
+    // ═══ پشکنینەکان ═══
     if (phone.isEmpty || pass.isEmpty) {
       _showSnackBar('مۆبایل و پاسۆرد پێویستە ⚠', Colors.orange);
       return;
     }
-    if (pass.length < 6) {
-      _showSnackBar('پاسۆرد دەبێت لانیکەم ٦ پیت بێت ⚠', Colors.orange);
+    if (pass.length < 8) {
+      _showSnackBar('پاسۆرد دەبێت لانیکەم ٨ پیت بێت ⚠', Colors.orange);
       return;
     }
     if (phone.length < 10) {
@@ -121,14 +113,15 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
 
+    // ═══ پشکنینی SignUp ═══
     if (_isSignUp) {
       if (_selectedRole == 'vendor' || _selectedRole == 'department') {
         if (_selectedStore == null) {
           _showSnackBar('تکایە شوێنەکەت هەڵبژێرە 🏪', Colors.orange);
           return;
         }
-        if (!_storeCodeVerified) {
-          _showSnackBar('تکایە کۆدی شوێن پشتڕاست بکەرەوە 🔑', Colors.orange);
+        if (_storeCodeCtrl.text.trim().isEmpty) {
+          _showSnackBar('تکایە کۆدی شوێن بنووسە 🔑', Colors.orange);
           return;
         }
       } else {
@@ -141,11 +134,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
     setState(() => _loading = true);
 
-    final hashedPass = PasswordHasher.hash(pass);
-
     try {
       if (_isSignUp) {
-        await _handleSignUp(phone, pass, name, hashedPass);
+        await _handleSignUp(phone, pass, name);
       } else {
         await _handleLogin(phone, pass);
       }
@@ -164,118 +155,264 @@ class _AuthScreenState extends State<AuthScreen> {
       String phone,
       String pass,
       String name,
-      String hashedPass,
       ) async {
-    // پشکنینی مۆبایل
-    final dukanExists = await Supabase.instance.client
-        .from('dukan')
-        .select('id')
-        .eq('user_phone', phone)
-        .maybeSingle();
+    // ═══ ١. پشکنینی دووبارەبوون ═══
+    try {
+      final dukanExists = await Supabase.instance.client
+          .from('dukan')
+          .select('id')
+          .eq('user_phone', phone)
+          .maybeSingle();
 
-    final userExists = await Supabase.instance.client
-        .from('app_users')
-        .select('id')
-        .eq('phone', phone)
-        .maybeSingle();
+      final userExists = await Supabase.instance.client
+          .from('app_users')
+          .select('id')
+          .eq('phone', phone)
+          .maybeSingle();
 
-    if (dukanExists != null || userExists != null) {
-      _showSnackBar('ئەم ژمارەیە پێشتر تۆمار کراوە ⚠', Colors.orange);
+      if (dukanExists != null || userExists != null) {
+        _showSnackBar('ئەم ژمارەیە پێشتر تۆمار کراوە ⚠', Colors.orange);
+        return;
+      }
+    } catch (e) {
+      _showSnackBar('هەڵە لە پشکنین: $e', Colors.red);
       return;
     }
 
+    // ═══ ٢. بۆ ڤێندەر / فەرمانگە — بە Edge Function ═══
     if (_selectedRole == 'vendor' || _selectedRole == 'department') {
-      // ڤێندەر / فەرمانگە — لە `dukan` نوێکردنەوە
-      await Supabase.instance.client.from('dukan').update({
-        'user_phone': phone,
-        'password': hashedPass,
-        'is_approved': false,
-        'vendor_role': _selectedRole,
-      }).eq('id', _selectedStore!['id']);
+      await _handleVendorSignUp(phone, pass, name);
+      return;
+    }
+
+    // ═══ ٣. بۆ کڕیار — بە RLS ═══
+    await _handleCustomerSignUp(phone, pass, name);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏪 Vendor SignUp — بە Edge Function
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _handleVendorSignUp(
+      String phone,
+      String pass,
+      String name,
+      ) async {
+    try {
+      final hashedPass = await PasswordHasher.hash(pass);
+
+      // ⭐ ١. دروستکردنی ئەکاونت لە Supabase Auth
+      try {
+        final fakeEmail = '$phone@kalar-guide.com';
+        await Supabase.instance.client.auth.signUp(
+          email: fakeEmail,
+          password: pass,
+        );
+        debugPrint('✅ Supabase Auth: Vendor user created');
+      } catch (authError) {
+        debugPrint('⚠️ Auth signup error: $authError');
+      }
+
+      // ⭐ ٢. بانگکردنی Edge Function بۆ تۆمارکردن لە داتابەیس
+      final response = await Supabase.instance.client.functions.invoke(
+        'register-vendor',
+        body: {
+          'storeId': _selectedStore!['id'],
+          'name': name,
+          'phone': phone,
+          'password': hashedPass,
+          'inviteCode': _storeCodeCtrl.text.trim(),
+        },
+      );
+
+      if (response.status != 200) {
+        final error = response.data?['error']?.toString() ??
+            'هەڵە لە ناردنی داواکاری';
+        _showSnackBar(error, Colors.red);
+        return;
+      }
 
       _showSnackBar(
-        'داواکاریت بۆ ${_selectedStore!['name']} نێردرا ⏳\nچاوەڕێی پەسەندی ئەدمین بە',
+        response.data?['message']?.toString() ??
+            'داواکاریت نێردرا — چاوەڕوانی پەسەندی ئەدمین بە ⏳',
         Colors.green,
       );
 
       setState(() {
         _isSignUp = false;
-        _storeCodeVerified = false;
         _selectedStore = null;
         _storeCodeCtrl.clear();
         _phoneCtrl.clear();
         _passCtrl.clear();
+        _nameCtrl.clear();
       });
-      return;
+    } catch (e) {
+      debugPrint('❌ Vendor signup error: $e');
+      _showSnackBar('هەڵە: $e', Colors.red);
     }
-
-    // کڕیار — لە `app_users` تۆمار
-    await Supabase.instance.client.from('app_users').insert({
-      'name': name,
-      'phone': phone,
-      'password': hashedPass,
-      'role': 'customer',
-      'is_approved': true,
-    });
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('logged_phone', phone);
-    await AuthSessionManager.fetchUserProfile();
-
-    if (mounted) Navigator.pop(context);
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🔑 چوونەژوورەوە — بە پشتگیری هەموو جۆرەکان
+  // 👤 Customer SignUp
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _handleCustomerSignUp(
+      String phone,
+      String pass,
+      String name,
+      ) async {
+    try {
+      final hashedPass = await PasswordHasher.hash(pass);
+
+      // ⭐ ١. دروستکردنی ئەکاونت لە Supabase Auth
+      try {
+        final fakeEmail = '$phone@kalar-guide.com';
+        await Supabase.instance.client.auth.signUp(
+          email: fakeEmail,
+          password: pass,
+        );
+        debugPrint('✅ Supabase Auth: Customer user created');
+      } catch (authError) {
+        debugPrint('⚠️ Auth signup error: $authError');
+      }
+
+      // ⭐ ٢. تۆمارکردن لە داتابەیس
+      await Supabase.instance.client.from('app_users').insert({
+        'name': name,
+        'phone': phone,
+        'password': hashedPass,
+        'role': 'customer',
+        'is_approved': true,
+      });
+
+      _showSnackBar(
+        'ئەکاونتەکەت دروستکرا — بچۆ ژوورەوە ✅',
+        Colors.green,
+      );
+
+      setState(() {
+        _isSignUp = false;
+        _nameCtrl.clear();
+        _passCtrl.clear();
+      });
+    } catch (e) {
+      debugPrint('❌ Customer signup error: $e');
+      _showSnackBar('هەڵە: $e', Colors.red);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🔑 چوونەژوورەوە — ⭐ نوێکراو بۆ چارەسەری RLS
   // ═══════════════════════════════════════════════════════════
   Future<void> _handleLogin(String phone, String pass) async {
-    final result = await AuthSessionManager.login(
-      phone: phone,
-      password: pass,
-    );
+    try {
+      // ═══ ١. Login لە AuthSessionManager (سیستەمی کۆن) ═══
+      final result = await AuthSessionManager.login(
+        phone: phone,
+        password: pass,
+      );
 
-    if (result == null) {
-      _showSnackBar('مۆبایل یان پاسۆرد هەڵەیە ❌', Colors.red);
-      return;
-    }
-
-    // ⚠️ چاوەڕوانی پەسەندکردن
-    if (result['__pending_approval__'] == true) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (ctx) => Directionality(
-            textDirection: TextDirection.rtl,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: const Row(
-                children: [
-                  Icon(Icons.hourglass_top_rounded, color: Colors.orange),
-                  SizedBox(width: 8),
-                  Text('چاوەڕوان بە ⏳'),
-                ],
-              ),
-              content: const Text(
-                'هێشتا داواکاریت لەلایەن ئەدمینەوە پەسەند نەکراوە.\n\n'
-                    'تکایە چاوەڕوان بە تا پەسەند دەکرێیت.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('باشە'),
-                ),
-              ],
-            ),
-          ),
-        );
+      if (result == null) {
+        _showSnackBar('مۆبایل یان پاسۆرد هەڵەیە ❌', Colors.red);
+        return;
       }
-      return;
-    }
 
-    // ✅ سەرکەوتوو
-    if (mounted) Navigator.pop(context);
+      // ⚠️ چاوەڕوانی پەسەندکردن
+      if (result['__pending_approval__'] == true) {
+        if (mounted) _showPendingDialog();
+        return;
+      }
+
+      // ═══ ٢. تۆمارکردن لە Supabase Auth (سیستەمی نوێ) ═══
+      // ⭐ ئەمە زۆر گرنگە بۆ ئەوەی RLS کار بکات
+      try {
+        final fakeEmail = '$phone@kalar-guide.com';
+
+        debugPrint('🔐 Supabase Auth: Attempting login for $fakeEmail');
+
+        // سەرەتا هەوڵبدە بچۆ ژوورەوە
+        try {
+          await Supabase.instance.client.auth.signInWithPassword(
+            email: fakeEmail,
+            password: pass,
+          );
+          debugPrint('✅ Supabase Auth: Login successful');
+        } on AuthException catch (e) {
+          debugPrint('⚠️ Supabase Auth error: ${e.message}');
+
+          // ئەگەر بەکارهێنەرەکە لە Auth دا نەبوو، دروستی بکە
+          if (e.message.contains('Invalid login credentials')) {
+            try {
+              await Supabase.instance.client.auth.signUp(
+                email: fakeEmail,
+                password: pass,
+              );
+              debugPrint('✅ Supabase Auth: New user created');
+
+              // دوای دروستکردن، دووبارە بچۆ ژوورەوە
+              await Supabase.instance.client.auth.signInWithPassword(
+                email: fakeEmail,
+                password: pass,
+              );
+              debugPrint('✅ Supabase Auth: Login after signup successful');
+            } catch (signUpError) {
+              debugPrint('❌ Supabase Auth signup error: $signUpError');
+            }
+          }
+        }
+
+        // پشکنین بکە ئەگەر بەکارهێنەرەکە بە ڕاستی چووەتە ژوورەوە
+        final currentUser = Supabase.instance.client.auth.currentUser;
+        if (currentUser != null) {
+          debugPrint('👤 Supabase User ID: ${currentUser.id}');
+        } else {
+          debugPrint('⚠️ Supabase User is still NULL!');
+        }
+      } catch (authError) {
+        debugPrint('❌ Supabase Auth setup error: $authError');
+      }
+
+      // ✅ سەرکەوتوو
+      if (mounted) {
+        Navigator.pop(context);
+        _showSnackBar('بەخێربێیت! ✅', Colors.green);
+      }
+    } catch (e) {
+      debugPrint('❌ Login error: $e');
+      _showSnackBar('هەڵە: $e', Colors.red);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ⏳ Pending Dialog
+  // ═══════════════════════════════════════════════════════════
+  void _showPendingDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.hourglass_top_rounded, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('چاوەڕوان بە ⏳'),
+            ],
+          ),
+          content: const Text(
+            'هێشتا داواکاریت لەلایەن ئەدمینەوە پەسەند نەکراوە.\n\n'
+                'تکایە چاوەڕوان بە تا پەسەند دەکرێیت.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('باشە'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -302,7 +439,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               child: Column(
                 children: [
-                  // لۆگۆ
+                  // ═══ لۆگۆ ═══
                   Container(
                     width: 100,
                     height: 100,
@@ -334,163 +471,19 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  // ═══ SignUp fields ═══
                   if (_isSignUp) ...[
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedRole,
-                      decoration: InputDecoration(
-                        labelText: 'جۆری ئەکاونت',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        prefixIcon: const Icon(
-                          Icons.person_pin_outlined,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'customer',
-                          child: Text('👤 بەکارهێنەر'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'vendor',
-                          child: Text('🏪 فرۆشیار / شوێن'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'department',
-                          child: Text('🏛️ فەرمانگە'),
-                        ),
-                      ],
-                      onChanged: (v) => setState(() {
-                        _selectedRole = v!;
-                        _storeCodeVerified = false;
-                        _selectedStore = null;
-                      }),
-                    ),
+                    _buildRoleDropdown(),
                     const SizedBox(height: 14),
 
                     if (_selectedRole == 'vendor' ||
-                        _selectedRole == 'department') ...[
-                      _loadingStores
-                          ? const CircularProgressIndicator(
-                        color: AppColors.primary,
-                      )
-                          : DropdownButtonFormField<Map<String, dynamic>>(
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: _selectedRole == 'department'
-                              ? 'فەرمانگەکەت هەڵبژێرە *'
-                              : 'شوێنەکەت هەڵبژێرە *',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
-                            borderSide: BorderSide.none,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          prefixIcon: Icon(
-                            _selectedRole == 'department'
-                                ? Icons.business_rounded
-                                : Icons.storefront_rounded,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        initialValue: _selectedStore,
-                        items: _allStores.map((store) {
-                          return DropdownMenuItem<Map<String, dynamic>>(
-                            value: store,
-                            child: Text(
-                              '${store['name']} (${store['category'] ?? ''})',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (val) => setState(() {
-                          _selectedStore = val;
-                          _storeCodeVerified = false;
-                          _storeCodeCtrl.clear();
-                        }),
-                      ),
-                      const SizedBox(height: 14),
-
-                      if (_selectedStore != null) ...[
-                        TextField(
-                          controller: _storeCodeCtrl,
-                          onChanged: (_) =>
-                              setState(() => _storeCodeVerified = false),
-                          decoration: InputDecoration(
-                            labelText: 'کۆدی نهێنی شوێن *',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: Colors.orange.shade50,
-                            prefixIcon: const Icon(
-                              Icons.vpn_key_rounded,
-                              color: AppColors.primary,
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _storeCodeVerified
-                                    ? Icons.check_circle
-                                    : Icons.verified_outlined,
-                                color: _storeCodeVerified
-                                    ? Colors.green
-                                    : AppColors.primary,
-                              ),
-                              onPressed: _verifyStoreCode,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _verifyStoreCode,
-                            child: Text(
-                              _storeCodeVerified
-                                  ? 'کۆد ڕاستە ✅'
-                                  : 'پشتڕاستکردنەوەی کۆد',
-                              style: TextStyle(
-                                color: _storeCodeVerified
-                                    ? Colors.green
-                                    : AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ] else ...[
-                      TextField(
-                        controller: _nameCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'ناوی تەواو',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(18),
-                            borderSide: BorderSide.none,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          prefixIcon: const Icon(
-                            Icons.person_outline_rounded,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                    ],
+                        _selectedRole == 'department')
+                      ..._buildVendorFields()
+                    else
+                      ..._buildCustomerFields(),
                   ],
 
-                  // مۆبایل
+                  // ═══ مۆبایل ═══
                   TextField(
                     controller: _phoneCtrl,
                     decoration: InputDecoration(
@@ -513,11 +506,11 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // پاسۆرد
+                  // ═══ پاسۆرد ═══
                   TextField(
                     controller: _passCtrl,
                     decoration: InputDecoration(
-                      labelText: 'پاسۆرد * (لانیکەم ٦ پیت)',
+                      labelText: 'پاسۆرد * (لانیکەم ٨ پیت)',
                       prefixIcon: const Icon(
                         Icons.lock_outline_rounded,
                         color: AppColors.primary,
@@ -542,7 +535,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 28),
 
-                  // دوگمەی ناردن
+                  // ═══ دوگمەی ناردن ═══
                   _loading
                       ? const CircularProgressIndicator(
                     color: AppColors.primary,
@@ -572,9 +565,13 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // گۆڕین
+                  // ═══ گۆڕین ═══
                   TextButton(
-                    onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                    onPressed: () => setState(() {
+                      _isSignUp = !_isSignUp;
+                      _selectedStore = null;
+                      _storeCodeCtrl.clear();
+                    }),
                     child: Text(
                       _isSignUp
                           ? 'ئەکاونتت هەیە؟ بچۆ ژوورەوە'
@@ -592,5 +589,154 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       ),
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Field Builders
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildRoleDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedRole,
+      decoration: InputDecoration(
+        labelText: 'جۆری ئەکاونت',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide.none,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: const Icon(
+          Icons.person_pin_outlined,
+          color: AppColors.primary,
+        ),
+      ),
+      items: const [
+        DropdownMenuItem(
+          value: 'customer',
+          child: Text('👤 بەکارهێنەر'),
+        ),
+        DropdownMenuItem(
+          value: 'vendor',
+          child: Text('🏪 فرۆشیار / شوێن'),
+        ),
+        DropdownMenuItem(
+          value: 'department',
+          child: Text('🏛️ فەرمانگە'),
+        ),
+      ],
+      onChanged: (v) {
+        if (v == null) return;
+        setState(() {
+          _selectedRole = v;
+          _selectedStore = null;
+          _storeCodeCtrl.clear();
+        });
+      },
+    );
+  }
+
+  List<Widget> _buildVendorFields() {
+    return [
+      if (_loadingStores)
+        const Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        )
+      else
+        DropdownButtonFormField<Map<String, dynamic>>(
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: _selectedRole == 'department'
+                ? 'فەرمانگەکەت هەڵبژێرە *'
+                : 'شوێنەکەت هەڵبژێرە *',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: Icon(
+              _selectedRole == 'department'
+                  ? Icons.business_rounded
+                  : Icons.storefront_rounded,
+              color: AppColors.primary,
+            ),
+          ),
+          initialValue: _selectedStore,
+          items: _allStores.map((store) {
+            return DropdownMenuItem<Map<String, dynamic>>(
+              value: store,
+              child: Text(
+                '${store['name']} (${store['category'] ?? ''})',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }).toList(),
+          onChanged: (val) => setState(() {
+            _selectedStore = val;
+            _storeCodeCtrl.clear();
+          }),
+        ),
+      const SizedBox(height: 14),
+
+      if (_selectedStore != null) ...[
+        TextField(
+          controller: _storeCodeCtrl,
+          decoration: InputDecoration(
+            labelText: 'کۆدی نهێنی شوێن *',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            filled: true,
+            fillColor: Colors.orange.shade50,
+            prefixIcon: const Icon(
+              Icons.vpn_key_rounded,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            '💡 کۆدەکە لەلایەن ئەدمین پێتدراوە. کاتێک داواکاریت نێردرا، '
+                'چاوەڕوانی پەسەندی ئەدمین بە.',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+      const SizedBox(height: 14),
+    ];
+  }
+
+  List<Widget> _buildCustomerFields() {
+    return [
+      TextField(
+        controller: _nameCtrl,
+        decoration: InputDecoration(
+          labelText: 'ناوی تەواو *',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          prefixIcon: const Icon(
+            Icons.person_outline_rounded,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
+      const SizedBox(height: 14),
+    ];
   }
 }

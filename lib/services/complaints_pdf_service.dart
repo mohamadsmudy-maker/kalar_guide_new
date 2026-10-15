@@ -21,7 +21,7 @@ class ComplaintsPdfService {
   // ✅ ڕەنگی سپی بە شەفافیەتی جیاواز
   static const PdfColor _white70 = PdfColor.fromInt(0xB3FFFFFF);
   static const PdfColor _white60 = PdfColor.fromInt(0x99FFFFFF);
-  static const PdfColor _white40 = PdfColor.fromInt(0x66FFFFFF);
+
   static const PdfColor _white20 = PdfColor.fromInt(0x33FFFFFF);
   static const PdfColor _white10 = PdfColor.fromInt(0x1AFFFFFF);
 

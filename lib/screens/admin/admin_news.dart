@@ -51,7 +51,7 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
         final store = await Supabase.instance.client
             .from('dukan')
             .select('id')
-            .eq('phone', phone)
+            .eq('user_phone', phone)  // ← دروست
             .maybeSingle();
 
         if (store != null) {

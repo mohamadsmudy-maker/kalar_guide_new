@@ -1,8 +1,10 @@
+// lib/screens/admin/admin_neighborhoods_screen.dart
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../models/neighborhood.dart';
 import '../../services/neighborhood_service.dart';
 
-/// 🏘️ شاشەی بەڕێوەبردنی گەڕەکەکان
+/// 🏘️ شاشەی بەڕێوەبردنی گەڕەکەکان — ULTRA PRO
 class AdminNeighborhoodsScreen extends StatefulWidget {
   const AdminNeighborhoodsScreen({super.key});
 
@@ -22,7 +24,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _loading = true);
+    if (mounted) setState(() => _loading = true);
     final data = await NeighborhoodService.getAll();
     if (mounted) {
       setState(() {
@@ -32,25 +34,54 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // ➕ / ✏️ Editor
+  // ═══════════════════════════════════════════════════════════
   Future<void> _openEditor({Neighborhood? neighborhood}) async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (_) => _NeighborhoodEditorDialog(neighborhood: neighborhood),
     );
 
-    if (result != null) {
+    if (result == null) return;
+
+    try {
       if (neighborhood == null) {
         await NeighborhoodService.addNeighborhood(result);
-      } else if (neighborhood.id != null) {
+      } else if (neighborhood.id != null && neighborhood.id!.isNotEmpty) {
         await NeighborhoodService.updateNeighborhood(
           neighborhood.id!,
           result,
         );
       }
-      _loadData();
+      await _loadData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              neighborhood == null ? '✅ زیادکرا' : '✅ نوێکرایەوە',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ _openEditor error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('هەڵە: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🗑️ Delete
+  // ═══════════════════════════════════════════════════════════
   Future<void> _deleteNeighborhood(Neighborhood n) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -61,7 +92,9 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
             borderRadius: BorderRadius.circular(20),
           ),
           title: const Text('سڕینەوەی گەڕەک'),
-          content: Text('ئایا دڵنیایت لە سڕینەوەی "${n.nameKu}"؟'),
+          content: Text(
+            'ئایا دڵنیایت لە سڕینەوەی "${n.nameKu}"؟',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -80,12 +113,37 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
       ),
     );
 
-    if (confirm == true && n.id != null) {
+    if (confirm != true) return;
+    if (n.id == null || n.id!.isEmpty) return;
+
+    try {
       await NeighborhoodService.deleteNeighborhood(n.id!);
-      _loadData();
+      await _loadData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ گەڕەک سڕایەوە'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ _deleteNeighborhood error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('هەڵە: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -96,9 +154,9 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
-          title: const Text(
-            'گەڕەکەکان 🏘️',
-            style: TextStyle(
+          title: Text(
+            'گەڕەکەکان 🏘️ (${_neighborhoods.length})',
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
               color: Colors.white,
@@ -144,14 +202,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
   }
 
   Widget _buildCard(Neighborhood n, bool isDark) {
-    Color color;
-    try {
-      String hex = n.color.replaceAll('#', '');
-      if (hex.length == 6) hex = 'FF$hex';
-      color = Color(int.parse(hex, radix: 16));
-    } catch (_) {
-      color = const Color(0xFF1E88E5);
-    }
+    final color = n.displayColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -162,6 +213,13 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
           color: color.withValues(alpha: 0.2),
           width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
@@ -190,20 +248,42 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            '${n.totalStores} شوێن',
-            style: TextStyle(
-              fontSize: 11,
-              color: isDark ? Colors.white54 : Colors.grey.shade600,
-              fontWeight: FontWeight.w600,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                n.hasBoundary
+                    ? '${n.boundaryPoints.length} خاڵی سنوور'
+                    : 'بێ سنوور',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.white54 : Colors.grey.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (n.hasCenter) ...[
+                const SizedBox(height: 2),
+                Text(
+                  '${n.centerLatitude!.toStringAsFixed(4)}, '
+                      '${n.centerLongitude!.toStringAsFixed(4)}',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.white38 : Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit_rounded, color: Colors.blue, size: 22),
+              icon: const Icon(
+                Icons.edit_rounded,
+                color: Colors.blue,
+                size: 22,
+              ),
               onPressed: () => _openEditor(neighborhood: n),
             ),
             IconButton(
@@ -268,51 +348,75 @@ class _NeighborhoodEditorDialog extends StatefulWidget {
 class _NeighborhoodEditorDialogState
     extends State<_NeighborhoodEditorDialog> {
   late TextEditingController _nameKuCtrl;
-  late TextEditingController _nameArCtrl;
   late TextEditingController _nameEnCtrl;
-  late TextEditingController _descKuCtrl;
   late TextEditingController _latCtrl;
   late TextEditingController _lngCtrl;
-  late String _selectedColor;
+  late TextEditingController _boundaryCtrl;
   bool _loading = false;
-
-  final _colors = [
-    '#1E88E5',
-    '#10B981',
-    '#EF4444',
-    '#F59E0B',
-    '#8B5CF6',
-    '#EC4899',
-    '#14B8A6',
-    '#6C5CE7',
-  ];
 
   @override
   void initState() {
     super.initState();
     final n = widget.neighborhood;
+
     _nameKuCtrl = TextEditingController(text: n?.nameKu ?? '');
-    _nameArCtrl = TextEditingController(text: n?.nameAr ?? '');
     _nameEnCtrl = TextEditingController(text: n?.nameEn ?? '');
-    _descKuCtrl = TextEditingController(text: n?.descriptionKu ?? '');
     _latCtrl = TextEditingController(
-      text: n?.centerLatitude?.toString() ?? '',
+      text: (n?.centerLatitude != null && n!.centerLatitude != 0)
+          ? n.centerLatitude.toString()
+          : '',
     );
     _lngCtrl = TextEditingController(
-      text: n?.centerLongitude?.toString() ?? '',
+      text: (n?.centerLongitude != null && n!.centerLongitude != 0)
+          ? n.centerLongitude.toString()
+          : '',
     );
-    _selectedColor = n?.color ?? '#1E88E5';
+    _boundaryCtrl = TextEditingController(
+      text: (n != null && n.hasBoundary)
+          ? _boundaryToString(n.boundaryPoints)
+          : '',
+    );
   }
 
   @override
   void dispose() {
     _nameKuCtrl.dispose();
-    _nameArCtrl.dispose();
     _nameEnCtrl.dispose();
-    _descKuCtrl.dispose();
     _latCtrl.dispose();
     _lngCtrl.dispose();
+    _boundaryCtrl.dispose();
     super.dispose();
+  }
+
+  // ⭐ گۆڕینی لیستی خاڵەکان بۆ تێکست
+  String _boundaryToString(List<LatLng> boundary) {
+    return boundary
+        .map((p) => '${p.latitude},${p.longitude}')
+        .join(';');
+  }
+
+  // ⭐ گۆڕینی تێکست بۆ لیستی خاڵەکان
+  List<Map<String, double>> _parseBoundary(String text) {
+    if (text.trim().isEmpty) return [];
+
+    final points = <Map<String, double>>[];
+    final parts = text.split(';');
+
+    for (var part in parts) {
+      part = part.trim();
+      if (part.isEmpty) continue;
+
+      final coords = part.split(',');
+      if (coords.length == 2) {
+        final lat = double.tryParse(coords[0].trim());
+        final lng = double.tryParse(coords[1].trim());
+        if (lat != null && lng != null) {
+          points.add({'lat': lat, 'lng': lng});
+        }
+      }
+    }
+
+    return points;
   }
 
   Future<void> _save() async {
@@ -329,27 +433,41 @@ class _NeighborhoodEditorDialogState
     setState(() => _loading = true);
 
     try {
-      final data = {
+      final boundaryPoints = _parseBoundary(_boundaryCtrl.text);
+
+      // ⚠️ پشکنین: ئەگەر boundary هەیە، دەبێت لانیکەم 3 خاڵ بێت
+      if (boundaryPoints.isNotEmpty && boundaryPoints.length < 3) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '⚠️ سنوور دەبێت لانیکەم ٣ خاڵ بێت '
+                  '(ئێستا: ${boundaryPoints.length})',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      final data = <String, dynamic>{
         'name_ku': _nameKuCtrl.text.trim(),
-        'name_ar': _nameArCtrl.text.trim().isEmpty
-            ? null
-            : _nameArCtrl.text.trim(),
         'name_en': _nameEnCtrl.text.trim().isEmpty
             ? null
             : _nameEnCtrl.text.trim(),
-        'description_ku': _descKuCtrl.text.trim().isEmpty
-            ? null
-            : _descKuCtrl.text.trim(),
-        'color': _selectedColor,
+        // ✅ ناوی دروست — center_latitude / center_longitude
         'center_latitude': _latCtrl.text.trim().isEmpty
             ? null
             : double.tryParse(_latCtrl.text.trim()),
         'center_longitude': _lngCtrl.text.trim().isEmpty
             ? null
             : double.tryParse(_lngCtrl.text.trim()),
+        'boundary': boundaryPoints.isEmpty ? null : boundaryPoints,
       };
 
       if (mounted) Navigator.pop(context, data);
+    } catch (e) {
+      debugPrint('❌ _save error: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -399,71 +517,51 @@ class _NeighborhoodEditorDialogState
                 const SizedBox(height: 16),
                 _buildField('ناوی کوردی *', _nameKuCtrl),
                 const SizedBox(height: 10),
-                _buildField('ناوی عەرەبی', _nameArCtrl),
-                const SizedBox(height: 10),
                 _buildField('ناوی ئینگلیزی', _nameEnCtrl),
-                const SizedBox(height: 10),
-                _buildField('وەسف', _descKuCtrl, maxLines: 3),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(
-                      child: _buildField('Latitude', _latCtrl),
-                    ),
+                    Expanded(child: _buildField('Latitude', _latCtrl)),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildField('Longitude', _lngCtrl),
-                    ),
+                    Expanded(child: _buildField('Longitude', _lngCtrl)),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'ڕەنگ',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
+                const SizedBox(height: 10),
+                _buildField(
+                  'سنوور (lat,lng;lat,lng;...)',
+                  _boundaryCtrl,
+                  maxLines: 5,
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _colors.map((c) {
-                    final color = _hexToColor(c);
-                    final isSelected = _selectedColor == c;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedColor = c),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? Colors.black
-                                : Colors.transparent,
-                            width: 3,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.5),
-                              blurRadius: 10,
-                            ),
-                          ]
-                              : null,
-                        ),
-                        child: isSelected
-                            ? const Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        )
-                            : null,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: Colors.blue.shade700,
+                        size: 18,
                       ),
-                    );
-                  }).toList(),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'خاڵەکانی سنوور بەم شێوەیە بنووسە:\n'
+                              '34.6189,45.3156;34.6195,45.3162;...\n'
+                              '⚠️ پێویستە لانیکەم ٣ خاڵ بێت',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blue.shade900,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -526,15 +624,5 @@ class _NeighborhoodEditorDialogState
         ),
       ),
     );
-  }
-
-  Color _hexToColor(String hex) {
-    try {
-      hex = hex.replaceAll('#', '');
-      if (hex.length == 6) hex = 'FF$hex';
-      return Color(int.parse(hex, radix: 16));
-    } catch (_) {
-      return const Color(0xFF1E88E5);
-    }
   }
 }

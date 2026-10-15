@@ -1,13 +1,15 @@
-import 'dart:convert';
+// lib/screens/stores/map_picker.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
-import 'package:http/http.dart' as http;
 import '../../config/app_colors.dart';
 import '../../config/constants.dart';
 import '../../services/location_service.dart';
+import '../../services/places_service.dart';
 
-/// 🗺️ شاشەی هەڵبژاردنی شوێن لەسەر نەخشە (Pro Version)
+/// 🗺️ شاشەی هەڵبژاردنی شوێن لەسەر نەخشە (Secure Edition)
+///
+/// ✅ Google Places API ئێستا بە Edge Function دەڕوات
+/// ✅ API Key لە client نابێت
 class MapPickerScreen extends StatefulWidget {
   final double? initialLat;
   final double? initialLng;
@@ -19,22 +21,6 @@ class MapPickerScreen extends StatefulWidget {
 }
 
 class _MapPickerScreenState extends State<MapPickerScreen> {
-  // ═══════════════════════════════════════════════════════════
-  // 🔐 API Key — لە .env یان --dart-define
-  // ═══════════════════════════════════════════════════════════
-  static String get _apiKey {
-    // ✅ ١. لە .env هەوڵ بدە
-    final envKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
-    if (envKey.isNotEmpty) return envKey;
-
-    // ✅ ٢. لە --dart-define هەوڵ بدە (بۆ Release)
-    const dartDefineKey = String.fromEnvironment(
-      'GOOGLE_MAPS_API_KEY',
-      defaultValue: '',
-    );
-    return dartDefineKey;
-  }
-
   gmaps.LatLng? _selectedLocation;
   gmaps.MapType _currentMapType = gmaps.MapType.normal;
   gmaps.GoogleMapController? _mapController;
@@ -46,13 +32,14 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   bool _isSearching = false;
   bool _showResults = false;
 
-  // ✅ زانیاری شوێنی هەڵبژێردراو
   Map<String, dynamic>? _selectedPOI;
   bool _loadingPOI = false;
 
-  // ═══════════════════════════════════════════════════════════
-  // 🚀 Lifecycle
-  // ═══════════════════════════════════════════════════════════
+  // ✅ Debounce بۆ گەڕان
+  // ⚠️ گرنگ: بۆ پاراستنی لە API calls ی زۆر
+  DateTime? _lastSearchTime;
+  static const Duration _searchDebounce = Duration(milliseconds: 400);
+
   @override
   void initState() {
     super.initState();
@@ -85,41 +72,33 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎯 گەڕان بۆ نزیکترین شوێن لە خاڵێکی دیاریکراو
+  // 🎯 گەڕان بۆ نزیکترین شوێن
   // ═══════════════════════════════════════════════════════════
   Future<void> _findNearestPlace(double lat, double lng) async {
-    try {
-      if (_apiKey.isEmpty) {
-        _showError('Google Maps API Key دانەنراوە');
-        if (mounted) setState(() => _loadingPOI = false);
-        return;
-      }
+    final place = await PlacesService.findNearest(
+      lat: lat,
+      lng: lng,
+      radius: 50,
+    );
 
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
-            '?location=$lat,$lng'
-            '&radius=50'
-            '&language=ku'
-            '&key=$_apiKey',
-      );
+    if (!mounted) return;
 
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data['status'] == 'OK' && (data['results'] as List).isNotEmpty) {
-          final result = data['results'][0];
-          final placeId = result['place_id'];
-          await _getPlaceDetails(placeId);
-          return;
-        }
-      }
-
-      // ✅ ئەگەر هیچ POI نەدۆزرایەوە، تەنها کۆئۆردینەت پیشان بدە
-      _showCoordinateOnly(lat, lng);
-    } catch (e) {
-      debugPrint('❌ هەڵە: $e');
+    if (place != null) {
+      setState(() {
+        _loadingPOI = false;
+        _selectedPOI = {
+          'name': place['name'] ?? 'شوێنی هەڵبژێردراو',
+          'address': place['address'] ?? '',
+          'phone': place['phone'] ?? '',
+          'lat': lat,
+          'lng': lng,
+          'rating': place['rating'] ?? 0,
+          'types': place['types'] ?? [],
+          'photo': place['photo'],
+          'place_id': place['place_id'] ?? '',
+        };
+      });
+    } else {
       _showCoordinateOnly(lat, lng);
     }
   }
@@ -145,71 +124,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📋 وەرگرتنی زانیاری شوێن بە Place ID
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _getPlaceDetails(String placeId) async {
-    try {
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/details/json'
-            '?place_id=$placeId'
-            '&language=ku'
-            '&fields=name,formatted_address,geometry,formatted_phone_number,rating,types,photos'
-            '&key=$_apiKey',
-      );
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        if (data['status'] == 'OK') {
-          final result = data['result'];
-
-          String? photoUrl;
-          if (result['photos'] != null && result['photos'].isNotEmpty) {
-            final photoRef = result['photos'][0]['photo_reference'];
-            photoUrl =
-            'https://maps.googleapis.com/maps/api/place/photo'
-                '?maxwidth=800'
-                '&photo_reference=$photoRef'
-                '&key=$_apiKey';
-          }
-
-          final poiData = {
-            'name': result['name'] ?? '',
-            'address': result['formatted_address'] ?? '',
-            'phone': result['formatted_phone_number'] ?? '',
-            'lat': result['geometry']['location']['lat'],
-            'lng': result['geometry']['location']['lng'],
-            'rating': result['rating'] ?? 0,
-            'types': result['types'] ?? [],
-            'photo': photoUrl,
-            'place_id': placeId,
-          };
-
-          if (mounted) {
-            setState(() {
-              _selectedPOI = poiData;
-              _loadingPOI = false;
-              _selectedLocation = gmaps.LatLng(
-                (poiData['lat'] as num).toDouble(),
-                (poiData['lng'] as num).toDouble(),
-              );
-            });
-          }
-          return;
-        }
-      }
-
-      if (mounted) setState(() => _loadingPOI = false);
-    } catch (e) {
-      debugPrint('❌ هەڵە: $e');
-      if (mounted) setState(() => _loadingPOI = false);
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🔍 سێرچکردن بە Google Places API
+  // 🔍 گەڕان بە Places API (بە Edge Function)
   // ═══════════════════════════════════════════════════════════
   Future<void> _searchLocation(String query) async {
     if (query.trim().isEmpty) {
@@ -222,6 +137,14 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       return;
     }
 
+    // ✅ Debounce — پشکنینی کاتی گەڕانی کۆتایی
+    final now = DateTime.now();
+    if (_lastSearchTime != null &&
+        now.difference(_lastSearchTime!) < _searchDebounce) {
+      return;
+    }
+    _lastSearchTime = now;
+
     if (mounted) {
       setState(() {
         _isSearching = true;
@@ -229,65 +152,18 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       });
     }
 
-    try {
-      if (_apiKey.isEmpty) {
-        _showError('Google Maps API Key دانەنراوە');
-        if (mounted) setState(() => _isSearching = false);
-        return;
-      }
+    final results = await PlacesService.searchPlaces(
+      query: query,
+      biasLat: AppConstants.kalarLatitude,
+      biasLng: AppConstants.kalarLongitude,
+      radius: 30000,
+    );
 
-      final url = Uri.parse(
-        'https://maps.googleapis.com/maps/api/place/textsearch/json'
-            '?query=${Uri.encodeComponent(query)}'
-            '&location=${AppConstants.kalarLatitude},${AppConstants.kalarLongitude}'
-            '&radius=30000'
-            '&language=ku'
-            '&key=$_apiKey',
-      );
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final status = data['status'];
-
-        if (status == 'OK') {
-          final results = List<Map<String, dynamic>>.from(
-            (data['results'] as List).map((e) => {
-              'name': e['name'] ?? '',
-              'address': e['formatted_address'] ?? '',
-              'lat': e['geometry']['location']['lat'],
-              'lng': e['geometry']['location']['lng'],
-              'place_id': e['place_id'] ?? '',
-              'rating': e['rating'] ?? 0,
-              'types': e['types'] ?? [],
-            }),
-          );
-
-          if (mounted) {
-            setState(() {
-              _searchResults = results;
-              _isSearching = false;
-            });
-          }
-        } else if (status == 'ZERO_RESULTS') {
-          if (mounted) {
-            setState(() {
-              _searchResults = [];
-              _isSearching = false;
-            });
-          }
-        } else {
-          _showError('هەڵەی API: $status');
-          if (mounted) setState(() => _isSearching = false);
-        }
-      } else {
-        _showError('کێشەی پەیوەندی: ${response.statusCode}');
-        if (mounted) setState(() => _isSearching = false);
-      }
-    } catch (e) {
-      _showError('هەڵە: $e');
-      if (mounted) setState(() => _isSearching = false);
+    if (mounted) {
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
     }
   }
 
@@ -295,14 +171,18 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   // 🎯 چوونە سەر ئەنجامەکە
   // ═══════════════════════════════════════════════════════════
   Future<void> _goToResult(Map<String, dynamic> result) async {
-    final lat = (result['lat'] as num).toDouble();
-    final lng = (result['lng'] as num).toDouble();
+    final lat = (result['lat'] as num?)?.toDouble();
+    final lng = (result['lng'] as num?)?.toDouble();
+    final placeId = result['place_id']?.toString() ?? '';
+
+    if (lat == null || lng == null) return;
+
     final newPos = gmaps.LatLng(lat, lng);
 
     if (mounted) {
       setState(() {
         _selectedLocation = newPos;
-        _searchCtrl.text = result['name'] ?? '';
+        _searchCtrl.text = result['name']?.toString() ?? '';
         _showResults = false;
         _searchResults = [];
         _loadingPOI = true;
@@ -310,12 +190,49 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     }
 
     _searchFocus.unfocus();
-
     _mapController?.animateCamera(
       gmaps.CameraUpdate.newLatLngZoom(newPos, 17),
     );
 
-    await _getPlaceDetails(result['place_id']);
+    // ✅ وەرگرتنی زانیاری زیاتر
+    if (placeId.isNotEmpty) {
+      final details = await PlacesService.getPlaceDetails(placeId);
+      if (mounted && details != null) {
+        setState(() {
+          _loadingPOI = false;
+          _selectedPOI = {
+            'name': details['name'] ?? result['name'],
+            'address': details['address'] ?? result['address'],
+            'phone': details['phone'] ?? '',
+            'lat': lat,
+            'lng': lng,
+            'rating': details['rating'] ?? 0,
+            'types': details['types'] ?? [],
+            'photo': details['photo'],
+            'place_id': placeId,
+          };
+        });
+        return;
+      }
+    }
+
+    // Fallback: تەنها کۆئۆردینەت
+    if (mounted) {
+      setState(() {
+        _loadingPOI = false;
+        _selectedPOI = {
+          'name': result['name'] ?? '',
+          'address': result['address'] ?? '',
+          'phone': '',
+          'lat': lat,
+          'lng': lng,
+          'rating': 0,
+          'types': [],
+          'photo': null,
+          'place_id': placeId,
+        };
+      });
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -374,13 +291,8 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       child: Scaffold(
         body: Stack(
           children: [
-            // 🗺️ نەخشە
             _buildMap(),
-
-            // 🔍 سەرەوە
             _buildSearchBar(),
-
-            // 📍 دوگمەی شوێنی ئێستا
             Positioned(
               bottom: 100,
               left: 20,
@@ -390,8 +302,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 onTap: _goToCurrentLocation,
               ),
             ),
-
-            // 🛰️ دوگمەی ساتەلایت
             Positioned(
               bottom: 160,
               left: 20,
@@ -410,11 +320,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 },
               ),
             ),
-
-            // ⏳ لۆدینگ POI
             if (_loadingPOI) _buildLoadingOverlay(),
-
-            // 📋 زانیاری POI (Bottom Sheet)
             if (_selectedPOI != null && !_loadingPOI)
               _buildPOIBottomSheet(),
           ],
@@ -423,9 +329,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🗺️ Map Widget
-  // ═══════════════════════════════════════════════════════════
   Widget _buildMap() {
     return gmaps.GoogleMap(
       initialCameraPosition: gmaps.CameraPosition(
@@ -464,9 +367,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔍 Search Bar
-  // ═══════════════════════════════════════════════════════════
   Widget _buildSearchBar() {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 12,
@@ -476,7 +376,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
         children: [
           Row(
             children: [
-              // دوگمەی گەڕانەوە
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
@@ -500,8 +399,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-
-              // خانەی گەڕان
               Expanded(
                 child: Container(
                   height: 48,
@@ -521,9 +418,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                     focusNode: _searchFocus,
                     onSubmitted: _searchLocation,
                     onChanged: (val) {
-                      if (val.length >= 2) {
-                        _searchLocation(val);
-                      }
+                      if (val.length >= 2) _searchLocation(val);
                     },
                     decoration: InputDecoration(
                       hintText: "گەڕان (بە ئینگلیزی: bakery، cafe)",
@@ -563,15 +458,9 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               ),
             ],
           ),
-
-          // 📋 ئەنجامەکان
           if (_showResults && _searchResults.isNotEmpty)
             _buildSearchResults(),
-
-          // ⏳ لۆدینگ
           if (_isSearching) _buildSearchingIndicator(),
-
-          // 📭 هیچ نییە
           if (_showResults &&
               !_isSearching &&
               _searchResults.isEmpty &&
@@ -582,9 +471,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📋 ئەنجامەکانی گەڕان
-  // ═══════════════════════════════════════════════════════════
   Widget _buildSearchResults() {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -625,7 +511,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               ),
             ),
             title: Text(
-              result['name'] ?? '',
+              result['name']?.toString() ?? '',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
@@ -634,11 +520,8 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
-              result['address'] ?? '',
-              style: const TextStyle(
-                fontSize: 11,
-                color: Colors.grey,
-              ),
+              result['address']?.toString() ?? '',
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -648,9 +531,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // ⏳ لۆدینگی گەڕان
-  // ═══════════════════════════════════════════════════════════
   Widget _buildSearchingIndicator() {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -679,19 +559,13 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
           SizedBox(width: 10),
           Text(
             'خەریکی گەڕان...',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📭 هیچ ئەنجامێک نییە
-  // ═══════════════════════════════════════════════════════════
   Widget _buildNoResults() {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -708,11 +582,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       ),
       child: const Column(
         children: [
-          Icon(
-            Icons.search_off_rounded,
-            color: Colors.grey,
-            size: 32,
-          ),
+          Icon(Icons.search_off_rounded, color: Colors.grey, size: 32),
           SizedBox(height: 6),
           Text(
             'هیچ شوێنێک نەدۆزرایەوە',
@@ -727,9 +597,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔵 دوگمەی نەخشە
-  // ═══════════════════════════════════════════════════════════
   Widget _buildMapButton({
     required IconData icon,
     required Color color,
@@ -755,9 +622,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // ⏳ لۆدینگی POI
-  // ═══════════════════════════════════════════════════════════
   Widget _buildLoadingOverlay() {
     return Container(
       color: Colors.black.withValues(alpha: 0.5),
@@ -780,9 +644,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📋 Bottom Sheet ی POI
-  // ═══════════════════════════════════════════════════════════
   Widget _buildPOIBottomSheet() {
     return Positioned(
       bottom: 0,
@@ -807,7 +668,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Drag Handle
             Center(
               child: Container(
                 width: 40,
@@ -819,8 +679,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 ),
               ),
             ),
-
-            // زانیاری
             Row(
               children: [
                 _buildPOIImage(),
@@ -830,7 +688,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _selectedPOI!['name'] ?? '',
+                        _selectedPOI!['name']?.toString() ?? '',
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 15,
@@ -871,8 +729,6 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               ],
             ),
             const SizedBox(height: 12),
-
-            // دوگمەی هەڵبژاردن
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -911,15 +767,13 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🖼️ وێنەی POI
-  // ═══════════════════════════════════════════════════════════
   Widget _buildPOIImage() {
-    if (_selectedPOI!['photo'] != null) {
+    final photo = _selectedPOI!['photo']?.toString();
+    if (photo != null && photo.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.network(
-          _selectedPOI!['photo'],
+          photo,
           width: 70,
           height: 70,
           fit: BoxFit.cover,
@@ -927,10 +781,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             width: 70,
             height: 70,
             color: Colors.grey.shade200,
-            child: const Icon(
-              Icons.image,
-              color: Colors.grey,
-            ),
+            child: const Icon(Icons.image, color: Colors.grey),
           ),
         ),
       );

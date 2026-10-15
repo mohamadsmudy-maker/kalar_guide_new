@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 🏛️ شاشەی مامەڵەکانی فەرمانگە
-class DepartmentServicesScreen extends StatefulWidget {
+class AdminDepartmentServicesScreen extends StatefulWidget {
   final Map<String, dynamic> department;
 
-  const DepartmentServicesScreen({
+  const AdminDepartmentServicesScreen({
     super.key,
     required this.department,
   });
 
   @override
-  State<DepartmentServicesScreen> createState() =>
-      _DepartmentServicesScreenState();
+  State<AdminDepartmentServicesScreen> createState() =>
+      _AdminDepartmentServicesScreenState();
 }
 
-class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
+class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _services = [];
 

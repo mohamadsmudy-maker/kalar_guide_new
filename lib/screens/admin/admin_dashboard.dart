@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../config/app_colors.dart';
+
 import '../../services/auth_service.dart';
-import 'admin_stores.dart';
-import 'admin_news.dart';
-import 'admin_complaints.dart' show AdminComplaintsProScreen;
-import 'admin_videos.dart';
-import 'admin_fuel.dart';
-import 'admin_currency.dart';
-import 'admin_banners.dart';
-import 'admin_weather.dart';
+import '../../utils/app_logger.dart';
+import '../../services/presence_service.dart';
+import 'admin_live_users.dart';
+
+// ═══════════════════════════════════════════════════════════
+// 📦 Admin Screens
+// ═══════════════════════════════════════════════════════════
 import 'admin_ai_chat.dart';
-import 'admin_notifications.dart';
+import 'admin_banners.dart';
 import 'admin_categories_management.dart';
-import 'admin_database_viewer.dart';
-import 'all_complaints_map.dart';
 import 'admin_complaint_instructions.dart';
-import 'admin_vendor_requests.dart';
-import 'admin_neighborhoods_screen.dart';
+import 'admin_complaints.dart' show AdminComplaintsProScreen;
+import 'admin_currency.dart';
+import 'admin_database_viewer.dart';
+import 'admin_departments.dart';
 import 'admin_emergency_services_screen.dart';
 import 'admin_events_screen.dart';
-import 'admin_emergency_services_screen.dart';
-/// 👑 پانێڵی بەڕێوەبردن — بە ٢ دۆخ: Admin + Vendor
+import 'admin_fuel.dart';
+import 'admin_neighborhoods_screen.dart';
+import 'admin_news.dart';
+import 'admin_notifications.dart';
+import 'admin_store_services_screen.dart';
+import 'admin_stores.dart';
+import 'admin_vendor_requests.dart';
+import 'admin_videos.dart';
+import 'admin_weather.dart';
+import 'all_complaints_map.dart';
+
+/// 👑 پانێڵی بەڕێوەبردن — ULTRA PRO EDITION
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -30,11 +39,17 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Stats State
+  // ═══════════════════════════════════════════════════════════
   bool _loading = true;
   int _totalStores = 0;
   int _totalProducts = 0;
   int _pendingVendors = 0;
   int _pendingComplaints = 0;
+  int _totalDepartments = 0;
+  int _totalComplaints = 0;
+  String? _statsError;
 
   @override
   void initState() {
@@ -43,47 +58,109 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📡 هێنانی ئامارەکان
+  // 📡 هێنانی ئامارەکان — Partial Failure Safe
   // ═══════════════════════════════════════════════════════════
   Future<void> _fetchAllStats() async {
     if (!mounted) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _statsError = null;
+    });
 
+    final supa = Supabase.instance.client;
+
+    int stores = 0, products = 0, pendingComplaints = 0;
+    int pendingVendors = 0, departments = 0, allComplaints = 0;
+    final errors = <String>[];
+
+    // ─── ١. شوێنەکان ───
     try {
-      final supa = Supabase.instance.client;
-
-      final results = await Future.wait([
-        supa.from('dukan').select('id').count(CountOption.exact),
-        supa.from('products').select('id').count(CountOption.exact),
-        supa
-            .from('complaints')
-            .select('id')
-            .eq('status', 'pending')
-            .count(CountOption.exact),
-        supa
-            .from('app_users')
-            .select('id')
-            .eq('role', 'vendor')
-            .eq('is_approved', false)
-            .count(CountOption.exact),
-      ]);
-
-      if (!mounted) return;
-
-      setState(() {
-        _totalStores = results[0].count ?? 0;
-        _totalProducts = results[1].count ?? 0;
-        _pendingComplaints = results[2].count ?? 0;
-        _pendingVendors = results[3].count ?? 0;
-        _loading = false;
-      });
-    } on PostgrestException catch (e) {
-      debugPrint('❌ Postgrest error: ${e.message}');
-      if (mounted) setState(() => _loading = false);
+      final res = await supa
+          .from('dukan')
+          .select('id')
+          .count(CountOption.exact);
+      stores = res.count ?? 0;
     } catch (e) {
-      debugPrint('❌ Unexpected error: $e');
-      if (mounted) setState(() => _loading = false);
+      AppLogger.w('⚠️ Stats: dukan error: $e');
+      errors.add('شوێنەکان');
     }
+
+    // ─── ٢. کاڵاکان ───
+    try {
+      final res = await supa
+          .from('products')
+          .select('id')
+          .count(CountOption.exact);
+      products = res.count ?? 0;
+    } catch (e) {
+      AppLogger.w('⚠️ Stats: products error: $e');
+      errors.add('کاڵاکان');
+    }
+
+    // ─── ٣. سکاڵای چاوەڕوان ───
+    try {
+      final res = await supa
+          .from('complaints')
+          .select('id')
+          .eq('status', 'pending')
+          .count(CountOption.exact);
+      pendingComplaints = res.count ?? 0;
+    } catch (e) {
+      AppLogger.w('⚠️ Stats: pending complaints error: $e');
+      errors.add('سکاڵاکان');
+    }
+
+    // ─── ٤. هەموو سکاڵاکان ───
+    try {
+      final res = await supa
+          .from('complaints')
+          .select('id')
+          .count(CountOption.exact);
+      allComplaints = res.count ?? 0;
+    } catch (e) {
+      AppLogger.w('⚠️ Stats: all complaints error: $e');
+    }
+
+    // ─── ٥. داواکاری ئەدمین ───
+    try {
+      final res = await supa
+          .from('app_users')
+          .select('id')
+          .eq('role', 'vendor')
+          .eq('is_approved', false)
+          .count(CountOption.exact);
+      pendingVendors = res.count ?? 0;
+    } catch (e) {
+      AppLogger.w('⚠️ Stats: vendors error: $e');
+      errors.add('داواکاری');
+    }
+
+    // ─── ٦. فەرمانگەکان ───
+    try {
+      final res = await supa
+          .from('departments')
+          .select('id')
+          .count(CountOption.exact);
+      departments = res.count ?? 0;
+    } catch (e) {
+      AppLogger.w('⚠️ Stats: departments error: $e');
+      errors.add('فەرمانگەکان');
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _totalStores = stores;
+      _totalProducts = products;
+      _pendingComplaints = pendingComplaints;
+      _totalComplaints = allComplaints;
+      _pendingVendors = pendingVendors;
+      _totalDepartments = departments;
+      _loading = false;
+      _statsError = errors.isEmpty
+          ? null
+          : '⚠️ هەندێک ئامار بار نەکران: ${errors.join("، ")}';
+    });
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -94,10 +171,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       context,
       MaterialPageRoute(builder: (_) => screen),
     );
-
     if (mounted) await _fetchAllStats();
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -133,9 +212,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFE91E63),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFE91E63)),
         )
             : RefreshIndicator(
           color: const Color(0xFFE91E63),
@@ -143,248 +220,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // ─── Partial Error Banner ───
+              if (_statsError != null) ...[
+                _buildErrorBanner(_statsError!),
+                const SizedBox(height: 12),
+              ],
+
               // ═══════════════════════════════════════
-              // 🎯 بەشی ١: بۆ Admin
+              // 👑 ADMIN ONLY
               // ═══════════════════════════════════════
               if (isAdmin) ...[
+                _buildLiveUsersCard(isDark),  // ⭐ Live Users
+                const SizedBox(height: 12),
                 _buildAiChatBanner(),
                 const SizedBox(height: 18),
                 _buildStatsSection(isDark),
                 const SizedBox(height: 22),
+                _buildAdminMenu(isDark),
               ],
 
               // ═══════════════════════════════════════
-              // 🎯 بەشی ٢: بۆ Vendor
+              // 🏪 VENDOR ONLY
               // ═══════════════════════════════════════
               if (isVendorOnly) ...[
                 _buildVendorBanner(),
                 const SizedBox(height: 18),
                 _buildVendorStats(isDark),
                 const SizedBox(height: 22),
-                _buildSectionTitle('⚡ شوێنەکەم', isDark),
-                const SizedBox(height: 12),
-                _buildMenuTile(
-                  "بەنزینخانەکەم ⛽",
-                  "نوێکردنەوەی نرخی سووتەمەنی",
-                  Icons.local_gas_station_rounded,
-                  const Color(0xFFFFD700),
-                      () => _navigate(const AdminFuelScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "نوسینگەی دراوەکەم 💵",
-                  "نوێکردنەوەی نرخی دراو و زێڕ",
-                  Icons.currency_exchange_rounded,
-                  Colors.green,
-                      () => _navigate(const AdminCurrencyScreen()),
-                  isDark: isDark,
-                ),
-
-                // لە دوای _buildMenuTile ی "نەخشەی گشتی سکاڵاکان"
-
-                _buildMenuTile(
-                  "بەڕێوەبردنی فریاکەوتن 🚑",
-                  "زیادکردن و دەستکاری ژمارەکانی فریاکەوتن",
-                  Icons.emergency_rounded,
-                  const Color(0xFFE53935),
-                      () => _navigate(const AdminEmergencyServicesScreen()),
-                  isDark: isDark,
-                ),
-
-                _buildMenuTile(
-                  "بەڕێوەبردنی ڕووداوەکان 📅",
-                  "زیادکردن و دەستکاری ڕووداوەکان",
-                  Icons.event_rounded,
-                  const Color(0xFF6C5CE7),
-                      () => _navigate(const AdminEventsScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "بڵاوکردنەوەی هەواڵ 📰",
-                  "زیادکردن و دەستکاریکردنی هەواڵ",
-                  Icons.post_add_rounded,
-                  Colors.green,
-                      () => _navigate(const AdminNewsScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "دەستکاریکردنی هەواڵەکان ✏️",
-                  "بینین و دەستکاریکردنی هەموو هەواڵەکان",
-                  Icons.edit_note_rounded,
-                  Colors.blue,
-                      () => _navigate(const AdminNewsScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "زانیاری شوێنەکەم 🏪",
-                  "بینین و دەستکاریکردنی زانیاری",
-                  Icons.storefront_rounded,
-                  Colors.orange,
-                      () => _navigate(const AdminStoresScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "کاڵاکانم 🛍️",
-                  "زیادکردن و دەستکاریکردنی کاڵاکان",
-                  Icons.shopping_bag_rounded,
-                  Colors.purple,
-                      () => _navigate(const AdminStoresScreen()),
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 18),
-              ],
-
-              // ═══════════════════════════════════════
-              // 🎯 بەشی ٣: بۆ Admin
-              // ═══════════════════════════════════════
-              if (isAdmin) ...[
-                _buildSectionTitle('⚡ بەشی گرنگ', isDark),
-                const SizedBox(height: 12),
-                _buildMenuTile(
-                  "بەڕێوەبردنی سکاڵاکان 📋",
-                  "بینین و جێبەجێکردنی سکاڵاکان",
-                  Icons.assignment_late_rounded,
-                  Colors.red,
-                      () => _navigate(const AdminComplaintsProScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "نەخشەی گشتی سکاڵاکان 🗺️",
-                  "بینینی گشت سکاڵاکان لەسەر ماپ",
-                  Icons.map_rounded,
-                  Colors.redAccent,
-                      () => _navigate(const AllComplaintsMapScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "بەڕێوەبردنی ڕێنماییەکانی سکاڵا 📢",
-                  "دەستکاری و گۆڕینی پۆپئاپی سکاڵا",
-                  Icons.announcement_rounded,
-                  Colors.deepOrange,
-                      () => _navigate(
-                    const AdminComplaintInstructionsListScreen(),
-                  ),
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 18),
-
-                _buildSectionTitle('🏪 بەڕێوەبردنی شوێن', isDark),
-                const SizedBox(height: 12),
-                _buildMenuTile(
-                  "بەڕێوەبردنی شوێنەکان 🏪",
-                  "سەرجەم شوێنە تۆمارکراوەکان",
-                  Icons.storefront_rounded,
-                  Colors.indigo,
-                      () => _navigate(const AdminStoresScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "بەشە سەرەکی و ژێربەشەکان 🗂️",
-                  "زیادکردن و دەستکاری بەشەکان",
-                  Icons.category_rounded,
-                  Colors.purple,
-                      () => _navigate(
-                    const AdminCategoriesManagementScreen(),
-                  ),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "بەڕێوەبردنی گەڕەکەکان 🏘️",
-                  "زیادکردن و دەستکاری گەڕەکەکانی کەلار",
-                  Icons.location_city_rounded,
-                  const Color(0xFF1E88E5),
-                      () => _navigate(const AdminNeighborhoodsScreen()),
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 18),
-
-                _buildSectionTitle('📰 بەڕێوەبردنی ناوەڕۆک', isDark),
-                const SizedBox(height: 12),
-                _buildMenuTile(
-                  "بەڕێوەبردنی هەواڵ 📰",
-                  "زیادکردن و دەستکاری هەواڵەکان",
-                  Icons.post_add_rounded,
-                  Colors.green,
-                      () => _navigate(const AdminNewsScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "بەڕێوەبردنی ڤیدیۆکان 🎬",
-                  "زیادکردن و دەستکاری ڤیدیۆکان",
-                  Icons.video_library_rounded,
-                  Colors.indigo,
-                      () => _navigate(const AdminVideosScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "ڕێکخستنی سلایدەکان 🎨",
-                  "ڕێکخستن و گۆڕینی بانەرەکان",
-                  Icons.view_carousel_rounded,
-                  Colors.pink,
-                      () => _navigate(const AdminReorderBannersScreen()),
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 18),
-
-                _buildSectionTitle(
-                  '⚡ خزمەتگوزارییە ڕۆژانەکان',
-                  isDark,
-                ),
-                const SizedBox(height: 12),
-                _buildMenuTile(
-                  "ناردنی ئاگاداری 🔔",
-                  "ناردنی ئاگاداری بۆ بەکارهێنەران",
-                  Icons.notifications_active_rounded,
-                  Colors.orange,
-                      () => _navigate(const AdminNotificationsScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "بەڕێوەبردنی کەشوهەوا 🌤️",
-                  "نوێکردنەوەی پلەی گەرما و دۆخ",
-                  Icons.cloud_rounded,
-                  Colors.lightBlue,
-                      () => _navigate(const AdminWeatherScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "بەڕێوەبردنی سووتەمەنی ⛽",
-                  "نوێکردنەوەی نرخی بەنزین و گاز",
-                  Icons.local_gas_station_rounded,
-                  const Color(0xFFFFD700),
-                      () => _navigate(const AdminFuelScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "بەڕێوەبردنی دراوەکان 💵",
-                  "نوێکردنەوەی نرخی دۆلار و زێڕ",
-                  Icons.currency_exchange_rounded,
-                  Colors.green,
-                      () => _navigate(const AdminCurrencyScreen()),
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 18),
-
-                _buildSectionTitle('⚙️ ڕێکخستن و سیستەم', isDark),
-                const SizedBox(height: 12),
-                _buildMenuTile(
-                  "داواکاری ئەدمینەکان 👑",
-                  "پەسەندکردنی ئەدمینە نوێکان",
-                  Icons.admin_panel_settings_rounded,
-                  Colors.purple,
-                      () => _navigate(const AdminVendorRequestsScreen()),
-                  isDark: isDark,
-                ),
-                _buildMenuTile(
-                  "تەیبڵەکانی سۆپابەیس 🗄️",
-                  "بینینی گشت خشتەکانی داتابەیس",
-                  Icons.table_chart_rounded,
-                  Colors.indigo,
-                      () => _navigate(
-                    const AdminDatabaseViewerScreen(),
-                  ),
-                  isDark: isDark,
-                ),
+                _buildVendorMenu(isDark),
               ],
 
               const SizedBox(height: 30),
@@ -392,6 +255,361 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 👥 Live Users Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildLiveUsersCard(bool isDark) {
+    return StreamBuilder<int>(
+      stream: PresenceService.watchOnlineCount(),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        return InkWell(
+          onTap: () => _navigate(const AdminLiveUsersScreen()),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.people_alt_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'بەکارهێنەرانی چالاک',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$count ئێستا لە خەتە',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_left_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📋 ADMIN MENU
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildAdminMenu(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ═══ بەشی گرنگ ═══
+        _buildSectionTitle('🔥 بەشی گرنگ', isDark),
+        const SizedBox(height: 12),
+
+        _buildMenuTile(
+          "بەڕێوەبردنی سکاڵاکان 📋",
+          "بینین و جێبەجێکردنی سکاڵاکان",
+          Icons.assignment_late_rounded,
+          Colors.red,
+              () => _navigate(const AdminComplaintsProScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "نەخشەی گشتی سکاڵاکان 🗺️",
+          "بینینی گشت سکاڵاکان لەسەر ماپ",
+          Icons.map_rounded,
+          Colors.redAccent,
+              () => _navigate(const AllComplaintsMapScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "ڕێنماییەکانی سکاڵا 📢",
+          "دەستکاری و گۆڕینی پۆپئاپی سکاڵا",
+          Icons.announcement_rounded,
+          Colors.deepOrange,
+              () => _navigate(const AdminComplaintInstructionsListScreen()),
+          isDark: isDark,
+        ),
+
+        const SizedBox(height: 18),
+
+        // ═══ شوێن و فەرمانگە ═══
+        _buildSectionTitle('🏪 بەڕێوەبردنی شوێن و فەرمانگە', isDark),
+        const SizedBox(height: 12),
+
+        _buildMenuTile(
+          "بەڕێوەبردنی شوێنەکان 🏪",
+          "سەرجەم شوێنە تۆمارکراوەکان",
+          Icons.storefront_rounded,
+          Colors.indigo,
+              () => _navigate(const AdminStoresScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "بەڕێوەبردنی فەرمانگەکان 🏛️",
+          "زیادکردن و دەستکاری مامەڵەکانی فەرمانگەکان",
+          Icons.business_rounded,
+          const Color(0xFF10B981),
+              () => _navigate(const AdminDepartmentsScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "بەشە سەرەکی و ژێربەشەکان 🗂️",
+          "زیادکردن و دەستکاری بەشەکان",
+          Icons.category_rounded,
+          Colors.purple,
+              () => _navigate(const AdminCategoriesManagementScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "بەڕێوەبردنی گەڕەکەکان 🏘️",
+          "زیادکردن و دەستکاری گەڕەکەکانی کەلار",
+          Icons.location_city_rounded,
+          const Color(0xFF1E88E5),
+              () => _navigate(const AdminNeighborhoodsScreen()),
+          isDark: isDark,
+        ),
+
+        const SizedBox(height: 18),
+
+        // ═══ ناوەڕۆک ═══
+        _buildSectionTitle('📰 بەڕێوەبردنی ناوەڕۆک', isDark),
+        const SizedBox(height: 12),
+
+        _buildMenuTile(
+          "بەڕێوەبردنی هەواڵ 📰",
+          "زیادکردن و دەستکاری هەواڵەکان",
+          Icons.post_add_rounded,
+          Colors.green,
+              () => _navigate(const AdminNewsScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "بەڕێوەبردنی ڤیدیۆکان 🎬",
+          "زیادکردن و دەستکاری ڤیدیۆکان",
+          Icons.video_library_rounded,
+          Colors.indigo,
+              () => _navigate(const AdminVideosScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "ڕێکخستنی سلایدەکان 🎨",
+          "ڕێکخستن و گۆڕینی بانەرەکان",
+          Icons.view_carousel_rounded,
+          Colors.pink,
+              () => _navigate(const AdminReorderBannersScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "ڕووداوەکان 📅",
+          "زیادکردن و دەستکاری ڕووداوەکان",
+          Icons.event_rounded,
+          const Color(0xFF6C5CE7),
+              () => _navigate(const AdminEventsScreen()),
+          isDark: isDark,
+        ),
+
+        const SizedBox(height: 18),
+
+        // ═══ خزمەتگوزارییە ڕۆژانەکان ═══
+        _buildSectionTitle('⚡ خزمەتگوزارییە ڕۆژانەکان', isDark),
+        const SizedBox(height: 12),
+
+        _buildMenuTile(
+          "بەڕێوەبردنی فریاکەوتن 🚑",
+          "ژمارەکانی فریاکەوتن",
+          Icons.emergency_rounded,
+          const Color(0xFFE53935),
+              () => _navigate(const AdminEmergencyServicesScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "بەڕێوەبردنی سووتەمەنی ⛽",
+          "نوێکردنەوەی نرخی بەنزین و گاز",
+          Icons.local_gas_station_rounded,
+          const Color(0xFFFFD700),
+              () => _navigate(const AdminFuelScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "بەڕێوەبردنی دراوەکان 💵",
+          "نوێکردنەوەی نرخی دۆلار و زێڕ",
+          Icons.currency_exchange_rounded,
+          Colors.green,
+              () => _navigate(const AdminCurrencyScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "بەڕێوەبردنی کەشوهەوا 🌤️",
+          "نوێکردنەوەی پلەی گەرما و دۆخ",
+          Icons.cloud_rounded,
+          Colors.lightBlue,
+              () => _navigate(const AdminWeatherScreen()),
+          isDark: isDark,
+        ),
+
+        const SizedBox(height: 18),
+
+        // ═══ ڕێکخستن ═══
+        _buildSectionTitle('⚙️ ڕێکخستن و سیستەم', isDark),
+        const SizedBox(height: 12),
+
+        _buildMenuTile(
+          "ناردنی ئاگاداری 🔔",
+          "ناردنی ئاگاداری بۆ بەکارهێنەران",
+          Icons.notifications_active_rounded,
+          Colors.orange,
+              () => _navigate(const AdminNotificationsScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "داواکاری ئەدمینەکان 👑",
+          "پەسەندکردنی ئەدمینە نوێکان",
+          Icons.admin_panel_settings_rounded,
+          Colors.purple,
+              () => _navigate(const AdminVendorRequestsScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "خشتەکانی داتابەیس 🗄️",
+          "بینینی گشت خشتەکانی داتابەیس",
+          Icons.table_chart_rounded,
+          Colors.indigo,
+              () => _navigate(const AdminDatabaseViewerScreen()),
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏪 VENDOR MENU
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildVendorMenu(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('⚡ شوێنەکەم', isDark),
+        const SizedBox(height: 12),
+
+        _buildMenuTile(
+          "بەنزینخانەکەم ⛽",
+          "نوێکردنەوەی نرخی سووتەمەنی",
+          Icons.local_gas_station_rounded,
+          const Color(0xFFFFD700),
+              () => _navigate(const AdminFuelScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "نوسینگەی دراوەکەم 💵",
+          "نوێکردنەوەی نرخی دراو و زێڕ",
+          Icons.currency_exchange_rounded,
+          Colors.green,
+              () => _navigate(const AdminCurrencyScreen()),
+          isDark: isDark,
+        ),
+
+        const SizedBox(height: 18),
+
+        _buildSectionTitle('📰 ناوەڕۆک', isDark),
+        const SizedBox(height: 12),
+
+        _buildMenuTile(
+          "بڵاوکردنەوەی هەواڵ 📰",
+          "زیادکردن و دەستکاریکردنی هەواڵ",
+          Icons.post_add_rounded,
+          Colors.green,
+              () => _navigate(const AdminNewsScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "کاڵاکانم 🛍️",
+          "زیادکردن و دەستکاریکردنی کاڵاکان",
+          Icons.shopping_bag_rounded,
+          Colors.purple,
+              () => _navigate(const AdminStoresScreen()),
+          isDark: isDark,
+        ),
+        _buildMenuTile(
+          "ڕووداوەکان 📅",
+          "زیادکردن و دەستکاری ڕووداوەکان",
+          Icons.event_rounded,
+          const Color(0xFF6C5CE7),
+              () => _navigate(const AdminEventsScreen()),
+          isDark: isDark,
+        ),
+
+        const SizedBox(height: 18),
+
+        _buildSectionTitle('🏪 شوێنەکەم', isDark),
+        const SizedBox(height: 12),
+
+        _buildMenuTile(
+          "زانیاری شوێنەکەم 🏪",
+          "بینین و دەستکاریکردنی زانیاری",
+          Icons.storefront_rounded,
+          Colors.orange,
+              () => _navigate(const AdminStoresScreen()),
+          isDark: isDark,
+        ),
+      ],
     );
   }
 
@@ -450,10 +668,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   SizedBox(height: 2),
                   Text(
                     "لێرەدا پرسیار لەبارەی داهات و داواکارییەکان بکە",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                 ],
               ),
@@ -469,6 +684,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🏪 Vendor Banner
+  // ═══════════════════════════════════════════════════════════
   Widget _buildVendorBanner() {
     final userName = AuthSessionManager.userName ?? 'بەکارهێنەر';
 
@@ -538,6 +756,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Error Banner
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildErrorBanner(String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            color: Colors.orange,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.orange,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Stats Section (Admin)
+  // ═══════════════════════════════════════════════════════════
   Widget _buildStatsSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,7 +803,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           children: [
             Expanded(
               child: _buildModernStatCard(
-                "شوێنە گشتیەکان",
+                "شوێنەکان",
                 "$_totalStores",
                 Icons.storefront_rounded,
                 Colors.orange,
@@ -559,13 +814,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: _buildModernStatCard(
+                "فەرمانگەکان",
+                "$_totalDepartments",
+                Icons.business_rounded,
+                const Color(0xFF10B981),
+                isDark: isDark,
+                onTap: () => _navigate(const AdminDepartmentsScreen()),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _buildModernStatCard(
                 "سکاڵای چاوەڕوان",
                 "$_pendingComplaints",
                 Icons.assignment_late_rounded,
                 Colors.red,
                 isDark: isDark,
-                onTap: () =>
-                    _navigate(const AdminComplaintsProScreen()),
+                onTap: () => _navigate(const AdminComplaintsProScreen()),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildModernStatCard(
+                "کۆی سکاڵاکان",
+                "$_totalComplaints",
+                Icons.assignment_rounded,
+                Colors.pink,
+                isDark: isDark,
+                onTap: () => _navigate(const AdminComplaintsProScreen()),
               ),
             ),
           ],
@@ -600,6 +880,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Vendor Stats
+  // ═══════════════════════════════════════════════════════════
   Widget _buildVendorStats(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -634,6 +917,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📝 Section Title
+  // ═══════════════════════════════════════════════════════════
   Widget _buildSectionTitle(String title, bool isDark) {
     return Text(
       title,
@@ -645,6 +931,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎴 Stat Card
+  // ═══════════════════════════════════════════════════════════
   Widget _buildModernStatCard(
       String title,
       String value,
@@ -727,6 +1016,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 Menu Tile
+  // ═══════════════════════════════════════════════════════════
   Widget _buildMenuTile(
       String title,
       String subtitle,
@@ -755,8 +1047,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
                 Container(
@@ -778,8 +1069,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color:
-                          isDark ? Colors.white : Colors.black87,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 3),

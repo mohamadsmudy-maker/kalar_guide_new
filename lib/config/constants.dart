@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:package_info_plus/package_info_plus.dart';   // ✅ زیادکرا
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// ⚙️ نەخشە و نرخی جێگیر
 class AppConstants {
@@ -29,13 +29,12 @@ class AppConstants {
   static const String appName = 'ڕێبەری کەلار';
 
   // ═══════════════════════════════════════════════════════════
-  // 📦 وەشانی ئەپ — ✅ لە package_info_plus
+  // 📦 وەشانی ئەپ
   // ═══════════════════════════════════════════════════════════
   static String? _cachedVersion;
   static String? _cachedBuildNumber;
   static String? _cachedPackageName;
 
-  /// ✅ هەڵگیری وەشانی ئەپ
   static Future<void> init() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
@@ -48,26 +47,18 @@ class AppConstants {
       );
     } catch (e) {
       debugPrint('⚠️ PackageInfo error: $e');
-      // Fallback
       _cachedVersion = '1.0.0';
       _cachedBuildNumber = '1';
       _cachedPackageName = 'com.kalar.guide';
     }
   }
 
-  /// ✅ وەشانی ئەپ (وەک String)
   static String get appVersion => _cachedVersion ?? '1.0.0';
-
-  /// ✅ ژمارەی Build
   static String get appBuildNumber => _cachedBuildNumber ?? '1';
-
-  /// ✅ ناوی پاکێج
   static String get packageName => _cachedPackageName ?? 'com.kalar.guide';
-
-  /// ✅ وەشانی تەواو (بۆ پیشاندان)
   static String get fullVersion => 'v$appVersion+$appBuildNumber';
 
-  /// ✅ پشکنینی وەشانی نوێ (بۆ داهاتوو)
+  /// ✅ پشکنینی وەشانی نوێ
   static Future<bool> hasNewVersion(String serverVersion) async {
     try {
       final current = _parseVersion(appVersion);
@@ -80,13 +71,27 @@ class AppConstants {
   }
 
   /// 🔢 پارسکردنی وەشان بۆ ژمارە
+  ///
+  /// ✅ چارەسەرکرا — وەزنی دروست:
+  /// - `1.2.3` → `10203`
+  /// - `1.3.0` → `10300` ✅
+  /// - `2.0.0` → `20000` ✅
   static int _parseVersion(String version) {
-    final parts = version.split('.').map(int.tryParse).toList();
-    int result = 0;
-    for (int i = 0; i < parts.length; i++) {
-      result += (parts[i] ?? 0) * (1000 ~/ (i + 1));
+    try {
+      final parts = version.split('.');
+      while (parts.length < 3) {
+        parts.add('0');
+      }
+
+      final major = int.tryParse(parts[0]) ?? 0;
+      final minor = int.tryParse(parts[1]) ?? 0;
+      final patch = int.tryParse(parts[2]) ?? 0;
+
+      return major * 10000 + minor * 100 + patch;
+    } catch (e) {
+      debugPrint('⚠️ Version parse error: $e');
+      return 0;
     }
-    return result;
   }
 
   // ═══════════════════════════════════════════════════════════

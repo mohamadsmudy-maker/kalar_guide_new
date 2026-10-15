@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:provider/provider.dart';
+
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../config/translations.dart';
 import '../../services/cache_service.dart';
 import '../../services/location_service.dart';
 import '../../widgets/cards/store_card.dart';
-import '../../widgets/common/app_text.dart';
+import '../../widgets/common/auto_translate.dart';
 import 'full_map_screen.dart';
 import 'store_details_dialog.dart';
 
-/// 🏪 شاشەی شوێنەکان — ULTRA PRO EDITION
+/// 🏪 شاشەی شوێنەکان — ULTRA PRO
 class StoresScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
 
@@ -37,7 +38,6 @@ class _StoresScreenState extends State<StoresScreen>
   bool _loadingStores = true;
   List<Map<String, dynamic>> _allStores = [];
 
-  // ✨ Animations
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late AnimationController _pulseController;
@@ -77,9 +77,6 @@ class _StoresScreenState extends State<StoresScreen>
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📍 شوێنی ئێستا
-  // ═══════════════════════════════════════════════════════════
   Future<void> _determinePosition() async {
     final position = await LocationService.getCurrentPosition();
     if (mounted) {
@@ -87,9 +84,6 @@ class _StoresScreenState extends State<StoresScreen>
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📡 هێنانی شوێنەکان — بە کاش
-  // ═══════════════════════════════════════════════════════════
   Future<void> _fetchStores({bool forceRefresh = false}) async {
     setState(() => _loadingStores = true);
 
@@ -104,7 +98,6 @@ class _StoresScreenState extends State<StoresScreen>
               _loadingStores = false;
             });
           }
-          debugPrint('✅ StoresScreen: لە کاش هێنرا (${stores.length})');
           return;
         }
       }
@@ -130,14 +123,6 @@ class _StoresScreenState extends State<StoresScreen>
     }
   }
 
-  Future<void> _onRefresh() async {
-    await CacheService.remove(_cacheKey);
-    await _fetchStores(forceRefresh: true);
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 📏 دووری
-  // ═══════════════════════════════════════════════════════════
   double _calculateDistance(double? lat, double? lng) {
     if (_currentPosition == null || lat == null || lng == null) {
       return 99999.0;
@@ -150,9 +135,6 @@ class _StoresScreenState extends State<StoresScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 فلتەرکردن
-  // ═══════════════════════════════════════════════════════════
   List<Map<String, dynamic>> get _filteredStores {
     var list = _allStores.where((store) {
       final name = (store['name'] ?? '').toString().toLowerCase();
@@ -181,10 +163,10 @@ class _StoresScreenState extends State<StoresScreen>
     }).toList();
 
     list.sort((a, b) {
-      double? latA = double.tryParse(a['latitude']?.toString() ?? '');
-      double? lngA = double.tryParse(a['longitude']?.toString() ?? '');
-      double? latB = double.tryParse(b['latitude']?.toString() ?? '');
-      double? lngB = double.tryParse(b['longitude']?.toString() ?? '');
+      final latA = double.tryParse(a['latitude']?.toString() ?? '');
+      final lngA = double.tryParse(a['longitude']?.toString() ?? '');
+      final latB = double.tryParse(b['latitude']?.toString() ?? '');
+      final lngB = double.tryParse(b['longitude']?.toString() ?? '');
 
       return _calculateDistance(latA, lngA)
           .compareTo(_calculateDistance(latB, lngB));
@@ -193,40 +175,26 @@ class _StoresScreenState extends State<StoresScreen>
     return list;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Build
-  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lang = context.watch<SettingsProvider>().languageId;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // ═══════════════════════════════════════════
-            // 🎯 هێدەری پریمیۆم
-            // ═══════════════════════════════════════════
-            _buildPremiumAppBar(isDark),
-
-            // ═══════════════════════════════════════════
-            // 🔍 گەڕان + Map
-            // ═══════════════════════════════════════════
+            _buildPremiumAppBar(isDark, lang),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: _buildSearchRow(isDark, lang),
               ),
             ),
-
-            // ═══════════════════════════════════════════
-            // 🎯 فلتەری جۆر (حکومی / ناحکومی)
-            // ═══════════════════════════════════════════
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -234,18 +202,10 @@ class _StoresScreenState extends State<StoresScreen>
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 10)),
-
-            // ═══════════════════════════════════════════
-            // 🏷️ فلتەری بەشەکان
-            // ═══════════════════════════════════════════
             SliverToBoxAdapter(
               child: _buildCategoriesFilter(isDark, lang),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-            // ═══════════════════════════════════════════
-            // 📊 ئاماری ئەنجام
-            // ═══════════════════════════════════════════
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -253,10 +213,6 @@ class _StoresScreenState extends State<StoresScreen>
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-            // ═══════════════════════════════════════════
-            // 📋 لیستی شوێنەکان
-            // ═══════════════════════════════════════════
             _buildStoresList(isDark, lang),
           ],
         ),
@@ -264,10 +220,7 @@ class _StoresScreenState extends State<StoresScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 هێدەری پریمیۆم
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildPremiumAppBar(bool isDark) {
+  Widget _buildPremiumAppBar(bool isDark, String lang) {
     return SliverAppBar(
       floating: true,
       pinned: true,
@@ -289,10 +242,7 @@ class _StoresScreenState extends State<StoresScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: isDark
-                  ? [
-                const Color(0xFF1A1A22),
-                const Color(0xFF252530),
-              ]
+                  ? [const Color(0xFF1A1A22), const Color(0xFF252530)]
                   : [
                 Colors.white,
                 AppColors.primary.withValues(alpha: 0.06),
@@ -312,15 +262,14 @@ class _StoresScreenState extends State<StoresScreen>
                       gradient: LinearGradient(
                         colors: [
                           AppColors.primary,
-                          Color.lerp(
-                              AppColors.primary, Colors.white, 0.2)!,
+                          Color.lerp(AppColors.primary, Colors.white, 0.2)!,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary
-                              .withValues(alpha: 0.45),
+                          color:
+                          AppColors.primary.withValues(alpha: 0.45),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                           spreadRadius: -4,
@@ -339,8 +288,9 @@ class _StoresScreenState extends State<StoresScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'شوێنەکان',
+                        AutoTranslate(
+                          text: 'شوێنەکان',
+                          lang: lang,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -349,10 +299,12 @@ class _StoresScreenState extends State<StoresScreen>
                                 : const Color(0xFF1A1A2E),
                             letterSpacing: 0.2,
                           ),
+                          maxLines: 1,
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          '${_allStores.length} شوێن لە شاری کەلار',
+                        AutoTranslate(
+                          text: '${_allStores.length} شوێن لە شاری کەلار',
+                          lang: lang,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -360,6 +312,7 @@ class _StoresScreenState extends State<StoresScreen>
                                 ? Colors.white54
                                 : Colors.grey.shade600,
                           ),
+                          maxLines: 1,
                         ),
                       ],
                     ),
@@ -373,9 +326,6 @@ class _StoresScreenState extends State<StoresScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔍 گەڕان + Map
-  // ═══════════════════════════════════════════════════════════
   Widget _buildSearchRow(bool isDark, String lang) {
     return Row(
       children: [
@@ -421,10 +371,11 @@ class _StoresScreenState extends State<StoresScreen>
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
-                      hintText: AppTranslations.t(
-                        'stores_search_hint',
-                        lang,
-                      ),
+                      hintText: lang == 'ar'
+                          ? 'ابحث عن الأماكن...'
+                          : (lang == 'en'
+                          ? 'Search places...'
+                          : 'گەڕان بەدوای شوێنەکان...'),
                       hintStyle: TextStyle(
                         fontSize: 13,
                         color: isDark ? Colors.white38 : Colors.grey,
@@ -451,8 +402,6 @@ class _StoresScreenState extends State<StoresScreen>
           ),
         ),
         const SizedBox(width: 10),
-
-        // 🗺️ دوگمەی Map
         GestureDetector(
           onTap: () {
             HapticFeedback.mediumImpact();
@@ -493,20 +442,17 @@ class _StoresScreenState extends State<StoresScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 فلتەری جۆر
-  // ═══════════════════════════════════════════════════════════
   Widget _buildTypeFilters(bool isDark, String lang) {
     return Row(
       children: [
         Expanded(
           child: _buildTypeFilter(
             icon: Icons.account_balance_rounded,
-            labelKey: 'stores_government',
-            fallbackLabel: 'حکومی',
+            label: 'حکومی',
             isSelected: _selectedType == 'حکومی',
             color: const Color(0xFF2E7D32),
             isDark: isDark,
+            lang: lang,
             onTap: () => setState(
                   () => _selectedType =
               _selectedType == 'حکومی' ? 'هەموو' : 'حکومی',
@@ -517,11 +463,11 @@ class _StoresScreenState extends State<StoresScreen>
         Expanded(
           child: _buildTypeFilter(
             icon: Icons.storefront_rounded,
-            labelKey: 'stores_non_government',
-            fallbackLabel: 'ناحکومی',
+            label: 'ناحکومی',
             isSelected: _selectedType == 'ناحکومی',
             color: const Color(0xFFE91E63),
             isDark: isDark,
+            lang: lang,
             onTap: () => setState(
                   () => _selectedType =
               _selectedType == 'ناحکومی' ? 'هەموو' : 'ناحکومی',
@@ -534,11 +480,11 @@ class _StoresScreenState extends State<StoresScreen>
 
   Widget _buildTypeFilter({
     required IconData icon,
-    required String labelKey,
-    required String fallbackLabel,
+    required String label,
     required bool isSelected,
     required Color color,
     required bool isDark,
+    required String lang,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -552,10 +498,7 @@ class _StoresScreenState extends State<StoresScreen>
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(
-            colors: [
-              color,
-              Color.lerp(color, Colors.white, 0.2)!,
-            ],
+            colors: [color, Color.lerp(color, Colors.white, 0.2)!],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
@@ -570,23 +513,6 @@ class _StoresScreenState extends State<StoresScreen>
                 : (isDark ? Colors.white12 : Colors.grey.shade200),
             width: isSelected ? 2 : 1,
           ),
-          boxShadow: isSelected
-              ? [
-            BoxShadow(
-              color: color.withValues(alpha: 0.4),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
-              spreadRadius: -3,
-            ),
-          ]
-              : [
-            BoxShadow(
-              color: Colors.black
-                  .withValues(alpha: isDark ? 0.3 : 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -597,14 +523,15 @@ class _StoresScreenState extends State<StoresScreen>
               size: 18,
             ),
             const SizedBox(width: 8),
-            AppText(
-              labelKey,
-              fallback: fallbackLabel,
+            AutoTranslate(
+              text: label,
+              lang: lang,
               style: TextStyle(
                 color: isSelected ? Colors.white : color,
                 fontWeight: FontWeight.w900,
                 fontSize: 13,
               ),
+              maxLines: 1,
             ),
             if (isSelected) ...[
               const SizedBox(width: 6),
@@ -620,16 +547,13 @@ class _StoresScreenState extends State<StoresScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🏷️ فلتەری بەشەکان
-  // ═══════════════════════════════════════════════════════════
   Widget _buildCategoriesFilter(bool isDark, String lang) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _fetchCategoriesCached(),
       builder: (context, snapshot) {
-        List<String> categories = ['هەموو'];
+        final categories = <String>['هەموو'];
         if (snapshot.hasData) {
-          Map<String, Map<String, dynamic>> uniqueMap = {};
+          final uniqueMap = <String, Map<String, dynamic>>{};
           for (var cat in snapshot.data!) {
             uniqueMap[cat['name']] = cat;
           }
@@ -647,24 +571,6 @@ class _StoresScreenState extends State<StoresScreen>
             itemBuilder: (context, index) {
               final cat = categories[index];
               final isSelected = _selectedCategory == cat;
-
-              String displayCat = cat;
-              if (cat == 'هەموو') {
-                displayCat = AppTranslations.t('stores_all', lang);
-              } else {
-                final keyMap = {
-                  'تەندروستی': 'cat_health',
-                  'پەروەردە': 'cat_education',
-                  'خوێندنی باڵا': 'cat_higher_ed',
-                  'بەڕێوەبەرایەتی': 'cat_government',
-                  'خواردن': 'cat_food',
-                  'بازاڕگەری': 'cat_shopping',
-                };
-                final key = keyMap[cat];
-                if (key != null) {
-                  displayCat = AppTranslations.t(key, lang);
-                }
-              }
 
               return Padding(
                 padding: const EdgeInsetsDirectional.only(end: 8),
@@ -684,8 +590,8 @@ class _StoresScreenState extends State<StoresScreen>
                           ? LinearGradient(
                         colors: [
                           AppColors.primary,
-                          Color.lerp(AppColors.primary,
-                              Colors.white, 0.2)!,
+                          Color.lerp(
+                              AppColors.primary, Colors.white, 0.2)!,
                         ],
                       )
                           : null,
@@ -703,17 +609,6 @@ class _StoresScreenState extends State<StoresScreen>
                             : Colors.grey.shade200),
                         width: isSelected ? 2 : 1,
                       ),
-                      boxShadow: isSelected
-                          ? [
-                        BoxShadow(
-                          color: AppColors.primary
-                              .withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                          spreadRadius: -3,
-                        ),
-                      ]
-                          : null,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -726,19 +621,19 @@ class _StoresScreenState extends State<StoresScreen>
                           ),
                           const SizedBox(width: 5),
                         ],
-                        Text(
-                          displayCat,
+                        AutoTranslate(
+                          text: cat,
+                          lang: lang,
                           style: TextStyle(
                             color: isSelected
                                 ? Colors.white
-                                : (isDark
-                                ? Colors.white70
-                                : Colors.black87),
+                                : (isDark ? Colors.white70 : Colors.black87),
                             fontWeight: isSelected
                                 ? FontWeight.w900
                                 : FontWeight.w700,
                             fontSize: 12,
                           ),
+                          maxLines: 1,
                         ),
                       ],
                     ),
@@ -752,18 +647,12 @@ class _StoresScreenState extends State<StoresScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📊 ئاماری ئەنجام
-  // ═══════════════════════════════════════════════════════════
   Widget _buildResultStats(bool isDark, String lang) {
     final stores = _filteredStores;
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -784,13 +673,15 @@ class _StoresScreenState extends State<StoresScreen>
                 size: 14,
               ),
               const SizedBox(width: 6),
-              Text(
-                '${stores.length} شوێن',
+              AutoTranslate(
+                text: '${stores.length} شوێن',
+                lang: lang,
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                   color: AppColors.primary,
                 ),
+                maxLines: 1,
               ),
             ],
           ),
@@ -798,10 +689,7 @@ class _StoresScreenState extends State<StoresScreen>
         if (_currentPosition != null) ...[
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.green.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
@@ -817,14 +705,15 @@ class _StoresScreenState extends State<StoresScreen>
                   size: 12,
                 ),
                 const SizedBox(width: 4),
-                AppText(
-                  'stores_nearest',
-                  fallback: 'نزیکترین',
+                AutoTranslate(
+                  text: 'نزیکترین',
+                  lang: lang,
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
                     color: Colors.green,
                   ),
+                  maxLines: 1,
                 ),
               ],
             ),
@@ -834,9 +723,6 @@ class _StoresScreenState extends State<StoresScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📋 لیستی شوێنەکان
-  // ═══════════════════════════════════════════════════════════
   Widget _buildStoresList(bool isDark, String lang) {
     if (_loadingStores) {
       return const SliverFillRemaining(
@@ -858,12 +744,8 @@ class _StoresScreenState extends State<StoresScreen>
         delegate: SliverChildBuilderDelegate(
               (context, index) {
             final store = stores[index];
-            final lat = double.tryParse(
-              store['latitude']?.toString() ?? '',
-            );
-            final lng = double.tryParse(
-              store['longitude']?.toString() ?? '',
-            );
+            final lat = double.tryParse(store['latitude']?.toString() ?? '');
+            final lng = double.tryParse(store['longitude']?.toString() ?? '');
             final distance = _calculateDistance(lat, lng);
 
             return FadeTransition(
@@ -884,9 +766,6 @@ class _StoresScreenState extends State<StoresScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📡 کاشکردنی بەشەکان
-  // ═══════════════════════════════════════════════════════════
   Future<List<Map<String, dynamic>>> _fetchCategoriesCached() async {
     const key = 'main_categories';
     final cached = await CacheService.get(key);
@@ -905,9 +784,6 @@ class _StoresScreenState extends State<StoresScreen>
     return list;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📭 حاڵەتی بەتاڵ
-  // ═══════════════════════════════════════════════════════════
   Widget _buildEmptyState(bool isDark, String lang) {
     return Center(
       child: Padding(
@@ -942,23 +818,26 @@ class _StoresScreenState extends State<StoresScreen>
               },
             ),
             const SizedBox(height: 20),
-            Text(
-              'هیچ شوێنێک نەدۆزرایەوە',
+            AutoTranslate(
+              text: 'هیچ شوێنێک نەدۆزرایەوە',
+              lang: lang,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
                 color: isDark ? Colors.white : const Color(0xFF1A1A2E),
               ),
+              maxLines: 2,
             ),
             const SizedBox(height: 8),
-            Text(
-              'گەڕانەکەت هیچ ئەنجامێکی نەبوو',
-              textAlign: TextAlign.center,
+            AutoTranslate(
+              text: 'گەڕانەکەت هیچ ئەنجامێکی نەبوو',
+              lang: lang,
               style: TextStyle(
                 fontSize: 12,
                 height: 1.5,
                 color: isDark ? Colors.white54 : Colors.grey.shade600,
               ),
+              maxLines: 2,
             ),
           ],
         ),

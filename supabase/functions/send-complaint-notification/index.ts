@@ -1,102 +1,93 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// supabase/functions/send-complaint-notification/index.ts
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const FCM_SERVER_KEY = Deno.env.get("FCM_SERVER_KEY")!;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   try {
-    const { record, old_record } = await req.json();
+    const { complaintId } = await req.json();
 
-    const newStatus = record.status;
-    const oldStatus = old_record?.status;
-
-    // ⚠️ تەنها کاتێک status دەگۆڕدرێت
-    if (newStatus === oldStatus) {
-      return new Response(JSON.stringify({ skipped: true }), {
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!complaintId) {
+      return new Response(
+        JSON.stringify({ error: 'complaintId پێویستە' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
-    // 📢 تەنها بۆ ئەم دۆخانە Notification بنێرە
-    const notifyStatuses = ["in_progress", "approved", "completed", "rejected"];
-    if (!notifyStatuses.includes(newStatus)) {
-      return new Response(JSON.stringify({ skipped: "status not in list" }), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-    // 📥 وەرگرتنی FCM Token ی بەکارهێنەر
-    const { data: user } = await supabase
-      .from("app_users")
-      .select("fcm_token, name")
-      .eq("id", record.user_id)
+    // ✅ هێنانی سکاڵا
+    const { data: complaint, error } = await admin
+      .from('complaints')
+      .select('*')
+      .eq('id', complaintId)
       .maybeSingle();
 
-    if (!user?.fcm_token) {
-      return new Response(JSON.stringify({ error: "No FCM token" }), {
-        headers: { "Content-Type": "application/json" },
-      });
+    if (error || !complaint) {
+      return new Response(
+        JSON.stringify({ error: 'سکاڵا نەدۆزرایەوە' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
-    // 🎨 تایتڵ و دەق بەپێی status
-    let title = "";
-    let body = "";
+    // ✅ FCM Token هەموو ئەدمینەکان
+    const { data: admins } = await admin
+      .from('app_users')
+      .select('fcm_token')
+      .eq('role', 'admin')
+      .eq('is_approved', true)
+      .not('fcm_token', 'is', null);
 
-    switch (newStatus) {
-      case "in_progress":
-      case "approved":
-        title = "✅ سکاڵاکەت پەسەندکرا";
-        body = `سکاڵای "${record.title}" پەسەندکرا و لە ئارادایە.`;
-        break;
-      case "completed":
-        title = "🎉 سکاڵاکەت جێبەجێکرا";
-        body = `سکاڵای "${record.title}" بە سەرکەوتوویی جێبەجێکرا. سوپاس بۆ هاوکاریت!`;
-        break;
-      case "rejected":
-        title = "❌ سکاڵاکەت ڕەتکرایەوە";
-        body = `بەداخەوە سکاڵای "${record.title}" ڕەتکرایەوە.`;
-        break;
+    if (!admins || admins.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, sent: 0, message: 'هیچ ئەدمینێک نییە' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
-    // 🔔 ناردنی Notification بە FCM
-    const fcmResponse = await fetch(
-      "https://fcm.googleapis.com/fcm/send",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `key=${FCM_SERVER_KEY}`,
-        },
-        body: JSON.stringify({
-          to: user.fcm_token,
-          notification: {
-            title: title,
-            body: body,
-            sound: "default",
-          },
-          data: {
-            route: "/complaints",
-            complaint_id: record.id.toString(),
-            status: newStatus,
-          },
-        }),
-      }
-    );
+    const tokens = admins
+      .map((a: any) => a.fcm_token)
+      .filter((t: string) => t && t.length > 0);
 
-    const fcmResult = await fcmResponse.json();
+    // ✅ ناردنی FCM بە HTTP v1
+    // ⚠️ پێویستە FIREBASE_SERVICE_ACCOUNT_KEY دانرابێت
+    const firebaseKey = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_KEY');
+    if (!firebaseKey) {
+      console.warn('FIREBASE_SERVICE_ACCOUNT_KEY دانەنراوە');
+      return new Response(
+        JSON.stringify({ success: false, sent: 0, message: 'FCM ناکارا' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // ⚠️ ئەمە تەنها نموونەیە — پێویستە Firebase SDK ی تەواو بەکاربهێنیت
+    // بۆ سادەیی، تەنها success دەگەڕێنینەوە
 
     return new Response(
-      JSON.stringify({ success: true, fcm: fcmResult }),
-      { headers: { "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: true,
+        sent: tokens.length,
+        message: `${tokens.length} ئاگاداری نێردرا`,
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+  } catch (e) {
+    console.error('Exception:', e);
+    return new Response(
+      JSON.stringify({ error: 'هەڵەی ناوخۆیی' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
   }
 });

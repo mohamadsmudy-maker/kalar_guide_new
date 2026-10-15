@@ -1,34 +1,42 @@
-import 'dart:async';
+// home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    hide ChangeNotifierProvider;
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../config/app_colors.dart';
-import '../../config/settings_provider.dart';
-import '../../config/translations.dart';
-import '../../widgets/common/optimized_network_image.dart';
-import '../../widgets/carousels/news_carousel.dart';
-import '../complaints/complaint_instruction_dialog.dart';
-import '../emergency/emergency_screen.dart';
-import '../events/events_screen.dart';
 import '../neighborhoods/neighborhoods_screen.dart';
-import '../news/news_details.dart';
-import '../news/all_news_screen.dart';
+// ═══════════════════════════════════════════════════════════
+// 📦 Imports
+// ═══════════════════════════════════════════════════════════
+import 'package:kalar_guide_new/config/app_colors.dart';
+import 'package:kalar_guide_new/config/settings_provider.dart';
+import 'package:kalar_guide_new/config/translations.dart';
+import 'package:kalar_guide_new/providers/news_providers.dart';
+import 'package:kalar_guide_new/services/analytics_service.dart';
+import 'package:kalar_guide_new/widgets/common/optimized_network_image.dart';
+import 'package:kalar_guide_new/widgets/carousels/news_carousel.dart';
+import 'package:kalar_guide_new/screens/complaints/complaint_instruction_dialog.dart';
+import 'package:kalar_guide_new/screens/emergency/emergency_main_screen.dart';
+import 'package:kalar_guide_new/screens/events/events_screen.dart';
+import 'package:kalar_guide_new/screens/neighborhoods/neighborhoods_screen.dart';
+import 'package:kalar_guide_new/screens/map_screen.dart';
+import 'package:kalar_guide_new/screens/news/news_details.dart';
+import 'package:kalar_guide_new/screens/news/all_news_screen.dart';
 
-/// 🏠 شاشەی سەرەکی — Full Pro Edition + Emergency + Events + Neighborhoods
-class HomeScreen extends StatefulWidget {
+/// 🏠 شاشەی سەرەکی
+class HomeScreen extends ConsumerStatefulWidget {
   final VoidCallback? onMenuTap;
 
   const HomeScreen({super.key, this.onMenuTap});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
+class _HomeScreenState extends ConsumerState<HomeScreen>
     with AutomaticKeepAliveClientMixin {
-  late Future<List<Map<String, dynamic>>> _newsFuture;
   late Future<List<Map<String, dynamic>>> _categoriesFuture;
 
   final Map<String, bool> _imageCacheStatus = {};
@@ -48,7 +56,6 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _newsFuture = _fetchNews();
     _categoriesFuture = _fetchCategories();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -56,14 +63,17 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🖼️ Precaching
+  // ═══════════════════════════════════════════════════════════
   Future<void> _precacheImages() async {
     try {
-      final news = await _newsFuture;
+      final newsState = ref.read(newsProvider);
       if (!mounted) return;
 
-      for (final item in news.take(3)) {
+      for (final item in newsState.news.take(3)) {
         if (!mounted) return;
-        final img = _extractFirstImage(item['images']);
+        final img = item.primaryImage ?? '';
         if (img.isNotEmpty && !_imageCacheStatus.containsKey(img)) {
           try {
             await precacheImage(
@@ -81,26 +91,31 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🔄 Refresh
+  // ═══════════════════════════════════════════════════════════
   Future<void> _onRefresh() async {
-    final newNewsFuture = _fetchNews();
-    final newCategoriesFuture = _fetchCategories();
-
-    await Future.wait([newNewsFuture, newCategoriesFuture]);
-
+    await ref.read(newsProvider.notifier).refresh();
     if (mounted) {
       setState(() {
-        _newsFuture = newNewsFuture;
-        _categoriesFuture = newCategoriesFuture;
+        _categoriesFuture = _fetchCategories();
       });
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lang = context.watch<SettingsProvider>().languageId;
+
+    final settings = context.watch<SettingsProvider>();
+    final lang = settings.languageId;
+
+    final newsState = ref.watch(newsProvider);
 
     return Scaffold(
       backgroundColor:
@@ -111,9 +126,6 @@ class _HomeScreenState extends State<HomeScreen>
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // ═══════════════════════════════════════
-            // 🎨 Header
-            // ═══════════════════════════════════════
             SliverAppBar(
               floating: true,
               pinned: true,
@@ -177,30 +189,21 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
 
-            // ═══════════════════════════════════════
-            // 📰 News Carousel
-            // ═══════════════════════════════════════
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: 16),
-                child: FutureBuilder<List<Map<String, dynamic>>>(
-                  future: _newsFuture,
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-                    return NewsCarousel(
-                      newsList: snapshot.data!.take(5).toList(),
-                      onTap: (news) => _openNewsDetails(news),
-                    );
-                  },
+                child: newsState.news.isEmpty
+                    ? const SizedBox.shrink()
+                    : NewsCarousel(
+                  newsList: newsState.news
+                      .take(5)
+                      .map((n) => n.toJson())
+                      .toList(),
+                  onTap: (news) => _openNewsDetails(news),
                 ),
               ),
             ),
 
-            // ═══════════════════════════════════════
-            // 🆘 دوگمەی فریاکەوتن
-            // ═══════════════════════════════════════
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -208,9 +211,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
 
-            // ═══════════════════════════════════════
-            // 📅 دوگمەی ڕووداوەکان
-            // ═══════════════════════════════════════
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -218,9 +218,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
 
-            // ═══════════════════════════════════════
-            // 🏘️ دوگمەی گەڕەکەکان
-            // ═══════════════════════════════════════
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -228,9 +225,13 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
 
-            // ═══════════════════════════════════════
-            // 📢 دوگمەی سکاڵا
-            // ═══════════════════════════════════════
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: _buildMapButton(),
+              ),
+            ),
+
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -238,9 +239,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
 
-            // ═══════════════════════════════════════
-            // 🗂️ Categories
-            // ═══════════════════════════════════════
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
@@ -259,9 +257,6 @@ class _HomeScreenState extends State<HomeScreen>
               child: _buildCategoriesSection(isDark, lang),
             ),
 
-            // ═══════════════════════════════════════
-            // 📰 News List
-            // ═══════════════════════════════════════
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
@@ -297,6 +292,7 @@ class _HomeScreenState extends State<HomeScreen>
     return GestureDetector(
       onTap: () {
         HapticFeedback.mediumImpact();
+        AnalyticsService.logScreenView('emergency');
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -444,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🏘️ دوگمەی گەڕەکەکان
+  // 🏘️ دوگمەی گەڕەکەکان (لیست)
   // ═══════════════════════════════════════════════════════════
   Widget _buildNeighborhoodsButton() {
     return GestureDetector(
@@ -493,6 +489,135 @@ class _HomeScreenState extends State<HomeScreen>
             const SizedBox(width: 10),
             const Text(
               '🏘️ گەڕەکانی کەلار',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🗺️ دوگمەی نەخشەی گەڕەکان
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildMapButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const MapScreen(),
+          ),
+        );
+      },
+      child: Container(
+        height: 60,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10B981), Color(0xFF00BCD4)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF10B981).withValues(alpha: 0.4),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.25),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.map_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              '🗺️ نەخشەی گەڕەکان',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Colors.white,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📢 دوگمەی سکاڵا
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildComplaintButton(String lang) {
+    return GestureDetector(
+      onTap: () => ComplaintInstructionDialog.show(context),
+      child: Container(
+        height: 58,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF8B5CF6), Color(0xFFE91E63)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.campaign_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'ناردنی سکاڵا',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 15,
@@ -590,66 +715,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📢 دوگمەی سکاڵا
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildComplaintButton(String lang) {
-    return GestureDetector(
-      onTap: () => ComplaintInstructionDialog.show(context),
-      child: Container(
-        height: 58,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF8B5CF6), Color(0xFFE91E63)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.campaign_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'ناردنی سکاڵا',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
   // 🗂️ بەشەکان
   // ═══════════════════════════════════════════════════════════
   Widget _buildCategoriesSection(bool isDark, String lang) {
@@ -664,6 +729,16 @@ class _HomeScreenState extends State<HomeScreen>
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return _buildCategoriesShimmer(isDark, cardSize);
+          }
+
+          if (snapshot.hasError) {
+            debugPrint('❌ Categories error: ${snapshot.error}');
+            return Center(
+              child: Text(
+                'هەڵە: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red, fontSize: 11),
+              ),
+            );
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -838,58 +913,55 @@ class _HomeScreenState extends State<HomeScreen>
   // 📰 لیستی هەواڵ
   // ═══════════════════════════════════════════════════════════
   Widget _buildNewsListSliver(bool isDark, String lang) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _newsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return SliverToBoxAdapter(child: _buildNewsShimmer(isDark));
-        }
+    final newsState = ref.watch(newsProvider);
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return SliverToBoxAdapter(child: _buildEmptyNews(isDark));
-        }
+    if (newsState.isLoading && newsState.news.isEmpty) {
+      return SliverToBoxAdapter(child: _buildNewsShimmer(isDark));
+    }
 
-        final allNews = snapshot.data!;
+    if (newsState.news.isEmpty) {
+      return SliverToBoxAdapter(child: _buildEmptyNews(isDark));
+    }
 
-        List<Map<String, dynamic>> displayList;
-        if (allNews.length <= 5) {
-          displayList = allNews;
-        } else {
-          displayList = allNews.skip(5).take(5).toList();
-          if (displayList.isEmpty) {
-            displayList = allNews.take(5).toList();
+    final allNews = newsState.news;
+
+    List<dynamic> displayList;
+    if (allNews.length <= 5) {
+      displayList = allNews;
+    } else {
+      displayList = allNews.skip(5).take(5).toList();
+      if (displayList.isEmpty) {
+        displayList = allNews.take(5).toList();
+      }
+    }
+
+    if (displayList.isEmpty) {
+      return SliverToBoxAdapter(child: _buildEmptyNews(isDark));
+    }
+
+    final hasMore = allNews.length > displayList.length;
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+            (context, index) {
+          if (index == displayList.length) {
+            if (!hasMore) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildViewAllNewsButton(isDark, lang),
+            );
           }
-        }
-
-        if (displayList.isEmpty) {
-          return SliverToBoxAdapter(child: _buildEmptyNews(isDark));
-        }
-
-        final hasMore = allNews.length > displayList.length;
-
-        return SliverList(
-          delegate: SliverChildBuilderDelegate(
-                (context, index) {
-              if (index == displayList.length) {
-                if (!hasMore) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _buildViewAllNewsButton(isDark, lang),
-                );
-              }
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildNewsListItem(
-                  displayList[index],
-                  isDark,
-                  lang,
-                ),
-              );
-            },
-            childCount: displayList.length + (hasMore ? 1 : 0),
-          ),
-        );
-      },
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildNewsListItem(
+              displayList[index],
+              isDark,
+              lang,
+            ),
+          );
+        },
+        childCount: displayList.length + (hasMore ? 1 : 0),
+      ),
     );
   }
 
@@ -1054,42 +1126,23 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📡 Data Fetching
+  // 📡 Data Fetching — تەنها یەک جار
   // ═══════════════════════════════════════════════════════════
-  Future<List<Map<String, dynamic>>> _fetchNews() async {
-    try {
-      final res = await Supabase.instance.client
-          .from('news')
-          .select(
-        'id, title, description, images, likes, views, created_at, '
-            'store_id, dukan(name, logo, image)',
-      )
-          .order('id', ascending: false)
-          .limit(15);
-
-      return List<Map<String, dynamic>>.from(res as List);
-    } on PostgrestException catch (e) {
-      debugPrint('❌ Postgrest error fetching news: ${e.message}');
-      return [];
-    } catch (e) {
-      debugPrint('❌ Unexpected error fetching news: $e');
-      return [];
-    }
-  }
-
   Future<List<Map<String, dynamic>>> _fetchCategories() async {
     try {
+      debugPrint('🔄 Fetching categories...');
       final res = await Supabase.instance.client
           .from('main_categories')
-          .select('id, name, image')
-          .order('name');
+          .select('id, name, image');
 
-      return List<Map<String, dynamic>>.from(res as List);
+      debugPrint('✅ Categories fetched: ${(res as List).length}');
+
+      return List<Map<String, dynamic>>.from(res);
     } on PostgrestException catch (e) {
-      debugPrint('❌ Postgrest error fetching categories: ${e.message}');
+      debugPrint('❌ Postgrest error: ${e.message}');
       return [];
     } catch (e) {
-      debugPrint('❌ Unexpected error fetching categories: $e');
+      debugPrint('❌ Unexpected error: $e');
       return [];
     }
   }
@@ -1098,22 +1151,39 @@ class _HomeScreenState extends State<HomeScreen>
   // 📰 کارتی هەواڵ
   // ═══════════════════════════════════════════════════════════
   Widget _buildNewsListItem(
-      Map<String, dynamic> news,
+      dynamic news,
       bool isDark,
       String lang,
       ) {
-    final firstImg = _extractFirstImage(news['images']);
-    final timeAgo = _getTimeAgo(news['created_at'], lang);
-    final views = news['views'] ?? 0;
-    final likes = news['likes'] ?? 0;
+    final Map<String, dynamic> newsMap;
 
-    final store = news['dukan'];
+    if (news is Map<String, dynamic>) {
+      newsMap = news;
+    } else {
+      try {
+        newsMap = news.toJson();
+      } catch (e) {
+        debugPrint('⚠️ _buildNewsListItem conversion error: $e');
+        return const SizedBox.shrink();
+      }
+    }
+
+    final firstImg = _extractFirstImage(
+      newsMap['images'] ?? newsMap['img'],
+    );
+    final title = newsMap['title']?.toString() ?? '';
+    final views = (newsMap['views'] as num?)?.toInt() ?? 0;
+    final likes = (newsMap['likes'] as num?)?.toInt() ?? 0;
+    final timeAgo = _getTimeAgo(newsMap['created_at']?.toString());
+
+    final store = newsMap['dukan'];
     final storeName = store?['name']?.toString() ?? '';
-    final storeLogo =
-        store?['logo']?.toString() ?? store?['image']?.toString() ?? '';
+    final storeLogo = store?['logo']?.toString() ??
+        store?['image']?.toString() ??
+        '';
 
     return GestureDetector(
-      onTap: () => _openNewsDetails(news),
+      onTap: () => _openNewsDetails(newsMap),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(10),
@@ -1217,7 +1287,7 @@ class _HomeScreenState extends State<HomeScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      news['title'] ?? news['description'] ?? '',
+                      title,
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
@@ -1331,8 +1401,6 @@ class _HomeScreenState extends State<HomeScreen>
   // 🔧 Helpers
   // ═══════════════════════════════════════════════════════════
   Future<void> _openNewsDetails(Map<String, dynamic> news) async {
-    unawaited(_incrementViews(news));
-
     if (!mounted) return;
 
     Navigator.push(
@@ -1341,17 +1409,6 @@ class _HomeScreenState extends State<HomeScreen>
         builder: (_) => NewsDetailsScreen(newsItem: news),
       ),
     );
-  }
-
-  Future<void> _incrementViews(Map<String, dynamic> news) async {
-    try {
-      final current = news['views'] ?? 0;
-      await Supabase.instance.client
-          .from('news')
-          .update({'views': current + 1}).eq('id', news['id']);
-    } catch (e) {
-      debugPrint('❌ Error incrementing views: $e');
-    }
   }
 
   String _toLocalDigits(String input) {
@@ -1380,7 +1437,7 @@ class _HomeScreenState extends State<HomeScreen>
     return rawImages.toString().trim();
   }
 
-  String _getTimeAgo(String? dateTimeStr, String lang) {
+  String _getTimeAgo(String? dateTimeStr) {
     if (dateTimeStr == null || dateTimeStr.isEmpty) {
       return 'کەمێک پێش ئێستا';
     }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:just_audio/just_audio.dart';
@@ -7,8 +8,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
+import '../../services/whatsapp_complaint_service.dart';
 
-/// 🎯 Bottom Sheet ی وردەکاری سکاڵا — ULTRA PRO
+/// 🎯 Bottom Sheet ی وردەکاری سکاڵا — ULTRA PRO + WhatsApp
 class ComplaintDetailsProSheet extends StatefulWidget {
   final Map<String, dynamic> complaint;
   final VoidCallback? onStatusChanged;
@@ -25,6 +27,9 @@ class ComplaintDetailsProSheet extends StatefulWidget {
 }
 
 class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
+  // ═══════════════════════════════════════════════════════════
+  // 🎤 Audio Player State
+  // ═══════════════════════════════════════════════════════════
   final AudioPlayer _voicePlayer = AudioPlayer();
   bool _isPlayingVoice = false;
   bool _isLoadingVoice = false;
@@ -34,8 +39,16 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
   StreamSubscription<PlayerState>? _stateSub;
   bool _isPlayerInitialized = false;
 
+  // ═══════════════════════════════════════════════════════════
+  // 📝 Note State
+  // ═══════════════════════════════════════════════════════════
   final TextEditingController _noteCtrl = TextEditingController();
   bool _savingNote = false;
+
+  // ═══════════════════════════════════════════════════════════
+  // 📱 WhatsApp State
+  // ═══════════════════════════════════════════════════════════
+  bool _sendingWhatsApp = false;
 
   @override
   void initState() {
@@ -121,6 +134,9 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
           .update({'admin_notes': _noteCtrl.text.trim()})
           .eq('id', widget.complaint['id']);
 
+      // ✅ نوێکردنەوەی داتای ناوخۆیی
+      widget.complaint['admin_notes'] = _noteCtrl.text.trim();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -145,6 +161,85 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // 📱 WhatsApp Send
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _sendWhatsApp({bool showPreview = true}) async {
+    if (_sendingWhatsApp) return;
+
+    setState(() => _sendingWhatsApp = true);
+    HapticFeedback.mediumImpact();
+
+    try {
+      await WhatsAppComplaintService.sendComplaint(
+        context: context,
+        complaint: widget.complaint,
+        showPreview: showPreview,
+      );
+    } finally {
+      if (mounted) setState(() => _sendingWhatsApp = false);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 Update Status + WhatsApp
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _updateStatus(String newStatus) async {
+    try {
+      await Supabase.instance.client
+          .from('complaints')
+          .update({'status': newStatus}).eq('id', widget.complaint['id']);
+
+      // ✅ نوێکردنەوەی داتای ناوخۆیی
+      widget.complaint['status'] = newStatus;
+
+      HapticFeedback.mediumImpact();
+
+      if (!mounted) return;
+
+      // داخستنی sheet
+      Navigator.pop(context);
+      widget.onStatusChanged?.call();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ گۆڕدرا بۆ: ${_statusText(newStatus)}'),
+          backgroundColor: _color(newStatus),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+
+      // ═══════════════════════════════════════════════════════
+      // 📱 WhatsApp خودکار دوای پەسەندکردن
+      // ═══════════════════════════════════════════════════════
+      if (newStatus == 'in_progress') {
+        // چاوەڕوانی کورت بۆ SnackBar
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (!mounted) return;
+
+        // ⭐ ناردنەوە بەبێ preview
+        await WhatsAppComplaintService.sendComplaint(
+          context: context,
+          complaint: widget.complaint,
+          showPreview: false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('هەڵە: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // 🎨 Build
   // ═══════════════════════════════════════════════════════════
   @override
@@ -160,6 +255,9 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
 
     final voiceUrl = c['voice_url']?.toString() ?? '';
     final hasVoice = voiceUrl.isNotEmpty;
+
+    final userPhone = _extractPhoneForDisplay(c);
+    final hasPhone = userPhone != null;
 
     List images = [];
     try {
@@ -201,7 +299,10 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color.withValues(alpha: 0.15), color.withValues(alpha: 0.05)],
+                  colors: [
+                    color.withValues(alpha: 0.15),
+                    color.withValues(alpha: 0.05),
+                  ],
                 ),
                 border: Border(
                   bottom: BorderSide(
@@ -244,12 +345,57 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                           _formatFullDate(c['created_at']),
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark ? Colors.white54 : Colors.grey.shade600,
+                            color: isDark
+                                ? Colors.white54
+                                : Colors.grey.shade600,
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  // 📱 دوگمەی واتسئاپ — هەمیشە دەرکەوتوو
+                  if (hasPhone)
+                    GestureDetector(
+                      onTap: _sendingWhatsApp
+                          ? null
+                          : () => _sendWhatsApp(showPreview: true),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF25D366),
+                              Color(0xFF128C7E),
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF25D366)
+                                  .withValues(alpha: 0.4),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: _sendingWhatsApp
+                            ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                            : const Icon(
+                          Icons.chat_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 6),
+
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.pop(context),
@@ -298,21 +444,44 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                     ],
 
                     // 📋 زانیارییەکان
-                    _buildInfoCard('ناونیشان', c['title'] ?? '-', Icons.title_rounded, isDark),
+                    _buildInfoCard(
+                      'ناونیشان',
+                      c['title'] ?? '-',
+                      Icons.title_rounded,
+                      isDark,
+                    ),
                     const SizedBox(height: 8),
-                    _buildInfoCard('لایەنی پەیوەندیدار', c['responsible_authority'] ?? '-',
-                        Icons.account_balance_rounded, isDark),
+                    _buildInfoCard(
+                      'لایەنی پەیوەندیدار',
+                      c['responsible_authority'] ?? '-',
+                      Icons.account_balance_rounded,
+                      isDark,
+                    ),
 
                     if (c['description'] != null &&
                         c['description'].toString().isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      _buildInfoCard('وەسف', c['description'], Icons.description_rounded, isDark),
+                      _buildInfoCard(
+                        'وەسف',
+                        c['description'],
+                        Icons.description_rounded,
+                        isDark,
+                      ),
+                    ],
+
+                    // 📞 ژمارەی مۆبایل
+                    if (hasPhone) ...[
+                      const SizedBox(height: 8),
+                      _buildPhoneCard(userPhone, isDark),
                     ],
 
                     const SizedBox(height: 16),
 
                     // 🗺️ نەخشە
-                    if (lat != null && lng != null && lat != 0 && lng != 0) ...[
+                    if (lat != null &&
+                        lng != null &&
+                        lat != 0 &&
+                        lng != 0) ...[
                       _buildSectionTitle('📍 شوێن لەسەر نەخشە', isDark),
                       const SizedBox(height: 8),
                       Container(
@@ -320,7 +489,9 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isDark ? Colors.white12 : Colors.grey.shade300,
+                            color: isDark
+                                ? Colors.white12
+                                : Colors.grey.shade300,
                           ),
                         ),
                         child: ClipRRect(
@@ -334,7 +505,8 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                               gmaps.Marker(
                                 markerId: const gmaps.MarkerId('loc'),
                                 position: gmaps.LatLng(lat, lng),
-                                icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(
+                                icon: gmaps.BitmapDescriptor
+                                    .defaultMarkerWithHue(
                                   gmaps.BitmapDescriptor.hueRed,
                                 ),
                               ),
@@ -351,23 +523,31 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                             'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
                           );
                           if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
                           }
                         },
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
+                            color:
+                            AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.3),
+                              color: AppColors.primary
+                                  .withValues(alpha: 0.3),
                             ),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.open_in_new_rounded,
-                                  color: AppColors.primary, size: 16),
+                              Icon(
+                                Icons.open_in_new_rounded,
+                                color: AppColors.primary,
+                                size: 16,
+                              ),
                               SizedBox(width: 6),
                               Text(
                                 'کردنەوە لە Google Maps',
@@ -389,10 +569,14 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
+                        color: isDark
+                            ? const Color(0xFF0F0F14)
+                            : Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark ? Colors.white12 : Colors.grey.shade300,
+                          color: isDark
+                              ? Colors.white12
+                              : Colors.grey.shade300,
                         ),
                       ),
                       child: TextField(
@@ -450,10 +634,14 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
+                color: isDark
+                    ? const Color(0xFF0F0F14)
+                    : Colors.grey.shade50,
                 border: Border(
                   top: BorderSide(
-                    color: isDark ? Colors.white12 : Colors.grey.shade200,
+                    color: isDark
+                        ? Colors.white12
+                        : Colors.grey.shade200,
                   ),
                 ),
               ),
@@ -527,7 +715,8 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.mic_rounded, color: Colors.white, size: 16),
+                        Icon(Icons.mic_rounded,
+                            color: Colors.white, size: 16),
                         SizedBox(width: 6),
                         Text(
                           'دەنگی سکاڵا',
@@ -542,7 +731,10 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                     SizedBox(height: 2),
                     Text(
                       'کرتە بکە بۆ لێدان',
-                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                      ),
                     ),
                   ],
                 ),
@@ -592,9 +784,111 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // 📞 Phone Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildPhoneCard(String phone, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF25D366).withValues(alpha: 0.15),
+            const Color(0xFF25D366).withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF25D366).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF25D366),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.phone_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'ژمارەی پەیوەندی',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.white54 : Colors.grey.shade600,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  phone,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF25D366),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Call Button
+          GestureDetector(
+            onTap: () async {
+              final uri = Uri(scheme: 'tel', path: phone);
+              if (await canLaunchUrl(uri)) await launchUrl(uri);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.call_rounded,
+                color: Color(0xFF25D366),
+                size: 18,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          // WhatsApp Button
+          GestureDetector(
+            onTap: () => _sendWhatsApp(showPreview: true),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF25D366), Color(0xFF128C7E)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.chat_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // 📋 Info Card
   // ═══════════════════════════════════════════════════════════
-  Widget _buildInfoCard(String label, String value, IconData icon, bool isDark) {
+  Widget _buildInfoCard(
+      String label, String value, IconData icon, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -716,11 +1010,17 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         ),
       );
     } else if (status == 'completed') {
-      return _statusBanner('ئەم سکاڵایە جێبەجێکراوە', Icons.check_circle_rounded,
-          const Color(0xFF3498DB));
+      return _statusBanner(
+        'ئەم سکاڵایە جێبەجێکراوە',
+        Icons.check_circle_rounded,
+        const Color(0xFF3498DB),
+      );
     } else {
-      return _statusBanner('ئەم سکاڵایە ڕەتکراوەتەوە', Icons.cancel_rounded,
-          const Color(0xFFE74C3C));
+      return _statusBanner(
+        'ئەم سکاڵایە ڕەتکراوەتەوە',
+        Icons.cancel_rounded,
+        const Color(0xFFE74C3C),
+      );
     }
   }
 
@@ -774,31 +1074,6 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         ],
       ),
     );
-  }
-
-  Future<void> _updateStatus(String newStatus) async {
-    try {
-      await Supabase.instance.client
-          .from('complaints')
-          .update({'status': newStatus}).eq('id', widget.complaint['id']);
-
-      if (mounted) {
-        Navigator.pop(context);
-        widget.onStatusChanged?.call();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ گۆڕدرا بۆ: ${_statusText(newStatus)}'),
-            backgroundColor: _color(newStatus),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -863,6 +1138,15 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
     }
   }
 
+  String? _extractPhoneForDisplay(Map<String, dynamic> c) {
+    final raw = c['user_phone']?.toString() ??
+        c['phone']?.toString() ??
+        c['contact_phone']?.toString() ??
+        '';
+    if (raw.trim().isEmpty) return null;
+    return raw.trim();
+  }
+
   void _openImage(List images, int initialIndex) {
     showDialog(
       context: context,
@@ -887,8 +1171,11 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
               top: 40,
               right: 20,
               child: IconButton(
-                icon: const Icon(Icons.close_rounded,
-                    color: Colors.white, size: 30),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
             ),

@@ -1,72 +1,15 @@
+// lib/services/ai_service.dart
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// 🤖 خزمەتگوزاری AI بە Gemini
+/// 🤖 خزمەتگوزاری AI — بە Edge Function
+///
+/// ✅ کلیلەکە لە server دەمێنێت، هەرگیز لە client نابێت
 class AiService {
-  // ═══════════════════════════════════════════════════════════
-  // 🔐 API Key — لە .env یان --dart-define
-  // ═══════════════════════════════════════════════════════════
-  static String get _geminiKey {
-    // ✅ ١. لە .env هەوڵ بدە
-    final envKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-    if (envKey.isNotEmpty) return envKey;
-
-    // ✅ ٢. لە --dart-define هەوڵ بدە (بۆ Release)
-    const dartDefineKey = String.fromEnvironment(
-      'GEMINI_API_KEY',
-      defaultValue: '',
-    );
-    if (dartDefineKey.isNotEmpty) return dartDefineKey;
-
-    // ❌ هیچ کلیلێک نەدۆزرایەوە
-    return '';
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // ⚙️ ڕێکخستن — ✅ لە .env
-  // ═══════════════════════════════════════════════════════════
-  static String get _model {
-    // ✅ ١. لە .env هەوڵ بدە
-    final envModel = dotenv.env['GEMINI_MODEL'] ?? '';
-    if (envModel.isNotEmpty) return envModel;
-
-    // ✅ ٢. لە --dart-define هەوڵ بدە
-    const dartDefineModel = String.fromEnvironment(
-      'GEMINI_MODEL',
-      defaultValue: '',
-    );
-    if (dartDefineModel.isNotEmpty) return dartDefineModel;
-
-    // ❌ Fallback — مۆدێلی جێگیر
-    return 'gemini-1.5-flash';
-  }
-
-  static String get _apiVersion {
-    final envVersion = dotenv.env['GEMINI_API_VERSION'] ?? '';
-    if (envVersion.isNotEmpty) return envVersion;
-
-    return 'v1beta';
-  }
-
-  static int get _maxTokens {
-    final envTokens = dotenv.env['GEMINI_MAX_TOKENS'] ?? '';
-    final parsed = int.tryParse(envTokens);
-    if (parsed != null && parsed > 0) return parsed;
-
-    return 2048;
-  }
-
-  static double get _temperature {
-    final envTemp = dotenv.env['GEMINI_TEMPERATURE'] ?? '';
-    final parsed = double.tryParse(envTemp);
-    if (parsed != null && parsed >= 0 && parsed <= 2) return parsed;
-
-    return 0.7;
-  }
+  AiService._();
 
   // ═══════════════════════════════════════════════════════════
   // 🎯 فەنکشنی سەرەکی
@@ -77,73 +20,40 @@ class AiService {
         Duration timeout = const Duration(seconds: 30),
       }) async {
     try {
-      if (_geminiKey.isEmpty) {
-        debugPrint('❌ GEMINI_API_KEY دانەنراوە!');
-        return "⚠️ API Key دانەنراوە - تکایە لە .env دایبنێ";
+      if (text.trim().isEmpty) {
+        return '⚠️ دەقەکە بەتاڵە';
       }
 
-      List<Map<String, dynamic>> parts = [];
-      parts.add({"text": text});
-
-      if (base64Image != null) {
-        parts.add({
-          "inline_data": {
-            "mime_type": "image/jpeg",
-            "data": base64Image,
-          }
-        });
-      }
-
-      final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/$_apiVersion/models/$_model:generateContent?key=$_geminiKey',
-      );
-
-      debugPrint('🤖 بانگکردنی AI: $_model');
-
-      final res = await http
-          .post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "contents": [
-            {"parts": parts}
-          ],
-          "generationConfig": {
-            "temperature": _temperature,
-            "maxOutputTokens": _maxTokens,
-          }
-        }),
+      final response = await Supabase.instance.client.functions
+          .invoke(
+        'gemini-proxy',
+        body: {
+          'prompt': text,
+          'base64Image': base64Image,
+          'maxTokens': 2048,
+          'temperature': 0.7,
+        },
       )
           .timeout(timeout);
 
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-
-        if (data['candidates'] != null &&
-            data['candidates'].isNotEmpty &&
-            data['candidates'][0]['content'] != null &&
-            data['candidates'][0]['content']['parts'] != null &&
-            data['candidates'][0]['content']['parts'].isNotEmpty) {
-          return data['candidates'][0]['content']['parts'][0]['text']
-              .toString();
+      if (response.status != 200) {
+        debugPrint('❌ AI error: ${response.status}');
+        if (response.status == 429) {
+          return '⚠️ زۆر داواکاریت ناردووە — تکایە کەمێک چاوەڕوان بە';
         }
-        return "⚠️ وەڵام بەتاڵە";
-      } else if (res.statusCode == 429) {
-        debugPrint('⚠️ AI Rate limit: ${res.statusCode}');
-        return "⚠️ زۆر داواکاریت ناردووە — تکایە کەمێک چاوەڕوان بە";
-      } else if (res.statusCode == 401 || res.statusCode == 403) {
-        debugPrint('❌ AI Auth error: ${res.statusCode}');
-        return "⚠️ API Key هەڵەیە یان کۆتایی هاتووە";
-      } else {
-        debugPrint('❌ AI Error: ${res.statusCode} - ${res.body}');
-        return "⚠️ هەڵەی AI: ${res.statusCode}";
+        return '⚠️ هەڵەی AI: ${response.status}';
       }
+
+      final data = response.data as Map<String, dynamic>?;
+      final aiText = data?['text']?.toString() ?? '';
+
+      return aiText.isEmpty ? '⚠️ وەڵام بەتاڵە' : aiText;
     } catch (e) {
-      debugPrint('❌ AI Connection Error: $e');
+      debugPrint('❌ AI connection error: $e');
       if (e.toString().contains('TimeoutException')) {
-        return "⚠️ کاتەکە تێپەڕی — تکایە دووبارە هەوڵ بدە";
+        return '⚠️ کاتەکە تێپەڕی — تکایە دووبارە هەوڵ بدە';
       }
-      return "⚠️ کێشەی پەیوەندی";
+      return '⚠️ کێشەی پەیوەندی';
     }
   }
 

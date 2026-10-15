@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 /// 📅 یاریدەدەر بۆ Date Picker بەپێی زمان
 class DatePickerHelper {
+  DatePickerHelper._();
+
   /// 🌍 وەرگرتنی Locale بەپێی کۆدی زمان
   static Locale getLocaleForLanguage(String languageId) {
     switch (languageId) {
@@ -12,9 +14,13 @@ class DatePickerHelper {
       case 'ku':
       default:
       // ✅ کوردی — بەکارهێنانی عەرەبی وەک بنەڕەت
-      // (چونکە Flutter Kurdish MaterialLocalizations ی فەرمی نییە)
         return const Locale('ar', 'AE');
     }
+  }
+
+  /// 🔄 وەرگرتنی ئاراستە بەپێی زمان
+  static TextDirection getDirectionForLanguage(String languageId) {
+    return languageId == 'en' ? TextDirection.ltr : TextDirection.rtl;
   }
 
   /// 📅 پیشاندانی Date Range Picker بەپێی زمان
@@ -26,6 +32,7 @@ class DatePickerHelper {
     required Color primaryColor,
   }) async {
     final locale = getLocaleForLanguage(languageId);
+    final direction = getDirectionForLanguage(languageId);
 
     return showDateRangePicker(
       context: context,
@@ -38,9 +45,7 @@ class DatePickerHelper {
       locale: locale,
       builder: (context, child) {
         return Directionality(
-          textDirection: languageId == 'en'
-              ? TextDirection.ltr
-              : TextDirection.rtl,
+          textDirection: direction,
           child: Theme(
             data: Theme.of(context).copyWith(
               colorScheme: ColorScheme.light(
@@ -65,6 +70,7 @@ class DatePickerHelper {
     required Color primaryColor,
   }) async {
     final locale = getLocaleForLanguage(languageId);
+    final direction = getDirectionForLanguage(languageId);
 
     return showDatePicker(
       context: context,
@@ -74,9 +80,7 @@ class DatePickerHelper {
       locale: locale,
       builder: (context, child) {
         return Directionality(
-          textDirection: languageId == 'en'
-              ? TextDirection.ltr
-              : TextDirection.rtl,
+          textDirection: direction,
           child: Theme(
             data: Theme.of(context).copyWith(
               colorScheme: ColorScheme.light(
@@ -86,6 +90,26 @@ class DatePickerHelper {
             ),
             child: child!,
           ),
+        );
+      },
+    );
+  }
+
+  /// 📅 پیشاندانی Time Picker
+  static Future<TimeOfDay?> showTimePickerCustom({
+    required BuildContext context,
+    required String languageId,
+    required TimeOfDay initialTime,
+  }) async {
+    final direction = getDirectionForLanguage(languageId);
+
+    return showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Directionality(
+          textDirection: direction,
+          child: child!,
         );
       },
     );

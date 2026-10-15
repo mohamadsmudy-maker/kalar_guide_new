@@ -1,15 +1,21 @@
+// lib/services/notification_service.dart
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../utils/app_logger.dart';
 import 'auth_service.dart';
 
-/// 🔔 خزمەتگوزاری ئاگادارکردنەوە — PRO EDITION
+/// 🔔 خزمەتگوزاری ئاگادارکردنەوە
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
   FlutterLocalNotificationsPlugin();
 
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+
+  static final GlobalKey<NavigatorState> navigatorKey =
+  GlobalKey<NavigatorState>();
 
   // ═══════════════════════════════════════════════════════════
   // 🚀 دەستپێکردن
@@ -24,10 +30,10 @@ class NotificationService {
         provisional: false,
       );
 
-      debugPrint('🔔 Notification Permission: ${settings.authorizationStatus}');
+      AppLogger.i('🔔 Notification Permission: ${settings.authorizationStatus}');
 
       if (settings.authorizationStatus == AuthorizationStatus.denied) {
-        debugPrint('⚠️ بەکارهێنەر مۆڵەتی Notification ی نەدا');
+        AppLogger.w('⚠️ بەکارهێنەر مۆڵەتی Notification ی نەدا');
         return;
       }
 
@@ -46,7 +52,7 @@ class NotificationService {
           iOS: iosSettings,
         ),
         onDidReceiveNotificationResponse: (response) {
-          debugPrint('🔔 Notification clicked: ${response.payload}');
+          AppLogger.i('🔔 Notification clicked: ${response.payload}');
           _handleNotificationTap(response.payload);
         },
       );
@@ -67,7 +73,7 @@ class NotificationService {
 
       // ٤. گوێگرتن لە نامەکان لە کاتی ئەپ چالاکە
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('📩 نامە گەیشت: ${message.notification?.title}');
+        AppLogger.i('📩 نامە گەیشت: ${message.notification?.title}');
         if (message.notification != null) {
           _showLocalNotification(message);
         }
@@ -75,43 +81,58 @@ class NotificationService {
 
       // ٥. گوێگرتن لە نامەکان کاتێک بەکارهێنەر کلیک دەکات
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('👆 بەکارهێنەر کلیکی کرد لەسەر Notification');
-        _handleNotificationTap(message.data['route']);
+        AppLogger.i('👆 بەکارهێنەر کلیکی کرد لەسەر Notification');
+        _handleNotificationTap(message.data['route']?.toString());
       });
 
-      // ٦. وەرگرتنی FCM Token و پاشەکەوتکردن
+      // ٦. پشکنینی نامەی سەرەتا
+      final initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        AppLogger.i('📬 Initial message: ${initialMessage.data}');
+        Future.delayed(const Duration(milliseconds: 800), () {
+          _handleNotificationTap(initialMessage.data['route']?.toString());
+        });
+      }
+
+      // ٧. وەرگرتنی FCM Token — ✅ بێ هەڵە
       await _updateFcmToken();
 
-      // ٧. گوێگرتن لە گۆڕینی Token
+      // ٨. گوێگرتن لە گۆڕینی Token
       _messaging.onTokenRefresh.listen((newToken) {
-        debugPrint('🔑 Token نوێ: $newToken');
+        AppLogger.i('🔑 Token نوێ: $newToken');
         _saveTokenToSupabase(newToken);
       });
 
-      debugPrint('✅ Notification Service ئامادەیە');
+      AppLogger.i('✅ Notification Service ئامادەیە');
     } catch (e) {
-      debugPrint('❌ هەڵە لە Notification Service: $e');
+      AppLogger.e('❌ هەڵە لە Notification Service', e);
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🔑 وەرگرتن و پاشەکەوتکردنی FCM Token
+  // 🔑 FCM Token — ✅ بێ هەڵە کاتێک Firebase ناکارا بێت
   // ═══════════════════════════════════════════════════════════
   static Future<String?> getToken() async {
     try {
       return await _messaging.getToken();
     } catch (e) {
-      debugPrint('❌ هەڵە لە وەرگرتنی Token: $e');
+      // ✅ ئەمە ئاگادارییەکی باوە لە سەر ئیمۆلەیتەر
+      // Firebase Installations Service لە سەر ئیمۆلەیتەر کار ناکات
+      AppLogger.w('⚠️ نەتوانرا FCM Token وەربگیرێت (ئیمۆلەیتەر)');
       return null;
     }
   }
 
-  /// 📥 وەرگرتنی Token و پاشەکەوتکردن لە Supabase
+  /// 📥 وەرگرتنی Token و پاشەکەوتکردن لە Supabase — ✅ بێ هەڵە
   static Future<void> _updateFcmToken() async {
     final token = await getToken();
-    if (token == null) return;
+    if (token == null) {
+      // ✅ ئەمە ئاساییە لە سەر ئیمۆلەیتەر
+      AppLogger.w('⚠️ FCM Token بەردەست نییە (ئیمۆلەیتەر یان کێشەی تۆڕ)');
+      return;
+    }
 
-    debugPrint('🔑 FCM Token: $token');
+    AppLogger.i('🔑 FCM Token: $token');
     await _saveTokenToSupabase(token);
   }
 
@@ -120,22 +141,28 @@ class NotificationService {
     try {
       final user = AuthSessionManager.currentUser;
       if (user == null) {
-        debugPrint('⚠️ بەکارهێنەر نەچووە ژوورەوە — Token پاشەکەوت نەکرا');
+        AppLogger.w('⚠️ بەکارهێنەر نەچووە ژوورەوە — Token پاشەکەوت نەکرا');
+        return;
+      }
+
+      final userId = user['id']?.toString();
+      if (userId == null || userId.isEmpty) {
+        AppLogger.w('⚠️ ID ی بەکارهێنەر نییە');
         return;
       }
 
       await Supabase.instance.client
           .from('app_users')
           .update({'fcm_token': token})
-          .eq('id', user['id']);
+          .eq('id', userId);
 
-      debugPrint('✅ FCM Token پاشەکەوتکرا لە Supabase');
+      AppLogger.i('✅ FCM Token پاشەکەوتکرا');
     } catch (e) {
-      debugPrint('❌ هەڵە لە پاشەکەوتکردنی Token: $e');
+      AppLogger.e('❌ هەڵە لە پاشەکەوتکردنی Token', e);
     }
   }
 
-  /// 🔄 دووبارە پاشەکەوتکردنی Token (کاتێک بەکارهێنەر دێتە ژوورەوە)
+  /// 🔄 دووبارە پاشەکەوتکردنی Token
   static Future<void> refreshToken() async {
     await _updateFcmToken();
   }
@@ -178,26 +205,52 @@ class NotificationService {
   // 👆 کردار کاتێک بەکارهێنەر کلیک لە Notification دەکات
   // ═══════════════════════════════════════════════════════════
   static void _handleNotificationTap(String? route) {
-    if (route == null) return;
-    debugPrint('🚀 چوونە ژوورەوە بۆ: $route');
+    if (route == null || route.isEmpty) {
+      AppLogger.w('⚠️ Route ی Notification بەتاڵە');
+      return;
+    }
+
+    AppLogger.i('🚀 چوونە ژوورەوە بۆ: $route');
+
+    try {
+      navigatorKey.currentState?.pushNamed(route);
+    } catch (e) {
+      AppLogger.e('❌ هەڵە لە چوونە ژوورەوە بۆ route', e);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🧹 پاککردنەوەی Token (کاتێک بەکارهێنەر دێتە دەرەوە)
+  // 🧹 پاککردنەوەی Token
   // ═══════════════════════════════════════════════════════════
   static Future<void> clearToken() async {
     try {
       final user = AuthSessionManager.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        AppLogger.w('⚠️ بەکارهێنەر نییە — Token پاک نەکرا');
+        return;
+      }
+
+      final userId = user['id']?.toString();
+      if (userId == null || userId.isEmpty) {
+        AppLogger.w('⚠️ ID ی بەکارهێنەر نییە');
+        return;
+      }
 
       await Supabase.instance.client
           .from('app_users')
           .update({'fcm_token': null})
-          .eq('id', user['id']);
+          .eq('id', userId);
 
-      debugPrint('🧹 FCM Token پاککرایەوە');
+      try {
+        await _messaging.deleteToken();
+        AppLogger.i('✅ FCM Token لە FCM پاککرایەوە');
+      } catch (e) {
+        AppLogger.w('⚠️ deleteToken error: $e');
+      }
+
+      AppLogger.i('✅ FCM Token پاککرایەوە');
     } catch (e) {
-      debugPrint('❌ هەڵە لە پاککردنەوەی Token: $e');
+      AppLogger.e('❌ هەڵە لە پاککردنەوەی Token', e);
     }
   }
 }

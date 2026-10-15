@@ -14,6 +14,13 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 
+// ✅ خوێندنەوەی key.properties بۆ Release
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+}
+
 android {
     namespace = "com.muhammad.kalar.kalar_guide"
     compileSdk = flutter.compileSdkVersion
@@ -22,8 +29,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-
-        // ✅ Desugaring بۆ flutter_local_notifications
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -34,26 +39,47 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        // ✅ API Key لە local.properties
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] =
             localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
     }
 
+    // ⭐ Signing Configs
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = keystoreProperties["storeFile"]?.let { file(it) }
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            // ⭐ ئەگەر key.properties هەبوو، ئەوا Release
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
 
-// ✅ Kotlin JVM Target — شێوازی نوێ
+// ✅ Kotlin JVM Target
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
-// ✅ Desugaring dependency — پێویستە
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

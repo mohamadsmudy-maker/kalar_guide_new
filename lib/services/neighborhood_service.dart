@@ -1,13 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/neighborhood.dart';
+import 'boundary_service.dart';
 
 /// 🏘️ خزمەتگوزاری گەڕەکەکان
 class NeighborhoodService {
   static SupabaseClient get _client => Supabase.instance.client;
 
   // ═══════════════════════════════════════════════════════════
-  // 📋 هێنانی هەموو گەڕەکەکان
+  // 📋 هێنانی هەموو گەڕەکەکان (لەگەڵ سنوورەکان)
   // ═══════════════════════════════════════════════════════════
   static Future<List<Neighborhood>> getAll() async {
     try {
@@ -17,9 +18,12 @@ class NeighborhoodService {
           .eq('is_active', true)
           .order('display_order');
 
-      return (res as List)
+      final list = (res as List)
           .map((e) => Neighborhood.fromJson(Map<String, dynamic>.from(e)))
           .toList();
+
+      // ⭐ پێکەوە بەستن لەگەڵ GeoJSON
+      return await BoundaryService.attachBoundaries(list);
     } catch (e) {
       debugPrint('❌ getAll neighborhoods error: $e');
       return [];
@@ -38,9 +42,11 @@ class NeighborhoodService {
           .ilike('name_ku', '%$query%')
           .order('display_order');
 
-      return (res as List)
+      final list = (res as List)
           .map((e) => Neighborhood.fromJson(Map<String, dynamic>.from(e)))
           .toList();
+
+      return await BoundaryService.attachBoundaries(list);
     } catch (e) {
       debugPrint('❌ search neighborhoods error: $e');
       return [];
@@ -58,7 +64,11 @@ class NeighborhoodService {
           .eq('id', id)
           .maybeSingle();
 
-      return res != null ? Neighborhood.fromJson(res) : null;
+      if (res == null) return null;
+
+      final n = Neighborhood.fromJson(Map<String, dynamic>.from(res));
+      final list = await BoundaryService.attachBoundaries([n]);
+      return list.first;
     } catch (e) {
       debugPrint('❌ getById error: $e');
       return null;
@@ -102,8 +112,10 @@ class NeighborhoodService {
       for (var n in (res as List)) {
         totalPopulation +=
             int.tryParse(n['population']?.toString() ?? '0') ?? 0;
-        totalStores += int.tryParse(n['total_stores']?.toString() ?? '0') ?? 0;
-        totalArea += double.tryParse(n['area_km2']?.toString() ?? '0') ?? 0;
+        totalStores +=
+            int.tryParse(n['total_stores']?.toString() ?? '0') ?? 0;
+        totalArea +=
+            double.tryParse(n['area_km2']?.toString() ?? '0') ?? 0;
       }
 
       return {
@@ -149,7 +161,7 @@ class NeighborhoodService {
   static bool _isPointInPolygon(
       double lat,
       double lng,
-      List<Map<String, double>> polygon,
+      List<dynamic> polygon,
       ) {
     if (polygon.length < 3) return false;
 
@@ -157,10 +169,10 @@ class NeighborhoodService {
     int j = polygon.length - 1;
 
     for (int i = 0; i < polygon.length; i++) {
-      final xi = polygon[i]['lng'] ?? 0;
-      final yi = polygon[i]['lat'] ?? 0;
-      final xj = polygon[j]['lng'] ?? 0;
-      final yj = polygon[j]['lat'] ?? 0;
+      final xi = polygon[i].longitude;
+      final yi = polygon[i].latitude;
+      final xj = polygon[j].longitude;
+      final yj = polygon[j].latitude;
 
       if (((yi > lat) != (yj > lat)) &&
           (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
@@ -195,8 +207,10 @@ class NeighborhoodService {
     try {
       await _client
           .from('neighborhoods')
-          .update({...data, 'updated_at': DateTime.now().toIso8601String()})
-          .eq('id', id);
+          .update({
+        ...data,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', id);
       return true;
     } catch (e) {
       debugPrint('❌ updateNeighborhood error: $e');

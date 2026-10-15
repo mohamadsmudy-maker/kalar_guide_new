@@ -2,13 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/emergency_service.dart';
 
-/// 🚑 خزمەتگوزاری فریاکەوتن
-class EmergencyServiceService {
+/// 🚑 Repository بۆ فریاکەوتن
+class EmergencyServiceRepository {
   static SupabaseClient get _client => Supabase.instance.client;
 
-  // ═══════════════════════════════════════════════════════════
-  // 📋 هێنانی هەموو خزمەتگوزارییەکان
-  // ═══════════════════════════════════════════════════════════
   static Future<List<EmergencyService>> getAll() async {
     try {
       final res = await _client
@@ -17,7 +14,9 @@ class EmergencyServiceService {
           .order('display_order');
 
       return (res as List)
-          .map((e) => EmergencyService.fromJson(Map<String, dynamic>.from(e)))
+          .map((e) => EmergencyService.fromJson(
+        Map<String, dynamic>.from(e as Map),
+      ))
           .toList();
     } catch (e) {
       debugPrint('❌ getAll emergency error: $e');
@@ -25,9 +24,6 @@ class EmergencyServiceService {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🏷️ هێنانی بەپێی کەرت
-  // ═══════════════════════════════════════════════════════════
   static Future<List<EmergencyService>> getByCategory(
       String category) async {
     try {
@@ -38,7 +34,9 @@ class EmergencyServiceService {
           .order('display_order');
 
       return (res as List)
-          .map((e) => EmergencyService.fromJson(Map<String, dynamic>.from(e)))
+          .map((e) => EmergencyService.fromJson(
+        Map<String, dynamic>.from(e as Map),
+      ))
           .toList();
     } catch (e) {
       debugPrint('❌ getByCategory error: $e');
@@ -46,9 +44,6 @@ class EmergencyServiceService {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // ⭐ هێنانی گرنگەکان
-  // ═══════════════════════════════════════════════════════════
   static Future<List<EmergencyService>> getImportant() async {
     try {
       final res = await _client
@@ -58,7 +53,9 @@ class EmergencyServiceService {
           .order('display_order');
 
       return (res as List)
-          .map((e) => EmergencyService.fromJson(Map<String, dynamic>.from(e)))
+          .map((e) => EmergencyService.fromJson(
+        Map<String, dynamic>.from(e as Map),
+      ))
           .toList();
     } catch (e) {
       debugPrint('❌ getImportant error: $e');
@@ -66,9 +63,6 @@ class EmergencyServiceService {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // ➕ زیادکردن (بۆ ئەدمین)
-  // ═══════════════════════════════════════════════════════════
   static Future<bool> addService(Map<String, dynamic> data) async {
     try {
       await _client.from('emergency_services').insert(data);
@@ -79,9 +73,6 @@ class EmergencyServiceService {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // ✏️ دەستکاریکردن
-  // ═══════════════════════════════════════════════════════════
   static Future<bool> updateService(
       String id, Map<String, dynamic> data) async {
     try {
@@ -96,9 +87,6 @@ class EmergencyServiceService {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🗑️ سڕینەوە
-  // ═══════════════════════════════════════════════════════════
   static Future<bool> deleteService(String id) async {
     try {
       await _client.from('emergency_services').delete().eq('id', id);

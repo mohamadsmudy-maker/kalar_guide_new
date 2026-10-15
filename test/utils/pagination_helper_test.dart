@@ -1,6 +1,6 @@
 // test/utils/pagination_helper_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kalar_guide/utils/pagination_helper.dart';
+import 'package:kalar_guide_new/utils/pagination_helper.dart';
 
 void main() {
   group('PaginationHelper', () {

@@ -13,9 +13,6 @@ class AboutScreen extends StatelessWidget {
   static const String _developerPhoneIntl = '9647701574997';
   static const String _developerRole = 'ئەندازیاری شارستانی • گەشەپێدەری ئەپ';
   static const String _developerEmail = '';
-  static const String _facebookUrl = '';
-  static const String _instagramUrl = '';
-  static const String _telegramUser = '';
 
   @override
   Widget build(BuildContext context) {

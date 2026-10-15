@@ -83,15 +83,3 @@ class EmergencyContact {
           longitude != 0;
 }
 
-/// 📋 جۆرەکانی فریاکەوتن
-class EmergencyCategories {
-  static const List<Map<String, String>> categories = [
-    {'key': 'all', 'name': 'هەموو', 'icon': 'apps'},
-    {'key': 'police', 'name': 'پۆلیس', 'icon': 'local_police'},
-    {'key': 'fire', 'name': 'ئاگرکوژێنەوە', 'icon': 'local_fire_department'},
-    {'key': 'ambulance', 'name': 'ئەمبولانس', 'icon': 'local_hospital'},
-    {'key': 'power', 'name': 'کارەبا', 'icon': 'electric_bolt'},
-    {'key': 'water', 'name': 'ئاو', 'icon': 'water_drop'},
-    {'key': 'other', 'name': 'گشتی', 'icon': 'phone_in_talk'},
-  ];
-}

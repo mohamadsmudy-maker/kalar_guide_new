@@ -18,8 +18,10 @@ class LocationService {
       if (permission == LocationPermission.deniedForever) return null;
 
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      ).timeout(const Duration(seconds: 10));
     } catch (_) {
       return null;
     }
@@ -44,7 +46,7 @@ class LocationService {
     return straightLineKm * 1.3;
   }
 
-  /// فۆرماتکردنی دووری بۆ دەقی خوێندنەوە
+  /// فۆرماتکردنی دووری بۆ دەقی خوونەوە
   static String formatDistance(double distanceKm) {
     if (distanceKm < 1.0) {
       return '${(distanceKm * 1000).toStringAsFixed(0)} مەتر';
@@ -56,12 +58,19 @@ class LocationService {
 
 /// 🛑 پشکنینی سنووری شاری کەلار
 class KalarBoundaryChecker {
-  // 📍 ٤ گۆشەی سنووری کەلار
-  static final List<LatLng> _kalarPolygon = [
-    const LatLng(34.69050, 45.44992),
-    const LatLng(34.72392, 45.43050),
-    const LatLng(34.59240, 45.31278),
-    const LatLng(34.64018, 45.26110),
+  /// 📍 سنووری ڕاستەقینەی شاری کەلار
+  ///
+  /// ✅ چارەسەرکرا — ٦ خاڵ بۆ دروستی زیاتر
+  static const List<LatLng> _kalarPolygon = [
+    // ═══════════════════════════════════════════════════════
+    // 🗺️ سنووری شاری کەلار — ٦ خاڵ
+    // ═══════════════════════════════════════════════════════
+    LatLng(34.6550, 45.3450), // NE
+    LatLng(34.6480, 45.3550), // E
+    LatLng(34.6050, 45.3350), // SE
+    LatLng(34.5950, 45.3050), // SW
+    LatLng(34.6050, 45.2850), // W
+    LatLng(34.6350, 45.2850), // NW
   ];
 
   /// پشکنین ئەگەر خاڵێک لە ناو سنووری کەلار بێت
@@ -82,5 +91,23 @@ class KalarBoundaryChecker {
       j = i;
     }
     return (intersectCount % 2) == 1;
+  }
+
+  /// ✅ پشکنینی نزیکەیی — ٥ کم لە ناوەندی کەلار
+  static bool isWithinKalarWithBuffer(LatLng point) {
+    if (isWithinKalar(point)) return true;
+
+    const centerLat = 34.6189;
+    const centerLng = 45.3156;
+
+    final distance = Geolocator.distanceBetween(
+      point.latitude,
+      point.longitude,
+      centerLat,
+      centerLng,
+    ) /
+        1000;
+
+    return distance <= 5.0;
   }
 }
