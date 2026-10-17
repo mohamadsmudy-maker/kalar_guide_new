@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';   // ✅ ئەمە زیاد بکە
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
@@ -24,9 +24,14 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
+  // ⭐ چاککراو — Future یەکان لێرە پارێزراون
+  late Future<List<Map<String, dynamic>>> _subsFuture;
+  late Future<List<Map<String, dynamic>>> _storesFuture;
+
   @override
   void initState() {
     super.initState();
+
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -36,6 +41,17 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
+
+    // ⭐ تەنها یەک جار بانگ دەکرێن — نەک هەر جارێک UI دووبارە بووەوە
+    _subsFuture = Supabase.instance.client
+        .from('sub_categories')
+        .select()
+        .eq('parent', widget.categoryName);
+
+    _storesFuture = Supabase.instance.client
+        .from('dukan')
+        .select()
+        .ilike('category', '%${widget.categoryName}%');
   }
 
   @override
@@ -168,10 +184,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             ),
             SliverToBoxAdapter(
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: Supabase.instance.client
-                    .from('sub_categories')
-                    .select()
-                    .eq('parent', widget.categoryName),
+                future: _subsFuture,    // ⭐ ئێستا یەک جار بانگ دەکرێت
                 builder: (context, snapshot) {
                   if (snapshot.connectionState ==
                       ConnectionState.waiting) {
@@ -204,10 +217,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             ),
 
             FutureBuilder<List<Map<String, dynamic>>>(
-              future: Supabase.instance.client
-                  .from('dukan')
-                  .select()
-                  .ilike('category', '%${widget.categoryName}%'),
+              future: _storesFuture,    // ⭐ ئێستا یەک جار بانگ دەکرێت
               builder: (context, snapshot) {
                 if (snapshot.connectionState ==
                     ConnectionState.waiting) {

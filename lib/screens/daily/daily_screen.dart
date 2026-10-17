@@ -17,7 +17,7 @@ import '../videos/user_videos.dart';
 import '../fuel/fuel_types_screen.dart';
 import '../currency/currency_rates_screen.dart';
 
-/// ⚡ شاشەی ڕۆژانە — ULTRA PRO V3
+/// ⚡ شاشەی ڕۆژانە — ULTRA PRO V4
 class DailyScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
   const DailyScreen({super.key, this.onMenuTap});
@@ -30,23 +30,45 @@ class _DailyScreenState extends State<DailyScreen>
     with TickerProviderStateMixin {
   late Timer _clockTimer;
   DateTime _now = DateTime.now();
+  String _greeting = '';
+  String _hijriDate = '';
+
+  final Map<String, int> _serviceUsage = {
+    'prayer': 0,
+    'emergency': 0,
+    'qibla': 0,
+    'currency': 0,
+    'fuel': 0,
+  };
+
+  int _notificationCount = 3;
 
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _pulseController;
   late AnimationController _shimmerController;
+  late AnimationController _floatController;
 
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _pulseAnimation;
+  late Animation<double> _floatAnimation;
 
   @override
   void initState() {
     super.initState();
 
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
+      if (mounted) {
+        setState(() {
+          _now = DateTime.now();
+          _updateGreeting();
+        });
+      }
     });
+
+    _updateGreeting();
+    _updateHijriDate();
 
     _fadeController = AnimationController(
       vsync: this,
@@ -84,6 +106,14 @@ class _DailyScreenState extends State<DailyScreen>
       duration: const Duration(milliseconds: 2500),
     )..repeat();
 
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    )..repeat(reverse: true);
+    _floatAnimation = Tween<double>(begin: -6, end: 6).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
+
     _fadeController.forward();
     _slideController.forward();
   }
@@ -95,7 +125,37 @@ class _DailyScreenState extends State<DailyScreen>
     _slideController.dispose();
     _pulseController.dispose();
     _shimmerController.dispose();
+    _floatController.dispose();
     super.dispose();
+  }
+
+  void _updateGreeting() {
+    final hour = _now.hour;
+    if (hour >= 5 && hour < 12) {
+      _greeting = 'بەیانیت باش ☀️';
+    } else if (hour >= 12 && hour < 17) {
+      _greeting = 'نیوەڕۆیت باش 🌤️';
+    } else if (hour >= 17 && hour < 20) {
+      _greeting = 'ئێوارەیت باش 🌅';
+    } else {
+      _greeting = 'شەویت باش 🌙';
+    }
+  }
+
+  void _updateHijriDate() {
+    try {
+      final hijri = HijriCalendar.now();
+      _hijriDate =
+      '${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} هـ';
+    } catch (e) {
+      _hijriDate = '';
+    }
+  }
+
+  void _incrementService(String key) {
+    setState(() {
+      _serviceUsage[key] = (_serviceUsage[key] ?? 0) + 1;
+    });
   }
 
   @override
@@ -108,25 +168,38 @@ class _DailyScreenState extends State<DailyScreen>
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildUltraAppBar(isDark, lang),
-            _buildWeatherSection(isDark),
-            _buildQuickInfoRow(isDark),
-            _buildServicesHeader(isDark),
-            _buildServicesGrid(isDark),
-            _buildDepartmentsSection(isDark),   // ⭐ نوێ
-            _buildVideoCard(isDark),
-            const SliverToBoxAdapter(child: SizedBox(height: 120)),
-          ],
+        body: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async {
+            HapticFeedback.mediumImpact();
+            _fadeController.forward(from: 0);
+            _slideController.forward(from: 0);
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              _buildUltraAppBar(isDark, lang),
+              _buildGreetingSection(isDark),
+              _buildWeatherSection(isDark),
+              _buildQuickInfoRow(isDark),
+              _buildQuickStatsRow(isDark),
+              _buildServicesHeader(isDark),
+              _buildServicesGrid(isDark),
+              _buildDepartmentsSection(isDark),
+              _buildVideoCard(isDark),
+              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+            ],
+          ),
         ),
       ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎯 ULTRA AppBar
+  // 🎯 AppBar
   // ═══════════════════════════════════════════════════════════
   Widget _buildUltraAppBar(bool isDark, String lang) {
     return SliverAppBar(
@@ -161,26 +234,35 @@ class _DailyScreenState extends State<DailyScreen>
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF6C5CE7).withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+          AnimatedBuilder(
+            animation: _pulseController,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _pulseAnimation.value,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6C5CE7)
+                            .withValues(alpha: 0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.calendar_today_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
-              ],
-            ),
-            child: const Icon(
-              Icons.calendar_today_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
+              );
+            },
           ),
           const SizedBox(width: 10),
           Text(
@@ -198,45 +280,184 @@ class _DailyScreenState extends State<DailyScreen>
         AnimatedBuilder(
           animation: _pulseAnimation,
           builder: (context, child) {
-            return Transform.scale(
-              scale: _pulseAnimation.value,
-              child: IconButton(
-                icon: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(
-                      Icons.notifications_none_rounded,
-                      color: isDark ? Colors.white : AppColors.primary,
-                      size: 26,
-                    ),
-                    Positioned(
-                      top: -2,
-                      right: -2,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.red.withValues(alpha: 0.6),
-                              blurRadius: 8,
-                            ),
-                          ],
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.notifications_none_rounded,
+                    color: isDark ? Colors.white : AppColors.primary,
+                    size: 26,
+                  ),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _notificationCount = 0);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content:
+                        Text('✅ هەموو ئاگادارکردنەوەکان خوێنرایەوە'),
+                        backgroundColor: Color(0xFF10B981),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+                if (_notificationCount > 0)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF0A0A0F)
+                              : Colors.white,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withValues(alpha: 0.6),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$_notificationCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                onPressed: () {},
-              ),
+                  ),
+              ],
             );
           },
         ),
         const SizedBox(width: 8),
       ],
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 👋 Greeting Section
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildGreetingSection(bool isDark) {
+    return SliverToBoxAdapter(
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF6C5CE7).withValues(alpha: 0.15),
+                    const Color(0xFFE91E63).withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFF6C5CE7).withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                          const Color(0xFF6C5CE7).withValues(alpha: 0.3),
+                          blurRadius: 12,
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      _getGreetingEmoji(),
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _greeting,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'هیوادارین ڕۆژێکی خۆش بێت',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? Colors.white54
+                                : Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_hijriDate.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6C5CE7)
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _hijriDate,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF6C5CE7),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getGreetingEmoji() {
+    final hour = _now.hour;
+    if (hour >= 5 && hour < 12) return '☀️';
+    if (hour >= 12 && hour < 17) return '🌤️';
+    if (hour >= 17 && hour < 20) return '🌅';
+    return '🌙';
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -255,7 +476,7 @@ class _DailyScreenState extends State<DailyScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // ⚡ Quick Info Row (Time + User)
+  // ⚡ Quick Info Row
   // ═══════════════════════════════════════════════════════════
   Widget _buildQuickInfoRow(bool isDark) {
     return SliverToBoxAdapter(
@@ -273,7 +494,7 @@ class _DailyScreenState extends State<DailyScreen>
                     iconColor: const Color(0xFF6C5CE7),
                     title: 'کاتی ئێستا',
                     value: intl.DateFormat('HH:mm').format(_now),
-                    subtitle: intl.DateFormat('EEEE').format(_now),
+                    subtitle: _getDayName(_now.weekday),
                     isDark: isDark,
                   ),
                 ),
@@ -292,6 +513,108 @@ class _DailyScreenState extends State<DailyScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Quick Stats Row
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildQuickStatsRow(bool isDark) {
+    return SliverToBoxAdapter(
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFF6C5CE7).withValues(alpha: 0.15),
+                ),
+              ),
+              child: Row(
+                children: [
+                  _buildStatItem(
+                    icon: Icons.calendar_today_rounded,
+                    label: 'بەروار',
+                    value: intl.DateFormat('dd/MM').format(_now),
+                    color: const Color(0xFF6C5CE7),
+                    isDark: isDark,
+                  ),
+                  Container(
+                    width: 1,
+                    height: 30,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.grey.shade200,
+                  ),
+                  _buildStatItem(
+                    icon: Icons.celebration_rounded,
+                    label: 'ڕووداو',
+                    value:
+                    '${_serviceUsage.values.reduce((a, b) => a + b)}',
+                    color: const Color(0xFFE91E63),
+                    isDark: isDark,
+                  ),
+                  Container(
+                    width: 1,
+                    height: 30,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.grey.shade200,
+                  ),
+                  _buildStatItem(
+                    icon: Icons.star_rounded,
+                    label: 'چالاک',
+                    value: '٥',
+                    color: const Color(0xFFF59E0B),
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: color,
+              height: 1.0,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white54 : Colors.grey.shade600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -381,7 +704,8 @@ class _DailyScreenState extends State<DailyScreen>
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                    color:
+                    isDark ? Colors.white : const Color(0xFF1A1A2E),
                     height: 1.1,
                   ),
                   maxLines: 1,
@@ -480,7 +804,7 @@ class _DailyScreenState extends State<DailyScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎨 Services Grid — ULTRA
+  // 🎨 Services Grid
   // ═══════════════════════════════════════════════════════════
   Widget _buildServicesGrid(bool isDark) {
     return SliverToBoxAdapter(
@@ -504,12 +828,16 @@ class _DailyScreenState extends State<DailyScreen>
                   icon: Icons.mosque_rounded,
                   color: const Color(0xFF6C5CE7),
                   isDark: isDark,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PrayerTimesScreen(),
-                    ),
-                  ),
+                  usageCount: _serviceUsage['prayer'] ?? 0,
+                  onTap: () {
+                    _incrementService('prayer');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PrayerTimesScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildUltraServiceCard(
                   title: 'فریاکەوتن',
@@ -517,12 +845,16 @@ class _DailyScreenState extends State<DailyScreen>
                   icon: Icons.emergency_rounded,
                   color: const Color(0xFFDC2626),
                   isDark: isDark,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const EmergencyScreen(),
-                    ),
-                  ),
+                  usageCount: _serviceUsage['emergency'] ?? 0,
+                  onTap: () {
+                    _incrementService('emergency');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EmergencyScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildUltraServiceCard(
                   title: 'قیبلە دۆزەرەوە',
@@ -530,12 +862,16 @@ class _DailyScreenState extends State<DailyScreen>
                   icon: Icons.explore_rounded,
                   color: const Color(0xFFF39C12),
                   isDark: isDark,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const QiblaFinderScreen(),
-                    ),
-                  ),
+                  usageCount: _serviceUsage['qibla'] ?? 0,
+                  onTap: () {
+                    _incrementService('qibla');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const QiblaFinderScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildUltraServiceCard(
                   title: 'دراوەکان',
@@ -543,12 +879,16 @@ class _DailyScreenState extends State<DailyScreen>
                   icon: Icons.attach_money_rounded,
                   color: const Color(0xFF2ECC71),
                   isDark: isDark,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CurrencyRatesScreen(),
-                    ),
-                  ),
+                  usageCount: _serviceUsage['currency'] ?? 0,
+                  onTap: () {
+                    _incrementService('currency');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CurrencyRatesScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildUltraServiceCard(
                   title: 'سوتەمەنی',
@@ -556,12 +896,16 @@ class _DailyScreenState extends State<DailyScreen>
                   icon: Icons.local_gas_station_rounded,
                   color: const Color(0xFFE67E22),
                   isDark: isDark,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const FuelTypesScreen(),
-                    ),
-                  ),
+                  usageCount: _serviceUsage['fuel'] ?? 0,
+                  onTap: () {
+                    _incrementService('fuel');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const FuelTypesScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -577,6 +921,7 @@ class _DailyScreenState extends State<DailyScreen>
     required IconData icon,
     required Color color,
     required bool isDark,
+    required int usageCount,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -594,7 +939,10 @@ class _DailyScreenState extends State<DailyScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: isDark
-                      ? [const Color(0xFF1A1A22), const Color(0xFF1F1F2A)]
+                      ? [
+                    const Color(0xFF1A1A22),
+                    const Color(0xFF1F1F2A)
+                  ]
                       : [Colors.white, const Color(0xFFFAFBFF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -613,7 +961,8 @@ class _DailyScreenState extends State<DailyScreen>
                     spreadRadius: -6,
                   ),
                   BoxShadow(
-                    color: color.withValues(alpha: isDark ? 0.25 : 0.15),
+                    color:
+                    color.withValues(alpha: isDark ? 0.25 : 0.15),
                     blurRadius: 28,
                     offset: const Offset(0, 12),
                     spreadRadius: -10,
@@ -626,76 +975,120 @@ class _DailyScreenState extends State<DailyScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              color,
-                              Color.lerp(color, Colors.white, 0.3)!,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.45),
-                              blurRadius: 14,
-                              offset: const Offset(0, 6),
-                              spreadRadius: -2,
-                            ),
-                          ],
-                        ),
-                        child: Icon(icon, color: Colors.white, size: 24),
-                      ),
                       AnimatedBuilder(
-                        animation: _pulseAnimation,
-                        builder: (context, _) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: color.withValues(alpha: 0.3),
+                        animation: _floatController,
+                        builder: (context, child) {
+                          return Transform.translate(
+                            offset:
+                            Offset(0, _floatAnimation.value * 0.5),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    color,
+                                    Color.lerp(
+                                        color, Colors.white, 0.3)!,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                    color.withValues(alpha: 0.45),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 6),
+                                    spreadRadius: -2,
+                                  ),
+                                ],
                               ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: color.withValues(
-                                          alpha: _pulseAnimation.value * 0.8,
-                                        ),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'زیندوو',
-                                  style: TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w900,
-                                    color: color,
-                                  ),
-                                ),
-                              ],
+                              child: Icon(icon,
+                                  color: Colors.white, size: 24),
                             ),
                           );
                         },
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          AnimatedBuilder(
+                            animation: _pulseAnimation,
+                            builder: (context, _) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                  color.withValues(alpha: 0.15),
+                                  borderRadius:
+                                  BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color:
+                                    color.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: color,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: color.withValues(
+                                              alpha:
+                                              _pulseAnimation.value *
+                                                  0.8,
+                                            ),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'زیندوو',
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.w900,
+                                        color: color,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          if (usageCount > 0) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green
+                                    .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'کردار: $usageCount',
+                                style: const TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -760,6 +1153,7 @@ class _DailyScreenState extends State<DailyScreen>
                 ],
               ),
             ),
+            // Shimmer
             Positioned.fill(
               child: IgnorePointer(
                 child: AnimatedBuilder(
@@ -797,7 +1191,7 @@ class _DailyScreenState extends State<DailyScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🏛️ مامەڵەی فەرمانگەکان — نوێ
+  // 🏛️ Departments
   // ═══════════════════════════════════════════════════════════
   Widget _buildDepartmentsSection(bool isDark) {
     return SliverToBoxAdapter(
@@ -837,13 +1231,6 @@ class _DailyScreenState extends State<DailyScreen>
                         offset: const Offset(0, 12),
                         spreadRadius: -4,
                       ),
-                      BoxShadow(
-                        color:
-                        const Color(0xFF10B981).withValues(alpha: 0.25),
-                        blurRadius: 40,
-                        offset: const Offset(0, 20),
-                        spreadRadius: -10,
-                      ),
                     ],
                   ),
                   child: Stack(
@@ -861,22 +1248,10 @@ class _DailyScreenState extends State<DailyScreen>
                           ),
                         ),
                       ),
-                      Positioned(
-                        bottom: -30,
-                        left: -30,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.06),
-                          ),
-                        ),
-                      ),
                       Row(
                         children: [
                           AnimatedBuilder(
-                            animation: _pulseAnimation,
+                            animation: _pulseController,
                             builder: (context, child) {
                               return Transform.scale(
                                 scale: _pulseAnimation.value,
@@ -884,22 +1259,14 @@ class _DailyScreenState extends State<DailyScreen>
                                   width: 60,
                                   height: 60,
                                   decoration: BoxDecoration(
-                                    color:
-                                    Colors.white.withValues(alpha: 0.25),
+                                    color: Colors.white
+                                        .withValues(alpha: 0.25),
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: Colors.white
                                           .withValues(alpha: 0.4),
                                       width: 2,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.3),
-                                        blurRadius: 20,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
                                   ),
                                   child: const Icon(
                                     Icons.business_rounded,
@@ -913,7 +1280,8 @@ class _DailyScreenState extends State<DailyScreen>
                           const SizedBox(width: 16),
                           const Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
@@ -942,9 +1310,6 @@ class _DailyScreenState extends State<DailyScreen>
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                              ),
                             ),
                             child: const Icon(
                               Icons.arrow_back_ios_new_rounded,
@@ -1006,13 +1371,6 @@ class _DailyScreenState extends State<DailyScreen>
                         offset: const Offset(0, 12),
                         spreadRadius: -4,
                       ),
-                      BoxShadow(
-                        color:
-                        const Color(0xFF9C27B0).withValues(alpha: 0.3),
-                        blurRadius: 40,
-                        offset: const Offset(0, 20),
-                        spreadRadius: -10,
-                      ),
                     ],
                   ),
                   child: Stack(
@@ -1030,22 +1388,10 @@ class _DailyScreenState extends State<DailyScreen>
                           ),
                         ),
                       ),
-                      Positioned(
-                        bottom: -30,
-                        left: -30,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.06),
-                          ),
-                        ),
-                      ),
                       Row(
                         children: [
                           AnimatedBuilder(
-                            animation: _pulseAnimation,
+                            animation: _pulseController,
                             builder: (context, child) {
                               return Transform.scale(
                                 scale: _pulseAnimation.value,
@@ -1053,22 +1399,14 @@ class _DailyScreenState extends State<DailyScreen>
                                   width: 60,
                                   height: 60,
                                   decoration: BoxDecoration(
-                                    color:
-                                    Colors.white.withValues(alpha: 0.25),
+                                    color: Colors.white
+                                        .withValues(alpha: 0.25),
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: Colors.white
                                           .withValues(alpha: 0.4),
                                       width: 2,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.3),
-                                        blurRadius: 20,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
                                   ),
                                   child: const Icon(
                                     Icons.play_arrow_rounded,
@@ -1082,7 +1420,8 @@ class _DailyScreenState extends State<DailyScreen>
                           const SizedBox(width: 16),
                           const Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
@@ -1111,9 +1450,6 @@ class _DailyScreenState extends State<DailyScreen>
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                              ),
                             ),
                             child: const Icon(
                               Icons.arrow_back_ios_new_rounded,
@@ -1153,5 +1489,18 @@ class _DailyScreenState extends State<DailyScreen>
 
   String _getUserName() {
     return AuthSessionManager.userName ?? 'میوان';
+  }
+
+  String _getDayName(int weekday) {
+    const days = [
+      'دووشەممە',
+      'سێشەممە',
+      'چوارشەممە',
+      'پێنجشەممە',
+      'هەینی',
+      'شەممە',
+      'یەکشەممە',
+    ];
+    return days[(weekday - 1) % 7];
   }
 }

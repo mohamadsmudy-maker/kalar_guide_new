@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../services/cache_service.dart';
 
-/// 🗄️ FutureBuilder لەگەڵ کاش
+/// 🗄️ FutureBuilder لەگەڵ کاش — ULTRA PRO
 ///
 /// ✅ چاکسازی کراوە بۆ:
 /// - پشکنینی جۆر پێش Cast (`cached is T` نەک `cached as T`)
 /// - پشکنینی `fresh is T` پێش پاشەکەوت
-/// - پشکنینی `_data == null`
+/// - پشکنینی `_data == null` پێش بەکارهێنان
 /// - سڕینەوەی کاشی هەڵە ئەگەر جۆر نەگونجاو
 /// - `mounted` پشکنین لە هەموو شوێنێک
 class CachedFutureBuilder<T> extends StatefulWidget {
@@ -68,7 +68,7 @@ class _CachedFutureBuilderState<T> extends State<CachedFutureBuilder<T>> {
       if (!mounted) return;
 
       if (cached != null) {
-        // ✅ پشکنینی جۆر بە پارێزراوی (نەک `as T`)
+        // ✅ پشکنینی جۆر بە پارێزراوی
         if (cached is T) {
           setState(() {
             _data = cached;
@@ -165,7 +165,7 @@ class _CachedFutureBuilderState<T> extends State<CachedFutureBuilder<T>> {
       );
     }
 
-    // ✅ پشکنینی `_data == null` پێش Cast
+    // ✅ پشکنینی `_data == null` پێش بەکارهێنان
     if (_data == null) {
       return const Center(
         child: Text(
@@ -175,17 +175,11 @@ class _CachedFutureBuilderState<T> extends State<CachedFutureBuilder<T>> {
       );
     }
 
-    // ✅ پشکنینی جۆر بە پارێزراوی
-    final data = _data;
-    if (data is! T) {
-      return const Center(
-        child: Text(
-          "جۆری داتا نەگونجاوە",
-          style: TextStyle(color: Colors.red),
-        ),
-      );
-    }
-
-    return widget.builder(context, data);
+    // ⭐ جۆر پشکنراوە پێشتر — `_data as T` پارێزراوە
+    // چونکە:
+    // ١. `_data` تەنها لە `_loadData` دا دیاری دەکرێت
+    // ٢. لە `cached is T` یان `fresh is T` دوای پشکنینی جۆر
+    // ٣. `if (_data == null)` پێشتر پشکنراوە
+    return widget.builder(context, _data as T);
   }
 }

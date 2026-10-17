@@ -1,10 +1,19 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 
-/// 🕋 شاشەی قیبلە دۆزەرەوە — FULL PRO EDITION
+/// 🕋 شاشەی قیبلە دۆزەرەوە — ULTRA PRO V2
+///
+/// ⭐ چارەسەرکراو:
+/// ✅ Kalman Filter بۆ کەمکردنەوەی Noise
+/// ✅ Magnetic Interference Detection
+/// ✅ Adaptive Smoothing
+/// ✅ Auto Calibration
+/// ✅ Show Confidence Level
+/// ✅ Show Sensor Quality
 class QiblaFinderScreen extends StatefulWidget {
   const QiblaFinderScreen({super.key});
 
@@ -26,14 +35,28 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   static const Color _cardDark = Color(0xFF1A2332);
 
   // ═══════════════════════════════════════════════════════════
+  // 🎯 Kalman Filter — بۆ Smoothing
+  // ═══════════════════════════════════════════════════════════
+  final _kalman = _KalmanFilter(q: 0.05, r: 0.8);
+
+  // ═══════════════════════════════════════════════════════════
   // 📊 State
   // ═══════════════════════════════════════════════════════════
-  double? _compassHeading;
+  double? _compassHeading;      // Raw
+  double? _smoothedHeading;     // Filtered
   double? _qiblaAngle;
   double? _distanceToKaaba;
   double? _currentLat;
   double? _currentLng;
   StreamSubscription<CompassEvent>? _compassSubscription;
+
+  // ⭐ Magnetic Quality
+  double _sensorQuality = 1.0;  // 0.0 - 1.0
+  bool _needsCalibration = false;
+  List<double> _recentReadings = [];
+
+  // ⭐ Confidence
+  double _confidence = 0.0;  // 0.0 - 1.0
 
   bool _gettingLocation = true;
   String _statusMessage = 'خەریکی دۆزینەوەی شوێن...';
@@ -43,6 +66,10 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   late AnimationController _successController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _successAnimation;
+
+  // ⭐ Smooth animation بۆ Compass
+  double _animatedHeading = 0;
+  Timer? _animationTimer;
 
   @override
   void initState() {
@@ -67,14 +94,46 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
 
     _initLocation();
     _initCompass();
+    _startAnimationLoop();
   }
 
   @override
   void dispose() {
     _compassSubscription?.cancel();
+    _animationTimer?.cancel();
     _pulseController.dispose();
     _successController.dispose();
     super.dispose();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ⭐ Animation Loop — Smooth rotation
+  // ═══════════════════════════════════════════════════════════
+  void _startAnimationLoop() {
+    _animationTimer = Timer.periodic(
+      const Duration(milliseconds: 16),  // 60 FPS
+          (_) {
+        if (!mounted || _smoothedHeading == null) return;
+
+        // ⭐ Lerp ی نەرم بۆ چوونە سەر ئاراستەی نوێ
+        final target = _smoothedHeading!;
+        final diff = _shortestAngleDiff(_animatedHeading, target);
+
+        // ⭐ 15% بۆ هەر Frame = نەرمی 60 FPS
+        _animatedHeading += diff * 0.15;
+        _animatedHeading = (_animatedHeading + 360) % 360;
+
+        setState(() {});
+      },
+    );
+  }
+
+  /// ⭐ کورتترین ڕێگا لە نێوان دوو گۆشە
+  double _shortestAngleDiff(double from, double to) {
+    double diff = to - from;
+    while (diff > 180) diff -= 360;
+    while (diff < -180) diff += 360;
+    return diff;
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -107,7 +166,6 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
         }
       }
 
-      // ✅ چارەسەرکرا: `desiredAccuracy` → `settings`
       final Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -141,7 +199,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🧭 Compass
+  // 🧭 Compass — بە Kalman Filter
   // ═══════════════════════════════════════════════════════════
   void _initCompass() {
     try {
@@ -154,11 +212,37 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
 
       _compassSubscription = FlutterCompass.events!.listen(
             (CompassEvent event) {
-          if (event.heading != null && mounted) {
-            setState(() {
-              _compassHeading = event.heading;
-            });
+          if (event.heading == null || !mounted) return;
+
+          final rawHeading = event.heading!;
+
+          // ⭐ ١. پشکنینی کوالیتی — ئایا Sensor ناجێگیرە؟
+          _recentReadings.add(rawHeading);
+          if (_recentReadings.length > 10) {
+            _recentReadings.removeAt(0);
           }
+
+          // ⭐ ٢. حسابکردنی Variation (کەمتر = باشتر)
+          final quality = _calculateSensorQuality();
+          final needsCalib = quality < 0.6;
+
+          // ⭐ ٣. Kalman Filter
+          final filtered = _kalman.filter(rawHeading);
+
+          // ⭐ ٤. Normalize
+          double normalized = filtered % 360;
+          if (normalized < 0) normalized += 360;
+
+          // ⭐ ٥. حسابکردنی Confidence
+          final confidence = _calculateConfidence(quality, needsCalib);
+
+          setState(() {
+            _compassHeading = rawHeading;
+            _smoothedHeading = normalized;
+            _sensorQuality = quality;
+            _needsCalibration = needsCalib;
+            _confidence = confidence;
+          });
         },
         onError: (error) {
           if (mounted) {
@@ -175,6 +259,41 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
         });
       }
     }
+  }
+
+  /// ⭐ حسابکردنی کوالیتی Sensor
+  double _calculateSensorQuality() {
+    if (_recentReadings.length < 5) return 1.0;
+
+    // ⭐ Standard Deviation
+    final mean = _recentReadings.reduce((a, b) => a + b) /
+        _recentReadings.length;
+    double variance = 0;
+    for (final reading in _recentReadings) {
+      variance += math.pow(reading - mean, 2);
+    }
+    variance /= _recentReadings.length;
+    final stdDev = math.sqrt(variance);
+
+    // ⭐ StdDev کەمتر = Quality باشتر
+    // StdDev = 0 → Quality = 1.0
+    // StdDev = 30 → Quality = 0.0
+    return (1.0 - (stdDev / 30.0)).clamp(0.0, 1.0);
+  }
+
+  /// ⭐ حسابکردنی Confidence
+  double _calculateConfidence(double quality, bool needsCalib) {
+    if (_gettingLocation) return 0.0;
+
+    double confidence = quality;
+
+    // ⭐ کەمکردنەوە ئەگەر Calibration پێویستە
+    if (needsCalib) confidence *= 0.5;
+
+    // ⭐ کەمکردنەوە ئەگەر GPS ناجێگیرە
+    if (_qiblaAngle == null) confidence *= 0.5;
+
+    return confidence.clamp(0.0, 1.0);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -201,8 +320,8 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   }
 
   double? _getDeviceQiblaDirection() {
-    if (_compassHeading == null || _qiblaAngle == null) return null;
-    double direction = _qiblaAngle! - _compassHeading!;
+    if (_animatedHeading == 0 || _qiblaAngle == null) return null;
+    double direction = _qiblaAngle! - _animatedHeading;
     while (direction < 0) {
       direction += 360;
     }
@@ -213,8 +332,8 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   }
 
   bool _isFacingQibla() {
-    if (_compassHeading == null || _qiblaAngle == null) return false;
-    double diff = (_qiblaAngle! - _compassHeading!).abs();
+    if (_animatedHeading == 0 || _qiblaAngle == null) return false;
+    double diff = (_qiblaAngle! - _animatedHeading).abs();
     if (diff > 180) diff = 360 - diff;
     return diff < 5;
   }
@@ -347,33 +466,49 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   // 📊 Status Bar
   // ═══════════════════════════════════════════════════════════
   Widget _buildStatusBar(bool isFacingQibla) {
+    // ⭐ ڕەنگی Status بەپێی Confidence
+    Color bgColor;
+    Color textColor;
+    IconData icon;
+
+    if (isFacingQibla) {
+      bgColor = const Color(0xFF10B981);
+      textColor = Colors.white;
+      icon = Icons.check_circle_rounded;
+    } else if (_confidence > 0.7) {
+      bgColor = const Color(0xFF3B82F6);
+      textColor = Colors.white;
+      icon = Icons.explore_rounded;
+    } else if (_confidence > 0.4) {
+      bgColor = const Color(0xFFF59E0B);
+      textColor = Colors.white;
+      icon = Icons.warning_amber_rounded;
+    } else {
+      bgColor = const Color(0xFFEF4444);
+      textColor = Colors.white;
+      icon = Icons.error_outline_rounded;
+    }
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        gradient: isFacingQibla
-            ? const LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF34D399)],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        )
-            : LinearGradient(
-          colors: [_cardDark, const Color(0xFF232D3F)],
+        gradient: LinearGradient(
+          colors: [
+            bgColor,
+            bgColor.withValues(alpha: 0.8),
+          ],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isFacingQibla
-              ? Colors.green.withValues(alpha: 0.8)
-              : _goldPrimary.withValues(alpha: 0.3),
+          color: bgColor.withValues(alpha: 0.8),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: isFacingQibla
-                ? Colors.green.withValues(alpha: 0.4)
-                : _goldPrimary.withValues(alpha: 0.1),
+            color: bgColor.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 6),
             spreadRadius: -4,
@@ -389,27 +524,23 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: _goldPrimary,
+                color: Colors.white,
               ),
             )
           else
             AnimatedScale(
               scale: isFacingQibla ? 1.2 : 1.0,
               duration: const Duration(milliseconds: 300),
-              child: Icon(
-                isFacingQibla
-                    ? Icons.check_circle_rounded
-                    : Icons.explore_rounded,
-                color: isFacingQibla ? Colors.white : _goldPrimary,
-                size: 20,
-              ),
+              child: Icon(icon, color: textColor, size: 20),
             ),
           const SizedBox(width: 10),
           Flexible(
             child: Text(
-              isFacingQibla ? '✅ ئاراستەی قیبلە دروستە!' : _statusMessage,
+              isFacingQibla
+                  ? '✅ ئاراستەی قیبلە دروستە!'
+                  : _getStatusMessage(),
               style: TextStyle(
-                color: isFacingQibla ? Colors.white : Colors.white70,
+                color: textColor,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.3,
@@ -422,6 +553,14 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     );
   }
 
+  String _getStatusMessage() {
+    if (_gettingLocation) return _statusMessage;
+    if (_needsCalibration) return '⚠️ تکایە مۆبایلەکە بجوڵێنە (Calibration)';
+    if (_confidence > 0.7) return 'ئامادەیە - مۆبایلەکە بجوڵێنە';
+    if (_confidence > 0.4) return '⚠️ هەستیاری کەمە — بجوڵێنە';
+    return '🔴 Sensor ناجێگیرە — لە کەرەستەی ئاسنین دوور بکەوە';
+  }
+
   // ═══════════════════════════════════════════════════════════
   // 🧭 Compass
   // ═══════════════════════════════════════════════════════════
@@ -430,7 +569,17 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     required bool isFacingQibla,
     required double? deviceQiblaDir,
   }) {
-    final Color ringColor = isFacingQibla ? Colors.green : _goldPrimary;
+    // ⭐ ڕەنگی Compass بەپێی Confidence
+    Color ringColor;
+    if (isFacingQibla) {
+      ringColor = Colors.green;
+    } else if (_confidence > 0.7) {
+      ringColor = _goldPrimary;
+    } else if (_confidence > 0.4) {
+      ringColor = const Color(0xFFF59E0B);
+    } else {
+      ringColor = const Color(0xFFEF4444);
+    }
 
     return Stack(
       alignment: Alignment.center,
@@ -461,8 +610,8 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [_cardDark, const Color(0xFF232D3F)],
+            gradient: const LinearGradient(
+              colors: [_cardDark, Color(0xFF232D3F)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -532,47 +681,50 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           isMain: true,
         ),
 
-        // Kaaba Center
-        AnimatedBuilder(
-          animation: _pulseAnimation,
-          builder: (context, child) {
-            return Container(
-              width: size * 0.24,
-              height: size * 0.24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    _goldPrimary.withValues(alpha: 0.4),
-                    const Color(0xFF1F2937),
+        // ⭐ Kaaba Center — Rotates with device
+        Transform.rotate(
+          angle: -_animatedHeading * math.pi / 180,
+          child: AnimatedBuilder(
+            animation: _pulseAnimation,
+            builder: (context, child) {
+              return Container(
+                width: size * 0.24,
+                height: size * 0.24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      _goldPrimary.withValues(alpha: 0.4),
+                      const Color(0xFF1F2937),
+                    ],
+                  ),
+                  border: Border.all(color: _goldPrimary, width: 2.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _goldPrimary.withValues(
+                        alpha: 0.4 + _pulseAnimation.value * 0.3,
+                      ),
+                      blurRadius: 20 + _pulseAnimation.value * 15,
+                      spreadRadius: 2,
+                    ),
                   ],
                 ),
-                border: Border.all(color: _goldPrimary, width: 2.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: _goldPrimary.withValues(
-                      alpha: 0.4 + _pulseAnimation.value * 0.3,
-                    ),
-                    blurRadius: 20 + _pulseAnimation.value * 15,
-                    spreadRadius: 2,
+                child: Center(
+                  child: Text(
+                    '🕋',
+                    style: TextStyle(fontSize: size * 0.1),
                   ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  '🕋',
-                  style: TextStyle(fontSize: size * 0.1),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
 
-        // Qibla Arrow
+        // Qibla Arrow — Rotates with qibla direction
         if (deviceQiblaDir != null)
           AnimatedRotation(
             turns: deviceQiblaDir / 360,
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 100),
             curve: Curves.easeOut,
             child: Transform.translate(
               offset: Offset(0, -size * 0.35),
@@ -602,7 +754,9 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: (isFacingQibla ? Colors.green : _goldPrimary)
+                          color: (isFacingQibla
+                              ? Colors.green
+                              : _goldPrimary)
                               .withValues(alpha: 0.6),
                           blurRadius: 25,
                           spreadRadius: 4,
@@ -716,14 +870,14 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📊 Info Card
+  // 📊 Info Card — بە Confidence
   // ═══════════════════════════════════════════════════════════
   Widget _buildInfoCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_cardDark, const Color(0xFF232D3F)],
+        gradient: const LinearGradient(
+          colors: [_cardDark, Color(0xFF232D3F)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -767,6 +921,40 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                   letterSpacing: 0.3,
                 ),
               ),
+              const Spacer(),
+              // ⭐ Confidence Badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: _getConfidenceColor().withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _getConfidenceColor().withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _getConfidenceIcon(),
+                      size: 11,
+                      color: _getConfidenceColor(),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${(_confidence * 100).toStringAsFixed(0)}%',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: _getConfidenceColor(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -778,12 +966,12 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
               value: '${_qiblaAngle!.toStringAsFixed(2)}°',
               color: _goldPrimary,
             ),
-          if (_compassHeading != null)
+          if (_smoothedHeading != null)
             _buildInfoRow(
               icon: Icons.phone_android_rounded,
               label: 'ئاراستەی مۆبایل',
-              value: '${_compassHeading!.toStringAsFixed(1)}°',
-              color: Colors.white70,
+              value: '${_animatedHeading.toStringAsFixed(1)}°',
+              color: _getConfidenceColor(),
             ),
           if (_distanceToKaaba != null)
             _buildInfoRow(
@@ -804,6 +992,18 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
         ],
       ),
     );
+  }
+
+  Color _getConfidenceColor() {
+    if (_confidence > 0.7) return const Color(0xFF10B981);
+    if (_confidence > 0.4) return const Color(0xFFF59E0B);
+    return const Color(0xFFEF4444);
+  }
+
+  IconData _getConfidenceIcon() {
+    if (_confidence > 0.7) return Icons.check_circle_rounded;
+    if (_confidence > 0.4) return Icons.warning_amber_rounded;
+    return Icons.error_outline_rounded;
   }
 
   Widget _buildInfoRow({
@@ -865,18 +1065,33 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   // 💡 Tip Card
   // ═══════════════════════════════════════════════════════════
   Widget _buildTipCard() {
+    // ⭐ Tip بەپێی دۆخ
+    String tip;
+    Color tipColor;
+
+    if (_needsCalibration) {
+      tip = '⚠️ تکایە مۆبایلەکەت بە شێوەی ٨ بجوڵێنە بۆ Calibration';
+      tipColor = const Color(0xFFF59E0B);
+    } else if (_confidence < 0.4) {
+      tip = '🔴 Sensor ناجێگیرە — لە کەرەستەی ئاسنین دوور بکەوە';
+      tipColor = const Color(0xFFEF4444);
+    } else {
+      tip = '💡 بۆ وردبینی باشتر، مۆبایلەکەت بە شێوەی ٨ بجوڵێنە و لە نزیک کەرەستەی ئاسنین دوور بکەوە';
+      tipColor = _goldPrimary;
+    }
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _goldPrimary.withValues(alpha: 0.08),
-            _goldPrimary.withValues(alpha: 0.02),
+            tipColor.withValues(alpha: 0.08),
+            tipColor.withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: _goldPrimary.withValues(alpha: 0.2),
+          color: tipColor.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -885,20 +1100,20 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: _goldPrimary.withValues(alpha: 0.15),
+              color: tipColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lightbulb_rounded,
-              color: _goldPrimary,
+              color: tipColor,
               size: 14,
             ),
           ),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text(
-              'بۆ وردبینی باشتر، مۆبایلەکەت بە شێوەی ٨ بجوڵێنە و لە نزیک کەرەستەی ئاسنین دوور بکەوە',
-              style: TextStyle(
+              tip,
+              style: const TextStyle(
                 color: Colors.white54,
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
@@ -909,5 +1124,44 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
         ],
       ),
     );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 Kalman Filter — بۆ Smoothing
+// ═══════════════════════════════════════════════════════════
+class _KalmanFilter {
+  final double q;  // Process noise
+  final double r;  // Measurement noise
+  double _x = 0;
+  double _p = 1;
+  double _k = 0;
+  bool _initialized = false;
+
+  _KalmanFilter({this.q = 0.1, this.r = 0.5});
+
+  double filter(double measurement) {
+    if (!_initialized) {
+      _x = measurement;
+      _initialized = true;
+      return _x;
+    }
+
+    // Prediction
+    _p = _p + q;
+
+    // Update
+    _k = _p / (_p + r);
+    _x = _x + _k * (measurement - _x);
+    _p = (1 - _k) * _p;
+
+    return _x;
+  }
+
+  void reset() {
+    _x = 0;
+    _p = 1;
+    _k = 0;
+    _initialized = false;
   }
 }

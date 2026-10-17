@@ -134,7 +134,6 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
           .update({'admin_notes': _noteCtrl.text.trim()})
           .eq('id', widget.complaint['id']);
 
-      // ✅ نوێکردنەوەی داتای ناوخۆیی
       widget.complaint['admin_notes'] = _noteCtrl.text.trim();
 
       if (mounted) {
@@ -181,7 +180,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎯 Update Status + WhatsApp
+  // 🎯 Update Status + WhatsApp — ⭐ چاککراو
   // ═══════════════════════════════════════════════════════════
   Future<void> _updateStatus(String newStatus) async {
     try {
@@ -189,18 +188,21 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
           .from('complaints')
           .update({'status': newStatus}).eq('id', widget.complaint['id']);
 
-      // ✅ نوێکردنەوەی داتای ناوخۆیی
       widget.complaint['status'] = newStatus;
 
       HapticFeedback.mediumImpact();
 
       if (!mounted) return;
 
+      // ⭐ messenger پارێزراوە پێش pop
+      final messenger = ScaffoldMessenger.of(context);
+
       // داخستنی sheet
       Navigator.pop(context);
       widget.onStatusChanged?.call();
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      // ⭐ messenger بەکاربهێنە نەک context
+      messenger.showSnackBar(
         SnackBar(
           content: Text('✅ گۆڕدرا بۆ: ${_statusText(newStatus)}'),
           backgroundColor: _color(newStatus),
@@ -211,20 +213,15 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         ),
       );
 
-      // ═══════════════════════════════════════════════════════
-      // 📱 WhatsApp خودکار دوای پەسەندکردن
-      // ═══════════════════════════════════════════════════════
+      // ⭐ WhatsApp دوای پەسەندکردن — showPreview: true
       if (newStatus == 'in_progress') {
-        // چاوەڕوانی کورت بۆ SnackBar
         await Future.delayed(const Duration(milliseconds: 500));
-
         if (!mounted) return;
 
-        // ⭐ ناردنەوە بەبێ preview
         await WhatsAppComplaintService.sendComplaint(
           context: context,
           complaint: widget.complaint,
-          showPreview: false,
+          showPreview: true,
         );
       }
     } catch (e) {
@@ -354,7 +351,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                     ),
                   ),
 
-                  // 📱 دوگمەی واتسئاپ — هەمیشە دەرکەوتوو
+                  // 📱 دوگمەی واتسئاپ
                   if (hasPhone)
                     GestureDetector(
                       onTap: _sendingWhatsApp
@@ -841,7 +838,6 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
               ],
             ),
           ),
-          // Call Button
           GestureDetector(
             onTap: () async {
               final uri = Uri(scheme: 'tel', path: phone);
@@ -861,7 +857,6 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
             ),
           ),
           const SizedBox(width: 6),
-          // WhatsApp Button
           GestureDetector(
             onTap: () => _sendWhatsApp(showPreview: true),
             child: Container(

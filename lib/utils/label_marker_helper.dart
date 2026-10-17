@@ -8,13 +8,13 @@ class LabelMarkerHelper {
   /// دروستکردنی BitmapDescriptor لە Text
   static Future<BitmapDescriptor> createLabelMarker({
     required String text,
-    Color textColor = Colors.black,
-    Color backgroundColor = Colors.white,
-    double fontSize = 28,
-    double padding = 12,
-    double borderRadius = 16,
-    Color borderColor = Colors.transparent,
-    double borderWidth = 2,
+    Color textColor = Colors.white,
+    Color backgroundColor = Colors.blue,
+    double fontSize = 26,
+    double padding = 14,
+    double borderRadius = 20,
+    Color borderColor = Colors.white,
+    double borderWidth = 3,
   }) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
@@ -49,9 +49,9 @@ class LabelMarkerHelper {
     // سێبەر
     canvas.drawShadow(
       Path()..addRRect(rrect),
-      Colors.black.withValues(alpha: 0.4),
-      6,
-      false,
+      Colors.black.withValues(alpha: 0.5),
+      8,
+      true,
     );
 
     // باکگراوند
@@ -61,7 +61,7 @@ class LabelMarkerHelper {
     );
 
     // چوارچێوە
-    if (borderWidth > 0 && borderColor != Colors.transparent) {
+    if (borderWidth > 0) {
       canvas.drawRRect(
         rrect,
         Paint()
@@ -85,22 +85,22 @@ class LabelMarkerHelper {
     return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
   }
 
-  /// دروستکردنی Label بۆ گەڕەک بە ڕەنگی تایبەت ⭐
+  /// دروستکردنی Label بۆ گەڕەک بە ڕەنگی تایبەت
   static Future<BitmapDescriptor> createNeighborhoodLabel({
     required String name,
     required Color color,
     double fontSize = 26,
-    bool isSelected = false,   // ⭐ زیادکرا
+    bool isSelected = false,
   }) async {
     return createLabelMarker(
       text: name,
       textColor: Colors.white,
       backgroundColor: isSelected ? Colors.red.shade700 : color,
-      fontSize: fontSize,
-      padding: 10,
-      borderRadius: 20,
+      fontSize: isSelected ? 30 : fontSize,
+      padding: 12,
+      borderRadius: 22,
       borderColor: Colors.white,
-      borderWidth: isSelected ? 3 : 2,
+      borderWidth: isSelected ? 4 : 2,
     );
   }
 }

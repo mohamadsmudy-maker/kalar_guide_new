@@ -1,9 +1,13 @@
 // lib/screens/complaints/submit_complaint.dart
 import 'dart:io';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/app_colors.dart';
@@ -14,8 +18,7 @@ import '../../services/audio_service.dart';
 import '../../services/neighborhood_service.dart';
 import '../../widgets/voice_recorder_widget.dart';
 
-/// 📝 شاشەی ناردنی سکاڵای هاوڵاتی — Pro Edition v5
-/// ⭐ نوێکاری: ناردنی سکاڵا پێویستی بە ئەکاونت نییە
+/// 📝 شاشەی ناردنی سکاڵای هاوڵاتی — ULTRA PRO V6
 class SubmitComplaintScreen extends StatefulWidget {
   const SubmitComplaintScreen({super.key});
 
@@ -23,11 +26,13 @@ class SubmitComplaintScreen extends StatefulWidget {
   State<SubmitComplaintScreen> createState() => _SubmitComplaintScreenState();
 }
 
-class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
+class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
+    with TickerProviderStateMixin {
   // ═══════════════════════════════════════════════════════════
   // 📊 State
   // ═══════════════════════════════════════════════════════════
   final _descCtrl = TextEditingController();
+  final _scrollController = ScrollController();
 
   String? _selectedComplaintType;
   String? _responsibleAuthority;
@@ -42,11 +47,12 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     'سەرۆکایەتی شارەوانی کەلار (بەشی ڕێگاوبان)',
     'تەندروستی و خاوێنی مۆڵ و ڕێستۆرانت':
     'بەڕێوەبەرایەتی تەندروستی گەرمیان',
+    'کێشەی تر': 'گشتی',
   };
 
   final List<XFile> _images = [];
-  bool _loadingLocation = true;
   bool _isSubmitting = false;
+  bool _isDraft = false;
   double? _lat;
   double? _lng;
   String _locationStatusText = "خەریکی وەرگرتنی لۆکەیشنی GPS...";
@@ -57,15 +63,43 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
   int? _neighborhoodId;
   bool _detectingNeighborhood = false;
 
+  // ⭐ Progress
+  int _currentStep = 1;
+  static const int _totalSteps = 4;
+
+  // ⭐ Animation
+  late AnimationController _pulseController;
+  late AnimationController _slideController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _slideController.forward();
+
     _getAutomaticLocation();
+    _loadDraft();
   }
 
   @override
   void dispose() {
     _descCtrl.dispose();
+    _scrollController.dispose();
+    _pulseController.dispose();
+    _slideController.dispose();
     super.dispose();
   }
 
@@ -73,13 +107,11 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
   // 📍 GPS
   // ═══════════════════════════════════════════════════════════
   Future<void> _getAutomaticLocation() async {
-    setState(() => _loadingLocation = true);
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         setState(() {
           _locationStatusText = "لۆکەیشن (GPS) کوژاوەتەوە ⚠";
-          _loadingLocation = false;
         });
         return;
       }
@@ -90,20 +122,21 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
         if (permission == LocationPermission.denied) {
           setState(() {
             _locationStatusText = "مۆڵەتی لۆکەیشن ڕەتکرایەوە ❌";
-            _loadingLocation = false;
           });
           return;
         }
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
+
       setState(() {
         _lat = position.latitude;
         _lng = position.longitude;
         _locationStatusText = "لۆکەیشنی GPS وەرگیرا ✓";
-        _loadingLocation = false;
       });
 
       if (_mapController != null && _lat != null && _lng != null) {
@@ -119,14 +152,10 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     } catch (e) {
       setState(() {
         _locationStatusText = "هەڵە لە وەرگرتنی لۆکەیشن";
-        _loadingLocation = false;
       });
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🏘️ دۆزینەوەی گەڕەک
-  // ═══════════════════════════════════════════════════════════
   Future<void> _detectNeighborhood() async {
     if (_lat == null || _lng == null) return;
 
@@ -144,12 +173,74 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           _neighborhoodId = int.tryParse(neighborhood?.id ?? '0');
           _detectingNeighborhood = false;
         });
-        debugPrint('🏘️ گەڕەک: $_neighborhoodName (id: $_neighborhoodId)');
       }
     } catch (e) {
-      debugPrint('⚠️ neighborhood detect error: $e');
       if (mounted) setState(() => _detectingNeighborhood = false);
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 💾 Draft Save
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _saveDraft() async {
+    if (_selectedComplaintType == null && _descCtrl.text.isEmpty) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('draft_type', _selectedComplaintType ?? '');
+      await prefs.setString('draft_desc', _descCtrl.text);
+      if (_voicePath != null) {
+        await prefs.setString('draft_voice', _voicePath!);
+      }
+      debugPrint('💾 Draft saved');
+    } catch (e) {
+      debugPrint('⚠️ Save draft error: $e');
+    }
+  }
+
+  Future<void> _loadDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final type = prefs.getString('draft_type');
+      final desc = prefs.getString('draft_desc');
+      final voice = prefs.getString('draft_voice');
+
+      // ⭐ پشکنینی ئەگەر فایلی دەنگ هێشتا هەیە
+      String? validVoice = voice;
+      if (voice != null && voice.isNotEmpty) {
+        try {
+          final voiceFile = File(voice);
+          if (!await voiceFile.exists()) {
+            validVoice = null;   // فایل نەماوە
+          }
+        } catch (_) {
+          validVoice = null;
+        }
+      }
+
+      if (type != null && type.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _selectedComplaintType = type;
+            _responsibleAuthority = _complaintTypesMap[type];
+            _descCtrl.text = desc ?? '';
+            _voicePath = validVoice;
+            _isDraft = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Load draft error: $e');
+    }
+  }
+
+  Future<void> _clearDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('draft_type');
+      await prefs.remove('draft_desc');
+      await prefs.remove('draft_voice');
+    } catch (_) {}
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -167,69 +258,74 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     if (isGarbage) {
       await _pickImageFromSource(ImageSource.camera);
     } else {
-      showModalBottomSheet(
-        context: context,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        builder: (context) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      _showImageSourceSheet();
+    }
+  }
+
+  void _showImageSourceSheet() {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  "وێنەی کێشە هەڵبژێرە",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "وێنەی کێشە هەڵبژێرە",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildSourceCard(
-                        icon: Icons.camera_alt_rounded,
-                        label: "کامێرا",
-                        color: AppColors.primary,
-                        onTap: () {
-                          Navigator.pop(context);
-                          _pickImageFromSource(ImageSource.camera);
-                        },
-                      ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSourceCard(
+                      icon: Icons.camera_alt_rounded,
+                      label: "کامێرا",
+                      color: AppColors.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickImageFromSource(ImageSource.camera);
+                      },
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildSourceCard(
-                        icon: Icons.photo_library_rounded,
-                        label: "گەلەری",
-                        color: Colors.purple,
-                        onTap: () {
-                          Navigator.pop(context);
-                          _pickImageFromSource(ImageSource.gallery);
-                        },
-                      ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSourceCard(
+                      icon: Icons.photo_library_rounded,
+                      label: "گەلەری",
+                      color: Colors.purple,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickImageFromSource(ImageSource.gallery);
+                      },
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
-      );
-    }
+      ),
+    );
   }
 
   Widget _buildSourceCard({
@@ -293,17 +389,19 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🚀 ناردن — ⭐ نوێکراو: پێویستی بە ئەکاونت نییە
+  // 🚀 ناردن — ⭐ چاککراو
   // ═══════════════════════════════════════════════════════════
   Future<void> _submitComplaint() async {
-    // ═══ پشکنینەکانی سەرەتا ═══
+    // ═══ پشکنینەکان ═══
     if (_selectedComplaintType == null) {
       _showSnackBar("تکایە جۆری کێشە دیاری بکە ⚠", Colors.orange);
+      HapticFeedback.vibrate();
       return;
     }
 
     if (_images.isEmpty) {
       _showSnackBar("تکایە لانیکەم یەک وێنە هەڵبژێرە ⚠", Colors.orange);
+      HapticFeedback.vibrate();
       return;
     }
 
@@ -316,37 +414,29 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     }
 
     gmaps.LatLng userLoc = gmaps.LatLng(_lat!, _lng!);
-    if (!KalarBoundaryChecker.isWithinKalar(userLoc)) {
+    if (!KalarBoundaryChecker.isWithinKalarWithBuffer(userLoc)) {
       _showOutOfBoundaryDialog();
       return;
     }
 
     setState(() => _isSubmitting = true);
+    HapticFeedback.mediumImpact();
 
     try {
-      // ⭐⭐⭐ لابردنی پشکنینی Login ⭐⭐⭐
-      // ئێستا ناردنی سکاڵا پێویستی بە ئەکاونت نییە
-      // تەنها ئەگەر بەکارهێنەر چووبێتە ژوورەوە، user_id دەنێرین
       final supabaseUser = Supabase.instance.client.auth.currentUser;
       final sessionUser = AuthSessionManager.currentUser;
 
-      // ⭐ user_id بە شێوەیەکی ئارەزوومەندانە
-      // ئەگەر بەکارهێنەر نەچووبێتە ژوورەوە، null دەنێرین
       final String? userId =
           sessionUser?['id']?.toString() ?? supabaseUser?.id;
 
-      debugPrint('👤 User ID (optional): $userId');
-
       // ═══ ١. بارکردنی وێنەکان ═══
-      debugPrint('📸 ========== بارکردنی وێنەکان ==========');
       List<String> uploadedUrls = [];
       for (int i = 0; i < _images.length; i++) {
         try {
           String url = await ImageCompressionService.uploadImage(_images[i]);
           uploadedUrls.add(url);
-          debugPrint('✅ وێنەی ${i + 1} بارکرا');
         } catch (e) {
-          debugPrint('❌ هەڵە لە وێنەی ${i + 1}: $e');
+          debugPrint('❌ وێنەی ${i + 1}: $e');
           rethrow;
         }
       }
@@ -360,9 +450,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           if (fileSize >= 1000) {
             try {
               voiceUrl = await AudioService.uploadAudio(_voicePath!);
-              debugPrint('✅ دەنگ بارکرا');
             } catch (e) {
-              debugPrint('⚠️ دەنگ بار نەکرا: $e');
               voiceUrl = null;
             }
           }
@@ -383,14 +471,12 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           neighborhoodId = int.tryParse(neighborhood?.id ?? '0');
           neighborhoodName = neighborhood?.nameKu;
         } catch (e) {
-          debugPrint('⚠️ neighborhood find error: $e');
+          debugPrint('⚠️ neighborhood error: $e');
         }
       }
 
       // ═══ ٤. پاشەکەوتکردن ═══
       final complaintData = <String, dynamic>{
-        // ⭐ user_id بە شێوەیەکی ئارەزوومەندانە
-        // ئەگەر بەکارهێنەر نەچووبێتە ژوورەوە، ئەم خانەیە نانێردرێت
         if (userId != null && userId.isNotEmpty) 'user_id': userId,
         'title': _selectedComplaintType,
         'description': _descCtrl.text.trim(),
@@ -401,38 +487,41 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
         'images': uploadedUrls,
         'status': 'pending',
         'created_at': DateTime.now().toIso8601String(),
-        'neighborhood_id': neighborhoodId,
         'neighborhood_name': neighborhoodName,
+        // ⭐ neighborhood_id زیادکرا — ئەگەر بەردەست بێت
+        if (neighborhoodId != null && neighborhoodId > 0)
+          'neighborhood_id': neighborhoodId,
       };
 
       if (voiceUrl != null && voiceUrl.isNotEmpty) {
         complaintData['voice_url'] = voiceUrl;
       }
 
-      debugPrint('📤 ناردنی سکاڵا: $complaintData');
-
-      // ⭐ ناردن بۆ Supabase
       await Supabase.instance.client.from('complaints').insert(complaintData);
 
-      debugPrint('✅ سکاڵا نێردرا بە سەرکەوتوویی');
+      // ⭐ سڕینەوەی Draft
+      await _clearDraft();
 
-      if (mounted) _showSuccessDialog();
+      if (mounted) {
+        HapticFeedback.heavyImpact();
+        _showSuccessDialog();
+      }
     } on PostgrestException catch (e) {
       debugPrint('❌ Postgrest error: ${e.message}');
       if (mounted) {
         if (e.message.contains('voice_url')) {
           _showSnackBar(
-            "⚠️ ستوونی voice_url لە داتابەیس نییە.",
+            "⚠️ ستوونی voice_url لە داتابەیسدا نییە. تکایە ئەدمین ئاگادار بکە.",
+            Colors.red,
+          );
+        } else if (e.message.contains('neighborhood_id')) {
+          _showSnackBar(
+            "⚠️ ستوونی neighborhood_id لە داتابەیسدا نییە.",
             Colors.red,
           );
         } else if (e.message.contains('row-level security')) {
           _showSnackBar(
-            "⚠️ کێشەی ئاسایش: تکایە دووبارە هەوڵبدەوە.",
-            Colors.red,
-          );
-        } else if (e.message.contains('user_id')) {
-          _showSnackBar(
-            "⚠️ کێشەی user_id: تکایە پەیوەندی بکە بە بەڕێوەبەر.",
+            "⚠️ کێشەی ئاسایش — تکایە دووبارە بچۆ ژوورەوە.",
             Colors.red,
           );
         } else {
@@ -459,13 +548,8 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
           ),
-          insetPadding: const EdgeInsets.all(20),
           child: Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -491,7 +575,6 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                     fontWeight: FontWeight.w900,
                     fontSize: 20,
                   ),
-                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -499,28 +582,14 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.red.shade200, width: 1.5),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline_rounded,
-                          color: Colors.red.shade700, size: 22),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          "تکایە! ناردنی سکاڵا تەنها لە سنووری شاری کەلاردا بەردەستە.",
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.red.shade900,
-                            fontWeight: FontWeight.w600,
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: const Text(
+                    "تکایە! ناردنی سکاڵا تەنها لە سنووری شاری کەلاردا بەردەستە.",
+                    style: TextStyle(fontSize: 13, height: 1.5),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -533,9 +602,13 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                       ),
                     ),
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text("تێدەگەم ✅",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w900, fontSize: 15)),
+                    child: const Text(
+                      "تێدەگەم ✅",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -556,33 +629,43 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
           ),
-          insetPadding: const EdgeInsets.all(20),
           child: Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.green.shade400,
-                        Colors.green.shade700,
-                      ],
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
-                    size: 55,
-                  ),
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _pulseAnimation.value,
+                      child: Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.green.shade400,
+                              Colors.green.shade700,
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withValues(alpha: 0.4),
+                              blurRadius: 24,
+                              spreadRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 55,
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -620,9 +703,13 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                       Navigator.pop(ctx);
                       Navigator.pop(context);
                     },
-                    child: const Text("باشە ✅",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w900, fontSize: 15)),
+                    child: const Text(
+                      "باشە ✅",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -637,13 +724,18 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 13)),
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -657,72 +749,73 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     bool isGarbageSelected = _selectedComplaintType != null &&
         _selectedComplaintType!.contains('خۆڵ و خاشاک');
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF4F6F9),
-        appBar: AppBar(
-          backgroundColor: AppColors.primary,
-          elevation: 0,
-          title: const Text(
-            "ناردنی سکاڵای هاوڵاتی",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-              color: Colors.white,
-            ),
-          ),
-          centerTitle: true,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) async {
+        await _saveDraft();
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF4F6F9),
+          appBar: _buildAppBar(),
+          body: Column(
             children: [
-              _buildStepHeader("١", "جۆری کێشە هەڵبژێرە"),
-              const SizedBox(height: 10),
-              _buildComplaintTypeDropdown(),
-              const SizedBox(height: 20),
+              _buildProgressSteps(),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_isDraft) _buildDraftBanner(),
+                      _buildStepHeader("١", "جۆری کێشە هەڵبژێرە"),
+                      const SizedBox(height: 10),
+                      _buildComplaintTypeDropdown(),
+                      const SizedBox(height: 20),
 
-              if (_selectedComplaintType == null) ...[
-                _buildEmptyStateInfo(),
-              ] else ...[
-                _buildAuthorityCard(),
-                const SizedBox(height: 12),
-                _buildNeighborhoodCard(),
-                const SizedBox(height: 20),
-                _buildStepHeader("٢", "وێنەی کێشەکە"),
-                const SizedBox(height: 10),
-                _buildImageSection(isGarbageSelected),
-                const SizedBox(height: 20),
-                _buildStepHeader("٣", "شوێنی کێشە لەسەر نەخشە"),
-                const SizedBox(height: 10),
-                _buildMapSection(),
-                const SizedBox(height: 20),
-                _buildStepHeader(
-                    "٤", "تۆمارکردنی دەنگ (ئارەزوومەندانە) 🎤"),
-                const SizedBox(height: 10),
-                VoiceRecorderWidget(
-                  onRecorded: (path) {
-                    debugPrint('🎤 دەنگ تۆمارکرا: $path');
-                    setState(() => _voicePath = path);
-                  },
+                      if (_selectedComplaintType == null) ...[
+                        _buildEmptyStateInfo(),
+                      ] else ...[
+                        _buildAuthorityCard(),
+                        const SizedBox(height: 12),
+                        _buildNeighborhoodCard(),
+                        const SizedBox(height: 20),
+                        _buildStepHeader("٢", "وێنەی کێشەکە"),
+                        const SizedBox(height: 10),
+                        _buildImageSection(isGarbageSelected),
+                        const SizedBox(height: 20),
+                        _buildStepHeader("٣", "شوێنی کێشە لەسەر نەخشە"),
+                        const SizedBox(height: 10),
+                        _buildMapSection(),
+                        const SizedBox(height: 20),
+                        _buildStepHeader(
+                            "٤", "تۆمارکردنی دەنگ (ئارەزوومەندانە) 🎤"),
+                        const SizedBox(height: 10),
+                        VoiceRecorderWidget(
+                          onRecorded: (path) {
+                            setState(() => _voicePath = path);
+                          },
+                        ),
+                        if (_voicePath != null) ...[
+                          const SizedBox(height: 8),
+                          _buildVoiceConfirmation(),
+                        ],
+                        const SizedBox(height: 20),
+                        _buildStepHeader("٥", "وەسفی کێشە (ئارەزوومەندانە)"),
+                        const SizedBox(height: 10),
+                        _buildDescriptionField(),
+                        const SizedBox(height: 28),
+                        _buildSubmitButton(),
+                        const SizedBox(height: 12),
+                        _buildCancelButton(),
+                      ],
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
-                if (_voicePath != null) ...[
-                  const SizedBox(height: 8),
-                  _buildVoiceConfirmation(),
-                ],
-                const SizedBox(height: 20),
-                _buildStepHeader("٥", "وەسفی کێشە (ئارەزوومەندانە)"),
-                const SizedBox(height: 10),
-                _buildDescriptionField(),
-                const SizedBox(height: 28),
-                _buildSubmitButton(),
-                const SizedBox(height: 12),
-                _buildCancelButton(),
-              ],
-              const SizedBox(height: 20),
+              ),
             ],
           ),
         ),
@@ -730,8 +823,109 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     );
   }
 
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.primary,
+      elevation: 0,
+      title: const Text(
+        "ناردنی سکاڵای هاوڵاتی",
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 17,
+          color: Colors.white,
+        ),
+      ),
+      centerTitle: true,
+      iconTheme: const IconThemeData(color: Colors.white),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.save_rounded),
+          onPressed: () async {
+            await _saveDraft();
+            if (!mounted) return;
+            _showSnackBar('💾 ڕەشنووس پاشەکەوت کرا', Colors.green);
+          },
+          tooltip: 'پاشەکەوتکردنی ڕەشنووس',
+        ),
+      ],
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════
-  // 🎨 UI Widgets
+  // 📊 Progress Steps
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildProgressSteps() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: Colors.white,
+      child: Row(
+        children: List.generate(_totalSteps, (i) {
+          final stepNum = i + 1;
+          final isActive = stepNum <= _currentStep;
+
+          return Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.primary
+                          : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📝 Draft Banner
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildDraftBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: Colors.amber.shade800),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'ڕەشنووس بارکرا — دەتوانیت درێژە بدەیت',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, size: 18),
+            onPressed: () {
+              setState(() => _isDraft = false);
+              _clearDraft();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Widgets
   // ═══════════════════════════════════════════════════════════
   Widget _buildStepHeader(String step, String title) {
     return Row(
@@ -797,8 +991,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           isExpanded: true,
           hint: const Row(
             children: [
-              Icon(Icons.search_rounded,
-                  color: AppColors.primary, size: 20),
+              Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
               SizedBox(width: 8),
               Text(
                 "جۆری کێشە هەڵبژێرە...",
@@ -841,9 +1034,11 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           onChanged: _selectedComplaintType != null
               ? null
               : (v) {
+            HapticFeedback.selectionClick();
             setState(() {
               _selectedComplaintType = v;
               _responsibleAuthority = _complaintTypesMap[v];
+              _currentStep = 2;
             });
           },
         ),
@@ -946,23 +1141,21 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.blue.shade200, width: 1.5),
         ),
-        child: Row(
+        child: const Row(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: Colors.blue),
             ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                "دۆزینەوەی گەڕەک...",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                  fontSize: 13,
-                ),
+            SizedBox(width: 12),
+            Text(
+              "دۆزینەوەی گەڕەک...",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+                fontSize: 13,
               ),
             ),
           ],
@@ -1065,19 +1258,28 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
             ? Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2196F3).withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isGarbageSelected
-                    ? Icons.camera_alt_rounded
-                    : Icons.add_a_photo_rounded,
-                color: const Color(0xFF2196F3),
-                size: 30,
-              ),
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2196F3)
+                          .withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isGarbageSelected
+                          ? Icons.camera_alt_rounded
+                          : Icons.add_a_photo_rounded,
+                      color: const Color(0xFF2196F3),
+                      size: 30,
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 8),
             Text(
@@ -1117,6 +1319,15 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                     child: Image.file(
                       File(img.path),
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: const Icon(
+                            Icons.broken_image_rounded,
+                            color: Colors.grey,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   Positioned(
@@ -1194,6 +1405,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
                   ),
                 }
                     : {},
+                onMapCreated: (controller) => _mapController = controller,
               ),
             ),
           ),
@@ -1305,20 +1517,22 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           borderRadius: BorderRadius.circular(18),
         ),
         child: const Center(
-          child: Column(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                    color: AppColors.primary, strokeWidth: 2.5),
+                  color: AppColors.primary,
+                  strokeWidth: 2.5,
+                ),
               ),
-              SizedBox(height: 6),
+              SizedBox(width: 12),
               Text(
                 'خەریکی ناردن...',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1360,9 +1574,11 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
           ),
           side: BorderSide(color: Colors.red.shade300, width: 1.5),
         ),
-        onPressed: () => Navigator.pop(context),
-        icon:
-        Icon(Icons.close_rounded, color: Colors.red.shade700, size: 20),
+        onPressed: () async {
+          await _saveDraft();
+          if (mounted) Navigator.pop(context);
+        },
+        icon: Icon(Icons.close_rounded, color: Colors.red.shade700, size: 20),
         label: Text(
           "پەشیمانبوونەوە",
           style: TextStyle(
@@ -1375,9 +1591,6 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 Helpers
-  // ═══════════════════════════════════════════════════════════
   IconData _getComplaintIcon(String type) {
     if (type.contains('خۆڵ') || type.contains('خاشاک')) {
       return Icons.delete_rounded;

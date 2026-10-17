@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../models/emergency_service.dart';
-import '../../services/emergency_service.dart';
+import '../../services/emergency_repository.dart';
 
 /// 🚑 پانێڵی بەڕێوەبردنی فریاکەوتن — ULTRA PRO
 class AdminEmergencyServicesScreen extends StatefulWidget {
