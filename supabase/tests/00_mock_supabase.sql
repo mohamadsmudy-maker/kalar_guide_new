@@ -21,6 +21,18 @@ create table events(id bigserial primary key, title text, views int default 0);
 create table banners(id bigserial primary key, title text);
 create table weather(id bigserial primary key, temp int);
 create table main_categories(id bigserial primary key, name text);
+create table reviews(id bigserial primary key, store_id bigint, user_id text, rating int, is_approved boolean default true);
+alter table dukan add column average_rating numeric default 0;
+create function refresh_rating() returns trigger language plpgsql as $f$
+begin
+  update dukan set average_rating = (select avg(rating) from reviews r where r.store_id = new.store_id) where id = new.store_id;
+  return new;
+end $f$;
+create trigger reviews_rating after insert on reviews for each row execute function refresh_rating();
+create table news_likes(id bigserial primary key, user_id text, news_id uuid);
+create table news_favorites(id bigserial primary key, user_id text, news_id uuid);
+create table favorite_stores(id bigserial primary key, user_id text, store_id bigint);
+create table event_interests(id bigserial primary key, user_id text, event_id bigint);
 create function increment_views(news_id uuid) returns void language sql as $$ update news set views = views + 1 where id = news_id $$;
 create policy old_allow_all on banners for all using (true) with check (true);
 alter table banners enable row level security;

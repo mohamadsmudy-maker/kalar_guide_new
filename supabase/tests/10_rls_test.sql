@@ -103,8 +103,33 @@ select t.check((select bool_and(password like '$2%') from app_users), 'legacy pa
 select t.check(not exists (select 1 from pg_policies where tablename = 'banners' and policyname = 'old_allow_all'),
                'old permissive policies removed');
 
+-- ── per-user rows ────────────────────────────────────────────────
+insert into favorite_stores(user_id, store_id) values ('999', 1);
+insert into reviews(store_id, user_id, rating, is_approved) values (1, '999', 5, true), (1, '999', 1, false);
 set role authenticated;
+select t.as_user('00000000-0000-0000-0000-0000000000ee');   -- not logged in
+select t.check((select count(*) from favorite_stores) = 0, 'cannot see others favorites');
+select t.check(t.rows($$insert into favorite_stores(user_id, store_id) values ('999', 2)$$) = -1,
+               'cannot add favorites for someone else');
+select t.check(t.rows($$insert into news_likes(user_id) values ('00000000-0000-0000-0000-0000000000ee')$$) = 1,
+               'anonymous user likes with auth id');
+select t.check((select count(*) from news_likes) = 1, 'sees own like');
+select t.check((select count(*) from reviews) = 1, 'only approved reviews are public');
+select t.check(t.rows($$delete from reviews$$) = 0, 'cannot delete others reviews');
+select t.as_user('00000000-0000-0000-0000-00000000000f');
+select app_login('07500000004', 'custpass1');              -- customer, app id 4
+select t.check(t.rows($$insert into favorite_stores(user_id, store_id) values ('4', 2)$$) = 1,
+               'logged-in user adds favorite with app id');
+select t.check(t.rows($$insert into reviews(store_id, user_id, rating) values (2, '4', 4)$$) = 1,
+               'logged-in user writes review');
+select t.check((select average_rating from dukan where id = 2) = 4, 'rating trigger still updates store');
+select t.check(t.rows($$update reviews set rating = 1 where user_id = '4'$$) = 1, 'author edits own review');
+
 select t.as_user('00000000-0000-0000-0000-00000000000d');
+select app_login('07500000001', 'adminpass');
+select t.check((select count(*) from reviews) = 3, 'admin sees all reviews');
+select t.check(t.rows($$delete from reviews where is_approved = false$$) = 1, 'admin deletes reviews');
+
 select app_logout();
 select t.check(app_role() = 'guest', 'logout clears the session');
 
