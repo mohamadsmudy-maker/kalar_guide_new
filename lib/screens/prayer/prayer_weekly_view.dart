@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:hijri/hijri_calendar.dart';
+
+import '../../services/prayer/kalar_prayer_times.dart';
 
 /// 📅 بینینی هەفتانە و مانگانەی کاتەکانی نوێژ — ULTRA PRO
 class PrayerWeeklyView extends StatefulWidget {
@@ -57,47 +58,55 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
     super.dispose();
   }
 
+  /// هەمان سەرچاوەی شاشەی سەرەکی (خشتەی فەرمی یان هەژماری ڕێکخراو)،
+  /// بۆیە پێویستی بە ئینتەرنێت نییە و هەردوو شاشە هەمان کات پیشان دەدەن.
   Future<void> _loadData() async {
-    setState(() => _loading = true);
+    final days = DateUtils.getDaysInMonth(_selectedYear, _selectedMonth);
+    final allDays = <Map<String, dynamic>>[
+      for (var d = 1; d <= days; d++) _dayData(DateTime(_selectedYear, _selectedMonth, d)),
+    ];
 
-    try {
-      final url = Uri.parse(
-        'https://api.aladhan.com/v1/calendar'
-            '?latitude=${widget.lat}&longitude=${widget.lng}'
-            '&method=3&school=0'
-            '&month=$_selectedMonth&year=$_selectedYear',
-      );
+    final today = DateTime.now();
+    final weekStart = DateTime(today.year, today.month, today.day - (today.weekday - 1));
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final week = <Map<String, dynamic>>[
+      for (var d = weekStart; !d.isAfter(weekEnd); d = DateTime(d.year, d.month, d.day + 1))
+        _dayData(d),
+    ];
 
-      final res = await http.get(url);
+    if (!mounted) return;
+    setState(() {
+      _weekData = week;
+      _monthData = allDays;
+      _loading = false;
+    });
+  }
 
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body);
-        final allDays = (json['data'] as List)
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
+  static const List<String> _hijriMonthsAr = [
+    'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
+    'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة',
+  ];
 
-        // ⭐ هەفتەی داهاتوو — ٧ ڕۆژ
-        final today = DateTime.now();
-        final weekStart = today.subtract(Duration(days: today.weekday - 1));
-        final weekEnd = weekStart.add(const Duration(days: 6));
-
-        final week = allDays.where((day) {
-          final date = _parseDate(day['date']['gregorian']['date']);
-          return !date.isBefore(weekStart) && !date.isAfter(weekEnd);
-        }).toList();
-
-        if (mounted) {
-          setState(() {
-            _weekData = week;
-            _monthData = allDays;
-            _loading = false;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ Load error: $e');
-      if (mounted) setState(() => _loading = false);
-    }
+  Map<String, dynamic> _dayData(DateTime date) {
+    final t = KalarPrayerTimes.forDay(date, lat: widget.lat, lng: widget.lng).times;
+    final hijri = HijriCalendar.fromDate(date);
+    return {
+      'date': {
+        'gregorian': {'date': KalarPrayerTimes.dateKey(date)},
+        'hijri': {
+          'day': '${hijri.hDay}',
+          'month': {'ar': _hijriMonthsAr[hijri.hMonth - 1]},
+        },
+      },
+      'timings': {
+        'Fajr': t['fajr'],
+        'Sunrise': t['sunrise'],
+        'Dhuhr': t['dhuhr'],
+        'Asr': t['asr'],
+        'Maghrib': t['maghrib'],
+        'Isha': t['isha'],
+      },
+    };
   }
 
   @override

@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:adhan/adhan.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +10,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../config/app_colors.dart';
+import '../../services/prayer/kalar_prayer_times.dart';
 import '../../services/prayer_notification_service.dart';
 import '../daily/qibla_finder_screen.dart';
 import '../prayer/adhan_settings_screen.dart';
@@ -109,42 +109,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     'isha': AppColors.purple,
   };
 
-  // ═══════════════════════════════════════════════════════════
-  // 🕌 OFFICIAL AMOZHGARY.TV DATA — KALAR
-  // بۆ زیادکردنی مانگی نوێ، تەنها ڕیزی نوێ لێرە زیاد بکە (dd-MM-yyyy)
-  // ═══════════════════════════════════════════════════════════
-  static const Map<String, Map<String, String>> _officialTimes = {
-    '01-11-2026': {'fajr': '04:59', 'sunrise': '06:25', 'dhuhr': '11:45', 'asr': '14:43', 'maghrib': '17:06', 'isha': '18:29'},
-    '02-11-2026': {'fajr': '05:00', 'sunrise': '06:26', 'dhuhr': '11:45', 'asr': '14:42', 'maghrib': '17:05', 'isha': '18:28'},
-    '03-11-2026': {'fajr': '05:01', 'sunrise': '06:27', 'dhuhr': '11:45', 'asr': '14:41', 'maghrib': '17:04', 'isha': '18:27'},
-    '04-11-2026': {'fajr': '05:02', 'sunrise': '06:27', 'dhuhr': '11:45', 'asr': '14:40', 'maghrib': '17:03', 'isha': '18:26'},
-    '05-11-2026': {'fajr': '05:03', 'sunrise': '06:28', 'dhuhr': '11:45', 'asr': '14:40', 'maghrib': '17:02', 'isha': '18:25'},
-    '06-11-2026': {'fajr': '05:04', 'sunrise': '06:29', 'dhuhr': '11:45', 'asr': '14:39', 'maghrib': '17:01', 'isha': '18:25'},
-    '07-11-2026': {'fajr': '05:05', 'sunrise': '06:30', 'dhuhr': '11:45', 'asr': '14:38', 'maghrib': '17:00', 'isha': '18:24'},
-    '08-11-2026': {'fajr': '05:06', 'sunrise': '06:31', 'dhuhr': '11:45', 'asr': '14:38', 'maghrib': '16:59', 'isha': '18:23'},
-    '09-11-2026': {'fajr': '05:07', 'sunrise': '06:32', 'dhuhr': '11:45', 'asr': '14:37', 'maghrib': '16:58', 'isha': '18:23'},
-    '10-11-2026': {'fajr': '05:08', 'sunrise': '06:33', 'dhuhr': '11:45', 'asr': '14:36', 'maghrib': '16:58', 'isha': '18:22'},
-    '11-11-2026': {'fajr': '05:09', 'sunrise': '06:34', 'dhuhr': '11:45', 'asr': '14:36', 'maghrib': '16:57', 'isha': '18:21'},
-    '12-11-2026': {'fajr': '05:10', 'sunrise': '06:35', 'dhuhr': '11:45', 'asr': '14:35', 'maghrib': '16:56', 'isha': '18:21'},
-    '13-11-2026': {'fajr': '05:11', 'sunrise': '06:36', 'dhuhr': '11:45', 'asr': '14:35', 'maghrib': '16:55', 'isha': '18:20'},
-    '14-11-2026': {'fajr': '05:12', 'sunrise': '06:37', 'dhuhr': '11:45', 'asr': '14:34', 'maghrib': '16:55', 'isha': '18:20'},
-    '15-11-2026': {'fajr': '05:13', 'sunrise': '06:38', 'dhuhr': '11:46', 'asr': '14:34', 'maghrib': '16:54', 'isha': '18:19'},
-    '16-11-2026': {'fajr': '05:14', 'sunrise': '06:39', 'dhuhr': '11:46', 'asr': '14:33', 'maghrib': '16:53', 'isha': '18:19'},
-    '17-11-2026': {'fajr': '05:15', 'sunrise': '06:40', 'dhuhr': '11:46', 'asr': '14:33', 'maghrib': '16:53', 'isha': '18:18'},
-    '18-11-2026': {'fajr': '05:16', 'sunrise': '06:41', 'dhuhr': '11:46', 'asr': '14:32', 'maghrib': '16:52', 'isha': '18:18'},
-    '19-11-2026': {'fajr': '05:17', 'sunrise': '06:42', 'dhuhr': '11:46', 'asr': '14:32', 'maghrib': '16:52', 'isha': '18:17'},
-    '20-11-2026': {'fajr': '05:18', 'sunrise': '06:43', 'dhuhr': '11:47', 'asr': '14:31', 'maghrib': '16:51', 'isha': '18:17'},
-    '21-11-2026': {'fajr': '05:19', 'sunrise': '06:44', 'dhuhr': '11:47', 'asr': '14:31', 'maghrib': '16:51', 'isha': '18:16'},
-    '22-11-2026': {'fajr': '05:20', 'sunrise': '06:45', 'dhuhr': '11:47', 'asr': '14:31', 'maghrib': '16:50', 'isha': '18:16'},
-    '23-11-2026': {'fajr': '05:20', 'sunrise': '06:46', 'dhuhr': '11:47', 'asr': '14:30', 'maghrib': '16:50', 'isha': '18:16'},
-    '24-11-2026': {'fajr': '05:21', 'sunrise': '06:47', 'dhuhr': '11:48', 'asr': '14:30', 'maghrib': '16:49', 'isha': '18:16'},
-    '25-11-2026': {'fajr': '05:22', 'sunrise': '06:48', 'dhuhr': '11:48', 'asr': '14:30', 'maghrib': '16:49', 'isha': '18:15'},
-    '26-11-2026': {'fajr': '05:23', 'sunrise': '06:49', 'dhuhr': '11:48', 'asr': '14:30', 'maghrib': '16:49', 'isha': '18:15'},
-    '27-11-2026': {'fajr': '05:23', 'sunrise': '06:50', 'dhuhr': '11:49', 'asr': '14:29', 'maghrib': '16:49', 'isha': '18:15'},
-    '28-11-2026': {'fajr': '05:24', 'sunrise': '06:51', 'dhuhr': '11:49', 'asr': '14:29', 'maghrib': '16:48', 'isha': '18:15'},
-    '29-11-2026': {'fajr': '05:24', 'sunrise': '06:52', 'dhuhr': '11:49', 'asr': '14:29', 'maghrib': '16:48', 'isha': '18:15'},
-    '30-11-2026': {'fajr': '05:25', 'sunrise': '06:53', 'dhuhr': '11:50', 'asr': '14:29', 'maghrib': '16:48', 'isha': '18:15'},
-  };
 
   // ═══════════════════════════════════════════════════════════
   // 📊 State
@@ -345,19 +309,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
     final now = DateTime.now();
     try {
-      final official = _officialTimes[_dmy(now)];
-      final Map<String, String> times;
-      if (official != null) {
-        times = official;
-      } else {
-        times = _calculate(now);
-      }
+      final day = KalarPrayerTimes.forDay(now, lat: _lat, lng: _lng);
+      final times = day.times;
 
       if (!mounted) return;
       setState(() {
         _loadedDay = now;
         _updateDates(now);
-        _isOfficial = official != null;
+        _isOfficial = day.isOfficial;
         _prayers = [
           for (final id in _ids)
             _Prayer(id, _names[id]!, times[id]!, _icons[id]!, _colors[id]!),
@@ -381,31 +340,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     }
   }
 
-  Map<String, String> _calculate(DateTime day) {
-    final params = CalculationMethod.muslim_world_league.getParameters()
-      ..madhab = Madhab.shafi
-      ..adjustments = PrayerAdjustments(
-        fajr: -1,
-        sunrise: 0,
-        dhuhr: 3,
-        asr: 2,
-        maghrib: 2,
-        isha: 1,
-      );
-    final t = PrayerTimes(
-      Coordinates(_lat, _lng),
-      DateComponents.from(day),
-      params,
-    );
-    return {
-      'fajr': _hm(t.fajr),
-      'sunrise': _hm(t.sunrise),
-      'dhuhr': _hm(t.dhuhr),
-      'asr': _hm(t.asr),
-      'maghrib': _hm(t.maghrib),
-      'isha': _hm(t.isha),
-    };
-  }
 
   Future<void> _saveCache() async {
     try {
@@ -606,9 +540,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   // 🛠️ Helpers
   // ═══════════════════════════════════════════════════════════
   static String _two(int n) => n.toString().padLeft(2, '0');
-  static String _hm(DateTime t) => '${_two(t.hour)}:${_two(t.minute)}';
   static String _ymd(DateTime d) => '${d.year}-${_two(d.month)}-${_two(d.day)}';
-  static String _dmy(DateTime d) => '${_two(d.day)}-${_two(d.month)}-${d.year}';
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
