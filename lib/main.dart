@@ -1113,9 +1113,9 @@ class _AppDrawer extends StatelessWidget {
         ),
         child: Ink(
           padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: AppColors.primaryGradient,
-            borderRadius: const BorderRadius.only(
+            borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(30),
               bottomRight: Radius.circular(30),
             ),

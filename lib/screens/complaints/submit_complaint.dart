@@ -1263,7 +1263,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                 );
               }),
               Text('${_ku(_doneCount)} لە ٣',
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
                       color: AppColors.primary)),
@@ -1541,7 +1541,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
   }
 
   Widget _buildImageSection(bool garbage) {
-    final blue = const Color(0xFF2196F3);
+    const blue = Color(0xFF2196F3);
 
     return GestureDetector(
       onTap: _images.isEmpty ? _handleImagePicking : null,
@@ -1586,7 +1586,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
               garbage
                   ? 'وێنەگرتن بە کامێرا'
                   : 'وێنە بگرە (کامێرا یان گەلەری)',
-              style: TextStyle(
+              style: const TextStyle(
                   fontWeight: FontWeight.bold, color: blue, fontSize: 13),
             ),
             const SizedBox(height: 4),
@@ -1657,7 +1657,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                   decoration: BoxDecoration(
                       color: Colors.blue.shade50,
                       shape: BoxShape.circle),
-                  child: Icon(Icons.add_a_photo, color: blue, size: 20),
+                  child: const Icon(Icons.add_a_photo, color: blue, size: 20),
                 ),
               ),
           ],
@@ -1742,7 +1742,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                     elevation: 3,
                     shape: const CircleBorder(),
                     child: IconButton(
-                      icon: Icon(Icons.my_location_rounded,
+                      icon: const Icon(Icons.my_location_rounded,
                           color: AppColors.primary),
                       tooltip: 'نوێکردنەوەی شوێن',
                       onPressed:

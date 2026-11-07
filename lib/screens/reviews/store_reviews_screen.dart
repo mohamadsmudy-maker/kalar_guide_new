@@ -96,9 +96,9 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
-          title: Text(
+          title: const Text(
             'کۆمێنت و هەڵسەنگاندن',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 17,
             ),

@@ -832,7 +832,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [AppColors.orange, AppColors.yellow]),
+              gradient: const LinearGradient(colors: [AppColors.orange, AppColors.yellow]),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(color: AppColors.orange.withValues(alpha: 0.4), blurRadius: 10),
@@ -913,7 +913,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             colors: [AppColors.darkCard, AppColors.darkSurface],
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
@@ -998,7 +998,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               colors: [AppColors.orange, AppColors.yellow],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -1224,7 +1224,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                 begin: Alignment.centerRight,
                 end: Alignment.centerLeft,
               )
-            : LinearGradient(colors: [AppColors.darkCard, AppColors.darkSurface]),
+            : const LinearGradient(colors: [AppColors.darkCard, AppColors.darkSurface]),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isNext

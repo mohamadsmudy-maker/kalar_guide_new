@@ -45,10 +45,12 @@ class WhatsAppComplaintService {
       }
 
       // ٤. داگرتنی وێنە و ڤۆیسەکان
+      if (!context.mounted) return false;
       _showSnack(context, '⏳ ئامادەکردنی فایلەکان...', Colors.blue);
       final mediaFiles = await _downloadMedia(complaint);
 
       // ٥. ناردن
+      if (!context.mounted) return false;
       return await _send(
         context: context,
         phone: phone,
@@ -57,7 +59,7 @@ class WhatsAppComplaintService {
       );
     } catch (e) {
       debugPrint('❌ WhatsApp send error: $e');
-      _showSnack(context, 'هەڵە: $e', Colors.red);
+      if (context.mounted) _showSnack(context, 'هەڵە: $e', Colors.red);
       return false;
     }
   }
@@ -306,6 +308,7 @@ class WhatsAppComplaintService {
     } catch (e) {
       debugPrint('❌ Share error: $e');
       // فۆڵباک بۆ واتسئاپ بێ فایل
+      if (!context.mounted) return false;
       return _openWhatsAppDirect(
         context: context,
         phone: phone,
@@ -337,11 +340,13 @@ class WhatsAppComplaintService {
         return true;
       }
 
-      _showSnack(context, '⚠️ واتسئاپ دامەزراو نییە', Colors.orange);
+      if (context.mounted) {
+        _showSnack(context, '⚠️ واتسئاپ دامەزراو نییە', Colors.orange);
+      }
       return false;
     } catch (e) {
       debugPrint('❌ WhatsApp open error: $e');
-      _showSnack(context, 'هەڵە: $e', Colors.red);
+      if (context.mounted) _showSnack(context, 'هەڵە: $e', Colors.red);
       return false;
     }
   }

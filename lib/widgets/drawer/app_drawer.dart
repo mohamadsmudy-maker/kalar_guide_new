@@ -13,7 +13,6 @@ import '../../services/presence_service.dart';
 import '../../screens/emergency/emergency_main_screen.dart';
 import '../../screens/events/events_screen.dart';
 import '../../screens/neighborhoods/neighborhoods_map_screen.dart';
-import '../../screens/about/about_screen.dart';
 import '../../screens/auth/auth_screen.dart';
 
 class AppDrawer extends StatefulWidget {
@@ -735,7 +734,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
     if (confirmed != true) return;
 
     await AuthSessionManager.clearSession();
-    if (!mounted) return;
+    if (!mounted || !context.mounted) return;
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(

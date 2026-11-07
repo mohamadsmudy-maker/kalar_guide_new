@@ -210,7 +210,6 @@ class _AboutScreenState extends State<AboutScreen>
     // ✅ بەکارهێنانی ThemeExtension بۆ ڕەنگی سەرکەوتوو و هەڵە
     final ext = Theme.of(context).extension<AppThemeColors>();
     final successColor = ext?.success ?? AppColors.green;
-    final dangerColor = ext?.danger ?? AppColors.red;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -904,7 +903,14 @@ class _AboutScreenState extends State<AboutScreen>
                 version: QrVersions.auto,
                 size: 140,
                 backgroundColor: Colors.white,
-                foregroundColor: AppColors.textPrimary,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: AppColors.textPrimary,
+                ),
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: AppColors.textPrimary,
+                ),
                 errorCorrectionLevel: QrErrorCorrectLevel.H,
               ),
             ),

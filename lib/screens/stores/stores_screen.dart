@@ -47,7 +47,6 @@ class _StoresScreenState extends State<StoresScreen>
   List<Map<String, dynamic>> _filteredStores = [];
 
   List<Map<String, dynamic>> _allCategories = [];
-  bool _loadingCategories = true;
 
   final Set<String> _favorites = {};
 
@@ -184,8 +183,6 @@ class _StoresScreenState extends State<StoresScreen>
   // 🗂️ Fetch Categories
   // ═══════════════════════════════════════════════════════════
   Future<void> _fetchCategories() async {
-    if (mounted) setState(() => _loadingCategories = true);
-
     try {
       const key = 'main_categories_v3';
       final cached = await CacheService.get(key);
@@ -193,10 +190,7 @@ class _StoresScreenState extends State<StoresScreen>
       if (cached != null && cached is List) {
         final list = List<Map<String, dynamic>>.from(cached);
         if (mounted) {
-          setState(() {
-            _allCategories = list;
-            _loadingCategories = false;
-          });
+          setState(() => _allCategories = list);
         }
         return;
       }
@@ -215,14 +209,10 @@ class _StoresScreenState extends State<StoresScreen>
       );
 
       if (mounted) {
-        setState(() {
-          _allCategories = list;
-          _loadingCategories = false;
-        });
+        setState(() => _allCategories = list);
       }
     } catch (e) {
       debugPrint('❌ Categories error: $e');
-      if (mounted) setState(() => _loadingCategories = false);
     }
   }
 

@@ -708,14 +708,14 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                           });
                         }
 
-                        if (mounted) {
+                        if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("بە سەرکەوتوویی پاشەکەوت کرا ✅"), backgroundColor: Colors.green),
                           );
                         }
                       } catch (e) {
-                        if (mounted) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text("هەڵە ڕووی دا: $e"), backgroundColor: Colors.red),
                           );

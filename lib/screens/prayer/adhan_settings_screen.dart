@@ -245,7 +245,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   }
 
   Future<void> _pickSoundForAll() async {
-    final sounds = AdhanService.availableSounds;
+    const sounds = AdhanService.availableSounds;
     final picked = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: _C.card,
@@ -440,7 +440,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
   Widget _buildPrayerSoundCard(_PrayerInfo info) {
     final prayer = info.name;
-    final sounds = AdhanService.availableSounds;
+    const sounds = AdhanService.availableSounds;
     var currentSound = _currentSounds[prayer] ?? _C.defaultSound;
 
     // ئەگەر دەنگی پاشەکەوتکراو لە لیستدا نەمابوو، Dropdown نەشکێت

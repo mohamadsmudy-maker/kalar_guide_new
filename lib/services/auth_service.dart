@@ -146,10 +146,23 @@ class AuthSessionManager {
 
   static Future<void> clearSession() async {
     try {
-      try { await NotificationService.clearToken(); } catch (e) {}
-      try { await Supabase.instance.client.rpc('app_logout').timeout(_supabaseTimeout); } catch (e) {}
+      // هەر هەنگاوێک سەربەخۆیە: ئەگەر یەکێکیان شکستی هێنا، ئەوانی تر هەر دەکرێن
+      try {
+        await NotificationService.clearToken();
+      } catch (e) {
+        AppLogger.w('⚠️ clearToken: $e');
+      }
+      try {
+        await Supabase.instance.client.rpc('app_logout').timeout(_supabaseTimeout);
+      } catch (e) {
+        AppLogger.w('⚠️ app_logout: $e');
+      }
       await _clearLocalSession();
-      try { await Supabase.instance.client.auth.signOut().timeout(_supabaseTimeout); } catch (e) {}
+      try {
+        await Supabase.instance.client.auth.signOut().timeout(_supabaseTimeout);
+      } catch (e) {
+        AppLogger.w('⚠️ signOut: $e');
+      }
     } catch (e, st) {
       AppLogger.e('❌ clearSession error', e, st);
     }
@@ -166,6 +179,8 @@ class AuthSessionManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('logged_phone');
-    } catch (e) {}
+    } catch (e) {
+      AppLogger.w('⚠️ remove logged_phone: $e');
+    }
   }
 }

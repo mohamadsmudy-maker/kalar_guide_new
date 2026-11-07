@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 /// 🔢 گۆڕینی ژمارە بۆ کوردی
 String toLocalDigits(String input) {

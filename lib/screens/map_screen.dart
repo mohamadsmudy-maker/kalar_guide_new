@@ -531,7 +531,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.8,
     );
-    tp.paint(canvas, Offset(shadow + padH, shadow + padV));
+    tp.paint(canvas, const Offset(shadow + padH, shadow + padV));
 
     final picture = recorder.endRecording();
     final img = await picture.toImage(

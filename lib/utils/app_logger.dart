@@ -120,7 +120,7 @@ class AppLogger {
   static void prettyJson(dynamic jsonObject, {String? tag}) {
     if (kDebugMode) {
       try {
-        final encoder = const JsonEncoder.withIndent('  ');
+        const encoder = JsonEncoder.withIndent('  ');
         final prettyString = encoder.convert(jsonObject);
         final title = tag != null ? ' $tag ' : ' JSON DATA ';
 

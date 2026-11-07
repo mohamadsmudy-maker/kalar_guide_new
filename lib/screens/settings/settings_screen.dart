@@ -806,16 +806,16 @@ class _SettingsScreenState extends State<SettingsScreen>
               HapticFeedback.mediumImpact();
               _showResetDialog(settings);
             },
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const _IconBadge(
+                  _IconBadge(
                     icon: Icons.restore_rounded,
                     color: Colors.red,
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                  SizedBox(width: 12),
+                  Expanded(
                     child: Text(
                       'گەڕاندنەوە بۆ دۆخی سەرەتا',
                       style: TextStyle(
@@ -825,7 +825,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                     ),
                   ),
-                  const Icon(Icons.chevron_left_rounded, color: Colors.red),
+                  Icon(Icons.chevron_left_rounded, color: Colors.red),
                 ],
               ),
             ),

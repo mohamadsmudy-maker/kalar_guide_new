@@ -314,7 +314,7 @@ class _AdminCurrencyPricesScreenState
     final name = widget.station['name']?.toString() ?? 'نوسینگەی دراو';
     final address = widget.station['address']?.toString() ?? '';
 
-    final currencyTypes = CurrencyService.currencyTypes;
+    const currencyTypes = CurrencyService.currencyTypes;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -560,15 +560,15 @@ class _AdminCurrencyPricesScreenState
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.edit_rounded,
                             size: 11,
                             color: Colors.grey,
                           ),
-                          const SizedBox(width: 3),
-                          const Text(
+                          SizedBox(width: 3),
+                          Text(
                             'کلیک بکە بۆ دەستکاری',
                             style: TextStyle(
                               fontSize: 10,

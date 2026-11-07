@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/app_colors.dart';
-import '../../config/settings_provider.dart';
 import '../../models/emergency_service.dart';
 import '../../services/emergency_repository.dart';
 

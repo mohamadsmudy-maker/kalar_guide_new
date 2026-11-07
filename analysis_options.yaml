@@ -83,7 +83,6 @@ linter:
     # ⚠️ ئەم یاسایانە ناچالاک بکە (ژاوەژاوە)
     # ═══════════════════════════════════════════════════════
     avoid_print: false
-    unnecessary_import: false
     curly_braces_in_flow_control_structures: false
     unnecessary_brace_in_string_interps: false
     unnecessary_string_interpolations: false

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../config/app_colors.dart';
 
 /// 👑 شاشەی داواکارییەکانی ئەدمین (Vendor Requests) — ULTRA PRO MAX
 class AdminVendorRequestsScreen extends StatefulWidget {

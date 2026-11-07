@@ -358,11 +358,12 @@ class _AdminGalleryState extends State<AdminGallery> {
       onRefresh: _load,
       color: AppColors.primary,
       child: GridView.builder(
+        // ignore: deprecated_member_use — scrollCacheExtent needs a newer Flutter
+        cacheExtent: 800,
         padding: const EdgeInsets.all(12).copyWith(bottom: 100),
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),
-        cacheExtent: 800,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,

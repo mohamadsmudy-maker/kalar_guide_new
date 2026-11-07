@@ -129,7 +129,7 @@ class ComplaintsPdfService {
       );
     } catch (e) {
       debugPrint('❌ هەڵە: $e');
-      _showMessage(context, 'هەڵە لە دروستکردنی PDF: $e');
+      if (context.mounted) _showMessage(context, 'هەڵە لە دروستکردنی PDF: $e');
     }
   }
 

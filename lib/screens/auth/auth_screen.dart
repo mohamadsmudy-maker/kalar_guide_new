@@ -489,7 +489,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Widget _buildRoleDropdown(bool isDark) {
     return DropdownButtonFormField<String>(
-      value: _selectedRole,
+      initialValue: _selectedRole,
       dropdownColor: isDark ? AppColors.darkCard : AppColors.surface,
       decoration: _inputDecoration(
         label: 'جۆری ئەکاونت',
@@ -542,7 +542,7 @@ class _AuthScreenState extends State<AuthScreen> {
         icon: Icons.storefront_rounded,
         isDark: isDark,
       ),
-      value: _selectedStore,
+      initialValue: _selectedStore,
       items: _allStores.map((store) {
         return DropdownMenuItem<Map<String, dynamic>>(
           value: store,

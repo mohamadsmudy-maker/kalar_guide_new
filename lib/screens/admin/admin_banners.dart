@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
-import '../../config/theme.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../services/image_service.dart';
 
@@ -210,9 +209,8 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
               child: ReorderableListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: _banners.length,
-                onReorder: (oldI, newI) {
+                onReorderItem: (oldI, newI) {
                   setState(() {
-                    if (newI > oldI) newI -= 1;
                     final it = _banners.removeAt(oldI);
                     _banners.insert(newI, it);
                   });

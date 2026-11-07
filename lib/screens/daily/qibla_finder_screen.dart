@@ -334,7 +334,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   // ═══════════════════════════════════════════════════════════
   static double _calculateQiblaAngle(double lat, double lng) {
     final latRad = lat * math.pi / 180;
-    final kaabaLatRad = _kaabaLat * math.pi / 180;
+    const kaabaLatRad = _kaabaLat * math.pi / 180;
     final dLng = (_kaabaLng - lng) * math.pi / 180;
 
     final y = math.sin(dLng);
@@ -372,7 +372,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
         body: Stack(
           children: [
             // 🌌 Background
-            Positioned.fill(
+            const Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -615,7 +615,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [AppColors.darkCard, AppColors.darkSurface],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -756,7 +756,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [AppColors.darkCard, AppColors.darkSurface],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
@@ -772,7 +772,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                 width: 4,
                 height: 16,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [AppColors.orange, AppColors.yellow],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,

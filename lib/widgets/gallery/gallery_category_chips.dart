@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
-import '../../models/gallery/gallery_category.dart';
 import '../../models/gallery/gallery_category_registry.dart';
 
 class GalleryCategoryChips extends StatelessWidget {
@@ -19,7 +18,7 @@ class GalleryCategoryChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cats = GalleryCategoryRegistry.all;
+    const cats = GalleryCategoryRegistry.all;
     return SizedBox(
       height: 44,
       child: ListView.separated(

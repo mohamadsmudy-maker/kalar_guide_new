@@ -114,7 +114,7 @@ class _NewsCarouselState extends State<NewsCarousel>
       if (!mounted || !_canAutoScroll || !_controller.hasClients) return;
 
       // Hidden tab / covered by another screen → don't animate, check later
-      if (!TickerMode.of(context)) {
+      if (!TickerMode.valuesOf(context).enabled) {
         _scheduleNext();
         return;
       }

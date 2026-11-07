@@ -176,7 +176,7 @@ class NotificationService {
       notification.hashCode,
       notification.title,
       notification.body,
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'high_importance_channel',
           'ئاگادارکردنەوەی گرنگ',
@@ -184,12 +184,12 @@ class NotificationService {
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
-          color: const Color(0xFF1E88E5),
+          color: Color(0xFF1E88E5),
           enableLights: true,
           enableVibration: true,
           playSound: true,
         ),
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,

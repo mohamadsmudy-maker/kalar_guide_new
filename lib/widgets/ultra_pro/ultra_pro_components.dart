@@ -252,7 +252,7 @@ class _ProEmptyStateState extends State<ProEmptyState>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.add_rounded,
                         color: Colors.white,
                         size: 18,

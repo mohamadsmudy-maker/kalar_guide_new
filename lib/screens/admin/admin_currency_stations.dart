@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../config/settings_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/currency_service.dart';
 import 'admin_currency_prices.dart';

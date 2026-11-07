@@ -260,7 +260,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
     final address = widget.station['address']?.toString() ?? '';
 
     // ✅ بەکارهێنانی هەمان جۆرەکانی FuelService
-    final fuelTypes = FuelService.fuelTypes;
+    const fuelTypes = FuelService.fuelTypes;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -516,15 +516,15 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.edit_rounded,
                             size: 11,
                             color: Colors.grey,
                           ),
-                          const SizedBox(width: 3),
-                          const Text(
+                          SizedBox(width: 3),
+                          Text(
                             'کلیک بکە بۆ دەستکاری',
                             style: TextStyle(
                               fontSize: 10,

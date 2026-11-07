@@ -623,7 +623,7 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                 await prefs.clear();
                 await PrayerNotificationService.cancelAll();
 
-                if (!mounted) return;
+                if (!mounted || !ctx.mounted) return;
                 Navigator.pop(ctx);
                 _loadSettings();
 

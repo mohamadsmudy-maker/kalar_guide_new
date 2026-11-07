@@ -114,11 +114,11 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
             // Header
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
                   colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
                 ),
-                borderRadius: const BorderRadius.vertical(
+                borderRadius: BorderRadius.vertical(
                   top: Radius.circular(28),
                 ),
               ),

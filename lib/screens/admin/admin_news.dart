@@ -103,7 +103,11 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
 
     try {
       await Supabase.instance.client.from('news').delete().eq('id', news['id']);
-      try { await StorageService.deleteNewsFiles(news: news); } catch (e) {}
+      try {
+        await StorageService.deleteNewsFiles(news: news);
+      } catch (e) {
+        debugPrint('⚠️ deleteNewsFiles: $e'); // هەواڵەکە سڕایەوە، تەنها فایلەکان نەسڕانەوە
+      }
       await _fetchNews();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -543,7 +547,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _selectedNewsType,
+                initialValue: _selectedNewsType,
                 decoration: InputDecoration(
                   labelText: "جۆری هەواڵ *",
                   filled: true,

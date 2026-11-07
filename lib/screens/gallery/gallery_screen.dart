@@ -11,7 +11,6 @@ import '../../widgets/gallery/gallery_error_state.dart';
 import '../../widgets/gallery/gallery_image_card.dart';
 import '../../widgets/gallery/gallery_shimmer_grid.dart';
 import '../../widgets/full_screen_image_viewer.dart';
-import 'gallery_category_screen.dart';
 
 /// 🖼️ گەلەری بەکارهێنەر — ULTRA PRO MAX V4
 class GalleryScreen extends StatefulWidget {
@@ -137,11 +136,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
       onRefresh: _load,
       color: AppColors.primary,
       child: GridView.builder(
+        // ignore: deprecated_member_use — scrollCacheExtent needs a newer Flutter
+        cacheExtent: 600,
         padding: const EdgeInsets.all(12),
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),
-        cacheExtent: 600,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,

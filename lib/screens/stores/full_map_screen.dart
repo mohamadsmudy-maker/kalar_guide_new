@@ -240,7 +240,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
       await recorder.endRecording().toImage(size.toInt(), size.toInt());
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
       descriptor =
-          gmaps.BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
+          gmaps.BitmapDescriptor.bytes(bytes!.buffer.asUint8List());
     } catch (e) {
       debugPrint('⚠️ cluster icon error: $e');
       descriptor = gmaps.BitmapDescriptor.defaultMarker;

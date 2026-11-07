@@ -201,7 +201,14 @@ class AppEvent {
   }
 
   bool get hasLocation => latitude != null && longitude != null && latitude != 0 && longitude != 0;
-  int get daysUntil => startDate.difference(DateTime.now()).inDays;
+  /// ژمارەی ڕۆژە سالنامەییەکان تا ڕووداوەکە (ئەمڕۆ = 0، سبەی = 1).
+  /// بە UTC دەژمێردرێت بۆ ئەوەی گۆڕینی کاتی هاوین کاری تێنەکات.
+  int get daysUntil {
+    final now = DateTime.now();
+    final today = DateTime.utc(now.year, now.month, now.day);
+    final day = DateTime.utc(startDate.year, startDate.month, startDate.day);
+    return day.difference(today).inDays;
+  }
 
   bool get isToday {
     final now = DateTime.now();
