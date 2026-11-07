@@ -55,45 +55,39 @@
 
 ```bash
 # ١. کۆپی پرۆژە
-git clone https://github.com/username/kalar-guide.git
-cd kalar-guide
+git clone https://github.com/mohamadsmudy-maker/kalar_guide_new.git
+cd kalar_guide_new
 
-# ٢. دامەزراندنی پاکێجەکان
+# ٢. دامەزراندنی پاکێجەکان (Flutter 3.44+)
 flutter pub get
-
-# ٣. ڕێکخستنی .env
-cp .env.example .env
-# بیکەرەوە و نرخەکان پڕبکەرەوە
 ```
 
-### 🔐 ڕێکخستنی `.env`
+### 🔐 کلیلەکانی Supabase
 
-```env
-# Supabase
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOi...
+ئەپەکە فایلی `.env` ناخوێنێتەوە. کلیلەکان لە کاتی build دا بە `--dart-define` دەدرێن
+(بڕوانە `lib/config/env.dart`). بەبێ ئەوان ئەپەکە ناتوانێت پەیوەندی بە Supabase ەوە بکات.
 
-# Google Gemini AI
-GEMINI_API_KEY=AIzaSy...
-GEMINI_MODEL=gemini-1.5-flash
-
-# Google Maps
-GOOGLE_MAPS_API_KEY=AIzaSy...
-
-# Security
-PASSWORD_SALT=your_secure_salt_here
 ```
+--dart-define=SUPABASE_URL=https://<project-ref>.supabase.co
+--dart-define=SUPABASE_ANON_KEY=<anon key>
+```
+
+**Android Studio:** Run ← Edit Configurations… ← `main.dart` ← **Additional run args** ← هەردوو دێڕەکەی سەرەوە (بە یەک دێڕ، بۆشایی لە نێوانیان).
 
 ### ▶️ جێبەجێکردن
 
 ```bash
-# Debug
-flutter run
+# Debug (مۆبایلی پەیوەستکراو)
+flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
 
-# Release
-flutter build apk --release
-flutter build appbundle --release
+# Release APK — یان لە Windows: ./build_release.ps1
+flutter build apk --release --split-per-abi --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+
+# بۆ Play Store
+flutter build appbundle --release --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
 ```
+
+بۆ ئیمزاکردنی Release، `android/key.properties` و فایلی keystore پێویستن (لە git دا نین).
 
 ---
 
