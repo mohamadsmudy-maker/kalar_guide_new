@@ -15,7 +15,6 @@ class PrayerSettingsScreen extends StatefulWidget {
 
 class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
   // ⭐ Settings
-  bool _is24Hour = true;
   bool _adhanEnabled = true;
   bool _notificationsEnabled = true;
   bool _vibrationEnabled = true;
@@ -36,7 +35,6 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _is24Hour = prefs.getBool('prayer_24h') ?? true;
       _adhanEnabled = prefs.getBool('adhan_enabled') ?? true;
       _notificationsEnabled = prefs.getBool('prayer_notif') ?? true;
       _vibrationEnabled = prefs.getBool('prayer_vibrate') ?? true;
@@ -52,7 +50,6 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
 
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('prayer_24h', _is24Hour);
     await prefs.setBool('adhan_enabled', _adhanEnabled);
     await prefs.setBool('prayer_notif', _notificationsEnabled);
     await prefs.setBool('prayer_vibrate', _vibrationEnabled);
@@ -84,16 +81,6 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
           children: [
             // ═══ Section: گشتی ═══
             _buildSection('🌐 گشتی'),
-            _buildSwitchTile(
-              icon: Icons.access_time_rounded,
-              title: 'کاتی 24 سەعات',
-              subtitle: 'پیشاندانی کات بە شێوەی 24h',
-              value: _is24Hour,
-              onChanged: (v) {
-                setState(() => _is24Hour = v);
-                _saveSettings();
-              },
-            ),
             _buildSwitchTile(
               icon: Icons.calendar_today_rounded,
               title: 'پیشاندانی هیجری',

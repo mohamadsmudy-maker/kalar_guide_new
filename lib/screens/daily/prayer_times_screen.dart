@@ -128,11 +128,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   double _lat = _defaultLat;
   double _lng = _defaultLng;
 
-  bool _is24Hour = true;
   bool _notificationsEnabled = true;
-
-  int _streakDays = 0;
-  final Set<String> _prayedToday = {};
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   StreamSubscription<PlayerState>? _playerCompleteSub;
@@ -187,7 +183,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   // 🚀 Init
   // ═══════════════════════════════════════════════════════════
   Future<void> _initAll() async {
-    await Future.wait([_loadSettings(), _loadStreak()]);
+    await _loadSettings();
     await _load();
     if (mounted) _fadeCtrl.forward();
 
@@ -209,39 +205,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     final p = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _is24Hour = p.getBool('prayer_24h') ?? true;
       _notificationsEnabled = p.getBool('prayer_notif') ?? true;
-    });
-  }
-
-  Future<void> _loadStreak() async {
-    final p = await SharedPreferences.getInstance();
-    final now = DateTime.now();
-    final today = _ymd(now);
-    final yesterday = _ymd(now.subtract(const Duration(days: 1)));
-
-    var streak = p.getInt('streak_days') ?? 0;
-    final lastCompleted = p.getString('last_streak_date');
-    // ئەگەر دوێنێ و ئەمڕۆ تەواو نەکرابێت → ستریک دەپچڕێت
-    if (streak > 0 &&
-        lastCompleted != null &&
-        lastCompleted != today &&
-        lastCompleted != yesterday) {
-      streak = 0;
-      await p.setInt('streak_days', 0);
-    }
-
-    final savedDay = p.getString('streak_date') ?? '';
-    final prayed = savedDay == today
-        ? (p.getStringList('prayed_today') ?? const <String>[])
-        : const <String>[];
-
-    if (!mounted) return;
-    setState(() {
-      _streakDays = streak;
-      _prayedToday
-        ..clear()
-        ..addAll(prayed);
     });
   }
 
@@ -402,7 +366,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     // 🌙 ڕۆژ گۆڕا → کاتەکانی ڕۆژی نوێ بهێنە
     if (!_sameDay(now, _loadedDay)) {
       _ticker?.cancel();
-      unawaited(_loadStreak());
       unawaited(_load(silent: true));
       return;
     }
@@ -455,14 +418,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   bool _isPassed(_Prayer p) => p.on(DateTime.now()).isBefore(DateTime.now());
 
   // ═══════════════════════════════════════════════════════════
-  // 🔔 Notifications / Audio / Streak
+  // 🔔 Notifications / Audio
   // ═══════════════════════════════════════════════════════════
   Future<void> _scheduleNotif() async {
     if (!_notificationsEnabled || _prayers.isEmpty) return;
     try {
       await PrayerNotificationService.scheduleAllPrayers(
         prayerTimes: {for (final p in _prayers) p.name: p.time},
-        is24Hour: _is24Hour,
+        is24Hour: true, // کاتەکان بە HH:mm دەنێردرێن
         enabled: _notificationsEnabled,
       );
     } catch (e) {
@@ -487,45 +450,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     }
   }
 
-  Future<void> _togglePrayed(_Prayer prayer) async {
-    if (prayer.isSunrise) return;
-    HapticFeedback.selectionClick();
-
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now();
-    final today = _ymd(now);
-    final yesterday = _ymd(now.subtract(const Duration(days: 1)));
-    final lastCompleted = prefs.getString('last_streak_date');
-    if (!mounted) return;
-
-    final wasComplete = _prayedToday.length == 5;
-    setState(() {
-      if (!_prayedToday.remove(prayer.name)) _prayedToday.add(prayer.name);
-    });
-    final isComplete = _prayedToday.length == 5;
-
-    if (!wasComplete && isComplete && lastCompleted != today) {
-      setState(() => _streakDays++);
-      HapticFeedback.heavyImpact();
-      await prefs.setString('last_streak_date', today);
-    } else if (wasComplete && !isComplete && lastCompleted == today) {
-      // پاشگەزبوونەوە → ستریکی ئەمڕۆ هەڵدەوەشێتەوە
-      setState(() => _streakDays = (_streakDays - 1).clamp(0, 1 << 30));
-      await prefs.setString('last_streak_date', yesterday);
-    }
-
-    await prefs.setInt('streak_days', _streakDays);
-    await prefs.setString('streak_date', today);
-    await prefs.setStringList('prayed_today', _prayedToday.toList());
-  }
-
-  Future<void> _toggle24h() async {
-    HapticFeedback.selectionClick();
-    setState(() => _is24Hour = !_is24Hour);
-    final p = await SharedPreferences.getInstance();
-    await p.setBool('prayer_24h', _is24Hour);
-  }
-
   Future<void> _openSettings() async {
     await Navigator.push(
       context,
@@ -544,30 +468,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  String _formatDisplay(String time) {
-    if (_is24Hour) return time;
-    try {
-      final p = time.split(':');
-      var h = int.parse(p[0]);
-      final suffix = h < 12 ? 'پ.ن' : 'د.ن';
-      h %= 12;
-      if (h == 0) h = 12;
-      return '$h:${p[1]} $suffix';
-    } catch (_) {
-      return time;
-    }
-  }
-
-  String _toLocalDigits(String input) {
-    const en = '0123456789';
-    const ar = '٠١٢٣٤٥٦٧٨٩';
-    final b = StringBuffer();
-    for (final ch in input.split('')) {
-      final i = en.indexOf(ch);
-      b.write(i >= 0 ? ar[i] : ch);
-    }
-    return b.toString();
-  }
+  String _formatDisplay(String time) => KalarPrayerTimes.format12(time);
 
   // ═══════════════════════════════════════════════════════════
   // 🏗️ Build
@@ -600,8 +501,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               const SizedBox(height: 14),
               _buildCountdownCard(),
               const SizedBox(height: 14),
-              _buildStreakCard(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 6),
               _buildSectionHeader(),
               const SizedBox(height: 12),
               for (final p in _prayers) _buildPrayerTile(p),

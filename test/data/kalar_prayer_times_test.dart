@@ -82,4 +82,17 @@ void main() {
       expect(_min(t['maghrib']!), inInclusiveRange(19 * 60, 19 * 60 + 30));
     });
   });
+
+  group('format12', () {
+    test('پێش و دوای نیوەڕۆ', () {
+      expect(KalarPrayerTimes.format12('05:05'), '5:05 پ.ن');
+      expect(KalarPrayerTimes.format12('11:47'), '11:47 پ.ن');
+      expect(KalarPrayerTimes.format12('12:10'), '12:10 د.ن');
+      expect(KalarPrayerTimes.format12('17:04'), '5:04 د.ن');
+      expect(KalarPrayerTimes.format12('00:30'), '12:30 پ.ن');
+    });
+    test('دەقی هەڵە وەک خۆی دەگەڕێتەوە', () {
+      expect(KalarPrayerTimes.format12('abc'), 'abc');
+    });
+  });
 }

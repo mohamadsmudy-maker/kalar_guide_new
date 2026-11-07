@@ -537,7 +537,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
           ),
           const SizedBox(width: 6),
           Text(
-            time.split(' ').first,
+            KalarPrayerTimes.format12(time),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 11,

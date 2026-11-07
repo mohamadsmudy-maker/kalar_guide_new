@@ -79,6 +79,18 @@ class KalarPrayerTimes {
     };
   }
 
+  /// `HH:mm` → `h:mm پ.ن` / `h:mm د.ن` (سیستەمی ١٢ سەعاتی)
+  static String format12(String hm) {
+    final p = hm.split(':');
+    if (p.length < 2) return hm;
+    final h24 = int.tryParse(p[0]);
+    final m = p[1].split(' ').first;
+    if (h24 == null) return hm;
+    final suffix = h24 < 12 ? 'پ.ن' : 'د.ن';
+    final h = h24 % 12 == 0 ? 12 : h24 % 12;
+    return '$h:$m $suffix';
+  }
+
   static String _hm(DateTime d) {
     final l = d.toUtc().add(_utcOffset);
     return '${_two(l.hour)}:${_two(l.minute)}';

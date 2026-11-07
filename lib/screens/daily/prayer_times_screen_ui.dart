@@ -348,97 +348,6 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🔥 Streak Card
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildStreakCard() {
-    final c = _prayedToday.length;
-    final done = c >= 5;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.green.withValues(alpha: done ? 0.28 : 0.15),
-            AppColors.green.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.green.withValues(alpha: done ? 0.5 : 0.25)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.green, AppColors.green.withValues(alpha: 0.7)],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 26),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'ڕۆژانەی نوێژکردن',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                    Text(
-                      _toLocalDigits('$c/5'),
-                      style: TextStyle(
-                        color: AppColors.green.withValues(alpha: 0.9),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text(
-                      _toLocalDigits('$_streakDays'),
-                      style: const TextStyle(color: AppColors.green, fontSize: 22, fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'ڕۆژ',
-                      style: TextStyle(color: AppColors.green, fontSize: 12, fontWeight: FontWeight.w900),
-                    ),
-                    const Spacer(),
-                    for (var i = 0; i < 5; i++)
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        margin: const EdgeInsetsDirectional.only(start: 4),
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: i < c ? AppColors.green : Colors.white.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
   // 🏷️ Section Header
   // ═══════════════════════════════════════════════════════════
   Widget _buildSectionHeader() {
@@ -459,21 +368,6 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
             style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900),
           ),
         ),
-        Material(
-          color: AppColors.orange.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(10),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(10),
-            onTap: _toggle24h,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              child: Text(
-                _is24Hour ? '24H' : '12H',
-                style: const TextStyle(color: AppColors.orange, fontSize: 11, fontWeight: FontWeight.w900),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -485,7 +379,6 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
     final color = prayer.color;
     final isNext = _countdown.value.nextId == prayer.id;
     final isPassed = !isNext && _isPassed(prayer);
-    final isPrayed = _prayedToday.contains(prayer.name);
     final dim = Colors.white.withValues(alpha: 0.35);
 
     final iconBox = Container(
@@ -589,49 +482,6 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                   ),
                 ),
               ),
-              if (!prayer.isSunrise) ...[
-                const SizedBox(height: 5),
-                Semantics(
-                  button: true,
-                  checked: isPrayed,
-                  label: '${prayer.name}: ${isPrayed ? 'نوێژکراو' : 'نوێژم کرد'}',
-                  excludeSemantics: true,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () => _togglePrayed(prayer),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: isPrayed ? AppColors.green : Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isPrayed ? AppColors.green : Colors.white.withValues(alpha: 0.14),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isPrayed ? Icons.check_circle_rounded : Icons.circle_outlined,
-                            size: 12,
-                            color: isPrayed ? Colors.white : Colors.white.withValues(alpha: 0.5),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isPrayed ? 'نوێژکراو' : 'نوێژم کرد',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: isPrayed ? Colors.white : Colors.white.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ],
