@@ -1,9 +1,34 @@
 // 📁 widgets/common/service_details_widgets.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// 🎨 ویدجێتەکانی هاوبەش بۆ وردەکاری مامەڵە
+/// 🎨 ویدجێتەکانی هاوبەش بۆ وردەکاری مامەڵە (v2)
+///
+/// هەموو واژووەکان وەک خۆیان ماونەتەوە؛ پارامەتری ئارەزوومەندانەی نوێ زیاد کراون.
+///
+///  • `buildSectionTitle`: ناونیشانی درێژ ئیتر لەگەڵ badge دا overflow ناکات
+///  • `buildRequirementItem`: `lang` بۆ ژمارەی ناوخۆیی (٠-٩)
+///  • `buildInfoRow`: `copyable` — بە ڕاگرتنی درێژ کۆپی دەکات (تەلەفۆن، ناونیشان…)
+///  • `getIconData`: ئایکۆنی زیاتر، ناونەخراو بە پیتی گەورە/بچووک گرنگ نییە
+///  • `hexToColor`: #RGB، #RRGGBB، #AARRGGBB، 0xAARRGGBB
 class ServiceDetailWidgets {
   ServiceDetailWidgets._();
+
+  static const Color _purple = Color(0xFF8B5CF6);
+  static const Color _green = Color(0xFF10B981);
+
+  static Color _fg(bool isDark) =>
+      isDark ? Colors.white : const Color(0xFF1A1A2E);
+
+  static String _digits(String s, String lang) {
+    if (lang == 'en') return s;
+    const en = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const ar = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    for (int i = 0; i < en.length; i++) {
+      s = s.replaceAll(en[i], ar[i]);
+    }
+    return s;
+  }
 
   /// 📄 ناونیشانی بەش
   static Widget buildSectionTitle({
@@ -23,21 +48,22 @@ class ServiceDetailWidgets {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w900,
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: _fg(isDark),
+            ),
           ),
         ),
         if (badge != null) ...[
-          const Spacer(),
+          const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 2,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
@@ -61,6 +87,7 @@ class ServiceDetailWidgets {
     required int index,
     required String text,
     required bool isDark,
+    String lang = 'en',
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -71,16 +98,16 @@ class ServiceDetailWidgets {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+              color: _purple.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
               child: Text(
-                '$index',
+                _digits('$index', lang),
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF8B5CF6),
+                  color: _purple,
                 ),
               ),
             ),
@@ -94,8 +121,7 @@ class ServiceDetailWidgets {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color:
-                  isDark ? Colors.white : const Color(0xFF1A1A2E),
+                  color: _fg(isDark),
                   height: 1.5,
                 ),
               ),
@@ -118,7 +144,7 @@ class ServiceDetailWidgets {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981),
+              color: _green,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -134,8 +160,7 @@ class ServiceDetailWidgets {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
-                color:
-                isDark ? Colors.white : const Color(0xFF10B981),
+                color: isDark ? Colors.white : _green,
               ),
             ),
           ),
@@ -145,14 +170,19 @@ class ServiceDetailWidgets {
   }
 
   /// ℹ️ ڕیزی زانیاری
+  ///
+  /// [copyable] = true: بە ڕاگرتنی درێژ `value` کۆپی دەکرێت.
+  /// [copiedMessage] دەقی SnackBar ی «کۆپی کرا» (ئارەزوومەندانە).
   static Widget buildInfoRow({
     required IconData icon,
     required String label,
     required String value,
     required Color color,
     required bool isDark,
+    bool copyable = false,
+    String copiedMessage = 'کۆپی کرا',
   }) {
-    return Container(
+    final content = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A22) : Colors.white,
@@ -189,22 +219,56 @@ class ServiceDetailWidgets {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
-                    color: isDark
-                        ? Colors.white
-                        : const Color(0xFF1A1A2E),
+                    color: _fg(isDark),
                   ),
                 ),
               ],
             ),
           ),
+          if (copyable)
+            Icon(
+              Icons.copy_rounded,
+              size: 14,
+              color: isDark ? Colors.white30 : Colors.grey.shade400,
+            ),
         ],
+      ),
+    );
+
+    if (!copyable) return content;
+
+    return Builder(
+      builder: (context) => Semantics(
+        label: '$label: $value',
+        hint: copiedMessage,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onLongPress: () async {
+              await Clipboard.setData(ClipboardData(text: value));
+              HapticFeedback.mediumImpact();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(copiedMessage),
+                    duration: const Duration(seconds: 1),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+            },
+            child: content,
+          ),
+        ),
       ),
     );
   }
 
-  /// 🎯 ئایکۆن بەپێی key
+  /// 🎯 ئایکۆن بەپێی key (پیتی گەورە/بچووک گرنگ نییە)
   static IconData getIconData(String icon) {
-    switch (icon) {
+    switch (icon.trim().toLowerCase()) {
       case 'car':
         return Icons.directions_car_rounded;
       case 'description':
@@ -219,17 +283,50 @@ class ServiceDetailWidgets {
         return Icons.attach_money_rounded;
       case 'id_card':
         return Icons.badge_rounded;
+    // ─── نوێ ───
+      case 'passport':
+        return Icons.card_travel_rounded;
+      case 'phone':
+        return Icons.phone_rounded;
+      case 'email':
+        return Icons.email_rounded;
+      case 'location':
+        return Icons.location_on_rounded;
+      case 'time':
+      case 'clock':
+        return Icons.access_time_rounded;
+      case 'calendar':
+        return Icons.calendar_month_rounded;
+      case 'building':
+      case 'government':
+        return Icons.account_balance_rounded;
+      case 'work':
+        return Icons.work_rounded;
+      case 'family':
+        return Icons.family_restroom_rounded;
+      case 'tax':
+        return Icons.receipt_long_rounded;
       default:
         return Icons.description_rounded;
     }
   }
 
-  /// 🎨 ڕەنگ لە hex
-  static Color hexToColor(String hex, {Color fallback = const Color(0xFF1E88E5)}) {
+  /// 🎨 ڕەنگ لە hex — #RGB، #RRGGBB، #AARRGGBB، 0xAARRGGBB
+  static Color hexToColor(
+      String hex, {
+        Color fallback = const Color(0xFF1E88E5),
+      }) {
     try {
-      hex = hex.replaceAll('#', '');
-      if (hex.length == 6) hex = 'FF$hex';
-      return Color(int.parse(hex, radix: 16));
+      var h = hex.trim().replaceAll('#', '');
+      if (h.toLowerCase().startsWith('0x')) h = h.substring(2);
+
+      if (h.length == 3) {
+        h = h.split('').map((c) => '$c$c').join(); // RGB → RRGGBB
+      }
+      if (h.length == 6) h = 'FF$h';
+      if (h.length != 8) return fallback;
+
+      return Color(int.parse(h, radix: 16));
     } catch (_) {
       return fallback;
     }

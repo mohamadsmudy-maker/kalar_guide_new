@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../config/app_colors.dart';
-import '../../services/auth_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../stores/store_details_dialog.dart';
 
-/// 📰 شاشەی وردەکاری هەواڵ
+/// 📰 وردەکاری هەواڵ — ULTRA PRO MAX V2
 class NewsDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> newsItem;
 
@@ -16,52 +17,84 @@ class NewsDetailsScreen extends StatefulWidget {
 }
 
 class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
+  // ═══════════════════════════════════════════════════════════
+  // 📊 State
+  // ═══════════════════════════════════════════════════════════
   late int likes;
+  late int views;
   bool isLiked = false;
   bool isFavorite = false;
   bool _loading = true;
   int _currentImageIndex = 0;
   Map<String, dynamic>? _storeInfo;
 
-  // ✅ Flag ی نوێ بۆ ڕێگریکردن لە Race Condition
   bool _isLiking = false;
   bool _isFavoriting = false;
 
+  String? get _newsId => widget.newsItem['id']?.toString();
+
+  // ═══════════════════════════════════════════════════════════
+  // 🔧 Lifecycle
+  // ═══════════════════════════════════════════════════════════
   @override
   void initState() {
     super.initState();
-    likes = widget.newsItem['likes'] ?? 0;
+    likes = (widget.newsItem['likes'] as num?)?.toInt() ?? 0;
+    views = (widget.newsItem['views'] as num?)?.toInt() ?? 0;
     _checkUserStatus();
     _fetchStoreInfo();
+    _incrementViews();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Stats
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _incrementViews() async {
+    final newsId = _newsId;
+    if (newsId == null || newsId.isEmpty) return;
+
+    try {
+      await Supabase.instance.client.rpc(
+        'increment_views',
+        params: {'news_id': newsId},
+      );
+      if (!mounted) return;
+      setState(() => views++);
+    } catch (e) {
+      debugPrint('❌ View increment error: $e');
+    }
   }
 
   Future<void> _fetchStoreInfo() async {
-    try {
-      final storeId = widget.newsItem['store_id'];
-      if (storeId != null) {
-        final res = await Supabase.instance.client
-            .from('dukan')
-            .select('id, name, logo, image, address, type')
-            .eq('id', storeId)
-            .maybeSingle();
+    final storeId = widget.newsItem['store_id'];
+    if (storeId == null) return;
 
-        if (res != null && mounted) {
-          setState(() => _storeInfo = res);
-        }
+    try {
+      final res = await Supabase.instance.client
+          .from('dukan')
+          .select('id, name, logo, image, address, type')
+          .eq('id', storeId)
+          .maybeSingle();
+
+      if (res != null && mounted) {
+        setState(() => _storeInfo = res);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('❌ Store info error: $e');
+    }
   }
 
   Future<void> _checkUserStatus() async {
-    final user = AuthSessionManager.currentUser;
-    if (user == null || user['id'] == null) {
+    final supabaseUser = Supabase.instance.client.auth.currentUser;
+    final newsId = _newsId;
+
+    if (supabaseUser == null || newsId == null || newsId.isEmpty) {
       if (mounted) setState(() => _loading = false);
       return;
     }
 
     try {
-      String userId = user['id'].toString();
-      int newsId = widget.newsItem['id'];
+      final userId = supabaseUser.id;
 
       final results = await Future.wait([
         Supabase.instance.client
@@ -78,47 +111,43 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
             .maybeSingle(),
       ]);
 
-      if (mounted) {
-        setState(() {
-          isLiked = results[0] != null;
-          isFavorite = results[1] != null;
-          _loading = false;
-        });
-      }
-    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        isLiked = results[0] != null;
+        isFavorite = results[1] != null;
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ User status error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  // ✅ چاککراو — بێ Race Condition
+  // ═══════════════════════════════════════════════════════════
+  // ❤️ Like / Favorite
+  // ═══════════════════════════════════════════════════════════
   Future<void> _toggleLike() async {
     if (_isLiking) return;
 
-    final user = AuthSessionManager.currentUser;
-    if (user == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("تکایە سەرەتا بچۆ ژوورەوە ⚠"),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
+    final supabaseUser = Supabase.instance.client.auth.currentUser;
+    if (supabaseUser == null) {
+      _showLoginRequired();
       return;
     }
 
+    final newsId = _newsId;
+    if (newsId == null || newsId.isEmpty) return;
+
+    HapticFeedback.lightImpact();
     setState(() => _isLiking = true);
 
-    String userId = user['id'].toString();
-    int newsId = widget.newsItem['id'];
-
-    // ✅ Optimistic Update
+    final userId = supabaseUser.id;
     final wasLiked = isLiked;
     final oldLikes = likes;
 
     setState(() {
       if (wasLiked) {
-        likes = (likes > 0) ? likes - 1 : 0;
+        likes = likes > 0 ? likes - 1 : 0;
         isLiked = false;
       } else {
         likes++;
@@ -133,53 +162,48 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
             .delete()
             .eq('user_id', userId)
             .eq('news_id', newsId);
+        await Supabase.instance.client.rpc(
+          'decrement_likes',
+          params: {'news_id': newsId},
+        );
       } else {
-        await Supabase.instance.client.from('news_likes').insert({
-          'user_id': userId,
-          'news_id': newsId,
-        });
+        await Supabase.instance.client
+            .from('news_likes')
+            .insert({'user_id': userId, 'news_id': newsId});
+        await Supabase.instance.client.rpc(
+          'increment_likes',
+          params: {'news_id': newsId},
+        );
       }
-
-      await Supabase.instance.client
-          .from('news')
-          .update({'likes': likes})
-          .eq('id', newsId);
     } catch (e) {
       debugPrint('❌ Like error: $e');
-      if (mounted) {
-        setState(() {
-          isLiked = wasLiked;
-          likes = oldLikes;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        isLiked = wasLiked;
+        likes = oldLikes;
+      });
+      _showError('هەڵە لە لایککردن');
     } finally {
       if (mounted) setState(() => _isLiking = false);
     }
   }
 
-  // ✅ چاککراو — بێ Race Condition
   Future<void> _toggleFavorite() async {
     if (_isFavoriting) return;
 
-    final user = AuthSessionManager.currentUser;
-    if (user == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("تکایە سەرەتا بچۆ ژوورەوە ⚠"),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
+    final supabaseUser = Supabase.instance.client.auth.currentUser;
+    if (supabaseUser == null) {
+      _showLoginRequired();
       return;
     }
 
+    final newsId = _newsId;
+    if (newsId == null || newsId.isEmpty) return;
+
+    HapticFeedback.lightImpact();
     setState(() => _isFavoriting = true);
 
-    String userId = user['id'].toString();
-    int newsId = widget.newsItem['id'];
-
-    // ✅ Optimistic Update
+    final userId = supabaseUser.id;
     final wasFavorite = isFavorite;
     setState(() => isFavorite = !isFavorite);
 
@@ -191,18 +215,91 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
             .eq('user_id', userId)
             .eq('news_id', newsId);
       } else {
-        await Supabase.instance.client.from('news_favorites').insert({
-          'user_id': userId,
-          'news_id': newsId,
-        });
+        await Supabase.instance.client
+            .from('news_favorites')
+            .insert({'user_id': userId, 'news_id': newsId});
       }
     } catch (e) {
       debugPrint('❌ Favorite error: $e');
-      if (mounted) {
-        setState(() => isFavorite = wasFavorite);
-      }
+      if (!mounted) return;
+      setState(() => isFavorite = wasFavorite);
+      _showError('هەڵە لە دڵخوازکردن');
     } finally {
       if (mounted) setState(() => _isFavoriting = false);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 💬 SnackBar helpers
+  // ═══════════════════════════════════════════════════════════
+  void _showLoginRequired() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text(
+            'تکایە سەرەتا بچۆ ژوورەوە ⚠',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: AppColors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: AppColors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Helpers
+  // ═══════════════════════════════════════════════════════════
+  Color _getTypeColor(String type) {
+    switch (type) {
+      case 'ئاگاداری':
+        return AppColors.orange;
+      case 'هۆشداری':
+        return AppColors.red;
+      case 'ڕووداو':
+        return AppColors.purple;
+      case 'خزمەتگوزاری':
+        return AppColors.primary;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  IconData _getTypeIcon(String type) {
+    switch (type) {
+      case 'ئاگاداری':
+        return Icons.info_rounded;
+      case 'هۆشداری':
+        return Icons.warning_rounded;
+      case 'ڕووداو':
+        return Icons.event_rounded;
+      case 'خزمەتگوزاری':
+        return Icons.build_rounded;
+      default:
+        return Icons.article_rounded;
     }
   }
 
@@ -230,30 +327,43 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     return [];
   }
 
+  String _formatDate(dynamic raw) {
+    if (raw == null) return 'ئەمڕۆ';
+    final s = raw.toString();
+    if (s.length >= 10) return s.substring(0, 10);
+    return s;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏗️ Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    String title = widget.newsItem['title'] ?? '';
-    String description = widget.newsItem['description'] ?? '';
-    String date = widget.newsItem['created_at'] != null
-        ? widget.newsItem['created_at'].toString().substring(0, 10)
-        : 'ئەمڕۆ';
-    int views = widget.newsItem['views'] ?? 0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.surface;
 
-    List<String> imagesList = _extractAllImages(
+    final title = widget.newsItem['title']?.toString() ?? '';
+    final description = widget.newsItem['description']?.toString() ?? '';
+    final newsType =
+        widget.newsItem['news_type']?.toString() ?? 'هەواڵ';
+    final date = _formatDate(widget.newsItem['created_at']);
+    final imagesList = _extractAllImages(
       widget.newsItem['images'] ?? widget.newsItem['img'],
     );
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: bgColor,
         appBar: AppBar(
           title: const Text(
-            "وردەکاری هەواڵ",
+            'وردەکاری هەواڵ',
             style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           ),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
+          backgroundColor:
+          isDark ? AppColors.darkCard : AppColors.surface,
+          foregroundColor:
+          isDark ? Colors.white : AppColors.textPrimary,
           elevation: 0,
           centerTitle: true,
         ),
@@ -262,223 +372,164 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🏛️ بەشی شوێن
-              if (_storeInfo != null)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.grey.shade200,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: InkWell(
-                      onTap: () => StoreDetailsDialog.show(
-                        context,
-                        _storeInfo!,
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.primary
-                                    .withValues(alpha: 0.3),
-                                width: 2,
-                              ),
-                            ),
-                            child: ClipOval(
-                              child: (() {
-                                String? profileImg = _storeInfo!['logo'];
-                                if (profileImg == null ||
-                                    profileImg.toString().isEmpty) {
-                                  profileImg = _storeInfo!['image'];
-                                }
-                                return profileImg != null &&
-                                    profileImg.toString().isNotEmpty
-                                    ? OptimizedNetworkImage(
-                                  imageUrl: profileImg,
-                                  width: 56,
-                                  height: 56,
-                                  fit: BoxFit.cover,
-                                )
-                                    : Container(
-                                  color: AppColors.primary
-                                      .withValues(alpha: 0.1),
-                                  child: const Icon(
-                                    Icons.storefront,
-                                    color: AppColors.primary,
-                                    size: 28,
-                                  ),
-                                );
-                              }()),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        _storeInfo!['name'] ?? 'شوێن',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 16,
-                                          color: Color(0xFF1A1A2E),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    const Icon(
-                                      Icons.verified_rounded,
-                                      color: AppColors.primary,
-                                      size: 18,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.location_on_rounded,
-                                      size: 12,
-                                      color: Colors.grey,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Expanded(
-                                      child: Text(
-                                        _storeInfo!['address'] ?? 'کەلار',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(
-                            Icons.chevron_left_rounded,
-                            color: Colors.grey,
-                            size: 24,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              // 🏪 Store Info
+              if (_storeInfo != null) _buildStoreCard(isDark),
 
-              // 📰 ناونیشان
+              // 🎯 Type Badge + Title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 22,
-                    color: Color(0xFF1A1A2E),
-                    height: 1.3,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTypeBadge(newsType),
+                    const SizedBox(height: 10),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 22,
+                        color: isDark
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
 
-              // 📊 ئامارەکان
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
+              // 📊 Stats Row
+              _buildStatsRow(isDark, date),
+
+              const SizedBox(height: 16),
+
+              // 🖼️ Images
+              if (imagesList.isNotEmpty) ...[
+                _buildImageCarousel(imagesList),
+                const SizedBox(height: 20),
+              ],
+
+              // 📄 Description
+              _buildDescription(description, isDark),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏪 Store Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildStoreCard(bool isDark) {
+    final store = _storeInfo!;
+    String? profileImg = store['logo']?.toString();
+    if (profileImg == null || profileImg.isEmpty) {
+      profileImg = store['image']?.toString();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Material(
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: () => StoreDetailsDialog.show(context, store),
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppColors.border,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(14),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        date,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w700,
-                        ),
+                  child: ClipOval(
+                    child: (profileImg != null && profileImg.isNotEmpty)
+                        ? OptimizedNetworkImage(
+                      imageUrl: profileImg,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                    )
+                        : Container(
+                      color: AppColors.primarySoft,
+                      child: const Icon(
+                        Icons.storefront,
+                        color: AppColors.primary,
+                        size: 28,
                       ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
                         children: [
-                          _buildStatItem(
-                            icon: Icons.visibility_rounded,
-                            value: "$views",
-                            color: Colors.grey.shade700,
-                          ),
-                          const SizedBox(width: 16),
-                          _loading
-                              ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                              : GestureDetector(
-                            onTap: _isLiking ? null : _toggleLike,
-                            child: _buildStatItem(
-                              icon: isLiked
-                                  ? Icons.thumb_up_rounded
-                                  : Icons.thumb_up_off_alt_rounded,
-                              value: "$likes",
-                              color: isLiked
-                                  ? AppColors.primary
-                                  : Colors.grey.shade700,
+                          Flexible(
+                            child: Text(
+                              store['name']?.toString() ?? 'شوێن',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          _loading
-                              ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                              : GestureDetector(
-                            onTap:
-                            _isFavoriting ? null : _toggleFavorite,
-                            child: Icon(
-                              isFavorite
-                                  ? Icons.favorite_rounded
-                                  : Icons.favorite_border_rounded,
-                              size: 20,
-                              color: isFavorite
-                                  ? Colors.redAccent
-                                  : Colors.grey.shade700,
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.verified_rounded,
+                            color: AppColors.primary,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: 12,
+                            color: isDark
+                                ? Colors.white54
+                                : AppColors.textTertiary,
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              store['address']?.toString() ?? 'کەلار',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark
+                                    ? Colors.white54
+                                    : AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -486,103 +537,126 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // 🖼️ وێنەکان
-              if (imagesList.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Stack(
-                    alignment: Alignment.topRight,
-                    children: [
-                      SizedBox(
-                        height: 250,
-                        child: PageView.builder(
-                          itemCount: imagesList.length,
-                          onPageChanged: (index) {
-                            setState(() => _currentImageIndex = index);
-                          },
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 2,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: OptimizedNetworkImage(
-                                  imageUrl: imagesList[index],
-                                  width: double.infinity,
-                                  height: 250,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      if (imagesList.length > 1)
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.7),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.photo_library_rounded,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  "${_currentImageIndex + 1} / ${imagesList.length}",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                Icon(
+                  Icons.chevron_left_rounded,
+                  color: isDark ? Colors.white54 : Colors.grey,
+                  size: 24,
                 ),
-              const SizedBox(height: 20),
-
-              // 📄 وەسف
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.black87,
-                      height: 1.7,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 Type Badge
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildTypeBadge(String newsType) {
+    final color = _getTypeColor(newsType);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_getTypeIcon(newsType), color: color, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            newsType,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Stats Row
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildStatsRow(bool isDark, String date) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : AppColors.backgroundGrey,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              date,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white54 : AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Row(
+              children: [
+                _buildStatItem(
+                  icon: Icons.visibility_rounded,
+                  value: '$views',
+                  color: isDark
+                      ? Colors.white70
+                      : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 16),
+                _loading
+                    ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : GestureDetector(
+                  onTap: _isLiking ? null : _toggleLike,
+                  child: _buildStatItem(
+                    icon: isLiked
+                        ? Icons.thumb_up_rounded
+                        : Icons.thumb_up_off_alt_rounded,
+                    value: '$likes',
+                    color: isLiked
+                        ? AppColors.primary
+                        : (isDark
+                        ? Colors.white70
+                        : AppColors.textSecondary),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                _loading
+                    ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : GestureDetector(
+                  onTap: _isFavoriting ? null : _toggleFavorite,
+                  child: Icon(
+                    isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    size: 20,
+                    color: isFavorite
+                        ? AppColors.pink
+                        : (isDark
+                        ? Colors.white70
+                        : AppColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -606,6 +680,162 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🖼️ Image Carousel
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildImageCarousel(List<String> imagesList) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          SizedBox(
+            height: 250,
+            child: PageView.builder(
+              itemCount: imagesList.length,
+              onPageChanged: (index) {
+                setState(() => _currentImageIndex = index);
+              },
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () => _openFullScreen(imagesList[index], index),
+                  child: Hero(
+                    tag: 'news_img_$index',
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: OptimizedNetworkImage(
+                          imageUrl: imagesList[index],
+                          width: double.infinity,
+                          height: 250,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (imagesList.length > 1)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.photo_library_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_currentImageIndex + 1} / ${imagesList.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _openFullScreen(String imageUrl, int index) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (_, __, ___) =>
+            _buildFullScreenImage(imageUrl, index),
+      ),
+    );
+  }
+
+  Widget _buildFullScreenImage(String imageUrl, int index) {
+    return Scaffold(
+      backgroundColor: Colors.black.withValues(alpha: 0.9),
+      body: Stack(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Center(
+              child: Hero(
+                tag: 'news_img_$index',
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  boundaryMargin: const EdgeInsets.all(20),
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: OptimizedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 40,
+            right: 20,
+            child: IconButton(
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📄 Description
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildDescription(String description, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color:
+          isDark ? AppColors.darkCard : AppColors.backgroundGrey,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : AppColors.border,
+          ),
+        ),
+        child: Text(
+          description,
+          style: TextStyle(
+            fontSize: 15,
+            color: isDark ? Colors.white70 : AppColors.textPrimary,
+            height: 1.7,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,35 +1,35 @@
-// home_screen.dart
+// lib/screens/home/home_screen.dart
+import 'dart:async';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'
-    hide ChangeNotifierProvider;
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../neighborhoods/neighborhoods_screen.dart';
-// ═══════════════════════════════════════════════════════════
-// 📦 Imports
-// ═══════════════════════════════════════════════════════════
+
 import 'package:kalar_guide_new/config/app_colors.dart';
 import 'package:kalar_guide_new/config/settings_provider.dart';
 import 'package:kalar_guide_new/config/translations.dart';
 import 'package:kalar_guide_new/providers/news_providers.dart';
 import 'package:kalar_guide_new/services/analytics_service.dart';
-import 'package:kalar_guide_new/widgets/common/optimized_network_image.dart';
 import 'package:kalar_guide_new/widgets/carousels/news_carousel.dart';
 import 'package:kalar_guide_new/screens/complaints/complaint_instruction_dialog.dart';
-import 'package:kalar_guide_new/screens/emergency/emergency_main_screen.dart';
-import 'package:kalar_guide_new/screens/events/events_screen.dart';
 import 'package:kalar_guide_new/screens/neighborhoods/neighborhoods_screen.dart';
 import 'package:kalar_guide_new/screens/map_screen.dart';
 import 'package:kalar_guide_new/screens/news/news_details.dart';
 import 'package:kalar_guide_new/screens/news/all_news_screen.dart';
+import 'package:kalar_guide_new/screens/gallery/gallery_screen.dart';
 
-/// 🏠 شاشەی سەرەکی
+const double _kBackToTopOffset = 600;
+const int _kCarouselCount = 5;
+const int _kListCount = 10;
+const int _kPrecacheCount = 3;
+
 class HomeScreen extends ConsumerStatefulWidget {
   final VoidCallback? onMenuTap;
+  final VoidCallback? onSearchTap;
 
-  const HomeScreen({super.key, this.onMenuTap});
+  const HomeScreen({super.key, this.onMenuTap, this.onSearchTap});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -37,18 +37,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with AutomaticKeepAliveClientMixin {
-  late Future<List<Map<String, dynamic>>> _categoriesFuture;
+  final ScrollController _scroll = ScrollController();
+  final ValueNotifier<bool> _showTop = ValueNotifier<bool>(false);
 
-  final Map<String, bool> _imageCacheStatus = {};
-
-  static const Map<String, String> _categoryTranslationMap = {
-    'تەندروستی': 'cat_health',
-    'پەروەردە': 'cat_education',
-    'خوێندنی باڵا': 'cat_higher_ed',
-    'بەڕێوەبەرایەتی': 'cat_government',
-    'خواردن': 'cat_food',
-    'بازاڕگەری': 'cat_shopping',
-  };
+  final Set<String> _precached = {};
 
   @override
   bool get wantKeepAlive => true;
@@ -56,227 +48,169 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _categoriesFuture = _fetchCategories();
-
+    _scroll.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _precacheImages();
+      if (!mounted) return;
+      _precacheImages(ref.read(newsProvider).news);
     });
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🖼️ Precaching
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _precacheImages() async {
-    try {
-      final newsState = ref.read(newsProvider);
+  @override
+  void dispose() {
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
+    _showTop.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final show = _scroll.hasClients && _scroll.offset > _kBackToTopOffset;
+    if (show != _showTop.value) _showTop.value = show;
+  }
+
+  /// وێنەی یەکەم هەواڵەکان پێشوەختە دادەبەزێنێت بۆ ئەوەی کارۆسێلەکە یەکسەر دەربکەوێت.
+  Future<void> _precacheImages(Iterable<dynamic> items) async {
+    for (final item in items.take(_kPrecacheCount)) {
       if (!mounted) return;
-
-      for (final item in newsState.news.take(3)) {
-        if (!mounted) return;
-        final img = item.primaryImage ?? '';
-        if (img.isNotEmpty && !_imageCacheStatus.containsKey(img)) {
-          try {
-            await precacheImage(
-              CachedNetworkImageProvider(img),
-              context,
-            );
-            _imageCacheStatus[img] = true;
-          } catch (e) {
-            _imageCacheStatus[img] = false;
-          }
-        }
+      String img = '';
+      try {
+        img = ((item as dynamic).primaryImage as String?)?.trim() ?? '';
+        if (img.isEmpty || !_precached.add(img)) continue;
+        await precacheImage(CachedNetworkImageProvider(img), context);
+      } catch (_) {
+        // ✅ چاککرا: پێشتر `item` لادەبرا نەک `img` — بۆیە هەرگیز دووبارە هەوڵی نەدەدایەوە
+        _precached.remove(img);
       }
-    } catch (e) {
-      debugPrint('⚠️ _precacheImages error: $e');
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔄 Refresh
-  // ═══════════════════════════════════════════════════════════
   Future<void> _onRefresh() async {
-    await ref.read(newsProvider.notifier).refresh();
-    if (mounted) {
-      setState(() {
-        _categoriesFuture = _fetchCategories();
-      });
+    HapticFeedback.mediumImpact();
+    await ref.read(newsProvider.notifier).refresh().catchError((e) {
+      debugPrint('⚠️ news refresh error: $e');
+    });
+  }
+
+  void _openSearch() {
+    HapticFeedback.selectionClick();
+    final cb = widget.onSearchTap;
+    if (cb != null) {
+      cb();
+    } else {
+      Navigator.pushNamed(context, '/search');
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Build
-  // ═══════════════════════════════════════════════════════════
+  void _openScreen(Widget screen, {String? analyticsName}) {
+    if (!mounted) return;
+    if (analyticsName != null) AnalyticsService.logScreenView(analyticsName);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+  }
+
+  void _openNewsDetails(Map<String, dynamic> news) {
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => NewsDetailsScreen(newsItem: news)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lang = context.select<SettingsProvider, String>((s) => s.languageId);
+    String t(String key, String fallback) {
+      final r = AppTranslations.t(key, lang);
+      return r == key ? fallback : r;
+    }
 
-    final settings = context.watch<SettingsProvider>();
-    final lang = settings.languageId;
+    final news = ref.watch(newsProvider.select((s) => s.news));
+    final isLoading = ref.watch(newsProvider.select((s) => s.isLoading)) == true;
 
-    final newsState = ref.watch(newsProvider);
+    ref.listen(newsProvider.select((s) => s.news), (prev, next) {
+      final had = prev?.isNotEmpty ?? false;
+      if (!had && next.isNotEmpty) _precacheImages(next);
+    });
+
+    final iconColor = isDark ? Colors.white : AppColors.primary;
+    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final surfaceColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
+    final carouselItems = news.take(_kCarouselCount).map((n) => n.toJson()).toList();
+    final List<dynamic> otherNews = news.length > _kCarouselCount
+        ? news.skip(_kCarouselCount).take(_kListCount).toList()
+        : const <dynamic>[];
+
+    // ✅ چاککرا: پێشتر لە کاتی بارکردندا ئەم بەشە شاردرابووەوە، بۆیە skeleton هەرگیز دەرنەدەکەوت
+    final showOtherSection = news.isNotEmpty || isLoading;
 
     return Scaffold(
-      backgroundColor:
-      isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
+      backgroundColor: bgColor,
+      floatingActionButton: _buildBackToTop(t),
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: _onRefresh,
         child: CustomScrollView(
+          controller: _scroll,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverAppBar(
-              floating: true,
-              pinned: true,
-              backgroundColor:
-              isDark ? const Color(0xFF1A1A22) : Colors.white,
-              elevation: 0,
-              leading: Builder(
-                builder: (ctx) => IconButton(
-                  icon: Icon(
-                    Icons.menu_rounded,
-                    color: isDark ? Colors.white : AppColors.primary,
-                  ),
-                  onPressed: () {
-                    if (widget.onMenuTap != null) {
-                      widget.onMenuTap!();
-                    } else {
-                      Scaffold.of(ctx).openDrawer();
-                    }
-                  },
-                ),
+            _buildAppBar(isDark, surfaceColor, iconColor, t),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: news.isNotEmpty
+                    ? NewsCarousel(newsList: carouselItems, onTap: _openNewsDetails)
+                    : isLoading
+                        ? const _CarouselSkeleton()
+                        : _NoNewsCard(
+                            isDark: isDark,
+                            title: t('no_news', 'هیچ هەواڵێک نییە'),
+                            subtitle: t('pull_to_refresh', 'بۆ نوێکردنەوە ڕایبکێشە خوارەوە'),
+                            retryLabel: t('retry', 'دووبارە'),
+                            onRetry: _onRefresh,
+                          ),
               ),
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
+            ),
+
+            // 📂 خزمەتگوزارییەکانی تر
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.newsGradient,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.explore_rounded,
-                      color: Colors.white,
-                      size: 18,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                    child: _SectionHeader(
+                      title: t('other_services', 'خزمەتگوزارییەکانی تر'),
+                      moreLabel: '',
+                      icon: Icons.apps_rounded,
+                      color: AppColors.secondary,
+                      isDark: isDark,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppTranslations.t('app_name', lang) == 'app_name'
-                        ? 'ڕێبەری کەلار'
-                        : AppTranslations.t('app_name', lang),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.white : AppColors.primary,
-                    ),
-                  ),
+                  _buildQuickActions(isDark, t),
                 ],
               ),
-              actions: [
-                IconButton(
-                  icon: Icon(
-                    Icons.search_rounded,
-                    color: isDark ? Colors.white : AppColors.primary,
+            ),
+
+            // 📰 هەواڵەکانی تر
+            if (showOtherSection) ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                  child: _SectionHeader(
+                    title: t('more_news', 'هەواڵەکانی تر'),
+                    moreLabel: t('see_all', 'بینینی هەموو'),
+                    icon: Icons.newspaper_rounded,
+                    color: Colors.blue,
+                    isDark: isDark,
+                    onMoreTap: () => _openScreen(const AllNewsScreen()),
                   ),
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/search');
-                  },
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: newsState.news.isEmpty
-                    ? const SizedBox.shrink()
-                    : NewsCarousel(
-                  newsList: newsState.news
-                      .take(5)
-                      .map((n) => n.toJson())
-                      .toList(),
-                  onTap: (news) => _openNewsDetails(news),
                 ),
               ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                child: _buildEmergencyButton(),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: _buildEventsButton(),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: _buildNeighborhoodsButton(),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: _buildMapButton(),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: _buildComplaintButton(lang),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-                child: _buildSectionHeader(
-                  title: 'بەشە سەرەکییەکان',
-                  icon: Icons.grid_view_rounded,
-                  iconColor: AppColors.primary,
-                  isDark: isDark,
-                  onMoreTap: () {
-                    Navigator.pushNamed(context, '/category');
-                  },
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _buildCategoriesSection(isDark, lang),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-                child: _buildSectionHeader(
-                  title: 'هەواڵەکانی تر',
-                  icon: Icons.newspaper_rounded,
-                  iconColor: Colors.blue,
-                  isDark: isDark,
-                  onMoreTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AllNewsScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            _buildNewsListSliver(isDark, lang),
+              _buildNewsListSliver(news, otherNews, isLoading, isDark, t, lang),
+            ],
 
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
@@ -285,385 +219,340 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🆘 دوگمەی فریاکەوتن
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildEmergencyButton() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        AnalyticsService.logScreenView('emergency');
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const EmergencyScreen(),
+  Widget _buildAppBar(bool isDark, Color surfaceColor, Color iconColor, String Function(String, String) t) {
+    return SliverAppBar(
+      floating: true,
+      pinned: true,
+      backgroundColor: surfaceColor,
+      elevation: 0,
+      scrolledUnderElevation: 3,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: isDark ? Colors.black.withValues(alpha: 0.35) : AppColors.primary.withValues(alpha: 0.08),
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          tooltip: t('menu', 'مێنیو'),
+          icon: Icon(Icons.menu_rounded, color: iconColor),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            final cb = widget.onMenuTap;
+            if (cb != null) {
+              cb();
+            } else {
+              Scaffold.of(ctx).openDrawer();
+            }
+          },
+        ),
+      ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              gradient: AppColors.newsGradient,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.explore_rounded, color: Colors.white, size: 18),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              t('app_name', 'ڕێبەری کەلار'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: iconColor),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          tooltip: t('search', 'گەڕان'),
+          icon: Icon(Icons.search_rounded, color: iconColor),
+          onPressed: _openSearch,
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildBackToTop(String Function(String, String) t) {
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return ValueListenableBuilder<bool>(
+      valueListenable: _showTop,
+      builder: (context, show, _) {
+        return IgnorePointer(
+          ignoring: !show,
+          child: AnimatedScale(
+          scale: show ? 1 : 0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 70 + bottom),
+            child: FloatingActionButton.small(
+              heroTag: 'home_back_to_top',
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              tooltip: t('back_to_top', 'سەرەوە'),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                _scroll.animateTo(0, duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
+              },
+              child: const Icon(Icons.keyboard_arrow_up_rounded),
+            ),
+          ),
           ),
         );
       },
-      child: Container(
-        height: 64,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFE53935), Color(0xFFFF7043)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFE53935).withValues(alpha: 0.4),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-              spreadRadius: -4,
-            ),
-          ],
-        ),
+    );
+  }
+
+  Widget _buildQuickActions(bool isDark, String Function(String, String) t) {
+    final actions = <_QuickAction>[
+      _QuickAction(
+        title: t('neighborhoods', 'گەڕەکان'),
+        icon: Icons.location_city_rounded,
+        color: AppColors.primary,
+        onTap: () => _openScreen(const NeighborhoodsScreen(), analyticsName: 'neighborhoods'),
+      ),
+      _QuickAction(
+        title: t('map', 'نەخشە'),
+        icon: Icons.map_rounded,
+        color: AppColors.green,
+        onTap: () => _openScreen(const MapScreen(), analyticsName: 'map'),
+      ),
+      _QuickAction(
+        title: t('gallery', 'گەلەری'),
+        icon: Icons.photo_library_rounded,
+        color: AppColors.orange,
+        onTap: () => _openScreen(const GalleryScreen(), analyticsName: 'gallery'),
+      ),
+      _QuickAction(
+        title: t('send_complaint', 'ناردنی سکاڵا'),
+        icon: Icons.campaign_rounded,
+        color: AppColors.pink,
+        onTap: () {
+          if (!mounted) return;
+          ComplaintInstructionDialog.show(context);
+        },
+      ),
+    ];
+
+    // ✅ هەر چوار دوگمە بەبێ سکڕۆڵ لە هەموو قەبارەیەکی شاشەدا جێدەبنەوە
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: IntrinsicHeight(
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.emergency_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '🚑 ژمارەکانی فریاکەوتن',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'پۆلیس • ئاگرکوژێنەوە • ئەمبولانس',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 14,
-            ),
+            for (var i = 0; i < actions.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(child: _QuickTile(action: actions[i], isDark: isDark)),
+            ],
           ],
         ),
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📅 دوگمەی ڕووداوەکان
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildEventsButton() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const EventsScreen(),
-          ),
-        );
-      },
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF6C5CE7).withValues(alpha: 0.4),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-              spreadRadius: -4,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                shape: BoxShape.circle,
+  Widget _buildNewsListSliver(
+      List<dynamic> allNews,
+      List<dynamic> list,
+      bool isLoading,
+      bool isDark,
+      String Function(String, String) t,
+      String lang,
+      ) {
+    if (allNews.isEmpty && isLoading) {
+      return SliverToBoxAdapter(child: _NewsSkeleton(isDark: isDark));
+    }
+
+    if (list.isEmpty && !isLoading) {
+      return SliverToBoxAdapter(
+        child: _EmptyNews(isDark: isDark, label: t('no_more_news', 'هیچ هەواڵێکی تر نییە')),
+      );
+    }
+
+    final hasMore = allNews.isNotEmpty;
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+            (context, index) {
+          if (index == list.length) {
+            if (!hasMore) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _ViewAllButton(
+                label: t('see_all_news', 'بینینی هەموو هەواڵەکان'),
+                icon: _forwardIcon(context),
+                onTap: () => _openScreen(const AllNewsScreen()),
               ),
-              child: const Icon(
-                Icons.event_rounded,
-                color: Colors.white,
-                size: 20,
+            );
+          }
+
+          final raw = list[index];
+          Map<String, dynamic>? map;
+          if (raw is Map<String, dynamic>) {
+            map = raw;
+          } else {
+            try {
+              map = (raw as dynamic).toJson() as Map<String, dynamic>;
+            } catch (e) {
+              debugPrint('⚠️ news item conversion error: $e');
+            }
+          }
+          if (map == null) return const SizedBox.shrink();
+
+          final item = map;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: RepaintBoundary(
+              child: _NewsTile(
+                news: item,
+                isDark: isDark,
+                lang: lang,
+                forwardIcon: _forwardIcon(context, small: true),
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  _openNewsDetails(item);
+                },
               ),
             ),
-            const SizedBox(width: 10),
-            const Text(
-              '📅 ڕووداوەکانی کەلار',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 14,
-            ),
-          ],
-        ),
+          );
+        },
+        childCount: list.length + (hasMore ? 1 : 0),
       ),
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 🏘️ دوگمەی گەڕەکەکان (لیست)
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildNeighborhoodsButton() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const NeighborhoodsScreen(),
-          ),
-        );
-      },
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF1E88E5), Color(0xFF00BCD4)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1E88E5).withValues(alpha: 0.4),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-              spreadRadius: -4,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.location_city_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              '🏘️ گەڕەکانی کەلار',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
+// ═══════════════════════════════════════════════════════════
+// 🔧 Free helpers
+// ═══════════════════════════════════════════════════════════
+IconData _forwardIcon(BuildContext context, {bool small = false}) {
+  final rtl = Directionality.of(context) == TextDirection.rtl;
+  if (small) return rtl ? Icons.arrow_back_ios_new_rounded : Icons.arrow_forward_ios_rounded;
+  return rtl ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded;
+}
+
+class _Fmt {
+  const _Fmt._();
+
+  static String digits(String input, [String lang = 'ku']) {
+    if (lang == 'en') return input;
+    const en = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const ar = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    for (int i = 0; i < en.length; i++) {
+      input = input.replaceAll(en[i], ar[i]);
+    }
+    return input;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🗺️ دوگمەی نەخشەی گەڕەکان
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildMapButton() {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const MapScreen(),
-          ),
-        );
-      },
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF10B981), Color(0xFF00BCD4)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.4),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-              spreadRadius: -4,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.map_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              '🗺️ نەخشەی گەڕەکان',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
+  static String compact(int n, [String lang = 'ku']) {
+    String trim(double v) {
+      final s = v.toStringAsFixed(1);
+      return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+    }
+
+    final String out;
+    if (n >= 1000000) {
+      out = lang == 'en' ? '${trim(n / 1000000)}M' : '${trim(n / 1000000)} ${lang == 'ar' ? 'مليون' : 'ملیۆن'}';
+    } else if (n >= 1000) {
+      out = lang == 'en' ? '${trim(n / 1000)}K' : '${trim(n / 1000)} ${lang == 'ar' ? 'ألف' : 'هەزار'}';
+    } else {
+      out = '$n';
+    }
+    return digits(out, lang);
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📢 دوگمەی سکاڵا
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildComplaintButton(String lang) {
-    return GestureDetector(
-      onTap: () => ComplaintInstructionDialog.show(context),
-      child: Container(
-        height: 58,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF8B5CF6), Color(0xFFE91E63)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.campaign_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'ناردنی سکاڵا',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
+  static const Map<String, List<String>> _ago = {
+    //        now,                  min,      hour,     day,     month,    year,    suffix/prefix
+    'ku': ['چەند چرکەیەک پێش ئێستا', 'دەقیقە', 'سەعات', 'ڕۆژ', 'مانگ', 'ساڵ', 'لەمەوبەر'],
+    'ar': ['منذ لحظات', 'دقيقة', 'ساعة', 'يوم', 'شهر', 'سنة', 'منذ'],
+    'en': ['just now', 'min', 'h', 'd', 'mo', 'y', 'ago'],
+  };
+
+  static String timeAgo(String? dateTimeStr, [String lang = 'ku']) {
+    final w = _ago[lang] ?? _ago['ku']!;
+    if (dateTimeStr == null || dateTimeStr.isEmpty) return w[0];
+    try {
+      var diff = DateTime.now().difference(DateTime.parse(dateTimeStr));
+      if (diff.isNegative) diff = Duration.zero; // کاتی ئامێر لەوانەیە کەمێک پێش بێت
+
+      String fmt(int n, String unit) {
+        final v = digits('$n', lang);
+        if (lang == 'ar') return '${w[6]} $v $unit';
+        if (lang == 'en') return '$v$unit ${w[6]}';
+        return '$v $unit ${w[6]}';
+      }
+
+      if (diff.inSeconds < 60) return w[0];
+      if (diff.inMinutes < 60) return fmt(diff.inMinutes, w[1]);
+      if (diff.inHours < 24) return fmt(diff.inHours, w[2]);
+      if (diff.inDays < 30) return fmt(diff.inDays, w[3]);
+      if (diff.inDays < 365) return fmt(diff.inDays ~/ 30, w[4]);
+      return fmt(diff.inDays ~/ 365, w[5]);
+    } catch (_) {
+      return dateTimeStr.length > 10 ? dateTimeStr.substring(0, 10) : dateTimeStr;
+    }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Section Header
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildSectionHeader({
-    required String title,
-    required IconData icon,
-    required Color iconColor,
-    required bool isDark,
-    VoidCallback? onMoreTap,
-  }) {
+  static String firstImage(dynamic raw) {
+    if (raw == null) return '';
+    if (raw is List) return raw.isEmpty ? '' : raw.first.toString().trim();
+    if (raw is String) {
+      var s = raw.trim();
+      if (s.isEmpty) return '';
+      s = s.replaceAll(RegExp(r'^\[|\]$'), '');
+      s = s.replaceAll('"', '').replaceAll("'", '');
+      if (s.contains(',')) s = s.split(',').first;
+      return s.trim();
+    }
+    return raw.toString().trim();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🧱 Widgets
+// ═══════════════════════════════════════════════════════════
+class _QuickAction {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickAction({required this.title, required this.icon, required this.color, required this.onTap});
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String moreLabel;
+  final IconData icon;
+  final Color color;
+  final bool isDark;
+  final VoidCallback? onMoreTap;
+
+  const _SectionHeader({
+    required this.title,
+    required this.moreLabel,
+    required this.icon,
+    required this.color,
+    required this.isDark,
+    this.onMoreTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                iconColor.withValues(alpha: 0.15),
-                iconColor.withValues(alpha: 0.05),
-              ],
-            ),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(11),
-            border: Border.all(
-              color: iconColor.withValues(alpha: 0.2),
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
-          child: Icon(icon, size: 18, color: iconColor),
+          child: Icon(icon, size: 18, color: color),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -677,421 +566,157 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
         ),
-        if (onMoreTap != null)
-          GestureDetector(
-            onTap: onMoreTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'بینینی هەموو',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: iconColor,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_back_ios_rounded,
-                    size: 10,
-                    color: iconColor,
-                  ),
-                ],
+        if (onMoreTap != null && moreLabel.isNotEmpty)
+          Material(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onMoreTap!();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(moreLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+                    const SizedBox(width: 4),
+                    Icon(_forwardIcon(context, small: true), size: 10, color: color),
+                  ],
+                ),
               ),
             ),
           ),
       ],
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 🗂️ بەشەکان
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildCategoriesSection(bool isDark, String lang) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final cardSize = (screenWidth * 0.19).clamp(64.0, 80.0);
-    final sectionHeight = (screenWidth * 0.31).clamp(105.0, 130.0);
+class _QuickTile extends StatelessWidget {
+  final _QuickAction action;
+  final bool isDark;
 
-    return SizedBox(
-      height: sectionHeight,
-      child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _categoriesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildCategoriesShimmer(isDark, cardSize);
-          }
+  const _QuickTile({required this.action, required this.isDark});
 
-          if (snapshot.hasError) {
-            debugPrint('❌ Categories error: ${snapshot.error}');
-            return Center(
-              child: Text(
-                'هەڵە: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red, fontSize: 11),
-              ),
-            );
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text(
-                "هیچ بەشێک نییە",
-                style: TextStyle(color: Colors.grey),
-              ),
-            );
-          }
-
-          final uniqueMap = <String, Map<String, dynamic>>{};
-          for (var cat in snapshot.data!) {
-            uniqueMap[cat['name']] = cat;
-          }
-          final mainCats = uniqueMap.values.toList();
-
-          return ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: mainCats.length,
-            itemBuilder: (context, index) {
-              final cat = mainCats[index];
-              final catName = cat['name']?.toString() ?? '';
-              final catImage = cat['image']?.toString();
-              final catColor = _getCategoryColor(catName);
-              final displayName = _translateCategory(catName, lang);
-
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(end: 12),
-                child: _buildCategoryItem(
-                  catName: catName,
-                  catImage: catImage,
-                  catColor: catColor,
-                  displayName: displayName,
-                  isDark: isDark,
-                  cardSize: cardSize,
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem({
-    required String catName,
-    required String? catImage,
-    required Color catColor,
-    required String displayName,
-    required bool isDark,
-    required double cardSize,
-  }) {
-    final hasValidImage = catImage != null &&
-        catImage.isNotEmpty &&
-        catImage.startsWith('http');
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/category',
-          arguments: catName,
-        );
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: cardSize,
-            height: cardSize,
+  @override
+  Widget build(BuildContext context) {
+    final a = action;
+    return Semantics(
+      button: true,
+      label: a.title,
+      child: Material(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : a.color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            a.onTap();
+          },
+          excludeFromSemantics: true,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  catColor.withValues(alpha: isDark ? 0.25 : 0.15),
-                  catColor.withValues(alpha: isDark ? 0.10 : 0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: catColor.withValues(alpha: 0.25),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: catColor.withValues(alpha: 0.15),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: a.color.withValues(alpha: 0.12)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(11),
+                  decoration: BoxDecoration(color: a.color.withValues(alpha: 0.15), shape: BoxShape.circle),
+                  child: Icon(a.icon, color: a.color, size: 22),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  a.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(22),
-              child: hasValidImage
-                  ? OptimizedNetworkImage(
-                imageUrl: catImage,
-                width: cardSize,
-                height: cardSize,
-                fit: BoxFit.cover,
-              )
-                  : Icon(
-                _getCategoryIcon(catName),
-                color: catColor,
-                size: cardSize * 0.42,
-              ),
-            ),
           ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: cardSize + 12,
-            child: Text(
-              displayName,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-                color: isDark ? Colors.white : AppColors.textPrimary,
-                height: 1.2,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ViewAllButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ViewAllButton({required this.label, required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
-    );
-  }
-
-  Widget _buildCategoriesShimmer(bool isDark, double cardSize) {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: 4,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsetsDirectional.only(end: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: cardSize,
-                height: cardSize,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1A1A22)
-                      : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(22),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                width: cardSize * 0.75,
-                height: 11,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1A1A22)
-                      : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 📰 لیستی هەواڵ
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildNewsListSliver(bool isDark, String lang) {
-    final newsState = ref.watch(newsProvider);
-
-    if (newsState.isLoading && newsState.news.isEmpty) {
-      return SliverToBoxAdapter(child: _buildNewsShimmer(isDark));
-    }
-
-    if (newsState.news.isEmpty) {
-      return SliverToBoxAdapter(child: _buildEmptyNews(isDark));
-    }
-
-    final allNews = newsState.news;
-
-    List<dynamic> displayList;
-    if (allNews.length <= 5) {
-      displayList = allNews;
-    } else {
-      displayList = allNews.skip(5).take(5).toList();
-      if (displayList.isEmpty) {
-        displayList = allNews.take(5).toList();
-      }
-    }
-
-    if (displayList.isEmpty) {
-      return SliverToBoxAdapter(child: _buildEmptyNews(isDark));
-    }
-
-    final hasMore = allNews.length > displayList.length;
-
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-            (context, index) {
-          if (index == displayList.length) {
-            if (!hasMore) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildViewAllNewsButton(isDark, lang),
-            );
-          }
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildNewsListItem(
-              displayList[index],
-              isDark,
-              lang,
-            ),
-          );
-        },
-        childCount: displayList.length + (hasMore ? 1 : 0),
-      ),
-    );
-  }
-
-  Widget _buildViewAllNewsButton(bool isDark, String lang) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const AllNewsScreen(),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 12),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primary.withValues(alpha: 0.12),
-              AppColors.primary.withValues(alpha: 0.06),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+      child: Material(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            width: 1.5,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.newspaper_rounded, color: AppColors.primary, size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(icon, color: AppColors.primary, size: 18),
+              ],
+            ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.newspaper_rounded,
-              color: AppColors.primary,
-              size: 20,
-            ),
-            SizedBox(width: 10),
-            Text(
-              'بینینی هەموو هەواڵەکان',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w900,
-                fontSize: 14,
-                letterSpacing: 0.3,
-              ),
-            ),
-            SizedBox(width: 8),
-            Icon(
-              Icons.arrow_forward_rounded,
-              color: AppColors.primary,
-              size: 18,
-            ),
-          ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildNewsShimmer(bool isDark) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: 3,
-      itemBuilder: (context, index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 100,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF2A2A35)
-                      : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF2A2A35)
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 12,
-                      width: 120,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF2A2A35)
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+class _EmptyNews extends StatelessWidget {
+  final bool isDark;
+  final String label;
 
-  Widget _buildEmptyNews(bool isDark) {
+  const _EmptyNews({required this.isDark, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(30),
@@ -1100,419 +725,392 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1A1A22)
-                    : AppColors.backgroundGrey,
+                color: isDark ? AppColors.darkCard : AppColors.backgroundGrey,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.article_outlined,
-                size: 40,
-                color: AppColors.textTertiary,
-              ),
+              child: const Icon(Icons.article_outlined, size: 40, color: AppColors.textTertiary),
             ),
             const SizedBox(height: 12),
             Text(
-              "هیچ هەواڵێکی تر نییە",
-              style: TextStyle(
-                color: isDark ? Colors.white54 : AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
+              label,
+              style: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondary, fontWeight: FontWeight.w600),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 📡 Data Fetching — تەنها یەک جار
-  // ═══════════════════════════════════════════════════════════
-  Future<List<Map<String, dynamic>>> _fetchCategories() async {
-    try {
-      debugPrint('🔄 Fetching categories...');
-      final res = await Supabase.instance.client
-          .from('main_categories')
-          .select('id, name, image');
+class _NewsTile extends StatelessWidget {
+  final Map<String, dynamic> news;
+  final bool isDark;
+  final String lang;
+  final IconData forwardIcon;
+  final VoidCallback onTap;
 
-      debugPrint('✅ Categories fetched: ${(res as List).length}');
+  const _NewsTile({
+    required this.news,
+    required this.isDark,
+    required this.lang,
+    required this.forwardIcon,
+    required this.onTap,
+  });
 
-      return List<Map<String, dynamic>>.from(res);
-    } on PostgrestException catch (e) {
-      debugPrint('❌ Postgrest error: ${e.message}');
-      return [];
-    } catch (e) {
-      debugPrint('❌ Unexpected error: $e');
-      return [];
-    }
-  }
+  @override
+  Widget build(BuildContext context) {
+    final firstImg = _Fmt.firstImage(news['images'] ?? news['img']);
+    final title = news['title']?.toString() ?? '';
+    final views = (news['views'] as num?)?.toInt() ?? 0;
+    final likes = (news['likes'] as num?)?.toInt() ?? 0;
+    final timeAgo = _Fmt.timeAgo(news['created_at']?.toString(), lang);
 
-  // ═══════════════════════════════════════════════════════════
-  // 📰 کارتی هەواڵ
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildNewsListItem(
-      dynamic news,
-      bool isDark,
-      String lang,
-      ) {
-    final Map<String, dynamic> newsMap;
+    final store = news['dukan'];
+    final storeName = store is Map ? (store['name']?.toString() ?? '') : '';
+    final storeLogo = store is Map ? (store['logo']?.toString() ?? store['image']?.toString() ?? '') : '';
 
-    if (news is Map<String, dynamic>) {
-      newsMap = news;
-    } else {
-      try {
-        newsMap = news.toJson();
-      } catch (e) {
-        debugPrint('⚠️ _buildNewsListItem conversion error: $e');
-        return const SizedBox.shrink();
-      }
-    }
+    final placeholder = isDark ? AppColors.darkBorder : AppColors.backgroundGrey;
+    final subColor = isDark ? Colors.white54 : AppColors.textTertiary;
+    final statColor = isDark ? Colors.white54 : AppColors.textSecondary;
 
-    final firstImg = _extractFirstImage(
-      newsMap['images'] ?? newsMap['img'],
-    );
-    final title = newsMap['title']?.toString() ?? '';
-    final views = (newsMap['views'] as num?)?.toInt() ?? 0;
-    final likes = (newsMap['likes'] as num?)?.toInt() ?? 0;
-    final timeAgo = _getTimeAgo(newsMap['created_at']?.toString());
+    Widget box({Widget? child}) => Container(width: 112, height: 100, color: placeholder, child: child);
 
-    final store = newsMap['dukan'];
-    final storeName = store?['name']?.toString() ?? '';
-    final storeLogo = store?['logo']?.toString() ??
-        store?['image']?.toString() ??
-        '';
-
-    return GestureDetector(
-      onTap: () => _openNewsDetails(newsMap),
+    return Semantics(
+      button: true,
+      label: title,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Material(
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: firstImg.isNotEmpty
-                      ? CachedNetworkImage(
-                    imageUrl: firstImg,
-                    width: 100,
-                    height: 90,
-                    fit: BoxFit.cover,
-                    memCacheWidth: 300,
-                    placeholder: (_, __) => Container(
-                      width: 100,
-                      height: 90,
-                      color: isDark
-                          ? const Color(0xFF2A2A35)
-                          : Colors.grey.shade200,
-                    ),
-                    errorWidget: (_, __, ___) => Container(
-                      width: 100,
-                      height: 90,
-                      color: isDark
-                          ? const Color(0xFF2A2A35)
-                          : Colors.grey.shade200,
-                      child: const Icon(
-                        Icons.broken_image,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  )
-                      : Container(
-                    width: 100,
-                    height: 90,
-                    color: isDark
-                        ? const Color(0xFF2A2A35)
-                        : AppColors.backgroundGrey,
-                    child: const Icon(
-                      Icons.image,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                ),
-                if (storeLogo.isNotEmpty)
-                  Positioned(
-                    bottom: 6,
-                    right: 6,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: CachedNetworkImage(
-                          imageUrl: storeLogo,
-                          fit: BoxFit.cover,
-                          memCacheWidth: 100,
-                          errorWidget: (_, __, ___) => const Icon(
-                            Icons.storefront_rounded,
-                            color: AppColors.primary,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 90,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Stack(
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                        height: 1.4,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: firstImg.isNotEmpty
+                          ? CachedNetworkImage(
+                        imageUrl: firstImg,
+                        width: 112,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 300,
+                        fadeInDuration: const Duration(milliseconds: 180),
+                        placeholder: (_, __) => box(),
+                        errorWidget: (_, __, ___) => box(child: const Icon(Icons.broken_image, color: Colors.grey)),
+                      )
+                          : box(child: const Icon(Icons.image, color: AppColors.textTertiary)),
                     ),
-                    Row(
-                      children: [
-                        if (storeName.isNotEmpty) ...[
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.storefront_rounded,
-                                    size: 10,
-                                    color: AppColors.primary,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Flexible(
-                                    child: Text(
-                                      storeName,
-                                      style: const TextStyle(
-                                        fontSize: 9,
-                                        color: AppColors.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                    if (storeLogo.isNotEmpty)
+                      PositionedDirectional(
+                        bottom: 6,
+                        end: 6,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 2)),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: storeLogo,
+                              fit: BoxFit.cover,
+                              memCacheWidth: 100,
+                              errorWidget: (_, __, ___) =>
+                              const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 16),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                        ],
-                        Text(
-                          timeAgo,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: AppColors.textTertiary,
-                            fontWeight: FontWeight.w700,
-                          ),
                         ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        _buildStatItem(
-                          icon: Icons.visibility_rounded,
-                          value: _toLocalDigits('$views'),
-                          color: isDark
-                              ? Colors.white54
-                              : AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildStatItem(
-                          icon: Icons.thumb_up_rounded,
-                          value: _toLocalDigits('$likes'),
-                          color: AppColors.primary,
-                        ),
-                      ],
-                    ),
+                      ),
                   ],
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 100,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                            height: 1.4,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            if (storeName.isNotEmpty) ...[
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primarySoft,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.storefront_rounded, size: 10, color: AppColors.primary),
+                                      const SizedBox(width: 3),
+                                      Flexible(
+                                        child: Text(
+                                          storeName,
+                                          style: const TextStyle(
+                                            fontSize: 9,
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            Flexible(
+                              child: Text(
+                                timeAgo,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 10, color: subColor, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            _Stat(
+                              icon: Icons.visibility_rounded,
+                              value: _Fmt.compact(views, lang),
+                              color: statColor,
+                            ),
+                            const SizedBox(width: 8),
+                            _Stat(
+                              icon: Icons.thumb_up_rounded,
+                              value: _Fmt.compact(likes, lang),
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
+      ),
       ),
     );
   }
+}
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required Color color,
-  }) {
+class _Stat extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final Color color;
+
+  const _Stat({required this.icon, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 12, color: color),
         const SizedBox(width: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 10,
-            color: color,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+        Text(value, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w800)),
       ],
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔧 Helpers
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _openNewsDetails(Map<String, dynamic> news) async {
-    if (!mounted) return;
+class _Pulse extends StatefulWidget {
+  final Widget child;
+  const _Pulse({required this.child});
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => NewsDetailsScreen(newsItem: news),
+  @override
+  State<_Pulse> createState() => _PulseState();
+}
+
+class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  late final Animation<double> _opacity =
+  Tween<double>(begin: 0.45, end: 1).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(opacity: _opacity, child: widget.child);
+}
+
+class _Bone extends StatelessWidget {
+  final double? width;
+  final double height;
+  final double radius;
+
+  const _Bone({this.width, required this.height, required this.radius});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBorder : AppColors.backgroundGrey,
+        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }
+}
 
-  String _toLocalDigits(String input) {
-    const en = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const ar = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    for (int i = 0; i < en.length; i++) {
-      input = input.replaceAll(en[i], ar[i]);
-    }
-    return input;
+class _CarouselSkeleton extends StatelessWidget {
+  const _CarouselSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: _Pulse(child: _Bone(width: double.infinity, height: 180, radius: 22)),
+    );
   }
+}
 
-  String _extractFirstImage(dynamic rawImages) {
-    if (rawImages == null) return '';
-    if (rawImages is List) {
-      if (rawImages.isEmpty) return '';
-      return rawImages.first.toString().trim();
-    }
-    if (rawImages is String) {
-      var s = rawImages.trim();
-      if (s.isEmpty) return '';
-      s = s.replaceAll(RegExp(r'^\[|\]$'), '');
-      s = s.replaceAll('"', '').replaceAll("'", '');
-      if (s.contains(',')) s = s.split(',').first;
-      return s.trim();
-    }
-    return rawImages.toString().trim();
+class _NewsSkeleton extends StatelessWidget {
+  final bool isDark;
+  const _NewsSkeleton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return _Pulse(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          children: List.generate(
+            3,
+                (_) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : AppColors.surface,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Row(
+                children: [
+                  _Bone(width: 112, height: 100, radius: 14),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _Bone(width: double.infinity, height: 14, radius: 4),
+                        SizedBox(height: 8),
+                        _Bone(width: 120, height: 12, radius: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
+}
+class _NoNewsCard extends StatelessWidget {
+  final bool isDark;
+  final String title;
+  final String subtitle;
+  final String retryLabel;
+  final Future<void> Function() onRetry;
 
-  String _getTimeAgo(String? dateTimeStr) {
-    if (dateTimeStr == null || dateTimeStr.isEmpty) {
-      return 'کەمێک پێش ئێستا';
-    }
-    try {
-      final dateTime = DateTime.parse(dateTimeStr);
-      final diff = DateTime.now().difference(dateTime);
+  const _NoNewsCard({
+    required this.isDark,
+    required this.title,
+    required this.subtitle,
+    required this.retryLabel,
+    required this.onRetry,
+  });
 
-      if (diff.inSeconds < 60) return 'چەند چرکەیەک پێش ئێستا';
-      if (diff.inMinutes < 60) {
-        return '${_toLocalDigits('${diff.inMinutes}')} دەقیقە لەمەوبەر';
-      }
-      if (diff.inHours < 24) {
-        return '${_toLocalDigits('${diff.inHours}')} سەعات لەمەوبەر';
-      }
-      if (diff.inDays < 30) {
-        return '${_toLocalDigits('${diff.inDays}')} ڕۆژ لەمەوبەر';
-      }
-      return '${_toLocalDigits('${(diff.inDays / 30).floor()}')} مانگ لەمەوبەر';
-    } catch (_) {
-      return dateTimeStr.length > 10
-          ? dateTimeStr.substring(0, 10)
-          : dateTimeStr;
-    }
-  }
-
-  String _translateCategory(String name, String lang) {
-    final key = _categoryTranslationMap[name];
-    if (key == null) return name;
-    final translated = AppTranslations.t(key, lang);
-    return translated == key ? name : translated;
-  }
-
-  IconData _getCategoryIcon(String name) {
-    final n = name.trim();
-    if (n.contains('تەندروستی') || n.contains('نەخۆشخانە')) {
-      return Icons.local_hospital_rounded;
-    }
-    if (n.contains('پەروەردە') || n.contains('قوتابخانە')) {
-      return Icons.school_rounded;
-    }
-    if (n.contains('بەڕێوەبەرایەتی') || n.contains('شارەوانی')) {
-      return Icons.account_balance_rounded;
-    }
-    if (n.contains('خوێندنی باڵا') || n.contains('زانکۆ')) {
-      return Icons.school_rounded;
-    }
-    if (n.contains('خواردن') || n.contains('شیرینی')) {
-      return Icons.restaurant_rounded;
-    }
-    if (n.contains('بازاڕ') || n.contains('شوێن')) {
-      return Icons.shopping_bag_rounded;
-    }
-    return Icons.category_rounded;
-  }
-
-  Color _getCategoryColor(String name) {
-    final n = name.trim();
-    if (n.contains('تەندروستی') || n.contains('نەخۆشخانە')) {
-      return AppColors.catHealth;
-    }
-    if (n.contains('پەروەردە') || n.contains('قوتابخانە')) {
-      return AppColors.catEducation;
-    }
-    if (n.contains('بەڕێوەبەرایەتی') || n.contains('شارەوانی')) {
-      return AppColors.catGovernment;
-    }
-    if (n.contains('خوێندنی باڵا') || n.contains('زانکۆ')) {
-      return AppColors.catHigherEd;
-    }
-    if (n.contains('خواردن') || n.contains('شیرینی')) {
-      return AppColors.catFood;
-    }
-    if (n.contains('بازاڕ') || n.contains('شوێن')) {
-      return AppColors.catShopping;
-    }
-    return AppColors.primary;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 180,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.newspaper_rounded, size: 36, color: AppColors.textTertiary),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : AppColors.textSecondary),
+          ),
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: Text(retryLabel, style: const TextStyle(fontWeight: FontWeight.w900)),
+          ),
+        ],
+      ),
+    );
   }
 }

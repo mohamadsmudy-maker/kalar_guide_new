@@ -1,0 +1,13 @@
+{
+  "@@locale": "en",
+  "appName": "Kalar Guide",
+  "nav_home": "Home",
+  "nav_places": "Places",
+  "nav_categories": "Categories",
+  "nav_favorites": "Favorites",
+  "nav_daily": "Daily",
+  "welcome_guest": "Dear Guest",
+  "settings": "Settings",
+  "emergency": "Emergency",
+  "events": "Events"
+}

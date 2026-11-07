@@ -1,5 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 🎵 خزمەتگوزاری دەنگی ئەدان
@@ -42,7 +44,7 @@ class AdhanService {
   /// ✅ دەستپێکردن
   static Future<void> initialize() async {
     try {
-      await _player.setReleaseMode(ReleaseMode.stop);
+      await _player.setLoopMode(LoopMode.off);
       debugPrint('✅ AdhanService initialized');
     } catch (e) {
       debugPrint('❌ AdhanService init error: $e');
@@ -87,8 +89,8 @@ class AdhanService {
         return;
       }
 
-      await _player.setVolume(volume);
-      await _player.play(AssetSource('audio/$sound.mp3'));
+      await _player.setVolume(volume.clamp(0.0, 1.0));
+      await _playAsset(sound);
       debugPrint('🎵 Playing: $sound');
     } catch (e) {
       debugPrint('❌ Play error: $e');
@@ -118,7 +120,7 @@ class AdhanService {
     try {
       if (soundName == 'silent') return;
       await _player.stop();
-      await _player.play(AssetSource('audio/$soundName.mp3'));
+      await _playAsset(soundName);
     } catch (e) {
       debugPrint('❌ Test error: $e');
     }
@@ -134,7 +136,22 @@ class AdhanService {
   }
 
   /// ✅ ئایا دەژەنرێت؟
-  static bool get isPlaying => _player.state == PlayerState.playing;
+  static bool get isPlaying =>
+      _player.playing &&
+      _player.processingState != ProcessingState.completed;
+
+  /// ✅ ژەنینی فایلی دەنگ — ئەگەر فایلەکە نەبوو، دەگەڕێتەوە بۆ ئەدانی ئاسایی
+  /// (تەنها assets/audio/adhan_default.mp3 لە پرۆژەکەدا هەیە)
+  static Future<void> _playAsset(String sound) async {
+    try {
+      await _player.setAsset('assets/audio/$sound.mp3');
+    } catch (_) {
+      debugPrint('⚠️ $sound.mp3 نەدۆزرایەوە — adhan_default بەکاردێت');
+      await _player.setAsset('assets/audio/adhan_default.mp3');
+    }
+    // play() تا کۆتایی دەنگەکە چاوەڕێ دەکات، بۆیە await ناکرێت
+    unawaited(_player.play());
+  }
 
   /// ✅ پاککردنەوە
   static Future<void> dispose() async {

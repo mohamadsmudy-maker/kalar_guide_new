@@ -1,10 +1,13 @@
+// lib/utils/date_picker_helper.dart
 import 'package:flutter/material.dart';
 
 /// 📅 یاریدەدەر بۆ Date Picker بەپێی زمان
 class DatePickerHelper {
   DatePickerHelper._();
 
-  /// 🌍 وەرگرتنی Locale بەپێی کۆدی زمان
+  // ═══════════════════════════════════════════════════════════
+  // 🌍 Locale
+  // ═══════════════════════════════════════════════════════════
   static Locale getLocaleForLanguage(String languageId) {
     switch (languageId) {
       case 'ar':
@@ -13,17 +16,17 @@ class DatePickerHelper {
         return const Locale('en', 'US');
       case 'ku':
       default:
-      // ✅ کوردی — بەکارهێنانی عەرەبی وەک بنەڕەت
         return const Locale('ar', 'AE');
     }
   }
 
-  /// 🔄 وەرگرتنی ئاراستە بەپێی زمان
   static TextDirection getDirectionForLanguage(String languageId) {
     return languageId == 'en' ? TextDirection.ltr : TextDirection.rtl;
   }
 
-  /// 📅 پیشاندانی Date Range Picker بەپێی زمان
+  // ═══════════════════════════════════════════════════════════
+  // 📅 Range Picker
+  // ═══════════════════════════════════════════════════════════
   static Future<DateTimeRange?> showRangePicker({
     required BuildContext context,
     required String languageId,
@@ -48,11 +51,9 @@ class DatePickerHelper {
           textDirection: direction,
           child: Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
                 primary: primaryColor,
                 onPrimary: Colors.white,
-                surface: Colors.white,
-                onSurface: Colors.black87,
               ),
             ),
             child: child!,
@@ -62,7 +63,9 @@ class DatePickerHelper {
     );
   }
 
-  /// 📅 پیشاندانی Single Date Picker
+  // ═══════════════════════════════════════════════════════════
+  // 📅 Single Picker
+  // ═══════════════════════════════════════════════════════════
   static Future<DateTime?> showSingleDatePicker({
     required BuildContext context,
     required String languageId,
@@ -83,7 +86,7 @@ class DatePickerHelper {
           textDirection: direction,
           child: Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
                 primary: primaryColor,
                 onPrimary: Colors.white,
               ),
@@ -95,7 +98,9 @@ class DatePickerHelper {
     );
   }
 
-  /// 📅 پیشاندانی Time Picker
+  // ═══════════════════════════════════════════════════════════
+  // ⏰ Time Picker
+  // ═══════════════════════════════════════════════════════════
   static Future<TimeOfDay?> showTimePickerCustom({
     required BuildContext context,
     required String languageId,

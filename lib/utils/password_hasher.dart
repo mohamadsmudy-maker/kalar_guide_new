@@ -1,66 +1,64 @@
-// 📁 lib/utils/password_hasher.dart
+// lib/utils/password_hasher.dart
 import 'dart:convert';
+
 import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import '../config/env.dart';
 
-/// 🔐 Hashing ی پاسۆرد — SECURE EDITION + PLAINTEXT MIGRATION
+/// 🔐 Hashing ی پاسۆرد
 ///
-/// ✅ bcrypt (logRounds: 12) — پاسۆردی نوێ
-/// ⚠️ SHA-256 (legacy) — تەنها بۆ migration
-/// ⚠️ Plaintext (legacy) — تەنها بۆ migration (کاتی)
+/// ⚠️ ئەم کلاسە تەنها بۆ گواستنەوەی (migration) بەکارهێنەرە کۆنەکانە.
+/// پشکنینی پاسۆرد دەبێت لە کۆتاییدا بچێتە سەر سێرڤەر (Edge Function)
+/// بۆ ئەوەی ئەپەکە هەرگیز hash ی پاسۆرد نەبینێت.
 class PasswordHasher {
   PasswordHasher._();
 
+  static const int _minPasswordLength = 8;
+  static const int _bcryptRounds = 12;
+
+  static const int bcryptHashLength = 60;
+  static const int legacyHashLength = 64;
+
+  static final RegExp _bcryptPattern =
+  RegExp(r'^\$2[abxy]?\$\d{2}\$[./A-Za-z0-9]{53}$');
+  static final RegExp _sha256Pattern = RegExp(r'^[0-9a-fA-F]{64}$');
+
   // ═══════════════════════════════════════════════════════════
-  // 🔐 bcrypt — پێشنیارکراو
+  // 🔐 دروستکردنی hash (bcrypt)
   // ═══════════════════════════════════════════════════════════
 
-  /// بەرهەمهێنانی Hash ی نوێ بە bcrypt — Sync
+  /// UI دەوەستێنێت (~٢٠٠-٥٠٠ms) — باشترە [hash] بەکاربهێنیت.
   static String hashSync(String password) {
-    if (password.isEmpty) return '';
-    return BCrypt.hashpw(
-      password,
-      BCrypt.gensalt(logRounds: 12),
-    );
+    _validatePassword(password);
+    return _hashIsolate(password);
   }
 
-  /// بەرهەمهێنانی Hash لە isolate (بۆ UI)
   static Future<String> hash(String password) async {
-    if (password.isEmpty) return '';
+    _validatePassword(password);
     return compute(_hashIsolate, password);
   }
 
   static String _hashIsolate(String password) {
-    return BCrypt.hashpw(
-      password,
-      BCrypt.gensalt(logRounds: 12),
-    );
+    return BCrypt.hashpw(password, BCrypt.gensalt(logRounds: _bcryptRounds));
   }
 
   // ═══════════════════════════════════════════════════════════
   // ✅ پشکنینی پاسۆرد
   // ═══════════════════════════════════════════════════════════
 
-  /// ✅ پشکنینی پاسۆرد — پشتگیری:
-  ///   • bcrypt (درێژی 60، `$2a$` / `$2b$` / `$2y$`)
-  ///   • SHA-256 (درێژی 64) — legacy
-  ///   • Plaintext — legacy (بۆ migration)
+  /// پشکنین لە isolate ی جیاوازدا — UI ناوەستێنێت.
+  static Future<bool> verifyAsync(String password, String storedHash) {
+    return compute(_verifyIsolate, (password, storedHash));
+  }
+
+  static bool _verifyIsolate((String, String) args) =>
+      verify(args.$1, args.$2);
+
   static bool verify(String password, String storedHash) {
     if (password.isEmpty || storedHash.isEmpty) return false;
 
-    // ⚠️ ١. Plaintext legacy (بۆ migration تەنها)
-    // ئەمە ڕێگە بە پاسۆردی کۆن دەدات کە هێشتا hash نەکراون
-    if (storedHash == password) {
-      debugPrint(
-        '⚠️ Plaintext password detected — needs upgrade to bcrypt!',
-      );
-      return true;
-    }
-
-    // ✅ ٢. bcrypt: درێژی 60 (دەستپێدەکات بە $2a$/$2b$/$2y$)
-    if (storedHash.length == 60 && storedHash.startsWith(r'$2')) {
+    // ١. bcrypt
+    if (isBcrypt(storedHash)) {
       try {
         return BCrypt.checkpw(password, storedHash);
       } catch (e) {
@@ -69,77 +67,85 @@ class PasswordHasher {
       }
     }
 
-    // ⚠️ ٣. Legacy SHA-256 (درێژی 64)
-    if (storedHash.length == 64) {
+    // ٢. Legacy SHA-256 (+ salt)
+    if (_sha256Pattern.hasMatch(storedHash)) {
       try {
-        debugPrint(
-          '⚠️ SHA-256 hash detected — needs migration to bcrypt',
-        );
+        debugPrint('⚠️ SHA-256 hash detected — needs migration to bcrypt');
         final legacyHash = _legacySha256(password);
-        return _constantTimeEquals(storedHash, legacyHash);
+        return _constantTimeEquals(storedHash.toLowerCase(), legacyHash);
       } catch (e) {
         debugPrint('❌ SHA-256 verify error: $e');
         return false;
       }
     }
 
-    debugPrint(
-      '⚠️ Unknown hash format (length: ${storedHash.length})',
-    );
-    return false;
+    // ٣. Plaintext legacy — تەنها کاتێک نرخەکە شێوەی hash ی نییە.
+    // 🔒 چاککراوە: پێشتر ئەگەر کەسێک hash ەکەی وەک پاسۆرد بنووسیبا،
+    //    `storedHash == password` ڕاست دەبوو و دەچووە ژوورەوە.
+    //    ئێستا hash ەکان سەرەوە پشکنین دەکرێن و هەرگیز ناگەنە ئێرە.
+    debugPrint('⚠️ Plaintext password detected — needs upgrade to bcrypt!');
+    return _constantTimeEquals(storedHash, password);
   }
 
   // ═══════════════════════════════════════════════════════════
   // 🔄 Migration check
   // ═══════════════════════════════════════════════════════════
 
-  /// ✅ پشکنین ئەگەر پاسۆردەکە پێویستی بە upgrade هەیە
-  ///   • bcrypt = 60 chars، دەستپێدەکات بە `$2` → ✅ نەخێر
-  ///   • SHA-256 = 64 chars → ⚠️ بەڵێ
-  ///   • Plaintext = هیچ کام → ⚠️ بەڵێ
+  /// `true` ئەگەر hash ەکە bcrypt نەبێت — دوای login ی سەرکەوتوو
+  /// پاسۆردەکە بە [hash] دووبارە hash بکە و لە داتابەیس نوێی بکەرەوە.
   static bool needsUpgrade(String storedHash) {
     if (storedHash.isEmpty) return false;
-
-    // اگر bcrypt ە → پێویست بە upgrade نییە
-    if (storedHash.length == 60 && storedHash.startsWith(r'$2')) {
-      return false;
-    }
-
-    // باقی هەموویان (SHA-256، Plaintext، هتد) → پێویست بە upgrade هەیە
-    return true;
+    return !isBcrypt(storedHash);
   }
 
+  static bool isBcrypt(String value) => _bcryptPattern.hasMatch(value);
+
   // ═══════════════════════════════════════════════════════════
-  // 🛠️ Legacy SHA-256
+  // 🛠️ Helpers
   // ═══════════════════════════════════════════════════════════
+  static void _validatePassword(String password) {
+    if (password.isEmpty) {
+      throw const PasswordHashException('پاسۆرد ناتوانێت بەتاڵ بێت');
+    }
+    if (password.length < _minPasswordLength) {
+      throw const PasswordHashException(
+        'پاسۆرد دەبێت لانیکەم $_minPasswordLength کاراکتەر بێت',
+      );
+    }
+  }
+
+  /// salt ی کۆن — تەنها ئەگەر بە `--dart-define=PASSWORD_SALT=...` درابێت.
+  /// ئەگەر نەدرابێت، بەکارهێنەرە SHA-256 ـە کۆنەکان ناتوانن بچنە ژوورەوە.
+  static const String _legacySalt = String.fromEnvironment('PASSWORD_SALT');
+
   static String _legacySha256(String password) {
-    final salt = AppEnv.passwordSalt;
+    const salt = _legacySalt;
     if (salt.isEmpty) {
-      throw StateError(
-        '❌ PASSWORD_SALT نەدۆزرایەوە — verify legacy hash ناکرێت',
+      throw const PasswordHashException(
+        'PASSWORD_SALT نەدۆزرایەوە — verify legacy hash ناکرێت',
       );
     }
     final salted = '$salt$password$salt';
-    final bytes = utf8.encode(salted);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
+    return sha256.convert(utf8.encode(salted)).toString();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔒 Constant-time comparison
-  // ═══════════════════════════════════════════════════════════
   static bool _constantTimeEquals(String a, String b) {
-    if (a.length != b.length) return false;
-    int result = 0;
-    for (int i = 0; i < a.length; i++) {
-      result |= a.codeUnitAt(i) ^ b.codeUnitAt(i);
+    final aBytes = utf8.encode(a);
+    final bBytes = utf8.encode(b);
+    if (aBytes.length != bBytes.length) return false;
+    var result = 0;
+    for (var i = 0; i < aBytes.length; i++) {
+      result |= aBytes[i] ^ bBytes[i];
     }
     return result == 0;
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 📏 Constants
-  // ═══════════════════════════════════════════════════════════
-  static int get bcryptHashLength => 60;
-  static int get legacyHashLength => 64;
+/// ❌ هەڵەی تایبەت بۆ هاشکردنی پاسۆرد
+class PasswordHashException implements Exception {
+  final String message;
+  const PasswordHashException(this.message);
+
+  @override
+  String toString() => 'PasswordHashException: $message';
 }

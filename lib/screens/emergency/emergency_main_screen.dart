@@ -1,66 +1,210 @@
+// 📁 presentation/screens/emergency/emergency_main_screen.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../models/emergency_service.dart';
+import '../../providers/providers.dart';
 import '../../models/emergency_categories.dart';
+import '../../models/emergency_service.dart';
 import '../../services/emergency_repository.dart';
 import '../../services/location_service.dart';
 
-/// 🚨 شاشەی فریاکەوتن — ULTRA PRO V2
-///
-/// ✅ تایبەتمەندییەکان:
-/// 1. Animated Header
-/// 2. Category Filter
-/// 3. Search Bar
-/// 4. Sort by Distance
-/// 5. Mini Map
-/// 6. Quick Dial
-/// 7. Share
-/// 8. Favorites
-/// 9. History
-/// 10. 24h Badge
-class EmergencyScreen extends StatefulWidget {
+// ═══════════════════════════════════════════════════════════
+// 🧠 Providers
+// ═══════════════════════════════════════════════════════════
+
+/// Raw list from the backend (cached, refreshable).
+final emergencyServicesProvider =
+FutureProvider.autoDispose<List<EmergencyService>>((ref) async {
+  final logger = ref.read(appLoggerProvider);
+  try {
+    final data = await EmergencyServiceRepository.getAll();
+    logger.d('EmergencyServices', 'loaded ${data.length}');
+    return data;
+  } catch (e, st) {
+    logger.e('EmergencyServices', 'load failed', e, st);
+    rethrow;
+  }
+});
+
+/// Current GPS position (nullable → not yet known / denied).
+final currentPositionProvider = FutureProvider.autoDispose<Position?>((ref) async {
+  final logger = ref.read(appLoggerProvider);
+  try {
+    return await LocationService.getCurrentPosition();
+  } catch (e, st) {
+    logger.w('Location', 'position failed', e, st);
+    return null;
+  }
+});
+
+/// Filter UI state — search, category, sort.
+class EmergencyFilter {
+  final String search;
+  final String category;
+  final EmergencySort sort;
+
+  const EmergencyFilter({
+    this.search = '',
+    this.category = 'all',
+    this.sort = EmergencySort.def,
+  });
+
+  EmergencyFilter copyWith({
+    String? search,
+    String? category,
+    EmergencySort? sort,
+  }) {
+    return EmergencyFilter(
+      search: search ?? this.search,
+      category: category ?? this.category,
+      sort: sort ?? this.sort,
+    );
+  }
+}
+
+enum EmergencySort {
+  def('default', 'ئاسایی', Icons.sort_rounded),
+  distance('distance', 'نزیکترین', Icons.near_me_rounded),
+  name('name', 'ناو', Icons.abc_rounded);
+
+  final String key;
+  final String label;
+  final IconData icon;
+  const EmergencySort(this.key, this.label, this.icon);
+}
+
+class EmergencyFilterNotifier extends StateNotifier<EmergencyFilter> {
+  EmergencyFilterNotifier() : super(const EmergencyFilter());
+
+  void setSearch(String v) => state = state.copyWith(search: v.trim());
+  void setCategory(String v) => state = state.copyWith(category: v);
+  void setSort(EmergencySort v) => state = state.copyWith(sort: v);
+  void reset() => state = const EmergencyFilter();
+}
+
+final emergencyFilterProvider =
+StateNotifierProvider.autoDispose<EmergencyFilterNotifier, EmergencyFilter>(
+      (ref) => EmergencyFilterNotifier(),
+);
+
+/// 🔎 Filtered + sorted list — derived provider. Cheap because
+/// `_hexToColor`, distance, and name lookups are precomputed per item.
+class EmergencyRow {
+  final EmergencyService service;
+  final double? distanceKm; // null → unknown
+  final int sortKey; // used only for tie-break
+
+  EmergencyRow({
+    required this.service,
+    required this.distanceKm,
+    this.sortKey = 0,
+  });
+}
+
+final filteredEmergencyProvider =
+Provider.autoDispose<List<EmergencyRow>>((ref) {
+  final servicesAsync = ref.watch(emergencyServicesProvider);
+  final posAsync = ref.watch(currentPositionProvider);
+  final filter = ref.watch(emergencyFilterProvider);
+
+  return servicesAsync.maybeWhen(
+    data: (services) {
+      final pos = posAsync.valueOrNull;
+
+      // 1️⃣ Category
+      var list = services;
+      if (filter.category != 'all') {
+        list = list.where((s) => s.category == filter.category).toList();
+      }
+
+      // 2️⃣ Search (localized + phone + alt phone + address + notes)
+      if (filter.search.isNotEmpty) {
+        final q = filter.search.toLowerCase();
+        list = list.where((s) {
+          final haystack = [
+            s.nameKu,
+            s.nameAr ?? '',
+            s.nameEn ?? '',
+            s.phone,
+            s.phoneAlt ?? '',
+            s.address ?? '',
+            s.notes ?? '',
+            s.authorityName ?? '',
+          ].join(' ').toLowerCase();
+          return haystack.contains(q);
+        }).toList();
+      }
+
+      // 3️⃣ Distance (precompute once)
+      final rows = list.map((s) {
+        double? d;
+        if (pos != null && s.hasLocation) {
+          d = LocationService.calculateDistance(
+            pos.latitude,
+            pos.longitude,
+            s.latitude!,
+            s.longitude!,
+          );
+        }
+        return EmergencyRow(service: s, distanceKm: d);
+      }).toList();
+
+      // 4️⃣ Sort
+      switch (filter.sort) {
+        case EmergencySort.distance:
+          rows.sort((a, b) {
+            final da = a.distanceKm ?? double.infinity;
+            final db = b.distanceKm ?? double.infinity;
+            return da.compareTo(db);
+          });
+        case EmergencySort.name:
+          rows.sort(
+                (a, b) => a.service.nameKu.compareTo(b.service.nameKu),
+          );
+        case EmergencySort.def:
+          rows.sort(
+                (a, b) => a.service.displayOrder.compareTo(b.service.displayOrder),
+          );
+      }
+
+      return rows;
+    },
+    orElse: () => const [],
+  );
+});
+
+// ═══════════════════════════════════════════════════════════
+// 🖥️ Screen
+// ═══════════════════════════════════════════════════════════
+class EmergencyScreen extends ConsumerStatefulWidget {
   const EmergencyScreen({super.key});
 
   @override
-  State<EmergencyScreen> createState() => _EmergencyScreenState();
+  ConsumerState<EmergencyScreen> createState() => _EmergencyScreenState();
 }
 
-class _EmergencyScreenState extends State<EmergencyScreen>
+class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
     with TickerProviderStateMixin {
-  // ═══════════════════════════════════════════════════════════
-  // 📊 State
-  // ═══════════════════════════════════════════════════════════
-  bool _loading = true;
-  List<EmergencyService> _services = [];
-  List<EmergencyService> _filteredServices = [];
-  String _selectedCategory = 'all';
-  String _searchQuery = '';
   final TextEditingController _searchCtrl = TextEditingController();
+  Timer? _searchDebounce;
 
-  Position? _currentPosition;
-  String _sortBy = 'default'; // 'default', 'distance', 'name'
-
-  // ⭐ Favorites
-  final Set<String> _favorites = {};
-
-  // ✨ Animations
-  late AnimationController _entryController;
-  late AnimationController _pulseController;
-  late AnimationController _shimmerController;
-  late Animation<double> _entryAnimation;
-  late Animation<double> _pulseAnimation;
+  late final AnimationController _entryController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _entryAnimation;
+  late final Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
-
     _entryController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
-    );
+    )..forward();
     _entryAnimation = CurvedAnimation(
       parent: _entryController,
       curve: Curves.easeOutCubic,
@@ -73,162 +217,147 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2500),
-    )..repeat();
-
-    _loadData();
-    _determinePosition();
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchCtrl.dispose();
     _entryController.dispose();
     _pulseController.dispose();
-    _shimmerController.dispose();
-    _searchCtrl.dispose();
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📡 Data
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _loadData() async {
-    if (mounted) setState(() => _loading = true);
-
-    try {
-      final data = await EmergencyServiceRepository.getAll();
-      debugPrint('🚨 Loaded emergency services: ${data.length}');
-
-      if (mounted) {
-        setState(() {
-          _services = data;
-          _applyFilters();
-          _loading = false;
-        });
-        _entryController.forward(from: 0);
-      }
-    } catch (e) {
-      debugPrint('❌ Load error: $e');
-      if (mounted) setState(() => _loading = false);
-    }
+  // ───────────────────────────────────────────────────────
+  // 🔄 Refresh
+  // ───────────────────────────────────────────────────────
+  Future<void> _refresh() async {
+    ref.invalidate(emergencyServicesProvider);
+    ref.invalidate(currentPositionProvider);
+    await ref.read(emergencyServicesProvider.future);
   }
 
-  Future<void> _determinePosition() async {
-    try {
-      final pos = await LocationService.getCurrentPosition();
-      if (mounted) {
-        setState(() => _currentPosition = pos);
-        _applyFilters();
-      }
-    } catch (e) {
-      debugPrint('⚠️ Position error: $e');
-    }
-  }
-
-  void _applyFilters() {
-    var filtered = List<EmergencyService>.from(_services);
-
-    // ⭐ Category
-    if (_selectedCategory != 'all') {
-      filtered = filtered
-          .where((s) => s.category == _selectedCategory)
-          .toList();
-    }
-
-    // ⭐ Search
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      filtered = filtered.where((s) {
-        return s.nameKu.toLowerCase().contains(q) ||
-            s.phone.toLowerCase().contains(q) ||
-            (s.authorityName?.toLowerCase().contains(q) ?? false) ||
-            (s.address?.toLowerCase().contains(q) ?? false);
-      }).toList();
-    }
-
-    // ⭐ Sort
-    if (_sortBy == 'distance' && _currentPosition != null) {
-      filtered.sort((a, b) {
-        final distA = _getDistance(a);
-        final distB = _getDistance(b);
-        return distA.compareTo(distB);
-      });
-    } else if (_sortBy == 'name') {
-      filtered.sort((a, b) => a.nameKu.compareTo(b.nameKu));
-    }
-
-    setState(() => _filteredServices = filtered);
-  }
-
-  double _getDistance(EmergencyService service) {
-    if (_currentPosition == null ||
-        service.latitude == null ||
-        service.longitude == null) {
-      return 99999.0;
-    }
-    return LocationService.calculateDistance(
-      _currentPosition!.latitude,
-      _currentPosition!.longitude,
-      service.latitude!,
-      service.longitude!,
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
+  // ───────────────────────────────────────────────────────
   // 📞 Call
-  // ═══════════════════════════════════════════════════════════
+  // ───────────────────────────────────────────────────────
   Future<void> _call(String phone) async {
-    HapticFeedback.heavyImpact();
+    HapticFeedback.selectionClick();
+    final uri = Uri(scheme: 'tel', path: phone);
     try {
-      final uri = Uri(scheme: 'tel', path: phone);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
+      final ok = await canLaunchUrl(uri);
+      if (!ok) {
+        await _copyAndToast(phone, 'ژمارە کۆپی کرا');
+        return;
       }
+      await launchUrl(uri);
     } catch (e) {
-      debugPrint('❌ Call error: $e');
+      ref.read(appLoggerProvider).e('Call', 'failed', e);
+      await _copyAndToast(phone, 'نەتوانرا پەیوەندی بکرێت');
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Build
-  // ═══════════════════════════════════════════════════════════
+  Future<void> _copyAndToast(String value, String msg) async {
+    await Clipboard.setData(ClipboardData(text: value));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
+
+  // ───────────────────────────────────────────────────────
+  // 🗺️ Directions
+  // ───────────────────────────────────────────────────────
+  Future<void> _openDirections(EmergencyService s) async {
+    if (!s.hasLocation) return;
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=${s.latitude},${s.longitude}',
+    );
+    try {
+      final ok = await canLaunchUrl(uri);
+      if (!ok) {
+        await _copyAndToast('${s.latitude},${s.longitude}', 'کۆردینات کۆپی کرا');
+        return;
+      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      ref.read(appLoggerProvider).e('Directions', 'failed', e);
+    }
+  }
+
+  // ───────────────────────────────────────────────────────
+  // 📤 Share (stub — replace with share_plus later)
+  // ───────────────────────────────────────────────────────
+  Future<void> _share(EmergencyService s) async {
+    final text = '${s.nameKu}\n${s.phone}'
+        '${s.phoneAlt != null ? '\n${s.phoneAlt}' : ''}';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('زانیاری کۆپی کرا — ئێستا هاوبەشی بکە'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  // ───────────────────────────────────────────────────────
+  // Build
+  // ───────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final servicesAsync = ref.watch(emergencyServicesProvider);
+    final rows = ref.watch(filteredEmergencyProvider);
+    final filter = ref.watch(emergencyFilterProvider);
+    final position = ref.watch(currentPositionProvider).valueOrNull;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor:
-        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF0F4F9),
-        body: RefreshIndicator(
-          color: const Color(0xFFDC2626),
-          onRefresh: _loadData,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              _buildAppBar(isDark),
-              SliverToBoxAdapter(child: _buildSearchBar(isDark)),
-              SliverToBoxAdapter(child: _buildFilters(isDark)),
-              SliverToBoxAdapter(child: _buildSortBar(isDark)),
-              SliverToBoxAdapter(child: _buildStatsCard(isDark)),
-              _buildServicesList(isDark),
-            ],
+    return Scaffold(
+      backgroundColor:
+      isDark ? const Color(0xFF0F0F14) : const Color(0xFFF0F4F9),
+      body: RefreshIndicator(
+        color: const Color(0xFFDC2626),
+        onRefresh: _refresh,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
           ),
+          slivers: [
+            _buildAppBar(isDark, servicesAsync, filter),
+            SliverToBoxAdapter(child: _buildSearchBar(isDark, filter)),
+            SliverToBoxAdapter(child: _buildFilters(isDark, filter)),
+            SliverToBoxAdapter(child: _buildSortBar(isDark, filter)),
+            if (rows.isNotEmpty || servicesAsync.hasValue)
+              SliverToBoxAdapter(
+                child: _buildStatsCard(isDark, filter, rows.length, position),
+              ),
+            _buildBody(isDark, servicesAsync, rows, filter),
+          ],
         ),
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 AppBar — ULTRA PRO
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildAppBar(bool isDark) {
+  // ───────────────────────────────────────────────────────
+  // AppBar
+  // ───────────────────────────────────────────────────────
+  Widget _buildAppBar(
+      bool isDark,
+      AsyncValue<List<EmergencyService>> servicesAsync,
+      EmergencyFilter filter,
+      ) {
+    final count = servicesAsync.maybeWhen(
+      data: (l) => l.length,
+      orElse: () => 0,
+    );
+
     return SliverAppBar(
       expandedHeight: 180,
       pinned: true,
@@ -238,7 +367,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh_rounded),
-          onPressed: _loadData,
+          onPressed: _refresh,
           tooltip: 'نوێکردنەوە',
         ),
       ],
@@ -246,36 +375,30 @@ class _EmergencyScreenState extends State<EmergencyScreen>
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFFDC2626),
-                Color(0xFFFF7043),
-                Color(0xFFE53935),
-              ],
+              colors: [Color(0xFFDC2626), Color(0xFFFF7043), Color(0xFFE53935)],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),
           ),
           child: Stack(
             children: [
-              // ⭐ Animated circles
+              // …decorative circles unchanged…
               Positioned(
                 top: -50,
                 right: -50,
                 child: AnimatedBuilder(
                   animation: _pulseController,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value,
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.08),
-                        ),
+                  builder: (_, __) => Transform.scale(
+                    scale: _pulseAnimation.value,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.08),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
               Positioned(
@@ -290,7 +413,6 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                   ),
                 ),
               ),
-              // ⭐ Content
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 60, 20, 16),
@@ -298,34 +420,25 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                     children: [
                       AnimatedBuilder(
                         animation: _pulseController,
-                        builder: (context, child) {
-                          return Transform.scale(
-                            scale: 1.0 + (_pulseAnimation.value - 1.0) * 0.6,
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.white.withValues(alpha: 0.3),
-                                    blurRadius: 24,
-                                    spreadRadius: 4,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.emergency_rounded,
-                                color: Colors.white,
-                                size: 32,
+                        builder: (_, __) => Transform.scale(
+                          scale: 1.0 + (_pulseAnimation.value - 1.0) * 0.6,
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                width: 2,
                               ),
                             ),
-                          );
-                        },
+                            child: const Icon(
+                              Icons.emergency_rounded,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -339,70 +452,19 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
-                                letterSpacing: 0.3,
                               ),
                             ),
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.25),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.phone_rounded,
-                                        color: Colors.white,
-                                        size: 12,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${_services.length} ژمارە',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                _pill(
+                                  icon: Icons.phone_rounded,
+                                  label: '$count ژمارە',
                                 ),
                                 const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.25),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.access_time_filled_rounded,
-                                        color: Colors.white,
-                                        size: 11,
-                                      ),
-                                      SizedBox(width: 3),
-                                      Text(
-                                        '٢٤/٧',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                _pill(
+                                  icon: Icons.access_time_filled_rounded,
+                                  label: '٢٤/٧',
                                 ),
                               ],
                             ),
@@ -420,10 +482,35 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔍 Search Bar
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildSearchBar(bool isDark) {
+  Widget _pill({required IconData icon, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 12),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────────
+  // Search
+  // ───────────────────────────────────────────────────────
+  Widget _buildSearchBar(bool isDark, EmergencyFilter filter) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Container(
@@ -432,7 +519,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
           color: isDark ? const Color(0xFF1A1A22) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: _searchQuery.isNotEmpty
+            color: filter.search.isNotEmpty
                 ? const Color(0xFFDC2626).withValues(alpha: 0.5)
                 : (isDark
                 ? Colors.white.withValues(alpha: 0.06)
@@ -451,8 +538,11 @@ class _EmergencyScreenState extends State<EmergencyScreen>
         child: TextField(
           controller: _searchCtrl,
           onChanged: (val) {
-            setState(() => _searchQuery = val.trim());
-            _applyFilters();
+            // ✅ debounced — no double setState
+            _searchDebounce?.cancel();
+            _searchDebounce = Timer(const Duration(milliseconds: 180), () {
+              ref.read(emergencyFilterProvider.notifier).setSearch(val);
+            });
           },
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black87,
@@ -470,7 +560,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
               color: Color(0xFFDC2626),
               size: 22,
             ),
-            suffixIcon: _searchQuery.isNotEmpty
+            suffixIcon: filter.search.isNotEmpty
                 ? IconButton(
               icon: Icon(
                 Icons.close_rounded,
@@ -479,8 +569,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
               ),
               onPressed: () {
                 _searchCtrl.clear();
-                setState(() => _searchQuery = '');
-                _applyFilters();
+                ref.read(emergencyFilterProvider.notifier).setSearch('');
               },
             )
                 : null,
@@ -492,63 +581,55 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 Category Filters
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildFilters(bool isDark) {
+  // ───────────────────────────────────────────────────────
+  // Filters
+  // ───────────────────────────────────────────────────────
+  Widget _buildFilters(bool isDark, EmergencyFilter filter) {
     return SizedBox(
       height: 44,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: EmergencyCategories.categories.length,
+        itemCount: EmergencyCategories.all.length,
         itemBuilder: (context, i) {
-          final cat = EmergencyCategories.categories[i];
-          final isSelected = _selectedCategory == cat['key'];
-          final catInfo = _getCategoryInfo(cat['key']!);
+          final cat = EmergencyCategories.all[i];
+          final selected = filter.category == cat.key;
 
           return Padding(
             padding: const EdgeInsetsDirectional.only(end: 8),
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
-                setState(() => _selectedCategory = cat['key']!);
-                _applyFilters();
+                ref.read(emergencyFilterProvider.notifier).setCategory(cat.key);
               },
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
+                duration: const Duration(milliseconds: 220),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  gradient: isSelected
+                  gradient: selected
                       ? LinearGradient(
                     colors: [
-                      catInfo['color'] as Color,
-                      (catInfo['color'] as Color)
-                          .withValues(alpha: 0.7),
+                      cat.color,
+                      cat.color.withValues(alpha: 0.7),
                     ],
                   )
                       : null,
-                  color: isSelected
+                  color: selected
                       ? null
-                      : (isDark
-                      ? const Color(0xFF1A1A22)
-                      : Colors.white),
+                      : (isDark ? const Color(0xFF1A1A22) : Colors.white),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isSelected
+                    color: selected
                         ? Colors.transparent
                         : (isDark
                         ? Colors.white.withValues(alpha: 0.08)
                         : Colors.grey.shade200),
                   ),
-                  boxShadow: isSelected
+                  boxShadow: selected
                       ? [
                     BoxShadow(
-                      color: (catInfo['color'] as Color)
-                          .withValues(alpha: 0.4),
+                      color: cat.color.withValues(alpha: 0.4),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                       spreadRadius: -2,
@@ -560,23 +641,21 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      catInfo['icon'] as IconData,
+                      cat.iconData,
                       size: 14,
-                      color: isSelected
+                      color: selected
                           ? Colors.white
-                          : (catInfo['color'] as Color),
+                          : cat.color,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      cat['name']!,
+                      cat.getName('ku'),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
-                        color: isSelected
+                        color: selected
                             ? Colors.white
-                            : (isDark
-                            ? Colors.white70
-                            : Colors.grey.shade700),
+                            : (isDark ? Colors.white70 : Colors.grey.shade700),
                       ),
                     ),
                   ],
@@ -589,39 +668,10 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     );
   }
 
-  Map<String, dynamic> _getCategoryInfo(String key) {
-    switch (key) {
-      case 'police':
-        return {'icon': Icons.local_police_rounded, 'color': const Color(0xFF1E88E5)};
-      case 'fire':
-        return {'icon': Icons.local_fire_department_rounded, 'color': const Color(0xFFEF4444)};
-      case 'ambulance':
-        return {'icon': Icons.local_hospital_rounded, 'color': const Color(0xFF10B981)};
-      case 'hospital':
-        return {'icon': Icons.local_hospital_rounded, 'color': const Color(0xFF10B981)};
-      case 'power':
-        return {'icon': Icons.electric_bolt_rounded, 'color': const Color(0xFFF59E0B)};
-      case 'water':
-        return {'icon': Icons.water_drop_rounded, 'color': const Color(0xFF3B82F6)};
-      case 'utility':
-        return {'icon': Icons.build_rounded, 'color': const Color(0xFF8B5CF6)};
-      case 'other':
-        return {'icon': Icons.phone_in_talk_rounded, 'color': const Color(0xFF6B7280)};
-      default:
-        return {'icon': Icons.apps_rounded, 'color': const Color(0xFFDC2626)};
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🔀 Sort Bar
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildSortBar(bool isDark) {
-    final sorts = [
-      {'key': 'default', 'label': 'ئاسایی', 'icon': Icons.sort_rounded},
-      {'key': 'distance', 'label': 'نزیکترین', 'icon': Icons.near_me_rounded},
-      {'key': 'name', 'label': 'ناو', 'icon': Icons.abc_rounded},
-    ];
-
+  // ───────────────────────────────────────────────────────
+  // Sort bar
+  // ───────────────────────────────────────────────────────
+  Widget _buildSortBar(bool isDark, EmergencyFilter filter) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Row(
@@ -632,31 +682,26 @@ class _EmergencyScreenState extends State<EmergencyScreen>
             color: isDark ? Colors.white54 : Colors.grey,
           ),
           const SizedBox(width: 8),
-          ...sorts.map((sort) {
-            final isSelected = _sortBy == sort['key'];
+          ...EmergencySort.values.map((sort) {
+            final selected = filter.sort == sort;
             return Padding(
               padding: const EdgeInsetsDirectional.only(end: 8),
               child: GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  setState(() => _sortBy = sort['key'] as String);
-                  _applyFilters();
+                  ref.read(emergencyFilterProvider.notifier).setSort(sort);
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isSelected
+                    color: selected
                         ? const Color(0xFFDC2626).withValues(alpha: 0.15)
-                        : (isDark
-                        ? const Color(0xFF1A1A22)
-                        : Colors.white),
+                        : (isDark ? const Color(0xFF1A1A22) : Colors.white),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isSelected
+                      color: selected
                           ? const Color(0xFFDC2626)
                           : Colors.transparent,
                     ),
@@ -665,19 +710,19 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        sort['icon'] as IconData,
+                        sort.icon,
                         size: 12,
-                        color: isSelected
+                        color: selected
                             ? const Color(0xFFDC2626)
                             : (isDark ? Colors.white54 : Colors.grey),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        sort['label'] as String,
+                        sort.label,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
-                          color: isSelected
+                          color: selected
                               ? const Color(0xFFDC2626)
                               : (isDark ? Colors.white54 : Colors.grey),
                         ),
@@ -693,11 +738,17 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📊 Stats Card
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildStatsCard(bool isDark) {
-    final hasPosition = _currentPosition != null;
+  // ───────────────────────────────────────────────────────
+  // Stats card
+  // ───────────────────────────────────────────────────────
+  Widget _buildStatsCard(
+      bool isDark,
+      EmergencyFilter filter,
+      int count,
+      Position? pos,
+      ) {
+    final hasPosition = pos != null;
+    final sortIsDistance = filter.sort == EmergencySort.distance;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -737,14 +788,14 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${_filteredServices.length} ژمارە بەردەستە',
+                    '$count ژمارە بەردەستە',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                       color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                     ),
                   ),
-                  if (hasPosition)
+                  if (hasPosition && sortIsDistance)
                     Text(
                       'ڕیزکراوە بەپێی دووری لە شوێنەکەت',
                       style: TextStyle(
@@ -757,10 +808,8 @@ class _EmergencyScreenState extends State<EmergencyScreen>
             ),
             if (hasPosition)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.green.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -768,11 +817,8 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.my_location_rounded,
-                      color: Colors.green,
-                      size: 11,
-                    ),
+                    Icon(Icons.my_location_rounded,
+                        color: Colors.green, size: 11),
                     SizedBox(width: 3),
                     Text(
                       'نزیک',
@@ -791,67 +837,260 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📋 Services List
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildServicesList(bool isDark) {
-    if (_loading) {
+  // ───────────────────────────────────────────────────────
+  // Body
+  // ───────────────────────────────────────────────────────
+  Widget _buildBody(
+      bool isDark,
+      AsyncValue<List<EmergencyService>> servicesAsync,
+      List<EmergencyRow> rows,
+      EmergencyFilter filter,
+      ) {
+    // 1️⃣ Loading (initial)
+    if (servicesAsync.isLoading && !servicesAsync.hasValue) {
       return const SliverFillRemaining(
+        hasScrollBody: false,
         child: Center(
           child: CircularProgressIndicator(color: Color(0xFFDC2626)),
         ),
       );
     }
 
-    if (_filteredServices.isEmpty) {
-      return SliverFillRemaining(child: _buildEmpty(isDark));
+    // 2️⃣ Error
+    if (servicesAsync.hasError && !servicesAsync.hasValue) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: _buildError(isDark, servicesAsync.error!),
+      );
     }
 
+    // 3️⃣ Empty
+    if (rows.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: _buildEmpty(isDark, filter),
+      );
+    }
+
+    // 4️⃣ List
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-              (context, i) {
-            final card = _buildServiceCard(_filteredServices[i], isDark);
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        40 + MediaQuery.of(context).padding.bottom,
+      ),
+      sliver: SliverList.builder(
+        itemCount: rows.length,
+        itemBuilder: (context, i) {
+          final row = rows[i];
+          final card = _EmergencyCard(
+            key: ValueKey('svc-${row.service.id ?? row.service.phone}-$i'),
+            row: row,
+            isDark: isDark,
+            pulse: _pulseController,
+            pulseValue: _pulseAnimation,
+            entry: _entryAnimation,
+            index: i,
+            onCall: () => _call(row.service.phone),
+            onDirections: () => _openDirections(row.service),
+            onShare: () => _share(row.service),
+            onCopied: (msg) => _copyAndToast(msg, msg),
+          );
+          return RepaintBoundary(child: card);
+        },
+      ),
+    );
+  }
 
-            // ⭐ Animation بۆ ٦ ی یەکەم
-            if (i >= 6) return card;
-
-            return AnimatedBuilder(
-              animation: _entryAnimation,
-              builder: (context, child) {
-                final delay = (i * 0.08).clamp(0.0, 0.5);
-                final progress =
-                ((_entryAnimation.value - delay) / 0.4).clamp(0.0, 1.0);
-                return Transform.translate(
-                  offset: Offset(0, 20 * (1 - progress)),
-                  child: Opacity(
-                    opacity: progress,
-                    child: child,
-                  ),
-                );
-              },
-              child: card,
-            );
-          },
-          childCount: _filteredServices.length,
+  Widget _buildError(bool isDark, Object error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                size: 60, color: Color(0xFFDC2626)),
+            const SizedBox(height: 16),
+            Text(
+              'هەڵە لە بارکردنی داتا',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              error.toString(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.white54 : Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _refresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('دووبارە هەوڵ بدە'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎴 Service Card — ULTRA PRO
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildServiceCard(EmergencyService service, bool isDark) {
-    final color = _hexToColor(service.color);
-    final icon = _getIconData(service.icon);
-    final isFavorite = _favorites.contains(service.id);
-    final distance = _getDistance(service);
-    final hasDistance = distance < 99999.0;
+  Widget _buildEmpty(bool isDark, EmergencyFilter filter) {
+    final searching = filter.search.isNotEmpty;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (_, __) => Transform.scale(
+                scale: _pulseAnimation.value,
+                child: Container(
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFFDC2626).withValues(alpha: 0.2),
+                        const Color(0xFFDC2626).withValues(alpha: 0.02),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.emergency_outlined,
+                    size: 60,
+                    color: Color(0xFFDC2626),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              searching ? 'هیچ ئەنجامێک نەدۆزرایەوە' : 'هیچ ژمارەیەک نییە',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              searching
+                  ? 'گەڕانەکەت هیچ ئەنجامێکی نەبوو'
+                  : 'تکایە داتا لە داتابەیس زیاد بکە',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white54 : Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
+// ═══════════════════════════════════════════════════════════
+// 🧱 Card (own widget → fewer rebuilds)
+// ═══════════════════════════════════════════════════════════
+class _EmergencyCard extends ConsumerWidget {
+  final EmergencyRow row;
+  final bool isDark;
+  final AnimationController pulse;
+  final Animation<double> pulseValue;
+  final Animation<double> entry;
+  final int index;
+  final VoidCallback onCall;
+  final VoidCallback onDirections;
+  final VoidCallback onShare;
+  final void Function(String msg) onCopied;
+
+  const _EmergencyCard({
+    super.key,
+    required this.row,
+    required this.isDark,
+    required this.pulse,
+    required this.pulseValue,
+    required this.entry,
+    required this.index,
+    required this.onCall,
+    required this.onDirections,
+    required this.onShare,
+    required this.onCopied,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final service = row.service;
+    final color = service.displayColor;
+    final icon = service.categoryInfo.iconData;
+    final favoriteIds = ref.watch(_favoritesProvider);
+    final isFavorite = service.id != null && favoriteIds.contains(service.id);
+
+    final distance = row.distanceKm;
+    final hasDistance = distance != null;
+
+    // Entry animation — computed once per frame during entry, then static
+    final t = entry.value;
+    final delay = (index * 0.08).clamp(0.0, 0.5);
+    final progress = ((t - delay) / 0.4).clamp(0.0, 1.0);
+    final animated = index < 6 && progress < 1.0;
+
+    Widget content = _buildContent(
+      context,
+      service,
+      color,
+      icon,
+      isFavorite,
+      hasDistance,
+      distance,
+      ref,
+    );
+
+    if (animated) {
+      content = AnimatedBuilder(
+        animation: entry,
+        builder: (_, child) {
+          final tt = entry.value;
+          final p = ((tt - delay) / 0.4).clamp(0.0, 1.0);
+          return Transform.translate(
+            offset: Offset(0, 20 * (1 - p)),
+            child: Opacity(opacity: p, child: child),
+          );
+        },
+        child: content,
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: content,
+    );
+  }
+
+  Widget _buildContent(
+      BuildContext context,
+      EmergencyService service,
+      Color color,
+      IconData icon,
+      bool isFavorite,
+      bool hasDistance,
+      double? distance,
+      WidgetRef ref,
+      ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A22) : Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -873,53 +1112,26 @@ class _EmergencyScreenState extends State<EmergencyScreen>
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () => _call(service.phone),
+          onTap: onCall,
+          onLongPress: () => _showContextSheet(context, service, ref),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               children: [
                 Row(
                   children: [
-                    // ⭐ Icon
-                    AnimatedBuilder(
-                      animation: service.isImportant
-                          ? _pulseController
-                          : const AlwaysStoppedAnimation(1.0),
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale: service.isImportant
-                              ? 1.0 + (_pulseAnimation.value - 1.0) * 0.3
-                              : 1.0,
-                          child: Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  color,
-                                  color.withValues(alpha: 0.7),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: color.withValues(alpha: 0.45),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 5),
-                                  spreadRadius: -2,
-                                ),
-                              ],
-                            ),
-                            child: Icon(icon, color: Colors.white, size: 26),
-                          ),
-                        );
-                      },
-                    ),
+                    // Icon circle
+                    service.isImportant
+                        ? AnimatedBuilder(
+                      animation: pulse,
+                      builder: (_, __) => Transform.scale(
+                        scale:
+                        1.0 + (pulseValue.value - 1.0) * 0.3,
+                        child: _iconCircle(color, icon),
+                      ),
+                    )
+                        : _iconCircle(color, icon),
                     const SizedBox(width: 14),
-
-                    // ⭐ Info
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -929,7 +1141,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                             children: [
                               Expanded(
                                 child: Text(
-                                  service.nameKu,
+                                  service.getName('ku'),
                                   style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 15,
@@ -965,67 +1177,35 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Icon(
-                                Icons.phone_rounded,
-                                size: 13,
-                                color: color,
-                              ),
+                              Icon(Icons.phone_rounded, size: 13, color: color),
                               const SizedBox(width: 4),
-                              Text(
-                                service.phone,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  color: color,
-                                  letterSpacing: 0.5,
+                              Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Text(
+                                  service.phone,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    color: color,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
                               ),
                               if (service.is24h) ...[
                                 const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.access_time_filled_rounded,
-                                        size: 9,
-                                        color: Colors.green,
-                                      ),
-                                      SizedBox(width: 3),
-                                      Text(
-                                        '٢٤/٧',
-                                        style: TextStyle(
-                                          fontSize: 8,
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                _badge('٢٤/٧', Colors.green),
                               ],
                             ],
                           ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              if (service.authorityName != null &&
-                                  service.authorityName!.isNotEmpty) ...[
-                                Icon(
-                                  Icons.business_rounded,
-                                  size: 10,
-                                  color: isDark
-                                      ? Colors.white54
-                                      : Colors.grey,
-                                ),
+                              if ((service.authorityName ?? '').isNotEmpty) ...[
+                                Icon(Icons.business_rounded,
+                                    size: 10,
+                                    color: isDark
+                                        ? Colors.white54
+                                        : Colors.grey),
                                 const SizedBox(width: 3),
                                 Expanded(
                                   child: Text(
@@ -1042,17 +1222,13 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                                 ),
                               ],
                               if (hasDistance) ...[
-                                if (service.authorityName != null &&
-                                    service.authorityName!.isNotEmpty)
+                                if ((service.authorityName ?? '').isNotEmpty)
                                   const SizedBox(width: 8),
-                                Icon(
-                                  Icons.near_me_rounded,
-                                  size: 10,
-                                  color: Colors.green,
-                                ),
+                                const Icon(Icons.near_me_rounded,
+                                    size: 10, color: Colors.green),
                                 const SizedBox(width: 3),
                                 Text(
-                                  '${distance.toStringAsFixed(1)} کم',
+                                  '${distance!.toStringAsFixed(1)} کم',
                                   style: const TextStyle(
                                     fontSize: 10,
                                     color: Colors.green,
@@ -1065,10 +1241,8 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                         ],
                       ),
                     ),
-
-                    // ⭐ Call Button
                     GestureDetector(
-                      onTap: () => _call(service.phone),
+                      onTap: onCall,
                       child: Container(
                         width: 48,
                         height: 48,
@@ -1094,8 +1268,6 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                     ),
                   ],
                 ),
-
-                // ⭐ Actions Row
                 const SizedBox(height: 10),
                 Container(
                   height: 1,
@@ -1106,44 +1278,35 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    // ⭐ Favorites
-                    _buildActionButton(
+                    _actionBtn(
                       icon: isFavorite
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
                       label: isFavorite ? 'دڵخواز' : 'زیادکردن',
                       color: isFavorite ? Colors.pink : Colors.grey,
                       onTap: () {
+                        if (service.id == null) {
+                          onCopied('ژمارە کۆپی کرا');
+                          return;
+                        }
                         HapticFeedback.selectionClick();
-                        setState(() {
-                          if (isFavorite) {
-                            _favorites.remove(service.id);
-                          } else {
-                            _favorites.add(service.id!);
-                          }
-                        });
+                        ref
+                            .read(_favoritesProvider.notifier)
+                            .toggle(service.id!);
                       },
                     ),
-                    // ⭐ Share
-                    _buildActionButton(
+                    _actionBtn(
                       icon: Icons.share_rounded,
                       label: 'هاوبەشکردن',
                       color: Colors.blue,
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        _shareService(service);
-                      },
+                      onTap: onShare,
                     ),
-                    // ⭐ Directions
                     if (service.hasLocation)
-                      _buildActionButton(
+                      _actionBtn(
                         icon: Icons.directions_rounded,
                         label: 'ئاراستە',
                         color: Colors.green,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          _openDirections(service);
-                        },
+                        onTap: onDirections,
                       ),
                   ],
                 ),
@@ -1155,16 +1318,66 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     );
   }
 
-  Widget _buildActionButton({
+  Widget _iconCircle(Color color, IconData icon) {
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color, color.withValues(alpha: 0.7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.45),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
+      child: Icon(icon, color: Colors.white, size: 26),
+    );
+  }
+
+  Widget _badge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.access_time_filled_rounded, size: 9, color: color),
+          const SizedBox(width: 3),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 8,
+              color: color,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionBtn({
     required IconData icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
   }) {
     return Expanded(
-      child: GestureDetector(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1186,125 +1399,93 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     );
   }
 
-  void _shareService(EmergencyService service) {
-    // TODO: بەکارهێنانی share_plus
-    debugPrint('📤 Share: ${service.nameKu} - ${service.phone}');
-  }
-
-  Future<void> _openDirections(EmergencyService service) async {
-    if (service.latitude == null || service.longitude == null) return;
-
-    final uri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination=${service.latitude},${service.longitude}',
-    );
-
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      debugPrint('❌ Directions error: $e');
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 📭 Empty State
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildEmpty(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
+  void _showContextSheet(
+      BuildContext context,
+      EmergencyService service,
+      WidgetRef ref,
+      ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          const Color(0xFFDC2626).withValues(alpha: 0.2),
-                          const Color(0xFFDC2626).withValues(alpha: 0.02),
-                        ],
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.emergency_outlined,
-                      size: 60,
-                      color: Color(0xFFDC2626),
-                    ),
-                  ),
-                );
+            ListTile(
+              leading: const Icon(Icons.call_rounded),
+              title: const Text('پەیوەندی'),
+              onTap: () {
+                Navigator.pop(ctx);
+                onCall();
               },
             ),
-            const SizedBox(height: 20),
-            Text(
-              _searchQuery.isEmpty
-                  ? 'هیچ ژمارەیەک نییە'
-                  : 'هیچ ئەنجامێک نەدۆزرایەوە',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-              ),
+            ListTile(
+              leading: const Icon(Icons.copy_rounded),
+              title: const Text('کۆپیکردنی ژمارە'),
+              onTap: () {
+                Navigator.pop(ctx);
+                onCopied(service.phone);
+              },
             ),
-            const SizedBox(height: 8),
-            Text(
-              _searchQuery.isEmpty
-                  ? 'تکایە داتا لە داتابەیس زیاد بکە'
-                  : 'گەڕانەکەت هیچ ئەنجامێکی نەبوو',
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white54 : Colors.grey.shade600,
+            if (service.hasLocation)
+              ListTile(
+                leading: const Icon(Icons.directions_rounded),
+                title: const Text('ئاراستە'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onDirections();
+                },
               ),
+            ListTile(
+              leading: const Icon(Icons.share_rounded),
+              title: const Text('هاوبەشکردن'),
+              onTap: () {
+                Navigator.pop(ctx);
+                onShare();
+              },
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Helpers
-  // ═══════════════════════════════════════════════════════════
-  IconData _getIconData(String icon) {
-    switch (icon) {
-      case 'local_police':
-        return Icons.local_police_rounded;
-      case 'local_fire_department':
-        return Icons.local_fire_department_rounded;
-      case 'local_hospital':
-        return Icons.local_hospital_rounded;
-      case 'electric_bolt':
-      case 'bolt':
-        return Icons.electric_bolt_rounded;
-      case 'water_drop':
-        return Icons.water_drop_rounded;
-      case 'local_gas_station':
-        return Icons.local_gas_station_rounded;
-      case 'business':
-        return Icons.business_rounded;
-      case 'construction':
-        return Icons.construction_rounded;
-      case 'phone_in_talk':
-        return Icons.phone_in_talk_rounded;
-      default:
-        return Icons.emergency_rounded;
+// ═══════════════════════════════════════════════════════════
+// ⭐ Favorites (persisted)
+// ═══════════════════════════════════════════════════════════
+class FavoritesNotifier extends StateNotifier<Set<String>> {
+  static const _key = 'emergency_favorites_v1';
+  FavoritesNotifier(this._ref) : super(const {}) {
+    _load();
+  }
+
+  final Ref _ref;
+
+  Future<void> _load() async {
+    try {
+      final prefs = await _ref.read(sharedPreferencesAsyncProvider.future);
+      state = (prefs.getStringList(_key) ?? const []).toSet();
+    } catch (_) {
+      // ignore — empty set is fine
     }
   }
 
-  Color _hexToColor(String hex) {
+  Future<void> toggle(String id) async {
+    final next = {...state};
+    if (!next.add(id)) next.remove(id);
+    state = next;
     try {
-      hex = hex.replaceAll('#', '');
-      if (hex.length == 6) hex = 'FF$hex';
-      return Color(int.parse(hex, radix: 16));
-    } catch (_) {
-      return const Color(0xFFDC2626);
-    }
+      final prefs = await _ref.read(sharedPreferencesAsyncProvider.future);
+      await prefs.setStringList(_key, next.toList());
+    } catch (_) {}
   }
 }
+
+final _favoritesProvider =
+StateNotifierProvider<FavoritesNotifier, Set<String>>((ref) {
+  return FavoritesNotifier(ref);
+});

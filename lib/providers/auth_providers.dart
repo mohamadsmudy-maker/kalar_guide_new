@@ -1,204 +1,134 @@
-import 'package:flutter/foundation.dart';  // ✅ بۆ debugPrint
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../models/user.dart';
+import '../../utils/password_hasher.dart'; // ⚠️ دڵنیابە ئەمە import کراوە
 
-import '../data/repositories/auth_repository.dart';
-import '../models/user.dart';
-import 'providers.dart';
+class AuthRepository {
+  final SupabaseClient _client;
 
-// ═══════════════════════════════════════════════════════════
-// 🔐 Auth Repository Provider
-// ═══════════════════════════════════════════════════════════
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  final client = ref.watch(supabaseProvider);
-  return AuthRepository(client);
-});
+  AuthRepository(this._client);
 
-// ═══════════════════════════════════════════════════════════
-// 🔐 State ی بەکارهێنەر
-// ═══════════════════════════════════════════════════════════
-class AuthState {
-  final AppUser? user;
-  final bool isLoading;
-  final bool isInitialized;
-  final String? error;
-
-  const AuthState({
-    this.user,
-    this.isLoading = false,
-    this.isInitialized = false,
-    this.error,
-  });
-
-  bool get isLoggedIn => user != null;
-  bool get isAdmin => user?.role == 'admin';
-  bool get isVendor => user?.role == 'vendor' || isAdmin;
-
-  AuthState copyWith({
-    AppUser? user,
-    bool? isLoading,
-    bool? isInitialized,
-    String? error,
-  }) {
-    return AuthState(
-      user: user ?? this.user,
-      isLoading: isLoading ?? this.isLoading,
-      isInitialized: isInitialized ?? this.isInitialized,
-      error: error,
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// 🎯 Notifier ی Auth
-// ═══════════════════════════════════════════════════════════
-class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _repo;
-  static const String _phoneKey = 'logged_phone';
-
-  AuthNotifier(this._repo) : super(const AuthState()) {
-    _init();
-  }
-
-  /// ✅ دەستپێکردن
-  Future<void> _init() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final phone = prefs.getString(_phoneKey);
-
-      if (phone == null || phone.isEmpty) {
-        state = state.copyWith(isInitialized: true);
-        return;
-      }
-
-      final user = await _repo.getUserByPhone(phone);
-      state = AuthState(
-        user: user,
-        isInitialized: true,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isInitialized: true,
-        error: e.toString(),
-      );
-    }
-  }
-
-  /// ✅ چوونەژوورەوە
-  Future<bool> login({
+  // ───────────────────────────────────────────────────────
+  // 🔑 Login
+  // ───────────────────────────────────────────────────────
+  Future<AppUser?> login({
     required String phone,
     required String password,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
-
     try {
-      final user = await _repo.login(
-        phone: phone,
-        password: password,
-      );
+      final response = await _client
+          .from('users')
+          .select()
+          .eq('phone', phone)
+          .maybeSingle();
 
-      if (user == null) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'مۆبایل یان پاسۆرد هەڵەیە',
-        );
-        return false;
-      }
+      if (response == null) return null;
 
-      if (user.role == 'pending') {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'چاوەڕوانی پەسەندکردن',
-        );
-        return false;
-      }
+      // ⚠️ دڵنیابە لەوەی کلیلەکە لە داتابەیسەکەتدا 'password_hash' ـە
+      final storedHash = response['password_hash'] as String?;
+      if (storedHash == null) return null;
 
-      // ✅ پاشەکەوتکردن
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_phoneKey, phone);
+      final isValid = PasswordHasher.verify(password, storedHash);
+      if (!isValid) return null;
 
-      state = AuthState(
-        user: user,
-        isLoading: false,
-        isInitialized: true,
-      );
-
-      return true;
+      return AppUser.fromJson(response);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
-      return false;
+      debugPrint('❌ AuthRepository.login: $e');
+      rethrow;
     }
   }
 
-  /// ✅ دروستکردنی ئەکاونت
+  // ───────────────────────────────────────────────────────
+  // 🆕 SignUp
+  // ───────────────────────────────────────────────────────
   Future<bool> signUp({
     required String name,
     required String phone,
     required String password,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
-
     try {
-      final success = await _repo.signUp(
-        name: name,
-        phone: phone,
-        password: password,
-      );
+      // پشکنین ئەگەر مۆبایلەکە بەکارهاتووە
+      final existing = await _client
+          .from('users')
+          .select('id')
+          .eq('phone', phone)
+          .maybeSingle();
+      if (existing != null) return false;
 
-      if (!success) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'نەتوانرا ئەکاونت دروست بکرێت',
-        );
-        return false;
-      }
+      final hashedPassword = PasswordHasher.hash(password);
 
-      // ✅ دوای SignUp، Login بکە
-      return await login(phone: phone, password: password);
+      await _client.from('users').insert({
+        'name': name,
+        'phone': phone,
+        'password_hash': hashedPassword,
+        'role': 'customer', // ڕۆڵی سەرەتایی
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      return true;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      debugPrint('❌ AuthRepository.signUp: $e');
       return false;
     }
   }
 
-  /// ✅ چوونەدەرەوە
-  Future<void> logout() async {
+  // ───────────────────────────────────────────────────────
+  // 👤 Get User by Phone
+  // ───────────────────────────────────────────────────────
+  Future<AppUser?> getUserByPhone(String phone) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_phoneKey);
+      final response = await _client
+          .from('users')
+          .select()
+          .eq('phone', phone)
+          .maybeSingle();
 
-      state = const AuthState(isInitialized: true);
+      if (response == null) return null;
+      return AppUser.fromJson(response);
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      debugPrint('❌ AuthRepository.getUserByPhone: $e');
+      return null;
     }
   }
 
-  /// ✅ نوێکردنەوەی پرۆفایل
-  Future<void> refreshProfile() async {
-    if (state.user?.phone == null) return;
-
+  // ═══════════════════════════════════════════════════════════
+  // 🔐 Change Password
+  // ═══════════════════════════════════════════════════════════
+  Future<bool> changePassword({
+    required String phone,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
     try {
-      final user = await _repo.getUserByPhone(state.user!.phone!);
-      if (user != null) {
-        state = state.copyWith(user: user);
-      }
+      // 1. پشکنین لەوەی پاسۆردی ئێستا ڕاستە بە هەمان شێوەی login
+      final user = await login(phone: phone, password: currentPassword);
+      if (user == null) return false;
+
+      // 2. ئەگەر ڕاست بوو، پاسۆردی نوێ هاش بکە و پاشەکەوتی بکە
+      final hashedNewPassword = PasswordHasher.hash(newPassword);
+
+      await _client
+          .from('users')
+          .update({'password_hash': hashedNewPassword}).eq('phone', phone);
+
+      return true;
     } catch (e) {
-      // ✅ ئێستا debugPrint کار دەکات چونکە import ەکە هەیە
-      debugPrint('❌ AuthNotifier.refreshProfile: $e');
+      debugPrint('❌ AuthRepository.changePassword: $e');
+      return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🗑 Delete Account
+  // ═══════════════════════════════════════════════════════════
+  Future<bool> deleteAccount({required String phone}) async {
+    try {
+      await _client.from('users').delete().eq('phone', phone);
+      return true;
+    } catch (e) {
+      debugPrint('❌ AuthRepository.deleteAccount: $e');
+      return false;
     }
   }
 }
-
-// ═══════════════════════════════════════════════════════════
-// 🎯 Provider ی سەرەکی
-// ═══════════════════════════════════════════════════════════
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final repo = ref.watch(authRepositoryProvider);
-  return AuthNotifier(repo);
-});

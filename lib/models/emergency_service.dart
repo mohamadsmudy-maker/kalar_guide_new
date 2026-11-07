@@ -1,5 +1,13 @@
-/// 🚑 مۆدێلی خزمەتگوزاری فریاکەوتن — ULTRA PRO
+// 📁 models/emergency_service.dart
+import 'package:flutter/material.dart'; // ✅ پێویستە بۆ Color و Icons
+import 'package:flutter/foundation.dart';
+
+import 'emergency_categories.dart'; // ✅ پێویستە بۆ EmergencyCategories
+
+/// 🚑 مۆدێلی خزمەتگوزاری فریاکەوتن — ULTRA PRO MAX
+@immutable
 class EmergencyService {
+  /// ✅ Stable id from DB. `null` only for "not yet saved".
   final String? id;
   final String nameKu;
   final String? nameAr;
@@ -11,7 +19,7 @@ class EmergencyService {
   final double? latitude;
   final double? longitude;
   final String icon;
-  final String color;
+  final String color; // hex like `#EF4444`
   final bool is24h;
   final bool isImportant;
   final bool isActive;
@@ -21,7 +29,7 @@ class EmergencyService {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  EmergencyService({
+  const EmergencyService({
     this.id,
     required this.nameKu,
     this.nameAr,
@@ -44,59 +52,66 @@ class EmergencyService {
     this.updatedAt,
   });
 
+  // ───────────────────────────────────────────────────────
+  // 📥 fromJson — tolerant of strings, ints, and nulls
+  // ───────────────────────────────────────────────────────
   factory EmergencyService.fromJson(Map<String, dynamic> json) {
     return EmergencyService(
-      id: json['id']?.toString(),
-      nameKu: json['name_ku']?.toString() ?? '',
-      nameAr: json['name_ar']?.toString(),
-      nameEn: json['name_en']?.toString(),
-      category: json['category']?.toString() ?? 'other',
-      phone: json['phone']?.toString() ?? '',
-      phoneAlt: json['phone_alt']?.toString(),
-      address: json['address']?.toString(),
-      latitude: double.tryParse(json['latitude']?.toString() ?? ''),
-      longitude: double.tryParse(json['longitude']?.toString() ?? ''),
-      icon: json['icon']?.toString() ?? 'emergency',
-      color: json['color']?.toString() ?? '#EF4444',
-      is24h: json['is_24h'] != false,
-      isImportant: json['is_important'] == true,
-      isActive: json['is_active'] != false,
-      displayOrder:
-      int.tryParse(json['display_order']?.toString() ?? '0') ?? 0,
-      notes: json['notes']?.toString(),
-      authorityName: json['authority_name']?.toString(),
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString())
-          : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'].toString())
-          : null,
+      id: _asString(json['id']),
+      nameKu: _asString(json['name_ku']) ?? '',
+      nameAr: _asString(json['name_ar']),
+      nameEn: _asString(json['name_en']),
+      category: _asString(json['category']) ?? 'other',
+      phone: _asString(json['phone']) ?? '',
+      phoneAlt: _asString(json['phone_alt']),
+      address: _asString(json['address']),
+      latitude: _asDouble(json['latitude']),
+      longitude: _asDouble(json['longitude']),
+      icon: _asString(json['icon']) ?? 'emergency',
+      color: _asString(json['color']) ?? '#EF4444',
+      is24h: _asBool(json['is_24h'], fallback: true),
+      isImportant: _asBool(json['is_important'], fallback: false),
+      isActive: _asBool(json['is_active'], fallback: true),
+      displayOrder: _asInt(json['display_order']) ?? 0,
+      notes: _asString(json['notes']),
+      authorityName: _asString(json['authority_name']),
+      createdAt: _asDateTime(json['created_at']),
+      updatedAt: _asDateTime(json['updated_at']),
     );
   }
 
-  Map<String, dynamic> toJson() {
+  // ───────────────────────────────────────────────────────
+  // 📤 toJson — strips nulls so Postgres defaults win
+  // ───────────────────────────────────────────────────────
+  Map<String, dynamic> toJson({bool includeId = true}) {
     return {
-      if (id != null) 'id': id,
+      if (includeId && id != null) 'id': id,
       'name_ku': nameKu,
-      'name_ar': nameAr,
-      'name_en': nameEn,
+      if (nameAr != null) 'name_ar': nameAr,
+      if (nameEn != null) 'name_en': nameEn,
       'category': category,
       'phone': phone,
-      'phone_alt': phoneAlt,
-      'address': address,
-      'latitude': latitude,
-      'longitude': longitude,
+      if (phoneAlt != null) 'phone_alt': phoneAlt,
+      if (address != null) 'address': address,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'icon': icon,
       'color': color,
       'is_24h': is24h,
       'is_important': isImportant,
       'is_active': isActive,
       'display_order': displayOrder,
-      'notes': notes,
-      'authority_name': authorityName,
+      if (notes != null) 'notes': notes,
+      if (authorityName != null) 'authority_name': authorityName,
     };
   }
 
+  /// For an "insert" (no id, no timestamps).
+  Map<String, dynamic> toInsertJson() => toJson(includeId: false);
+
+  // ───────────────────────────────────────────────────────
+  // 🎯 Localization
+  // ───────────────────────────────────────────────────────
   String getName(String lang) {
     switch (lang) {
       case 'ar':
@@ -108,23 +123,35 @@ class EmergencyService {
     }
   }
 
+  // ───────────────────────────────────────────────────────
+  // 📍 Location
+  // ───────────────────────────────────────────────────────
   bool get hasLocation =>
       latitude != null &&
           longitude != null &&
-          latitude != 0 &&
-          longitude != 0;
+          !(latitude == 0.0 && longitude == 0.0);
 
+  // ───────────────────────────────────────────────────────
+  // 🔄 copyWith — with explicit clear flags for nullable fields
+  // ───────────────────────────────────────────────────────
   EmergencyService copyWith({
     String? id,
+    bool clearId = false,
     String? nameKu,
     String? nameAr,
+    bool clearNameAr = false,
     String? nameEn,
+    bool clearNameEn = false,
     String? category,
     String? phone,
     String? phoneAlt,
+    bool clearPhoneAlt = false,
     String? address,
+    bool clearAddress = false,
     double? latitude,
+    bool clearLatitude = false,
     double? longitude,
+    bool clearLongitude = false,
     String? icon,
     String? color,
     bool? is24h,
@@ -132,31 +159,151 @@ class EmergencyService {
     bool? isActive,
     int? displayOrder,
     String? notes,
+    bool clearNotes = false,
     String? authorityName,
+    bool clearAuthorityName = false,
     DateTime? createdAt,
+    bool clearCreatedAt = false,
     DateTime? updatedAt,
+    bool clearUpdatedAt = false,
   }) {
     return EmergencyService(
-      id: id ?? this.id,
+      id: clearId ? null : (id ?? this.id),
       nameKu: nameKu ?? this.nameKu,
-      nameAr: nameAr ?? this.nameAr,
-      nameEn: nameEn ?? this.nameEn,
+      nameAr: clearNameAr ? null : (nameAr ?? this.nameAr),
+      nameEn: clearNameEn ? null : (nameEn ?? this.nameEn),
       category: category ?? this.category,
       phone: phone ?? this.phone,
-      phoneAlt: phoneAlt ?? this.phoneAlt,
-      address: address ?? this.address,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
+      phoneAlt: clearPhoneAlt ? null : (phoneAlt ?? this.phoneAlt),
+      address: clearAddress ? null : (address ?? this.address),
+      latitude: clearLatitude ? null : (latitude ?? this.latitude),
+      longitude: clearLongitude ? null : (longitude ?? this.longitude),
       icon: icon ?? this.icon,
       color: color ?? this.color,
       is24h: is24h ?? this.is24h,
       isImportant: isImportant ?? this.isImportant,
       isActive: isActive ?? this.isActive,
       displayOrder: displayOrder ?? this.displayOrder,
-      notes: notes ?? this.notes,
-      authorityName: authorityName ?? this.authorityName,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      notes: clearNotes ? null : (notes ?? this.notes),
+      authorityName:
+      clearAuthorityName ? null : (authorityName ?? this.authorityName),
+      createdAt: clearCreatedAt ? null : (createdAt ?? this.createdAt),
+      updatedAt: clearUpdatedAt ? null : (updatedAt ?? this.updatedAt),
     );
   }
+
+  // ───────────────────────────────────────────────────────
+  // ⚖️ Equality
+  // ───────────────────────────────────────────────────────
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is EmergencyService &&
+              runtimeType == other.runtimeType &&
+              id == other.id &&
+              nameKu == other.nameKu &&
+              nameAr == other.nameAr &&
+              nameEn == other.nameEn &&
+              category == other.category &&
+              phone == other.phone &&
+              phoneAlt == other.phoneAlt &&
+              address == other.address &&
+              latitude == other.latitude &&
+              longitude == other.longitude &&
+              icon == other.icon &&
+              color == other.color &&
+              is24h == other.is24h &&
+              isImportant == other.isImportant &&
+              isActive == other.isActive &&
+              displayOrder == other.displayOrder &&
+              notes == other.notes &&
+              authorityName == other.authorityName &&
+              createdAt == other.createdAt &&
+              updatedAt == other.updatedAt;
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    nameKu,
+    nameAr,
+    nameEn,
+    category,
+    phone,
+    phoneAlt,
+    address,
+    latitude,
+    longitude,
+    icon,
+    color,
+    is24h,
+    isImportant,
+    isActive,
+    displayOrder,
+    notes,
+    authorityName,
+    createdAt,
+    updatedAt,
+  ]);
+
+  @override
+  String toString() =>
+      'EmergencyService(id: $id, nameKu: $nameKu, category: $category, '
+          'phone: $phone, active: $isActive)';
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🧰 Safe JSON coercion helpers
+// ═══════════════════════════════════════════════════════════
+String? _asString(Object? v) {
+  if (v == null) return null;
+  final s = v.toString().trim();
+  return s.isEmpty ? null : s;
+}
+
+int? _asInt(Object? v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
+}
+
+double? _asDouble(Object? v) {
+  if (v == null) return null;
+  if (v is double) return v;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString());
+}
+
+bool _asBool(Object? v, {required bool fallback}) {
+  if (v == null) return fallback;
+  if (v is bool) return v;
+  if (v is num) return v != 0;
+  final s = v.toString().toLowerCase();
+  if (s == 'true' || s == '1' || s == 'yes') return true;
+  if (s == 'false' || s == '0' || s == 'no') return false;
+  return fallback;
+}
+
+DateTime? _asDateTime(Object? v) {
+  if (v == null) return null;
+  if (v is DateTime) return v;
+  return DateTime.tryParse(v.toString());
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎨 Extensions (چارەسەری کێشەی ڕەنگ و ئایکۆن)
+// ═══════════════════════════════════════════════════════════
+extension EmergencyServiceX on EmergencyService {
+  /// 🎨 پارسکردنی ڕەنگ لە هێکسی وەک `#EF4444` بۆ `Color`
+  Color get displayColor {
+    final hex = color.replaceFirst('#', '');
+    try {
+      if (hex.length == 6) return Color(int.parse('FF$hex', radix: 16));
+      if (hex.length == 8) return Color(int.parse(hex, radix: 16));
+    } catch (_) {}
+    return EmergencyCategories.getOrOther(category).color;
+  }
+
+  /// 🏷️ وەرگرتنی زانیاری کاتێگۆری (ئایکۆن و ڕەنگ)
+  EmergencyCategory get categoryInfo => EmergencyCategories.getOrOther(category);
 }

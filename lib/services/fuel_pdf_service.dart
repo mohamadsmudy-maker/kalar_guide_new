@@ -1,14 +1,13 @@
+// lib/services/fuel_pdf_service.dart
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'fuel_service.dart';
 
-/// 📄 ڕاپۆرتی PDF ی پرۆفیشناڵ بۆ سووتەمەنی
+/// 📄 ڕاپۆرتی PDF ی پرۆفیشناڵ بۆ سووتەمەنی — Ultra Pro Max
 class FuelPdfService {
-  // ═══════════════════════════════════════════════════════════
   // 🎨 ڕەنگەکان
-  // ═══════════════════════════════════════════════════════════
   static const PdfColor _primaryDark = PdfColor.fromInt(0xFF1A1B2E);
   static const PdfColor _primaryGold = PdfColor.fromInt(0xFFFFD700);
   static const PdfColor _primaryBlue = PdfColor.fromInt(0xFF1E88E5);
@@ -17,13 +16,12 @@ class FuelPdfService {
   static const PdfColor _grey = PdfColors.grey600;
   static const PdfColor _lightGrey = PdfColors.grey100;
 
-  // ✅ ڕەنگی سپی بە شەفافیەتی جیاواز (PDF compatible)
   static const PdfColor _white70 = PdfColor.fromInt(0xB3FFFFFF);
   static const PdfColor _white60 = PdfColor.fromInt(0x99FFFFFF);
   static const PdfColor _white10 = PdfColor.fromInt(0x1AFFFFFF);
 
   // ═══════════════════════════════════════════════════════════
-  // 📄 ڕاپۆرتی PDF بە بەرواری دیاریکراو — پرۆفیشناڵ
+  // 📄 دروستکردنی ڕاپۆرت
   // ═══════════════════════════════════════════════════════════
   static Future<void> generateDateRangeReport({
     required BuildContext context,
@@ -34,18 +32,11 @@ class FuelPdfService {
     try {
       final history = await FuelService.getMonthlyHistory(monthsBack: 12);
 
-      // ✅ فلتەرکردن
       final filtered = history.where((item) {
-        final createdAt = DateTime.tryParse(
-          item['created_at']?.toString() ?? '',
-        );
+        final createdAt = DateTime.tryParse(item['created_at']?.toString() ?? '');
         if (createdAt == null) return false;
-
-        final isInRange = createdAt.isAfter(
-          fromDate.subtract(const Duration(days: 1)),
-        ) &&
+        final isInRange = createdAt.isAfter(fromDate.subtract(const Duration(days: 1))) &&
             createdAt.isBefore(toDate.add(const Duration(days: 1)));
-
         if (fuelType != null && fuelType.isNotEmpty) {
           return isInRange && item['fuel_type'] == fuelType;
         }
@@ -57,7 +48,6 @@ class FuelPdfService {
         return;
       }
 
-      // ✅ ڕیزبەندکردن
       filtered.sort((a, b) {
         final dateA = DateTime.tryParse(a['created_at']?.toString() ?? '');
         final dateB = DateTime.tryParse(b['created_at']?.toString() ?? '');
@@ -69,35 +59,26 @@ class FuelPdfService {
       final font = await PdfGoogleFonts.notoNaskhArabicRegular();
       final fontBold = await PdfGoogleFonts.notoNaskhArabicBold();
 
-      // ✅ ئامارەکان
-      final prices = filtered
-          .map((h) => (h['new_price'] as num?)?.toDouble() ?? 0)
-          .toList();
+      final prices = filtered.map((h) => (h['new_price'] as num?)?.toDouble() ?? 0).toList();
       final minPrice = prices.reduce((a, b) => a < b ? a : b);
       final maxPrice = prices.reduce((a, b) => a > b ? a : b);
       final avgPrice = prices.reduce((a, b) => a + b) / prices.length;
       final firstPrice = prices.first;
       final lastPrice = prices.last;
       final diff = lastPrice - firstPrice;
-      final percentChange =
-      firstPrice > 0 ? (diff / firstPrice) * 100 : 0.0;
+      final percentChange = firstPrice > 0 ? (diff / firstPrice) * 100 : 0.0;
 
-      // ✅ گروپکردن بەپێی جۆر
       final groupedByType = <String, List<Map<String, dynamic>>>{};
       for (final item in filtered) {
         final type = item['fuel_type']?.toString() ?? '';
         groupedByType.putIfAbsent(type, () => []).add(item);
       }
 
-      // ✅ گروپکردن بەپێی ڕۆژ
       final groupedByDate = <String, List<Map<String, dynamic>>>{};
       for (final item in filtered) {
-        final createdAt = DateTime.tryParse(
-          item['created_at']?.toString() ?? '',
-        );
+        final createdAt = DateTime.tryParse(item['created_at']?.toString() ?? '');
         if (createdAt == null) continue;
-        final key =
-            '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}';
+        final key = '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}';
         groupedByDate.putIfAbsent(key, () => []).add(item);
       }
 
@@ -114,13 +95,8 @@ class FuelPdfService {
             toDate: toDate,
             fuelType: fuelType,
           ),
-          footer: (ctx) => _buildFooter(
-            font: font,
-            fontBold: fontBold,
-            context: ctx,
-          ),
+          footer: (ctx) => _buildFooter(font: font, fontBold: fontBold, context: ctx),
           build: (ctx) => [
-            // ═══ زانیاری ڕاپۆرت ═══
             _buildReportInfo(
               font: font,
               fontBold: fontBold,
@@ -129,8 +105,6 @@ class FuelPdfService {
               totalDays: groupedByDate.length,
             ),
             pw.SizedBox(height: 16),
-
-            // ═══ ئاماری کورت ═══
             _buildStatsSection(
               font: font,
               fontBold: fontBold,
@@ -143,51 +117,20 @@ class FuelPdfService {
               percentChange: percentChange,
             ),
             pw.SizedBox(height: 20),
-
-            // ═══ Chart ═══
             _buildChartSection(
               font: font,
               fontBold: fontBold,
               history: filtered,
-              color: PdfColor.fromHex(
-                FuelService.getColorForType(fuelType ?? 'normal')
-                    .replaceAll('#', ''),
-              ),
+              color: PdfColor.fromHex(FuelService.getColorForType(fuelType ?? 'normal').replaceAll('#', '')),
             ),
             pw.SizedBox(height: 20),
-
-            // ═══ گروپکردن بەپێی جۆر ═══
-            pw.Text(
-              '📊 ئامار بەپێی جۆر',
-              style: pw.TextStyle(
-                font: fontBold,
-                fontSize: 14,
-                color: _primaryDark,
-              ),
-            ),
+            pw.Text('📊 ئامار بەپێی جۆر', style: pw.TextStyle(font: fontBold, fontSize: 14, color: _primaryDark)),
             pw.SizedBox(height: 10),
-            _buildTypesSummary(
-              font: font,
-              fontBold: fontBold,
-              groupedByType: groupedByType,
-            ),
+            _buildTypesSummary(font: font, fontBold: fontBold, groupedByType: groupedByType),
             pw.SizedBox(height: 20),
-
-            // ═══ لیستی گۆڕانکارییەکان ═══
-            pw.Text(
-              '📋 لیستی گۆڕانکارییەکان',
-              style: pw.TextStyle(
-                font: fontBold,
-                fontSize: 14,
-                color: _primaryDark,
-              ),
-            ),
+            pw.Text('📋 لیستی گۆڕانکارییەکان', style: pw.TextStyle(font: fontBold, fontSize: 14, color: _primaryDark)),
             pw.SizedBox(height: 10),
-            _buildDataTable(
-              font: font,
-              fontBold: fontBold,
-              filtered: filtered,
-            ),
+            _buildDataTable(font: font, fontBold: fontBold, filtered: filtered),
           ],
         ),
       );
@@ -197,13 +140,13 @@ class FuelPdfService {
         name: 'fuel_report_${DateTime.now().millisecondsSinceEpoch}.pdf',
       );
     } catch (e) {
-      debugPrint('❌ هەڵە: $e');
+      debugPrint('❌ هەڵە لە دروستکردنی PDF: $e');
       _showMessage(context, 'هەڵە لە دروستکردنی PDF: $e');
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎨 Header
+  // 🎨 یاریدەدەرەکانی PDF (Header, Footer, ...)
   // ═══════════════════════════════════════════════════════════
   static pw.Widget _buildHeader({
     required pw.Font font,
@@ -216,95 +159,41 @@ class FuelPdfService {
       margin: const pw.EdgeInsets.only(bottom: 16),
       padding: const pw.EdgeInsets.all(16),
       decoration: pw.BoxDecoration(
-        gradient: const pw.LinearGradient(
-          colors: [_primaryDark, PdfColor.fromInt(0xFF2D1B4E)],
-        ),
+        gradient: const pw.LinearGradient(colors: [_primaryDark, PdfColor.fromInt(0xFF2D1B4E)]),
         borderRadius: pw.BorderRadius.circular(12),
       ),
       child: pw.Row(
         children: [
-          // ⛽ ئایکۆن
           pw.Container(
             width: 50,
             height: 50,
             decoration: const pw.BoxDecoration(
-              gradient: pw.LinearGradient(
-                colors: [_primaryGold, PdfColor.fromInt(0xFFFFB300)],
-              ),
+              gradient: pw.LinearGradient(colors: [_primaryGold, PdfColor.fromInt(0xFFFFB300)]),
               shape: pw.BoxShape.circle,
             ),
-            child: pw.Center(
-              child: pw.Text(
-                '⛽',
-                style: pw.TextStyle(fontSize: 24),
-              ),
-            ),
+            child: pw.Center(child: pw.Text('⛽', style: const pw.TextStyle(fontSize: 24))),
           ),
           pw.SizedBox(width: 14),
           pw.Expanded(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text(
-                  'ڕاپۆرتی نرخی سووتەمەنی',
-                  style: pw.TextStyle(
-                    font: fontBold,
-                    fontSize: 20,
-                    color: PdfColors.white,
-                  ),
-                ),
+                pw.Text('ڕاپۆرتی نرخی سووتەمەنی', style: pw.TextStyle(font: fontBold, fontSize: 20, color: PdfColors.white)),
                 pw.SizedBox(height: 4),
-                pw.Text(
-                  fuelType != null
-                      ? 'جۆری: ${FuelService.getNameKu(fuelType)}'
-                      : 'هەموو جۆرەکان',
-                  style: pw.TextStyle(
-                    font: font,
-                    fontSize: 11,
-                    color: _white70,
-                  ),
-                ),
+                pw.Text(fuelType != null ? 'جۆری: ${FuelService.getNameKu(fuelType)}' : 'هەموو جۆرەکان', style: pw.TextStyle(font: font, fontSize: 11, color: _white70)),
                 pw.SizedBox(height: 2),
-                pw.Text(
-                  'لە ${_formatDate(fromDate)} بۆ ${_formatDate(toDate)}',
-                  style: pw.TextStyle(
-                    font: font,
-                    fontSize: 10,
-                    color: _white60,
-                  ),
-                ),
+                pw.Text('لە ${_formatDate(fromDate)} بۆ ${_formatDate(toDate)}', style: pw.TextStyle(font: font, fontSize: 10, color: _white60)),
               ],
             ),
           ),
-          // 📅 بەروار
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
-            decoration: pw.BoxDecoration(
-              color: _white10,
-              borderRadius: pw.BorderRadius.circular(8),
-            ),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: pw.BoxDecoration(color: _white10, borderRadius: pw.BorderRadius.circular(8)),
             child: pw.Column(
               children: [
-                pw.Text(
-                  'بەروار',
-                  style: pw.TextStyle(
-                    font: font,
-                    fontSize: 8,
-                    color: _white60,
-                  ),
-                ),
+                pw.Text('بەروار', style: pw.TextStyle(font: font, fontSize: 8, color: _white60)),
                 pw.SizedBox(height: 2),
-                pw.Text(
-                  DateTime.now().toString().substring(0, 10),
-                  style: pw.TextStyle(
-                    font: fontBold,
-                    fontSize: 10,
-                    color: PdfColors.white,
-                  ),
-                ),
+                pw.Text(DateTime.now().toString().substring(0, 10), style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.white)),
               ],
             ),
           ),
@@ -313,249 +202,89 @@ class FuelPdfService {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Footer
-  // ═══════════════════════════════════════════════════════════
-  static pw.Widget _buildFooter({
-    required pw.Font font,
-    required pw.Font fontBold,
-    required pw.Context context,
-  }) {
+  static pw.Widget _buildFooter({required pw.Font font, required pw.Font fontBold, required pw.Context context}) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 16),
       padding: const pw.EdgeInsets.all(10),
-      decoration: pw.BoxDecoration(
-        color: _lightGrey,
-        borderRadius: pw.BorderRadius.circular(8),
-      ),
+      decoration: pw.BoxDecoration(color: _lightGrey, borderRadius: pw.BorderRadius.circular(8)),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(
-            '🏙️ ڕێبەری کەلار — ئەپی فەرمی شاری کەلار',
-            style: pw.TextStyle(
-              font: fontBold,
-              fontSize: 9,
-              color: _primaryDark,
-            ),
-          ),
-          pw.Text(
-            'لاپەڕە ${context.pageNumber} لە ${context.pagesCount}',
-            style: pw.TextStyle(
-              font: font,
-              fontSize: 8,
-              color: _grey,
-            ),
-          ),
+          pw.Text('🏙️ ڕێبەری کەلار — ئەپی فەرمی شاری کەلار', style: pw.TextStyle(font: fontBold, fontSize: 9, color: _primaryDark)),
+          pw.Text('لاپەڕە ${context.pageNumber} لە ${context.pagesCount}', style: pw.TextStyle(font: font, fontSize: 8, color: _grey)),
         ],
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📋 زانیاری ڕاپۆرت
-  // ═══════════════════════════════════════════════════════════
-  static pw.Widget _buildReportInfo({
-    required pw.Font font,
-    required pw.Font fontBold,
-    required int totalRecords,
-    required int totalTypes,
-    required int totalDays,
-  }) {
+  static pw.Widget _buildReportInfo({required pw.Font font, required pw.Font fontBold, required int totalRecords, required int totalTypes, required int totalDays}) {
     return pw.Row(
       children: [
-        _buildInfoBox(
-          icon: '📋',
-          label: 'کۆی تۆمارەکان',
-          value: '$totalRecords',
-          color: _primaryBlue,
-          font: font,
-          fontBold: fontBold,
-        ),
+        _buildInfoBox(icon: '📋', label: 'کۆی تۆمارەکان', value: '$totalRecords', color: _primaryBlue, font: font, fontBold: fontBold),
         pw.SizedBox(width: 8),
-        _buildInfoBox(
-          icon: '🛢️',
-          label: 'جۆرەکان',
-          value: '$totalTypes',
-          color: _successGreen,
-          font: font,
-          fontBold: fontBold,
-        ),
+        _buildInfoBox(icon: '🛢️', label: 'جۆرەکان', value: '$totalTypes', color: _successGreen, font: font, fontBold: fontBold),
         pw.SizedBox(width: 8),
-        _buildInfoBox(
-          icon: '📅',
-          label: 'ڕۆژەکان',
-          value: '$totalDays',
-          color: const PdfColor.fromInt(0xFFF59E0B),
-          font: font,
-          fontBold: fontBold,
-        ),
+        _buildInfoBox(icon: '📅', label: 'ڕۆژەکان', value: '$totalDays', color: const PdfColor.fromInt(0xFFF59E0B), font: font, fontBold: fontBold),
       ],
     );
   }
 
-  static pw.Widget _buildInfoBox({
-    required String icon,
-    required String label,
-    required String value,
-    required PdfColor color,
-    required pw.Font font,
-    required pw.Font fontBold,
-  }) {
+  static pw.Widget _buildInfoBox({required String icon, required String label, required String value, required PdfColor color, required pw.Font font, required pw.Font fontBold}) {
     return pw.Expanded(
       child: pw.Container(
         padding: const pw.EdgeInsets.all(12),
-        decoration: pw.BoxDecoration(
-          color: color,
-          borderRadius: pw.BorderRadius.circular(10),
-        ),
+        decoration: pw.BoxDecoration(color: color, borderRadius: pw.BorderRadius.circular(10)),
         child: pw.Column(
           children: [
             pw.Text(icon, style: const pw.TextStyle(fontSize: 18)),
             pw.SizedBox(height: 4),
-            pw.Text(
-              value,
-              style: pw.TextStyle(
-                font: fontBold,
-                fontSize: 18,
-                color: PdfColors.white,
-              ),
-            ),
+            pw.Text(value, style: pw.TextStyle(font: fontBold, fontSize: 18, color: PdfColors.white)),
             pw.SizedBox(height: 2),
-            pw.Text(
-              label,
-              style: pw.TextStyle(
-                font: font,
-                fontSize: 9,
-                color: _white70,
-              ),
-            ),
+            pw.Text(label, style: pw.TextStyle(font: font, fontSize: 9, color: _white70)),
           ],
         ),
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📊 ئاماری کورت
-  // ═══════════════════════════════════════════════════════════
-  static pw.Widget _buildStatsSection({
-    required pw.Font font,
-    required pw.Font fontBold,
-    required double minPrice,
-    required double maxPrice,
-    required double avgPrice,
-    required double firstPrice,
-    required double lastPrice,
-    required double diff,
-    required double percentChange,
-  }) {
+  static pw.Widget _buildStatsSection({required pw.Font font, required pw.Font fontBold, required double minPrice, required double maxPrice, required double avgPrice, required double firstPrice, required double lastPrice, required double diff, required double percentChange}) {
     final isUp = diff > 0;
     final isDown = diff < 0;
-    final changeColor = isUp
-        ? _dangerRed
-        : isDown
-        ? _successGreen
-        : _grey;
+    final changeColor = isUp ? _dangerRed : isDown ? _successGreen : _grey;
 
     return pw.Column(
       children: [
         pw.Container(
           padding: const pw.EdgeInsets.all(14),
-          decoration: pw.BoxDecoration(
-            color: _lightGrey,
-            borderRadius: pw.BorderRadius.circular(12),
-            border: pw.Border.all(color: PdfColors.grey300),
-          ),
+          decoration: pw.BoxDecoration(color: _lightGrey, borderRadius: pw.BorderRadius.circular(12), border: pw.Border.all(color: PdfColors.grey300)),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                '📊 ئاماری کورت',
-                style: pw.TextStyle(
-                  font: fontBold,
-                  fontSize: 13,
-                  color: _primaryDark,
-                ),
-              ),
+              pw.Text('📊 ئاماری کورت', style: pw.TextStyle(font: fontBold, fontSize: 13, color: _primaryDark)),
               pw.SizedBox(height: 12),
-
               pw.Row(
                 children: [
-                  _buildStatBox(
-                    icon: '⬇️',
-                    label: 'نزمترین',
-                    value: minPrice.toStringAsFixed(0),
-                    color: _successGreen,
-                    font: font,
-                    fontBold: fontBold,
-                  ),
+                  _buildStatBox(icon: '⬇️', label: 'نزمترین', value: minPrice.toStringAsFixed(0), color: _successGreen, font: font, fontBold: fontBold),
                   pw.SizedBox(width: 8),
-                  _buildStatBox(
-                    icon: '📊',
-                    label: 'تێکڕا',
-                    value: avgPrice.toStringAsFixed(0),
-                    color: _primaryBlue,
-                    font: font,
-                    fontBold: fontBold,
-                  ),
+                  _buildStatBox(icon: '📊', label: 'تێکڕا', value: avgPrice.toStringAsFixed(0), color: _primaryBlue, font: font, fontBold: fontBold),
                   pw.SizedBox(width: 8),
-                  _buildStatBox(
-                    icon: '⬆️',
-                    label: 'بەرزترین',
-                    value: maxPrice.toStringAsFixed(0),
-                    color: _dangerRed,
-                    font: font,
-                    fontBold: fontBold,
-                  ),
+                  _buildStatBox(icon: '⬆️', label: 'بەرزترین', value: maxPrice.toStringAsFixed(0), color: _dangerRed, font: font, fontBold: fontBold),
                 ],
               ),
               pw.SizedBox(height: 8),
-
               pw.Container(
                 padding: const pw.EdgeInsets.all(10),
-                decoration: pw.BoxDecoration(
-                  color: changeColor,
-                  borderRadius: pw.BorderRadius.circular(8),
-                ),
+                decoration: pw.BoxDecoration(color: changeColor, borderRadius: pw.BorderRadius.circular(8)),
                 child: pw.Row(
                   children: [
-                    pw.Text(
-                      isUp ? '📈' : isDown ? '📉' : '➖',
-                      style: const pw.TextStyle(fontSize: 16),
-                    ),
+                    pw.Text(isUp ? '📈' : isDown ? '📉' : '➖', style: const pw.TextStyle(fontSize: 16)),
                     pw.SizedBox(width: 8),
                     pw.Expanded(
-                      child: pw.Text(
-                        isUp
-                            ? 'زیادبوونی گشتی'
-                            : isDown
-                            ? 'کەمبوونەوەی گشتی'
-                            : 'بێ گۆڕانکاری',
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 11,
-                          color: PdfColors.white,
-                        ),
-                      ),
+                      child: pw.Text(isUp ? 'زیادبوونی گشتی' : isDown ? 'کەمبوونەوەی گشتی' : 'بێ گۆڕانکاری', style: pw.TextStyle(font: fontBold, fontSize: 11, color: PdfColors.white)),
                     ),
-                    pw.Text(
-                      '${isUp ? "+" : ""}${diff.toStringAsFixed(0)} د.ع',
-                      style: pw.TextStyle(
-                        font: fontBold,
-                        fontSize: 11,
-                        color: PdfColors.white,
-                      ),
-                    ),
+                    pw.Text('${isUp ? "+" : ""}${diff.toStringAsFixed(0)} د.ع', style: pw.TextStyle(font: fontBold, fontSize: 11, color: PdfColors.white)),
                     pw.SizedBox(width: 6),
-                    pw.Text(
-                      '(${percentChange.toStringAsFixed(1)}%)',
-                      style: pw.TextStyle(
-                        font: font,
-                        fontSize: 10,
-                        color: _white70,
-                      ),
-                    ),
+                    pw.Text('(${percentChange.toStringAsFixed(1)}%)', style: pw.TextStyle(font: font, fontSize: 10, color: _white70)),
                   ],
                 ),
               ),
@@ -566,65 +295,28 @@ class FuelPdfService {
     );
   }
 
-  static pw.Widget _buildStatBox({
-    required String icon,
-    required String label,
-    required String value,
-    required PdfColor color,
-    required pw.Font font,
-    required pw.Font fontBold,
-  }) {
+  static pw.Widget _buildStatBox({required String icon, required String label, required String value, required PdfColor color, required pw.Font font, required pw.Font fontBold}) {
     return pw.Expanded(
       child: pw.Container(
         padding: const pw.EdgeInsets.all(10),
-        decoration: pw.BoxDecoration(
-          color: PdfColors.white,
-          borderRadius: pw.BorderRadius.circular(8),
-          border: pw.Border.all(color: color, width: 1.5),
-        ),
+        decoration: pw.BoxDecoration(color: PdfColors.white, borderRadius: pw.BorderRadius.circular(8), border: pw.Border.all(color: color, width: 1.5)),
         child: pw.Column(
           children: [
             pw.Text(icon, style: const pw.TextStyle(fontSize: 16)),
             pw.SizedBox(height: 4),
-            pw.Text(
-              value,
-              style: pw.TextStyle(
-                font: fontBold,
-                fontSize: 16,
-                color: color,
-              ),
-            ),
+            pw.Text(value, style: pw.TextStyle(font: fontBold, fontSize: 16, color: color)),
             pw.SizedBox(height: 2),
-            pw.Text(
-              label,
-              style: pw.TextStyle(
-                font: font,
-                fontSize: 8,
-                color: _grey,
-              ),
-            ),
+            pw.Text(label, style: pw.TextStyle(font: font, fontSize: 8, color: _grey)),
           ],
         ),
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📈 Chart Section
-  // ═══════════════════════════════════════════════════════════
-  static pw.Widget _buildChartSection({
-    required pw.Font font,
-    required pw.Font fontBold,
-    required List<Map<String, dynamic>> history,
-    required PdfColor color,
-  }) {
-    if (history.length < 2) {
-      return pw.SizedBox.shrink();
-    }
+  static pw.Widget _buildChartSection({required pw.Font font, required pw.Font fontBold, required List<Map<String, dynamic>> history, required PdfColor color}) {
+    if (history.length < 2) return pw.SizedBox.shrink();
 
-    final prices = history
-        .map((h) => (h['new_price'] as num?)?.toDouble() ?? 0)
-        .toList();
+    final prices = history.map((h) => (h['new_price'] as num?)?.toDouble() ?? 0).toList();
     final minPrice = prices.reduce((a, b) => a < b ? a : b);
     final maxPrice = prices.reduce((a, b) => a > b ? a : b);
     final range = maxPrice - minPrice;
@@ -640,49 +332,26 @@ class FuelPdfService {
 
     return pw.Container(
       padding: const pw.EdgeInsets.all(14),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.white,
-        borderRadius: pw.BorderRadius.circular(12),
-        border: pw.Border.all(color: PdfColors.grey300),
-      ),
+      decoration: pw.BoxDecoration(color: PdfColors.white, borderRadius: pw.BorderRadius.circular(12), border: pw.Border.all(color: PdfColors.grey300)),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Row(
             children: [
-              pw.Text(
-                '📈 چارتی گۆڕانکاری',
-                style: pw.TextStyle(
-                  font: fontBold,
-                  fontSize: 13,
-                  color: _primaryDark,
-                ),
-              ),
+              pw.Text('📈 چارتی گۆڕانکاری', style: pw.TextStyle(font: fontBold, fontSize: 13, color: _primaryDark)),
               pw.Spacer(),
-              pw.Text(
-                '${history.length} خاڵ',
-                style: pw.TextStyle(
-                  font: font,
-                  fontSize: 9,
-                  color: _grey,
-                ),
-              ),
+              pw.Text('${history.length} خاڵ', style: pw.TextStyle(font: font, fontSize: 9, color: _grey)),
             ],
           ),
           pw.SizedBox(height: 12),
-
           pw.SizedBox(
             height: 140,
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: displayPoints.map((i) {
                 final price = prices[i];
-                final height = range > 0
-                    ? ((price - minPrice) / range) * 100 + 20
-                    : 50.0;
-                final date = DateTime.tryParse(
-                  history[i]['created_at']?.toString() ?? '',
-                );
+                final height = range > 0 ? ((price - minPrice) / range) * 100 + 20 : 50.0;
+                final date = DateTime.tryParse(history[i]['created_at']?.toString() ?? '');
 
                 return pw.Expanded(
                   child: pw.Padding(
@@ -693,31 +362,12 @@ class FuelPdfService {
                         pw.Container(
                           height: height,
                           decoration: pw.BoxDecoration(
-                            gradient: pw.LinearGradient(
-                              colors: [
-                                color,
-                                PdfColors.white,
-                              ],
-                              begin: pw.Alignment.topCenter,
-                              end: pw.Alignment.bottomCenter,
-                            ),
-                            borderRadius: const pw.BorderRadius.only(
-                              topLeft: pw.Radius.circular(3),
-                              topRight: pw.Radius.circular(3),
-                            ),
+                            gradient: pw.LinearGradient(colors: [color, PdfColors.white], begin: pw.Alignment.topCenter, end: pw.Alignment.bottomCenter),
+                            borderRadius: const pw.BorderRadius.only(topLeft: pw.Radius.circular(3), topRight: pw.Radius.circular(3)),
                           ),
                         ),
                         pw.SizedBox(height: 2),
-                        pw.Text(
-                          date != null
-                              ? '${date.day}/${date.month}'
-                              : '',
-                          style: pw.TextStyle(
-                            font: font,
-                            fontSize: 5,
-                            color: _grey,
-                          ),
-                        ),
+                        pw.Text(date != null ? '${date.day}/${date.month}' : '', style: pw.TextStyle(font: font, fontSize: 5, color: _grey)),
                       ],
                     ),
                   ),
@@ -725,29 +375,13 @@ class FuelPdfService {
               }).toList(),
             ),
           ),
-
           pw.SizedBox(height: 8),
-
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.center,
             children: [
-              pw.Container(
-                width: 10,
-                height: 10,
-                decoration: pw.BoxDecoration(
-                  color: color,
-                  borderRadius: pw.BorderRadius.circular(2),
-                ),
-              ),
+              pw.Container(width: 10, height: 10, decoration: pw.BoxDecoration(color: color, borderRadius: pw.BorderRadius.circular(2))),
               pw.SizedBox(width: 4),
-              pw.Text(
-                'نرخی سووتەمەنی',
-                style: pw.TextStyle(
-                  font: font,
-                  fontSize: 8,
-                  color: _grey,
-                ),
-              ),
+              pw.Text('نرخی سووتەمەنی', style: pw.TextStyle(font: font, fontSize: 8, color: _grey)),
             ],
           ),
         ],
@@ -755,73 +389,29 @@ class FuelPdfService {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📊 Types Summary
-  // ═══════════════════════════════════════════════════════════
-  static pw.Widget _buildTypesSummary({
-    required pw.Font font,
-    required pw.Font fontBold,
-    required Map<String, List<Map<String, dynamic>>> groupedByType,
-  }) {
+  static pw.Widget _buildTypesSummary({required pw.Font font, required pw.Font fontBold, required Map<String, List<Map<String, dynamic>>> groupedByType}) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
-      decoration: pw.BoxDecoration(
-        color: _lightGrey,
-        borderRadius: pw.BorderRadius.circular(10),
-      ),
+      decoration: pw.BoxDecoration(color: _lightGrey, borderRadius: pw.BorderRadius.circular(10)),
       child: pw.Column(
         children: groupedByType.entries.map((entry) {
           final type = entry.key;
           final items = entry.value;
-          final prices = items
-              .map((h) => (h['new_price'] as num?)?.toDouble() ?? 0)
-              .toList();
+          final prices = items.map((h) => (h['new_price'] as num?)?.toDouble() ?? 0).toList();
           final minP = prices.reduce((a, b) => a < b ? a : b);
           final maxP = prices.reduce((a, b) => a > b ? a : b);
-          final color = PdfColor.fromHex(
-            FuelService.getColorForType(type).replaceAll('#', ''),
-          );
+          final color = PdfColor.fromHex(FuelService.getColorForType(type).replaceAll('#', ''));
 
           return pw.Padding(
             padding: const pw.EdgeInsets.only(bottom: 6),
             child: pw.Row(
               children: [
-                pw.Container(
-                  width: 12,
-                  height: 12,
-                  decoration: pw.BoxDecoration(
-                    color: color,
-                    borderRadius: pw.BorderRadius.circular(3),
-                  ),
-                ),
+                pw.Container(width: 12, height: 12, decoration: pw.BoxDecoration(color: color, borderRadius: pw.BorderRadius.circular(3))),
                 pw.SizedBox(width: 8),
-                pw.Expanded(
-                  child: pw.Text(
-                    FuelService.getNameKu(type),
-                    style: pw.TextStyle(
-                      font: fontBold,
-                      fontSize: 10,
-                      color: _primaryDark,
-                    ),
-                  ),
-                ),
-                pw.Text(
-                  '${items.length} تۆمار',
-                  style: pw.TextStyle(
-                    font: font,
-                    fontSize: 9,
-                    color: _grey,
-                  ),
-                ),
+                pw.Expanded(child: pw.Text(FuelService.getNameKu(type), style: pw.TextStyle(font: fontBold, fontSize: 10, color: _primaryDark))),
+                pw.Text('${items.length} تۆمار', style: pw.TextStyle(font: font, fontSize: 9, color: _grey)),
                 pw.SizedBox(width: 12),
-                pw.Text(
-                  '${minP.toStringAsFixed(0)} — ${maxP.toStringAsFixed(0)} د.ع',
-                  style: pw.TextStyle(
-                    font: fontBold,
-                    fontSize: 9,
-                    color: _primaryDark,
-                  ),
-                ),
+                pw.Text('${minP.toStringAsFixed(0)} — ${maxP.toStringAsFixed(0)} د.ع', style: pw.TextStyle(font: fontBold, fontSize: 9, color: _primaryDark)),
               ],
             ),
           );
@@ -830,25 +420,9 @@ class FuelPdfService {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📋 Data Table
-  // ═══════════════════════════════════════════════════════════
-  static pw.Widget _buildDataTable({
-    required pw.Font font,
-    required pw.Font fontBold,
-    required List<Map<String, dynamic>> filtered,
-  }) {
+  static pw.Widget _buildDataTable({required pw.Font font, required pw.Font fontBold, required List<Map<String, dynamic>> filtered}) {
     return pw.TableHelper.fromTextArray(
-      headers: [
-        '#',
-        'بەروار',
-        'کات',
-        'جۆر',
-        'نرخی کۆن',
-        'نرخی نوێ',
-        'گۆڕانکاری',
-        'لەلایەن',
-      ],
+      headers: ['#', 'بەروار', 'کات', 'جۆر', 'نرخی کۆن', 'نرخی نوێ', 'گۆڕانکاری', 'لەلایەن'],
       data: filtered.reversed.toList().asMap().entries.map((entry) {
         final idx = entry.key + 1;
         final item = entry.value;
@@ -856,23 +430,15 @@ class FuelPdfService {
         final oldPrice = (item['old_price'] as num?)?.toDouble();
         final newPrice = (item['new_price'] as num?)?.toDouble() ?? 0;
         final updatedBy = item['updated_by_name']?.toString() ?? '-';
-        final createdAt = item['created_at'] != null
-            ? DateTime.tryParse(item['created_at'].toString())
-            : null;
+        final createdAt = item['created_at'] != null ? DateTime.tryParse(item['created_at'].toString()) : null;
 
         final diff = oldPrice != null ? newPrice - oldPrice : 0;
-        final diffText = oldPrice == null
-            ? '-'
-            : '${diff > 0 ? "+" : ""}${diff.toStringAsFixed(0)}';
+        final diffText = oldPrice == null ? '-' : '${diff > 0 ? "+" : ""}${diff.toStringAsFixed(0)}';
 
         return [
           idx.toString(),
-          createdAt != null
-              ? '${createdAt.year}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.day.toString().padLeft(2, '0')}'
-              : '-',
-          createdAt != null
-              ? '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}'
-              : '-',
+          createdAt != null ? '${createdAt.year}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.day.toString().padLeft(2, '0')}' : '-',
+          createdAt != null ? '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}' : '-',
           FuelService.getNameKu(fuelType),
           oldPrice?.toStringAsFixed(0) ?? '-',
           newPrice.toStringAsFixed(0),
@@ -881,35 +447,22 @@ class FuelPdfService {
         ];
       }).toList(),
       border: pw.TableBorder.all(color: PdfColors.grey300),
-      headerStyle: pw.TextStyle(
-        font: fontBold,
-        color: PdfColors.white,
-        fontSize: 9,
-      ),
-      headerDecoration: const pw.BoxDecoration(
-        color: _primaryDark,
-      ),
+      headerStyle: pw.TextStyle(font: fontBold, color: PdfColors.white, fontSize: 9),
+      headerDecoration: const pw.BoxDecoration(color: _primaryDark),
       cellAlignment: pw.Alignment.centerRight,
       cellStyle: pw.TextStyle(font: font, fontSize: 8),
       cellPadding: const pw.EdgeInsets.all(5),
-      oddRowDecoration: const pw.BoxDecoration(
-        color: _lightGrey,
-      ),
+      oddRowDecoration: const pw.BoxDecoration(color: _lightGrey),
       headerAlignment: pw.Alignment.centerRight,
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🛠️ Helpers
-  // ═══════════════════════════════════════════════════════════
   static String _formatDate(DateTime? d) {
     if (d == null) return '-';
     return '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
   }
 
   static void _showMessage(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 }

@@ -1,3 +1,5 @@
+// lib/models/store_service.dart
+
 /// 📋 مۆدێلی مامەڵەی شوێن (پێداویستی و تێچووی)
 class StoreService {
   final String? id;
@@ -49,8 +51,7 @@ class StoreService {
       notes: json['notes']?.toString(),
       icon: json['icon']?.toString() ?? 'description',
       color: json['color']?.toString() ?? '#1E88E5',
-      displayOrder:
-      int.tryParse(json['display_order']?.toString() ?? '0') ?? 0,
+      displayOrder: int.tryParse(json['display_order']?.toString() ?? '0') ?? 0,
       isActive: json['is_active'] != false,
     );
   }
@@ -78,19 +79,19 @@ class StoreService {
     return [];
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool includeNullables = false}) {
     return {
       if (id != null) 'id': id,
       'store_id': storeId,
       'title_ku': titleKu,
-      'title_ar': titleAr,
-      'title_en': titleEn,
-      'description': description,
+      if (includeNullables || titleAr != null) 'title_ar': titleAr,
+      if (includeNullables || titleEn != null) 'title_en': titleEn,
+      if (includeNullables || description != null) 'description': description,
       'requirements': requirements,
       'fees': fees,
-      'duration': duration,
-      'location': location,
-      'notes': notes,
+      if (includeNullables || duration != null) 'duration': duration,
+      if (includeNullables || location != null) 'location': location,
+      if (includeNullables || notes != null) 'notes': notes,
       'icon': icon,
       'color': color,
       'display_order': displayOrder,
@@ -98,15 +99,53 @@ class StoreService {
     };
   }
 
-  /// 📝 ناو بەپێی زمان
+  Map<String, dynamic> toUpdateJson() {
+    final json = toJson(includeNullables: true);
+    json['updated_at'] = DateTime.now().toUtc().toIso8601String();
+    return json;
+  }
+
   String getTitle(String lang) {
     switch (lang) {
       case 'ar':
-        return (titleAr?.isEmpty ?? true) ? titleKu : titleAr!;
+        return (titleAr?.trim().isEmpty ?? true) ? titleKu : titleAr!.trim();
       case 'en':
-        return (titleEn?.isEmpty ?? true) ? titleKu : titleEn!;
+        return (titleEn?.trim().isEmpty ?? true) ? titleKu : titleEn!.trim();
       default:
         return titleKu;
     }
+  }
+
+  StoreService copyWith({
+    String? id, bool clearId = false,
+    int? storeId,
+    String? titleKu, String? titleAr, bool clearTitleAr = false,
+    String? titleEn, bool clearTitleEn = false,
+    String? description, bool clearDescription = false,
+    List<String>? requirements,
+    List<String>? fees,
+    String? duration, bool clearDuration = false,
+    String? location, bool clearLocation = false,
+    String? notes, bool clearNotes = false,
+    String? icon, String? color,
+    int? displayOrder, bool? isActive,
+  }) {
+    return StoreService(
+      id: clearId ? null : (id ?? this.id),
+      storeId: storeId ?? this.storeId,
+      titleKu: titleKu ?? this.titleKu,
+      titleAr: clearTitleAr ? null : (titleAr ?? this.titleAr),
+      titleEn: clearTitleEn ? null : (titleEn ?? this.titleEn),
+      description: clearDescription ? null : (description ?? this.description),
+      requirements: requirements ?? this.requirements,
+      fees: fees ?? this.fees,
+      duration: clearDuration ? null : (duration ?? this.duration),
+      location: clearLocation ? null : (location ?? this.location),
+      notes: clearNotes ? null : (notes ?? this.notes),
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      displayOrder: displayOrder ?? this.displayOrder,
+      isActive: isActive ?? this.isActive,
+    );
   }
 }

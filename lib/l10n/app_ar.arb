@@ -1,0 +1,13 @@
+{
+  "@@locale": "ar",
+  "appName": "دليل كەلار",
+  "nav_home": "الرئيسية",
+  "nav_places": "الأماكن",
+  "nav_categories": "الأقسام",
+  "nav_favorites": "المفضلة",
+  "nav_daily": "اليومي",
+  "welcome_guest": "ضيف عزيز",
+  "settings": "الإعدادات",
+  "emergency": "الطوارئ",
+  "events": "المناسبات"
+}

@@ -1,12 +1,146 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../services/image_service.dart';
 
-/// 📢 لیستی بەڕێوەبردنی ڕێنماییەکانی سکاڵا
+// ═══════════════════════════════════════════════════════════
+// ⚙️ Constants
+// ═══════════════════════════════════════════════════════════
+const String _kTable = 'complaint_instructions';
+const int _kMaxInstructions = 20;
+const int _kTitleMax = 80;
+const int _kDescMax = 600;
+const Color _kAppBarColor = Color(0xFF1E1B2E);
+
+// ═══════════════════════════════════════════════════════════
+// 🛠️ Shared UI Helpers
+// ═══════════════════════════════════════════════════════════
+void _toast(ScaffoldMessengerState messenger, String msg, {bool isError = false}) {
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+}
+
+Future<bool> _confirmDialog(
+    BuildContext context, {
+      required String title,
+      required String message,
+      required String confirmLabel,
+      String cancelLabel = "نەخێر",
+      IconData icon = Icons.warning_amber_rounded,
+      Color color = Colors.red,
+    }) async {
+  final res = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => Directionality(
+      textDirection: TextDirection.rtl,
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        content: Text(message, style: const TextStyle(fontSize: 13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(cancelLabel, style: const TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    ),
+  );
+  return res ?? false;
+}
+
+void _showImagePreview(BuildContext context, String url) {
+  showDialog(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(12),
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: InteractiveViewer(
+              minScale: 1,
+              maxScale: 4,
+              child: OptimizedNetworkImage(imageUrl: url, fit: BoxFit.contain),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: CircleAvatar(
+              backgroundColor: Colors.black54,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _SectionCard extends StatelessWidget {
+  final bool isDark;
+  final Widget child;
+  const _SectionCard({required this.isDark, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+enum _StatusFilter { all, active, inactive }
+
+// ═══════════════════════════════════════════════════════════
+// 1. 📢 لیستی بەڕێوەبردنی ڕێنماییەکانی سکاڵا
+// ═══════════════════════════════════════════════════════════
 class AdminComplaintInstructionsListScreen extends StatefulWidget {
   const AdminComplaintInstructionsListScreen({super.key});
 
@@ -18,7 +152,16 @@ class AdminComplaintInstructionsListScreen extends StatefulWidget {
 class _AdminComplaintInstructionsListScreenState
     extends State<AdminComplaintInstructionsListScreen> {
   bool _loading = true;
+  String? _error;
   List<Map<String, dynamic>> _instructions = [];
+
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
+  _StatusFilter _filter = _StatusFilter.all;
+  final Set<dynamic> _togglingIds = {};
+
+  bool get _limitReached => _instructions.length >= _kMaxInstructions;
+  int get _activeCount => _instructions.where((e) => (e['is_active'] ?? true) == true).length;
 
   @override
   void initState() {
@@ -26,100 +169,116 @@ class _AdminComplaintInstructionsListScreenState
     _fetchInstructions();
   }
 
-  Future<void> _fetchInstructions() async {
-    setState(() => _loading = true);
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchInstructions({bool silent = false}) async {
+    if (!silent && mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final res = await Supabase.instance.client
-          .from('complaint_instructions')
+          .from(_kTable)
           .select()
           .order('id', ascending: true);
 
-      if (mounted) {
-        setState(() {
-          _instructions = List<Map<String, dynamic>>.from(res as List);
-          _loading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _instructions = List<Map<String, dynamic>>.from(res as List);
+        _loading = false;
+        _error = null;
+      });
     } on PostgrestException catch (e) {
-      debugPrint('❌ Postgrest error: ${e.message}');
-      if (mounted) setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.message;
+      });
     } catch (e) {
-      debugPrint('❌ Unexpected error: $e');
-      if (mounted) setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<void> _toggleActive(Map<String, dynamic> item, bool value) async {
+    final id = item['id'];
+    final messenger = ScaffoldMessenger.of(context);
+    final old = item['is_active'] ?? true;
+
+    setState(() {
+      item['is_active'] = value;
+      _togglingIds.add(id);
+    });
+
+    try {
+      await Supabase.instance.client.from(_kTable).update({'is_active': value}).eq('id', id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => item['is_active'] = old);
+      _toast(messenger, "هەڵە: $e", isError: true);
+    } finally {
+      if (mounted) setState(() => _togglingIds.remove(id));
     }
   }
 
   Future<void> _deleteInstruction(dynamic id) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red),
-              SizedBox(width: 8),
-              Text(
-                "سڕینەوەی ڕێنمایی",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          content: const Text("ئایا دڵنیایت لە سڕینەوەی ئەم سلایدە؟"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text(
-                "نەخێر",
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("سڕینەوە"),
-            ),
-          ],
-        ),
-      ),
-    ) ??
-        false;
-
+    final messenger = ScaffoldMessenger.of(context);
+    final confirm = await _confirmDialog(
+      context,
+      title: "سڕینەوەی ڕێنمایی",
+      message: "ئایا دڵنیایت لە سڕینەوەی ئەم سلایدە؟",
+      confirmLabel: "سڕینەوە",
+    );
     if (!confirm) return;
 
     try {
-      await Supabase.instance.client
-          .from('complaint_instructions')
-          .delete()
-          .eq('id', id);
-      _fetchInstructions();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("بە سەرکەوتوویی سڕایەوە 🗑️"),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      await Supabase.instance.client.from(_kTable).delete().eq('id', id);
+      await _fetchInstructions(silent: true);
+      _toast(messenger, "بە سەرکەوتوویی سڕایەوە 🗑️");
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("هەڵە: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _toast(messenger, "هەڵە: $e", isError: true);
     }
+  }
+
+  Future<void> _openEditor({Map<String, dynamic>? item}) async {
+    if (item == null && _limitReached) {
+      _toast(ScaffoldMessenger.of(context), "گەیشتیتە سنووری $_kMaxInstructions سلاید ⚠", isError: true);
+      return;
+    }
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminEditComplaintInstructionScreen(itemToEdit: item),
+      ),
+    );
+    if (changed == true) _fetchInstructions(silent: true);
+  }
+
+  List<MapEntry<int, Map<String, dynamic>>> get _visible {
+    final q = _query.trim().toLowerCase();
+    final out = <MapEntry<int, Map<String, dynamic>>>[];
+    for (var i = 0; i < _instructions.length; i++) {
+      final it = _instructions[i];
+      final active = (it['is_active'] ?? true) == true;
+      if (_filter == _StatusFilter.active && !active) continue;
+      if (_filter == _StatusFilter.inactive && active) continue;
+      if (q.isNotEmpty) {
+        final t = (it['title'] ?? '').toString().toLowerCase();
+        final d = (it['description'] ?? '').toString().toLowerCase();
+        if (!t.contains(q) && !d.contains(q)) continue;
+      }
+      out.add(MapEntry(i, it));
+    }
+    return out;
   }
 
   @override
@@ -129,79 +288,238 @@ class _AdminComplaintInstructionsListScreenState
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
+        backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: const Text(
             "ڕێنماییەکانی سکاڵا 📢",
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-            ),
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           ),
-          backgroundColor: const Color(0xFF1E1B2E),
+          backgroundColor: _kAppBarColor,
           foregroundColor: Colors.white,
           centerTitle: true,
           elevation: 0,
+          actions: [
+            IconButton(
+              tooltip: "نوێکردنەوە",
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: _loading ? null : () => _fetchInstructions(),
+            ),
+          ],
         ),
-        body: _loading
-            ? const Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-          ),
-        )
-            : _instructions.isEmpty
-            ? _buildEmptyState(isDark)
-            : RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: _fetchInstructions,
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: _instructions.length,
-            itemBuilder: (context, index) {
-              var item = _instructions[index];
-              return _buildInstructionCard(item, index, isDark);
-            },
-          ),
-        ),
-        floatingActionButton: _instructions.length >= 20
+        body: _buildBody(isDark),
+        floatingActionButton: (_loading || _error != null || _limitReached)
             ? null
             : FloatingActionButton.extended(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                const AdminEditComplaintInstructionScreen(),
-              ),
-            ).then((_) => _fetchInstructions());
-          },
+          onPressed: () => _openEditor(),
           icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            "زیادکردنی نوێ",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          label: const Text("زیادکردنی نوێ", style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(bool isDark) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+    }
+    if (_error != null) {
+      return _buildScrollableCenter(_buildErrorState(isDark));
+    }
+    if (_instructions.isEmpty) {
+      return _buildScrollableCenter(_buildEmptyState(isDark));
+    }
+
+    final items = _visible;
+
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () => _fetchInstructions(silent: true),
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        itemCount: items.isEmpty ? 2 : items.length + 1,
+        itemBuilder: (context, i) {
+          if (i == 0) return _buildHeader(isDark);
+          if (items.isEmpty) return _buildNoResults(isDark);
+          final entry = items[i - 1];
+          return _buildInstructionCard(entry.value, entry.key, isDark);
+        },
+      ),
+    );
+  }
+
+  Widget _buildScrollableCenter(Widget child) {
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () => _fetchInstructions(silent: true),
+      child: LayoutBuilder(
+        builder: (context, c) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: c.maxHeight),
+            child: Center(child: child),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildInstructionCard(
-      Map<String, dynamic> item,
-      int index,
-      bool isDark,
-      ) {
-    bool isActive = item['is_active'] ?? true;
-    String imageUrl = item['image_url'] ?? '';
-    String title = item['title'] ?? 'بێ ناونیشان';
-    String desc = item['description'] ?? '';
+  Widget _buildHeader(bool isDark) {
+    final total = _instructions.length;
+    final active = _activeCount;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _statChip(isDark, Icons.layers_rounded, "$total / $_kMaxInstructions", "کۆی گشتی", AppColors.primary),
+              const SizedBox(width: 8),
+              _statChip(isDark, Icons.visibility_rounded, "$active", "چالاک", Colors.green),
+              const SizedBox(width: 8),
+              _statChip(isDark, Icons.visibility_off_rounded, "${total - active}", "ناچالاک", Colors.grey),
+            ],
+          ),
+          if (_limitReached) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "گەیشتیتە زۆرترین ژمارەی سلاید ($_kMaxInstructions). بۆ زیادکردنی نوێ، یەکێک بسڕەوە.",
+                      style: TextStyle(fontSize: 11, color: isDark ? Colors.white70 : Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          TextField(
+            controller: _searchCtrl,
+            onChanged: (v) => setState(() => _query = v),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13),
+            decoration: InputDecoration(
+              hintText: "گەڕان بەپێی ناونیشان یان دەق...",
+              hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontSize: 12),
+              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
+              suffixIcon: _query.isEmpty
+                  ? null
+                  : IconButton(
+                icon: Icon(Icons.close_rounded, color: isDark ? Colors.white54 : Colors.grey),
+                onPressed: () {
+                  _searchCtrl.clear();
+                  setState(() => _query = '');
+                },
+              ),
+              filled: true,
+              fillColor: isDark ? AppColors.darkCard : Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            children: [
+              _filterChip(isDark, "هەمووی", _StatusFilter.all),
+              _filterChip(isDark, "چالاک", _StatusFilter.active),
+              _filterChip(isDark, "ناچالاک", _StatusFilter.inactive),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statChip(bool isDark, IconData icon, String value, String label, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _filterChip(bool isDark, String label, _StatusFilter value) {
+    final selected = _filter == value;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: selected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+        ),
+      ),
+      selected: selected,
+      showCheckmark: false,
+      selectedColor: AppColors.primary,
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      side: BorderSide(
+        color: selected ? AppColors.primary : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      onSelected: (_) => setState(() => _filter = value),
+    );
+  }
+
+  Widget _buildInstructionCard(Map<String, dynamic> item, int index, bool isDark) {
+    final bool isActive = (item['is_active'] ?? true) == true;
+    final String imageUrl = (item['image_url'] ?? '').toString();
+    final String title = (item['title'] ?? 'بێ ناونیشان').toString();
+    final String desc = (item['description'] ?? '').toString();
+    final bool toggling = _togglingIds.contains(item['id']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+        color: isDark ? AppColors.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -220,217 +538,146 @@ class _AdminComplaintInstructionsListScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🖼️ بەشی سەرەوە: وێنە + ژمارە + دۆخ
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(18),
-                ),
-                child: imageUrl.isNotEmpty
-                    ? OptimizedNetworkImage(
-                  imageUrl: imageUrl,
-                  width: double.infinity,
-                  height: 160,
-                  fit: BoxFit.cover,
-                )
-                    : Container(
-                  width: double.infinity,
-                  height: 160,
-                  color: isDark
-                      ? const Color(0xFF2A2A35)
-                      : Colors.grey.shade100,
-                  child: const Icon(
-                    Icons.image_not_supported_rounded,
-                    color: Colors.grey,
-                    size: 40,
+          GestureDetector(
+            onTap: imageUrl.isEmpty ? null : () => _showImagePreview(context, imageUrl),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                  child: imageUrl.isNotEmpty
+                      ? OptimizedNetworkImage(
+                    imageUrl: imageUrl,
+                    width: double.infinity,
+                    height: 160,
+                    fit: BoxFit.cover,
+                  )
+                      : Container(
+                    width: double.infinity,
+                    height: 160,
+                    color: isDark ? AppColors.darkBackground : Colors.grey.shade100,
+                    child: const Icon(Icons.image_not_supported_rounded, color: Colors.grey, size: 40),
                   ),
                 ),
-              ),
-              // 🌑 Gradient
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.7),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // 🔢 ژمارەی سلاید
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 6,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    "سلاید ${index + 1}",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              // 🟢/🔴 دۆخی چالاکی
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isActive ? Colors.green : Colors.grey,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 6,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isActive
-                            ? Icons.visibility_rounded
-                            : Icons.visibility_off_rounded,
-                        color: Colors.white,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isActive ? "چالاک" : "ناچالاک",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: IgnorePointer(
+                    child: Container(
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: _badge("سلاید ${index + 1}", AppColors.primary, fontSize: 12),
+                ),
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: _badge(
+                    isActive ? "چالاک" : "ناچالاک",
+                    isActive ? Colors.green : Colors.grey,
+                    icon: isActive ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                  ),
+                ),
+                if (imageUrl.isNotEmpty)
+                  Positioned(
+                    bottom: 10,
+                    left: 12,
+                    child: Icon(Icons.zoom_out_map_rounded, color: Colors.white.withValues(alpha: 0.85), size: 18),
+                  ),
+              ],
+            ),
           ),
-
-          // 📝 بەشی خوارەوە: ناو و وەسف
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                    color:
-                    isDark ? Colors.white : const Color(0xFF1A1A2E),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  desc,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white54 : Colors.grey.shade600,
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 14),
-                // 🎯 دوگمەکانی دەستکاری و سڕینەوە
                 Row(
                   children: [
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  AdminEditComplaintInstructionScreen(
-                                    itemToEdit: item,
-                                  ),
-                            ),
-                          ).then((_) => _fetchInstructions());
-                        },
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    toggling
+                        ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      ),
+                    )
+                        : Switch(
+                      value: isActive,
+                      activeThumbColor: Colors.green,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (v) => _toggleActive(item, v),
+                    ),
+                  ],
+                ),
+                if (desc.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    desc,
+                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.grey.shade600, height: 1.4),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => _openEditor(item: item),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppColors.primary
-                                .withValues(alpha: 0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.edit_rounded,
-                                color: AppColors.primary,
-                                size: 16,
-                              ),
+                              Icon(Icons.edit_rounded, color: AppColors.primary, size: 16),
                               SizedBox(width: 6),
-                              Text(
-                                "دەستکاری",
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              Text("دەستکاری", style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    GestureDetector(
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
                       onTap: () => _deleteInstruction(item['id']),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.red.shade50,
+                          color: isDark ? Colors.red.withValues(alpha: 0.15) : Colors.red.shade50,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
-                          Icons.delete_rounded,
-                          color: Colors.red,
-                          size: 18,
-                        ),
+                        child: const Icon(Icons.delete_rounded, color: Colors.red, size: 18),
                       ),
                     ),
                   ],
@@ -443,67 +690,128 @@ class _AdminComplaintInstructionsListScreenState
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
-    return Center(
+  Widget _badge(String text, Color color, {IconData? icon, double fontSize = 10}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 6)],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, color: Colors.white, size: 12),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            text,
+            style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoResults(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 50),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off_rounded, size: 52, color: isDark ? Colors.white54 : Colors.grey),
+          const SizedBox(height: 10),
+          Text(
+            "هیچ ئەنجامێک نەدۆزرایەوە",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white54 : Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              _searchCtrl.clear();
+              setState(() {
+                _query = '';
+                _filter = _StatusFilter.all;
+              });
+            },
+            child: const Text("سڕینەوەی فلتەرەکان"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(bool isDark) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+          child: const Icon(Icons.announcement_outlined, size: 60, color: AppColors.primary),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          "هیچ ڕێنماییەک نییە 📭",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: isDark ? Colors.white54 : const Color(0xFF1A1A2E),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text("دەتوانیت ڕێنمایی نوێ زیاد بکەیت", style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey)),
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          ),
+          onPressed: () => _openEditor(),
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label: const Text("زیادکردنی ڕێنمایی نوێ", style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorState(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.announcement_outlined,
-              size: 60,
-              color: AppColors.primary,
-            ),
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: const Icon(Icons.wifi_off_rounded, size: 52, color: Colors.red),
           ),
           const SizedBox(height: 16),
           Text(
-            "هیچ ڕێنماییەک نییە 📭",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-              color: isDark ? Colors.white54 : const Color(0xFF1A1A2E),
-            ),
+            "هەڵەیەک ڕووی دا",
+            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isDark ? Colors.white : Colors.black87),
           ),
           const SizedBox(height: 6),
           Text(
-            "دەتوانیت ڕێنمایی نوێ زیاد بکەیت",
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.white38 : Colors.grey.shade600,
-            ),
+            _error ?? '',
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.grey),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 14,
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                  const AdminEditComplaintInstructionScreen(),
-                ),
-              ).then((_) => _fetchInstructions());
-            },
-            icon: const Icon(Icons.add_rounded, size: 20),
-            label: const Text(
-              "زیادکردنی ڕێنمایی نوێ",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            onPressed: () => _fetchInstructions(),
+            icon: const Icon(Icons.refresh_rounded, size: 20),
+            label: const Text("دووبارە هەوڵبدەرەوە", style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -512,7 +820,7 @@ class _AdminComplaintInstructionsListScreenState
 }
 
 // ═══════════════════════════════════════════════════════════
-// 2. پەڕەی زیادکردن و دەستکاری سلایدی تاکەکەسی
+// 2. ✏️ پەڕەی زیادکردن و دەستکاری سلایدی تاکەکەسی
 // ═══════════════════════════════════════════════════════════
 class AdminEditComplaintInstructionScreen extends StatefulWidget {
   final Map<String, dynamic>? itemToEdit;
@@ -524,455 +832,456 @@ class AdminEditComplaintInstructionScreen extends StatefulWidget {
       _AdminEditComplaintInstructionScreenState();
 }
 
-class _AdminEditComplaintInstructionScreenState
-    extends State<AdminEditComplaintInstructionScreen> {
-final _titleCtrl = TextEditingController();
-final _descCtrl = TextEditingController();
-XFile? _pickedImage;
-String? _existingImageUrl;
-bool _isActive = true;
-bool _loading = false;
+class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaintInstructionScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _picker = ImagePicker();
 
-@override
-void initState() {
-super.initState();
-if (widget.itemToEdit != null) {
-_titleCtrl.text = widget.itemToEdit!['title'] ?? '';
-_descCtrl.text = widget.itemToEdit!['description'] ?? '';
-_existingImageUrl = widget.itemToEdit!['image_url'];
-_isActive = widget.itemToEdit!['is_active'] ?? true;
-}
-}
+  XFile? _pickedImage;
+  String? _existingImageUrl;
+  bool _removedExisting = false;
+  bool _isActive = true;
+  bool _loading = false;
+  bool _saved = false;
+  bool _imageError = false;
 
-@override
-void dispose() {
-_titleCtrl.dispose();
-_descCtrl.dispose();
-super.dispose();
-}
+  String _initTitle = '';
+  String _initDesc = '';
+  bool _initActive = true;
 
-Future<void> _save() async {
-if (_titleCtrl.text.trim().isEmpty) {
-ScaffoldMessenger.of(context).showSnackBar(
-const SnackBar(
-content: Text("تکایە ناونیشان پڕبکەرەوە ⚠"),
-backgroundColor: Colors.orange,
-),
-);
-return;
-}
+  bool get isEditing => widget.itemToEdit != null;
 
-setState(() => _loading = true);
-try {
-String imageUrl = _existingImageUrl ?? '';
-if (_pickedImage != null) {
-imageUrl =
-await ImageCompressionService.uploadImage(_pickedImage!);
-}
+  bool get _hasImage =>
+      _pickedImage != null || (!_removedExisting && (_existingImageUrl ?? '').isNotEmpty);
 
-final data = {
-'title': _titleCtrl.text.trim(),
-'description': _descCtrl.text.trim(),
-'image_url': imageUrl,
-'is_active': _isActive,
-};
+  bool get _isDirty =>
+      _titleCtrl.text.trim() != _initTitle ||
+          _descCtrl.text.trim() != _initDesc ||
+          _isActive != _initActive ||
+          _pickedImage != null ||
+          _removedExisting;
 
-if (widget.itemToEdit == null) {
-await Supabase.instance.client
-.from('complaint_instructions')
-.insert(data);
-} else {
-await Supabase.instance.client
-.from('complaint_instructions')
-.update(data)
-.eq('id', widget.itemToEdit!['id']);
-}
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.itemToEdit;
+    if (item != null) {
+      _titleCtrl.text = (item['title'] ?? '').toString();
+      _descCtrl.text = (item['description'] ?? '').toString();
+      _existingImageUrl = item['image_url']?.toString();
+      _isActive = (item['is_active'] ?? true) == true;
+    }
+    _initTitle = _titleCtrl.text.trim();
+    _initDesc = _descCtrl.text.trim();
+    _initActive = _isActive;
 
-if (mounted) {
-Navigator.pop(context);
-ScaffoldMessenger.of(context).showSnackBar(
-const SnackBar(
-content: Text("بە سەرکەوتوویی پاشەکەوت کرا ✅"),
-backgroundColor: Colors.green,
-),
-);
-}
-} catch (e) {
-if (mounted) {
-ScaffoldMessenger.of(context).showSnackBar(
-SnackBar(
-content: Text("هەڵە ڕووی دا: $e"),
-backgroundColor: Colors.red,
-),
-);
-}
-} finally {
-if (mounted) setState(() => _loading = false);
-}
-}
+    _titleCtrl.addListener(_onChanged);
+    _descCtrl.addListener(_onChanged);
+  }
 
-@override
-Widget build(BuildContext context) {
-final isDark = Theme.of(context).brightness == Brightness.dark;
-bool isEditing = widget.itemToEdit != null;
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
 
-return Directionality(
-textDirection: TextDirection.rtl,
-child: Scaffold(
-backgroundColor:
-isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
-appBar: AppBar(
-title: Text(
-isEditing
-? "دەستکاریکردنی ڕێنمایی ✏️"
-: "زیادکردنی ڕێنمایی نوێ 📢",
-style: const TextStyle(
-fontWeight: FontWeight.w900,
-fontSize: 16,
-),
-),
-backgroundColor: const Color(0xFF1E1B2E),
-foregroundColor: Colors.white,
-centerTitle: true,
-elevation: 0,
-),
-body: SingleChildScrollView(
-padding: const EdgeInsets.all(16),
-child: Column(
-crossAxisAlignment: CrossAxisAlignment.start,
-children: [
-// 🖼️ بەشی وێنە
-Container(
-padding: const EdgeInsets.all(16),
-decoration: BoxDecoration(
-color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-borderRadius: BorderRadius.circular(20),
-boxShadow: [
-BoxShadow(
-color: Colors.black
-.withValues(alpha: isDark ? 0.3 : 0.04),
-blurRadius: 10,
-offset: const Offset(0, 3),
-),
-],
-),
-child: Column(
-crossAxisAlignment: CrossAxisAlignment.start,
-children: [
-Row(
-children: [
-const Icon(
-Icons.photo_library_rounded,
-color: AppColors.primary,
-size: 20,
-),
-const SizedBox(width: 8),
-Text(
-"وێنەی سلاید *",
-style: TextStyle(
-fontWeight: FontWeight.bold,
-fontSize: 13,
-color:
-isDark ? Colors.white : Colors.black87,
-),
-),
-],
-),
-const SizedBox(height: 12),
-GestureDetector(
-onTap: () async {
-final picked = await ImagePicker().pickImage(
-source: ImageSource.gallery,
-imageQuality: 70,
-);
-if (picked != null) {
-setState(() => _pickedImage = picked);
-}
-},
-child: Container(
-height: 200,
-width: double.infinity,
-decoration: BoxDecoration(
-color: isDark
-? const Color(0xFF2A2A35)
-: Colors.grey.shade50,
-borderRadius: BorderRadius.circular(16),
-border: Border.all(
-color: AppColors.primary
-.withValues(alpha: 0.3),
-width: 2,
-),
-),
-child: _pickedImage != null
-? ClipRRect(
-borderRadius: BorderRadius.circular(14),
-child: Image.file(
-File(_pickedImage!.path),
-fit: BoxFit.cover,
-),
-)
-: (_existingImageUrl != null &&
-_existingImageUrl!.isNotEmpty)
-? ClipRRect(
-borderRadius:
-BorderRadius.circular(14),
-child: OptimizedNetworkImage(
-imageUrl: _existingImageUrl!,
-fit: BoxFit.cover,
-),
-)
-: const Column(
-mainAxisAlignment:
-MainAxisAlignment.center,
-children: [
-Icon(
-Icons.add_a_photo_rounded,
-size: 40,
-color: AppColors.primary,
-),
-SizedBox(height: 8),
-Text(
-"کرتە بکە بۆ هەڵبژاردنی وێنە 📸",
-style: TextStyle(
-fontSize: 13,
-color: Colors.grey,
-fontWeight: FontWeight.bold,
-),
-),
-],
-),
-),
-),
-],
-),
-),
-const SizedBox(height: 16),
+  @override
+  void dispose() {
+    _titleCtrl.removeListener(_onChanged);
+    _descCtrl.removeListener(_onChanged);
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
 
-// 📝 بەشی زانیارییەکان
-Container(
-padding: const EdgeInsets.all(16),
-decoration: BoxDecoration(
-color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-borderRadius: BorderRadius.circular(20),
-boxShadow: [
-BoxShadow(
-color: Colors.black
-.withValues(alpha: isDark ? 0.3 : 0.04),
-blurRadius: 10,
-offset: const Offset(0, 3),
-),
-],
-),
-child: Column(
-children: [
-TextField(
-controller: _titleCtrl,
-style: TextStyle(
-color: isDark ? Colors.white : Colors.black87,
-),
-decoration: InputDecoration(
-labelText: "ناونیشانی ڕێنمایی *",
-labelStyle: TextStyle(
-fontSize: 13,
-color: isDark
-? Colors.white54
-: Colors.grey.shade700,
-),
-prefixIcon: const Icon(
-Icons.title_rounded,
-color: AppColors.primary,
-),
-border: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide:
-BorderSide(color: Colors.grey.shade300),
-),
-enabledBorder: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide:
-BorderSide(color: Colors.grey.shade300),
-),
-focusedBorder: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide: const BorderSide(
-color: AppColors.primary,
-width: 1.5,
-),
-),
-filled: true,
-fillColor: isDark
-? const Color(0xFF0F0F14)
-: Colors.grey.shade50,
-contentPadding: const EdgeInsets.symmetric(
-horizontal: 16,
-vertical: 16,
-),
-),
-),
-const SizedBox(height: 14),
-TextField(
-controller: _descCtrl,
-maxLines: 5,
-style: TextStyle(
-color: isDark ? Colors.white : Colors.black87,
-),
-decoration: InputDecoration(
-labelText: "دەق و ڕوونکردنەوەی ڕێنماییەکە",
-alignLabelWithHint: true,
-labelStyle: TextStyle(
-fontSize: 13,
-color: isDark
-? Colors.white54
-: Colors.grey.shade700,
-),
-prefixIcon: const Padding(
-padding: EdgeInsets.only(bottom: 80),
-child: Icon(
-Icons.description_rounded,
-color: AppColors.primary,
-),
-),
-border: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide:
-BorderSide(color: Colors.grey.shade300),
-),
-enabledBorder: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide:
-BorderSide(color: Colors.grey.shade300),
-),
-focusedBorder: OutlineInputBorder(
-borderRadius: BorderRadius.circular(14),
-borderSide: const BorderSide(
-color: AppColors.primary,
-width: 1.5,
-),
-),
-filled: true,
-fillColor: isDark
-? const Color(0xFF0F0F14)
-: Colors.grey.shade50,
-contentPadding: const EdgeInsets.all(16),
-),
-),
-const SizedBox(height: 16),
-// 🟢 دۆخی چالاکی
-Container(
-padding: const EdgeInsets.symmetric(
-horizontal: 16,
-vertical: 12,
-),
-decoration: BoxDecoration(
-color: _isActive
-? (isDark
-? Colors.green.shade900
-.withValues(alpha: 0.3)
-: Colors.green.shade50)
-: (isDark
-? const Color(0xFF2A2A35)
-: Colors.grey.shade100),
-borderRadius: BorderRadius.circular(14),
-border: Border.all(
-color: _isActive
-? Colors.green.shade200
-: Colors.grey.shade300,
-),
-),
-child: Row(
-children: [
-Icon(
-_isActive
-? Icons.visibility_rounded
-: Icons.visibility_off_rounded,
-color: _isActive ? Colors.green : Colors.grey,
-size: 22,
-),
-const SizedBox(width: 12),
-Expanded(
-child: Column(
-crossAxisAlignment: CrossAxisAlignment.start,
-children: [
-Text(
-_isActive ? "چالاکە" : "ناچالاکە",
-style: TextStyle(
-fontWeight: FontWeight.w900,
-fontSize: 14,
-color: _isActive
-? Colors.green.shade800
-: (isDark
-? Colors.white70
-: Colors.grey.shade700),
-),
-),
-Text(
-_isActive
-? "بەکارهێنەران دەتوانن بیبینن"
-: "بەکارهێنەران ناتوانن بیبینن",
-style: TextStyle(
-fontSize: 10,
-color: _isActive
-? Colors.green.shade600
-: (isDark
-? Colors.white54
-: Colors.grey.shade600),
-),
-),
-],
-),
-),
-Switch(
-value: _isActive,
-activeThumbColor: Colors.green,
-onChanged: (val) =>
-setState(() => _isActive = val),
-),
-],
-),
-),
-],
-),
-),
-const SizedBox(height: 30),
+  Future<void> _pickImage() async {
+    if (_loading) return;
+    FocusScope.of(context).unfocus();
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70, maxWidth: 1600);
+      if (picked != null && mounted) {
+        setState(() {
+          _pickedImage = picked;
+          _imageError = false;
+        });
+      }
+    } catch (e) {
+      _toast(messenger, "نەتوانرا وێنە هەڵبژێردرێت: $e", isError: true);
+    }
+  }
 
-// 💾 دوگمەی پاشەکەوتکردن
-SizedBox(
-width: double.infinity,
-height: 54,
-child: _loading                    ? const Center(
-child: CircularProgressIndicator(
-color: AppColors.primary,
-),
-)
-: ElevatedButton.icon(
-style: ElevatedButton.styleFrom(
-backgroundColor: AppColors.primary,
-foregroundColor: Colors.white,
-shape: RoundedRectangleBorder(
-borderRadius: BorderRadius.circular(16),
-),
-elevation: 3,
-shadowColor: AppColors.primary
-.withValues(alpha: 0.4),
-),
-onPressed: _save,
-icon: const Icon(Icons.save_rounded, size: 22),
-label: Text(
-isEditing
-? "نوێکردنەوە ✅"
-: "پاشەکەوتکردن ✅",
-style: const TextStyle(
-fontWeight: FontWeight.w900,
-fontSize: 15,
-),
-),
-),
-),
-const SizedBox(height: 20),
-],
-),
-),
-),
-);
-}
+  void _removeImage() {
+    setState(() {
+      _pickedImage = null;
+      if ((_existingImageUrl ?? '').isNotEmpty) _removedExisting = true;
+    });
+  }
+
+  Future<void> _save() async {
+    if (_loading) return;
+    FocusScope.of(context).unfocus();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    final formOk = _formKey.currentState?.validate() ?? false;
+    if (!_hasImage) setState(() => _imageError = true);
+    if (!formOk || !_hasImage) {
+      _toast(messenger, "تکایە زانیارییە پێویستەکان پڕبکەرەوە ⚠", isError: true);
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      String imageUrl = _removedExisting ? '' : (_existingImageUrl ?? '');
+      if (_pickedImage != null) {
+        imageUrl = await ImageCompressionService.uploadImage(_pickedImage!);
+      }
+
+      final data = {
+        'title': _titleCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'image_url': imageUrl,
+        'is_active': _isActive,
+      };
+
+      final table = Supabase.instance.client.from(_kTable);
+      if (!isEditing) {
+        await table.insert(data);
+      } else {
+        await table.update(data).eq('id', widget.itemToEdit!['id']);
+      }
+
+      if (!mounted) return;
+      setState(() => _saved = true);
+      navigator.pop(true);
+      _toast(messenger, "بە سەرکەوتوویی پاشەکەوت کرا ✅");
+    } catch (e) {
+      _toast(messenger, "هەڵە ڕووی دا: $e", isError: true);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  InputDecoration _decoration(bool isDark, {required String label, required IconData icon, bool multiline = false}) {
+    OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide(color: c, width: w),
+    );
+
+    final fieldBorderColor = isDark ? AppColors.darkBorder : Colors.grey.shade300;
+
+    return InputDecoration(
+      labelText: label,
+      alignLabelWithHint: multiline,
+      labelStyle: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey),
+      prefixIcon: multiline
+          ? Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: Icon(icon, color: AppColors.primary),
+      )
+          : Icon(icon, color: AppColors.primary),
+      border: border(fieldBorderColor),
+      enabledBorder: border(fieldBorderColor),
+      focusedBorder: border(AppColors.primary, 1.5),
+      errorBorder: border(Colors.red),
+      focusedErrorBorder: border(Colors.red, 1.5),
+      filled: true,
+      fillColor: isDark ? AppColors.darkBackground : Colors.grey.shade50,
+      counterStyle: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: multiline ? 16 : 16),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: PopScope(
+        canPop: _saved || !_isDirty,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final navigator = Navigator.of(context);
+          final leave = await _confirmDialog(
+            context,
+            title: "گۆڕانکاریەکان پاشەکەوت نەکراون",
+            message: "ئەگەر دەرچیت، گۆڕانکارییەکانت لەدەست دەچن. دڵنیایت؟",
+            confirmLabel: "دەرچوون",
+            cancelLabel: "مانەوە",
+            icon: Icons.edit_off_rounded,
+            color: Colors.orange,
+          );
+          if (leave) navigator.pop(false);
+        },
+        child: Scaffold(
+          backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF4F6F9),
+          appBar: AppBar(
+            title: Text(
+              isEditing ? "دەستکاریکردنی ڕێنمایی ✏️" : "زیادکردنی ڕێنمایی نوێ 📢",
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+            backgroundColor: _kAppBarColor,
+            foregroundColor: Colors.white,
+            centerTitle: true,
+            elevation: 0,
+          ),
+          body: Stack(
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () => FocusScope.of(context).unfocus(),
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildImageSection(isDark),
+                        const SizedBox(height: 16),
+                        _buildFieldsSection(isDark),
+                        const SizedBox(height: 28),
+                        _buildSaveButton(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (_loading)
+                Positioned.fill(
+                  child: AbsorbPointer(
+                    child: Container(color: Colors.black.withValues(alpha: 0.15)),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageSection(bool isDark) {
+    final hasImage = _hasImage;
+
+    Widget content;
+    if (_pickedImage != null) {
+      content = Image.file(File(_pickedImage!.path), fit: BoxFit.cover);
+    } else if (!_removedExisting && (_existingImageUrl ?? '').isNotEmpty) {
+      content = OptimizedNetworkImage(imageUrl: _existingImageUrl!, fit: BoxFit.cover);
+    } else {
+      content = const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.add_a_photo_rounded, size: 40, color: AppColors.primary),
+          SizedBox(height: 8),
+          Text(
+            "کرتە بکە بۆ هەڵبژاردنی وێنە 📸",
+            style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    }
+
+    return _SectionCard(
+      isDark: isDark,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                "وێنەی سلاید *",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBackground : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _imageError ? Colors.red : AppColors.primary.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    content,
+                    if (hasImage)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Row(
+                          children: [
+                            _roundBtn(Icons.edit_rounded, _pickImage),
+                            const SizedBox(width: 6),
+                            _roundBtn(Icons.delete_outline_rounded, _removeImage, color: Colors.red),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (_imageError)
+            const Padding(
+              padding: EdgeInsets.only(top: 8, right: 4),
+              child: Text("تکایا وێنەیەک هەڵبژێرە", style: TextStyle(color: Colors.red, fontSize: 11)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _roundBtn(IconData icon, VoidCallback onTap, {Color? color}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(7),
+        decoration: BoxDecoration(
+          color: (color ?? Colors.black).withValues(alpha: 0.65),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: Colors.white, size: 18),
+      ),
+    );
+  }
+
+  Widget _buildFieldsSection(bool isDark) {
+    return _SectionCard(
+      isDark: isDark,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _titleCtrl,
+            enabled: !_loading,
+            maxLength: _kTitleMax,
+            textInputAction: TextInputAction.next,
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            decoration: _decoration(isDark, label: "ناونیشانی ڕێنمایی *", icon: Icons.title_rounded),
+            validator: (v) => (v == null || v.trim().isEmpty) ? "تکایا ناونیشان پڕبکەرەوە" : null,
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _descCtrl,
+            enabled: !_loading,
+            maxLines: 5,
+            maxLength: _kDescMax,
+            keyboardType: TextInputType.multiline,
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            decoration: _decoration(isDark, label: "دەق و ڕوونکردنەوەی ڕێنماییەکە", icon: Icons.description_rounded, multiline: true),
+          ),
+          const SizedBox(height: 10),
+          _buildActiveToggle(isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveToggle(bool isDark) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: _isActive
+            ? (isDark ? Colors.green.withValues(alpha: 0.15) : Colors.green.shade50)
+            : (isDark ? AppColors.darkBackground : Colors.grey.shade100),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _isActive ? Colors.green.shade200 : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _isActive ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+            color: _isActive ? Colors.green : Colors.grey,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isActive ? "چالاکە" : "ناچالاکە",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    color: _isActive ? Colors.green.shade800 : (isDark ? Colors.white70 : Colors.grey.shade700),
+                  ),
+                ),
+                Text(
+                  _isActive ? "بەکارهێنەران دەتوانن بیبینن" : "بەکارهێنەران ناتوانن بیبینن",
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: _isActive ? Colors.green.shade600 : (isDark ? Colors.white54 : Colors.grey.shade600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _isActive,
+            activeThumbColor: Colors.green,
+            onChanged: _loading ? null : (val) => setState(() => _isActive = val),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
+          disabledForegroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 3,
+          shadowColor: AppColors.primary.withValues(alpha: 0.4),
+        ),
+        onPressed: _loading
+            ? null
+            : () {
+          HapticFeedback.lightImpact();
+          _save();
+        },
+        icon: _loading
+            ? const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+        )
+            : const Icon(Icons.save_rounded, size: 22),
+        label: Text(
+          _loading ? "تکایە چاوەڕێبە..." : (isEditing ? "نوێکردنەوە ✅" : "پاشەکەوتکردن ✅"),
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+        ),
+      ),
+    );
+  }
 }

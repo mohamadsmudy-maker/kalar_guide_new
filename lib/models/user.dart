@@ -1,10 +1,12 @@
+// lib/models/user.dart
+
 /// 👤 مۆدێلی بەکارهێنەر
 class AppUser {
   final String? id;
   final String? name;
   final String? phone;
   final String? password;
-  final String role; // customer, vendor, admin
+  final String role;
   final bool isApproved;
   final DateTime? createdAt;
 
@@ -18,7 +20,6 @@ class AppUser {
     this.createdAt,
   });
 
-  /// دروستکردن لە JSON
   factory AppUser.fromJson(Map<String, dynamic> json) {
     return AppUser(
       id: json['id']?.toString(),
@@ -33,39 +34,48 @@ class AppUser {
     );
   }
 
-  /// گۆڕین بۆ JSON
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool includeNullables = false}) {
     return {
       if (id != null) 'id': id,
-      'name': name,
-      'phone': phone,
-      'password': password,
+      if (includeNullables || name != null) 'name': name,
+      if (includeNullables || phone != null) 'phone': phone,
+      if (includeNullables || password != null) 'password': password,
       'role': role,
       'is_approved': isApproved,
-      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
     };
   }
 
-  /// کۆپی لەگەڵ گۆڕانکاری
+  Map<String, dynamic> toUpdateJson() {
+    final json = toJson(includeNullables: true);
+    json['updated_at'] = DateTime.now().toUtc().toIso8601String();
+    return json;
+  }
+
+  String get displayName {
+    final n = name?.trim();
+    return (n == null || n.isEmpty) ? (phone ?? 'بەکارهێنەر') : n;
+  }
+
   AppUser copyWith({
-    String? id,
-    String? name,
-    String? phone,
+    String? id, bool clearId = false,
+    String? name, bool clearName = false,
+    String? phone, bool clearPhone = false,
+    String? password, bool clearPassword = false,
     String? role,
     bool? isApproved,
+    DateTime? createdAt, bool clearCreatedAt = false,
   }) {
     return AppUser(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      phone: phone ?? this.phone,
-      password: password,
+      id: clearId ? null : (id ?? this.id),
+      name: clearName ? null : (name ?? this.name),
+      phone: clearPhone ? null : (phone ?? this.phone),
+      password: clearPassword ? null : (password ?? this.password),
       role: role ?? this.role,
       isApproved: isApproved ?? this.isApproved,
-      createdAt: createdAt,
+      createdAt: clearCreatedAt ? null : (createdAt ?? this.createdAt),
     );
   }
 
-  // ڕۆڵەکان
   bool get isAdmin => role == 'admin';
   bool get isVendor => role == 'vendor' || isAdmin;
   bool get isCustomer => role == 'customer';

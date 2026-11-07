@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../news/news_details.dart';
+import '../admin/admin_news.dart';
 
-/// 📰 شاشەی هەواڵەکانی شوێن
 class StoreNewsScreen extends StatefulWidget {
   final Map<String, dynamic> store;
   const StoreNewsScreen({super.key, required this.store});
@@ -78,13 +79,16 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
       rawName = rawName.replaceFirst('فرۆشگا', '').trim();
     }
 
+    final user = AuthSessionManager.currentUser;
+    final isVendorForThisStore = user != null &&
+        user['role'] == 'vendor' &&
+        user['store_id']?.toString() == store['id']?.toString();
+
     var filteredNews = _storeNews.where((news) {
       final title = (news['title'] ?? '').toString().toLowerCase();
       final desc = (news['description'] ?? '').toString().toLowerCase();
       final q = _searchQuery.toLowerCase();
-      return _searchQuery.isEmpty ||
-          title.contains(q) ||
-          desc.contains(q);
+      return _searchQuery.isEmpty || title.contains(q) || desc.contains(q);
     }).toList();
 
     return Directionality(
@@ -140,29 +144,18 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Icon(
-                                Icons.verified,
-                                color: Colors.white,
-                                size: 16,
-                              ),
+                              const Icon(Icons.verified, color: Colors.white, size: 16),
                             ],
                           ),
                           const SizedBox(height: 3),
                           Row(
                             children: [
-                              const Icon(
-                                Icons.location_on,
-                                color: Colors.white70,
-                                size: 13,
-                              ),
+                              const Icon(Icons.location_on, color: Colors.white70, size: 13),
                               const SizedBox(width: 3),
                               Expanded(
                                 child: Text(
                                   store['address'] ?? 'کەلار',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 11,
-                                  ),
+                                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -196,36 +189,47 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                       ),
                       child: TextField(
                         controller: _searchCtrl,
-                        onChanged: (val) => setState(
-                              () => _searchQuery = val.trim(),
-                        ),
-                        decoration: InputDecoration(
+                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        decoration: const InputDecoration(
                           hintText: 'گەڕان بەدوای هەواڵەکاندا...',
-                          hintStyle: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
+                          hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                          prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                            horizontal: 16,
-                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                         ),
                       ),
                     ),
                     const SizedBox(height: 14),
-                    const Text(
-                      'هەواڵ و ئاگادارییەکان 📰',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'هەواڵ و ئاگادارییەکان 📰',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.black87),
+                        ),
+                        if (isVendorForThisStore)
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: const Text(
+                              'زیادکردنی هەواڵ',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddNewsScreen(forcedStoreId: store['id'].toString()),
+                                ),
+                              ).then((_) => _fetchStoreNews());
+                            },
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -238,19 +242,11 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.article_outlined,
-                      size: 60,
-                      color: Colors.grey,
-                    ),
+                    Icon(Icons.article_outlined, size: 60, color: Colors.grey),
                     SizedBox(height: 10),
                     Text(
                       'هیچ هەواڵێک بۆ ئەم شوێنە نەدۆزرایەوە 📰',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -260,22 +256,16 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
               delegate: SliverChildBuilderDelegate(
                     (context, index) {
                   var news = filteredNews[index];
-                  String firstImg = _extractFirstImage(
-                    news['images'] ?? news['img'],
-                  );
+                  String firstImg = _extractFirstImage(news['images'] ?? news['img']);
 
                   return Container(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black
-                              .withValues(alpha: 0.03),
+                          color: Colors.black.withValues(alpha: 0.03),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -296,18 +286,12 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                           width: 65,
                           height: 65,
                           color: Colors.grey.shade200,
-                          child: const Icon(
-                            Icons.image,
-                            color: Colors.grey,
-                          ),
+                          child: const Icon(Icons.image, color: Colors.grey),
                         ),
                       ),
                       title: Text(
                         news['title'] ?? '',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -315,26 +299,17 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           news['description'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: Colors.grey,
-                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => NewsDetailsScreen(
-                              newsItem: news,
-                            ),
+                            builder: (_) => NewsDetailsScreen(newsItem: news),
                           ),
                         );
                       },
@@ -344,7 +319,7 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                 childCount: filteredNews.length,
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
           ],
         ),
       ),

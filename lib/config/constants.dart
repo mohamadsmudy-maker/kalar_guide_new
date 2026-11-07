@@ -1,19 +1,22 @@
+// lib/config/constants.dart
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-/// ⚙️ نەخشە و نرخی جێگیر
+/// ⚙️ نەخشە و نرخی جێگیر — Ultra Pro Max
 class AppConstants {
-  // 📍 کۆئۆردینەیتی شاری کەلار
+  AppConstants._();
+
+  // ═══════════════════════════════════════════════════════════
+  // 📍 کۆئۆردینەیت
+  // ═══════════════════════════════════════════════════════════
   static const double kalarLatitude = 34.6189;
   static const double kalarLongitude = 45.3156;
-
-  // 🗺️ زوومی سەرەتایی نەخشە
   static const double defaultMapZoom = 14.0;
-
-  // 📏 سنووری دووری بۆ پیشاندانی شوێنەکان (بە کیلۆمەتر)
   static const double maxDistanceKm = 50.0;
 
-  // 🖼️ قەبارەی وێنەکان
+  // ═══════════════════════════════════════════════════════════
+  // 🖼️ وێنە
+  // ═══════════════════════════════════════════════════════════
   static const int maxImageSizeKB = 800;
   static const int imageQuality = 70;
   static const int maxProductImages = 4;
@@ -21,15 +24,20 @@ class AppConstants {
   static const int maxStoreImages = 3;
   static const int maxComplaintImages = 2;
 
-  // ⏱️ کاتەکان
+  // ═══════════════════════════════════════════════════════════
+  // ⏱️ کات
+  // ═══════════════════════════════════════════════════════════
   static const Duration flashSaleDuration = Duration(hours: 24);
   static const Duration bannerAutoPlayInterval = Duration(seconds: 4);
+  static const Duration weatherRefreshInterval = Duration(minutes: 15);
 
+  // ═══════════════════════════════════════════════════════════
   // 📱 ناوی ئەپ
+  // ═══════════════════════════════════════════════════════════
   static const String appName = 'ڕێبەری کەلار';
 
   // ═══════════════════════════════════════════════════════════
-  // 📦 وەشانی ئەپ
+  // 📦 وەشان
   // ═══════════════════════════════════════════════════════════
   static String? _cachedVersion;
   static String? _cachedBuildNumber;
@@ -58,7 +66,6 @@ class AppConstants {
   static String get packageName => _cachedPackageName ?? 'com.kalar.guide';
   static String get fullVersion => 'v$appVersion+$appBuildNumber';
 
-  /// ✅ پشکنینی وەشانی نوێ
   static Future<bool> hasNewVersion(String serverVersion) async {
     try {
       final current = _parseVersion(appVersion);
@@ -70,12 +77,6 @@ class AppConstants {
     }
   }
 
-  /// 🔢 پارسکردنی وەشان بۆ ژمارە
-  ///
-  /// ✅ چارەسەرکرا — وەزنی دروست:
-  /// - `1.2.3` → `10203`
-  /// - `1.3.0` → `10300` ✅
-  /// - `2.0.0` → `20000` ✅
   static int _parseVersion(String version) {
     try {
       final parts = version.split('.');
@@ -95,7 +96,7 @@ class AppConstants {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎨 ڕەنگ و ستایل
+  // 🎨 ستایل
   // ═══════════════════════════════════════════════════════════
   static const Duration snackBarDuration = Duration(seconds: 3);
   static const Duration animationDuration = Duration(milliseconds: 300);

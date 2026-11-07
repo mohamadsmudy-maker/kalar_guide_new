@@ -1,13 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../config/app_colors.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../config/settings_provider.dart';
-import '../../services/currency_service.dart';
 import '../../services/currency_pdf_service.dart';
+import '../../services/currency_service.dart';
+import '../../widgets/currency_converter_card.dart';
 import '../../widgets/multi_currency_chart_widget.dart';
 import 'currency_stations_by_type_screen.dart';
+import 'currency_strings.dart';
+import 'global_currency_chart_screen.dart';
 
-/// 💱 شاشەی جۆرەکانی دراو — FULL PRO EDITION
+/// 💱 شاشەی سەرەکی دراو — ULTRA PRO MAX
+///   • نرخی ڕاستەوخۆ (Realtime) • باشترین کڕین و فرۆشتن • گۆڕینەوەی خێرا
+///   • فلتەری دراو/زێڕ • چارت • PDF • سێ زمان
 class CurrencyRatesScreen extends StatefulWidget {
   const CurrencyRatesScreen({super.key});
 
@@ -16,93 +25,96 @@ class CurrencyRatesScreen extends StatefulWidget {
 }
 
 class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
-  // ═══════════════════════════════════════════════════════════
-  // 📊 State
-  // ═══════════════════════════════════════════════════════════
+  CurrencySnapshot? _snapshot;
   bool _loading = true;
+  bool _refreshing = false;
   bool _generatingPdf = false;
-  List<Map<String, dynamic>> _allHistory = [];
-  final Map<String, Map<String, dynamic>> _cheapest = {};
+  String _group = 'all'; // all | fiat | gold
 
-  // ✅ ڕەنگەکان
-  static const Color _primaryDark = Color(0xFF1A1B2E);
-  static const Color _primaryGreen = Color(0xFF10B981);
-  static const Color _primaryGreenDark = Color(0xFF059669);
+  RealtimeChannel? _channel;
+  Timer? _debounce;
+  Timer? _ticker;
+  bool _liveFlash = false;
+
+  static const Color _dark = Color(0xFF0F172A);
+  static const Color _green = Color(0xFF10B981);
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _load();
+    _channel = CurrencyService.subscribeToPriceChanges('currency-rates-live', _onRealtime);
+    // «٥ خولەک لەمەوبەر» نوێ دەکاتەوە
+    _ticker = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📡 هێنانی داتا
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _loadData() async {
-    setState(() => _loading = true);
-    try {
-      // ١. هەرزانترین نرخ
-      final allPrices = await CurrencyService.getCurrentPrices();
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _ticker?.cancel();
+    CurrencyService.unsubscribe(_channel);
+    super.dispose();
+  }
 
-      final Map<String, Map<String, dynamic>> cheapest = {};
-      for (final p in allPrices) {
-        final currencyType = p['currency_type']?.toString() ?? '';
-        final sellPrice = (p['sell_price'] as num?)?.toDouble() ?? 0;
+  void _onRealtime() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 1200), () async {
+      if (!mounted) return;
+      await _load(silent: true);
+      if (!mounted) return;
+      setState(() => _liveFlash = true);
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _liveFlash = false);
+      });
+    });
+  }
 
-        if (currencyType.isEmpty || sellPrice <= 0) continue;
-
-        final current = cheapest[currencyType];
-        final currentPrice =
-            (current?['sell_price'] as num?)?.toDouble() ?? double.infinity;
-
-        if (current == null || sellPrice < currentPrice) {
-          cheapest[currencyType] = p;
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        if (_snapshot == null) {
+          _loading = true;
+        } else {
+          _refreshing = true;
         }
-      }
-
-      // ٢. مێژوو بۆ چارت
-      final history = await CurrencyService.getMonthlyHistory(monthsBack: 6);
-
-      if (mounted) {
-        setState(() {
-          _cheapest
-            ..clear()
-            ..addAll(cheapest);
-          _allHistory = history;
-          _loading = false;
-        });
-      }
+      });
+    }
+    try {
+      final snap = await CurrencyService.getMarketSnapshot(monthsBack: 6);
+      if (!mounted) return;
+      setState(() {
+        _snapshot = snap;
+        _loading = false;
+        _refreshing = false;
+      });
     } catch (e) {
       debugPrint('❌ CurrencyRates error: $e');
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _refreshing = false;
+        });
+      }
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📄 ڕاپۆرتی گشتی PDF
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _generateGlobalPdf() async {
+  Future<void> _generatePdf(String lang) async {
+    final history = _snapshot?.history ?? const [];
+    if (history.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(CurrencyStrings.of(lang, 'no_history')), backgroundColor: Colors.orange),
+      );
+      return;
+    }
     setState(() => _generatingPdf = true);
     try {
-      if (_allHistory.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('هیچ مێژوویەک نییە'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
-
-      await CurrencyPdfService.generateMultiReport(
-        context: context,
-        allHistory: _allHistory,
-      );
+      await CurrencyPdfService.generateMultiReport(context: context, allHistory: history);
     } catch (e) {
-      debugPrint('❌ $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${CurrencyStrings.of(lang, 'error')}: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -111,87 +123,60 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎨 Build
+  // 🏗️ Build
   // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lang = context.watch<SettingsProvider>().languageId;
-
-    final currencyTypes = CurrencyService.getCurrencyTypesForLang(lang);
+    String t(String k) => CurrencyStrings.of(lang, k);
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-        isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
-        appBar: AppBar(
-          title: const Text(
-            'نرخی دراوەکان',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 17,
-              color: Colors.white,
-            ),
-          ),
-          backgroundColor: _primaryDark,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              onPressed: _loadData,
-            ),
-          ],
-        ),
-        body: _loading
-            ? const Center(
-          child: CircularProgressIndicator(color: _primaryGreen),
-        )
-            : RefreshIndicator(
-          color: _primaryGreen,
-          onRefresh: _loadData,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // ═══════════════════════════════════════
-              // 🎨 هێدەر
-              // ═══════════════════════════════════════
-              _buildHeader(),
-              const SizedBox(height: 16),
-
-              // ═══════════════════════════════════════
-              // 🎯 دوو دوگمە: PDF + Chart
-              // ═══════════════════════════════════════
-              _buildActionsRow(),
-              const SizedBox(height: 20),
-
-              // ═══════════════════════════════════════
-              // 📈 چارتی گشتی
-              // ═══════════════════════════════════════
-              if (_allHistory.isNotEmpty) ...[
-                MultiCurrencyChartWidget(
-                  history: _allHistory,
-                  isDark: isDark,
+        backgroundColor: isDark ? _dark : const Color(0xFFF1F5F9),
+        body: RefreshIndicator(
+          color: _green,
+          onRefresh: () => _load(silent: true),
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              _buildAppBar(isDark, lang),
+              if (_loading)
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList.list(
+                    children: List.generate(5, (_) => _Skeleton(isDark: isDark)),
+                  ),
+                )
+              else ...[
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  sliver: SliverToBoxAdapter(
+                    child: CurrencyConverterCard(
+                      markets: _snapshot?.markets ?? const {},
+                      lang: lang,
+                      isDark: isDark,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 20),
-              ] else
-                _buildEmptyChart(isDark),
-
-              // ═══════════════════════════════════════
-              // 📝 ناونیشانی بەش
-              // ═══════════════════════════════════════
-              _buildSectionTitle('جۆرەکانی دراو', isDark),
-              const SizedBox(height: 12),
-
-              // ═══════════════════════════════════════
-              // 🎴 کارتەکان
-              // ═══════════════════════════════════════
-              ...currencyTypes.map(
-                    (type) => _buildTypeCard(type, isDark),
-              ),
-              const SizedBox(height: 30),
+                SliverToBoxAdapter(child: _buildSectionHeader(t('markets'), isDark, trailing: _buildGroupFilter(isDark, lang))),
+                ..._buildMarketList(isDark, lang),
+                SliverToBoxAdapter(child: _buildSectionHeader(t('chart'), isDark)),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverToBoxAdapter(
+                    child: (_snapshot?.history.isNotEmpty ?? false)
+                        ? MultiCurrencyChartWidget(
+                            key: ValueKey(_snapshot!.fetchedAt),
+                            history: _snapshot!.history,
+                            isDark: isDark,
+                          )
+                        : _buildEmpty(isDark, Icons.show_chart_rounded, t('no_history')),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 48)),
+              ],
             ],
           ),
         ),
@@ -200,579 +185,544 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎨 هێدەر
+  // 🦸 Hero — دۆلار لە سەرەوە
   // ═══════════════════════════════════════════════════════════
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_primaryDark, Color(0xFF1B3D2F)],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: _primaryGreen.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryGreen.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [_primaryGreen, _primaryGreenDark],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: _primaryGreen.withValues(alpha: 0.4),
-                  blurRadius: 15,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.attach_money_rounded,
-              color: Color(0xFF0F1421),
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'هەرزانترین نرخەکان',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'کرتە لە هەر جۆرێک بکە بۆ بینینی نوسینگەکان',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildAppBar(bool isDark, String lang) {
+    String t(String k) => CurrencyStrings.of(lang, k);
+    final usd = _snapshot?.markets['usd'];
+    final updated = _snapshot?.lastUpdated;
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 دوو دوگمەکە — PDF + Chart
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildActionsRow() {
-    return Row(
-      children: [
-        // 📄 دوگمەی PDF
-        Expanded(
-          child: GestureDetector(
-            onTap: _generatingPdf || _allHistory.isEmpty
-                ? null
-                : _generateGlobalPdf,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 14,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: _allHistory.isEmpty
-                      ? [Colors.grey.shade400, Colors.grey.shade500]
-                      : [const Color(0xFFE91E63), const Color(0xFFAD1457)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _allHistory.isEmpty
-                    ? null
-                    : [
-                  BoxShadow(
-                    color: const Color(0xFFE91E63)
-                        .withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: _generatingPdf
-                        ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                        : const Icon(
-                      Icons.picture_as_pdf_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'ڕاپۆرتی PDF',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'مێژووی گشتی',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 9,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return SliverAppBar(
+      pinned: true,
+      stretch: true,
+      expandedHeight: 285,
+      backgroundColor: _dark,
+      foregroundColor: Colors.white,
+      centerTitle: true,
+      title: Text(t('title'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+      actions: [
+        IconButton(
+          tooltip: t('global_chart'),
+          icon: const Icon(Icons.insights_rounded),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const GlobalCurrencyChartScreen()),
           ),
         ),
-        const SizedBox(width: 10),
-
-        // 📈 دوگمەی Chart
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              Scrollable.ensureVisible(
-                context,
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeOut,
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 14,
-              ),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [_primaryGreen, _primaryGreenDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryGreen.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: const Row(
-                children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Color(0x33FFFFFF),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.show_chart_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'چارت ی گشتی',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'گۆڕانکاری هەموو دراوەکان',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 9,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        IconButton(
+          tooltip: t('pdf'),
+          icon: _generatingPdf
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Icon(Icons.picture_as_pdf_rounded),
+          onPressed: _generatingPdf ? null : () => _generatePdf(lang),
         ),
       ],
+      flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.parallax,
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFF064E3B)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Row(
+                    children: [
+                      Text('🇺🇸  ${CurrencyService.getNameByLang('usd', lang)}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
+                      const Spacer(),
+                      _LiveBadge(label: t('live'), flash: _liveFlash || _refreshing),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 400),
+                            child: Text(
+                              CurrencyService.formatPrice(usd?.bestSellPrice, lang),
+                              key: ValueKey(usd?.bestSellPrice),
+                              style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, height: 1),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (usd?.lastChange != null) _ChangeChip(change: usd!.lastChange!, lang: lang, onDark: true),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${t('best_sell')} • ${t('per')} ${CurrencyService.localizeDigits('${CurrencyService.getQuoteUnit('usd')}', lang)} ${CurrencyService.getUnitName('usd', lang)}',
+                    style: const TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _heroStat(t('best_buy'), CurrencyService.formatPrice(usd?.bestBuyPrice, lang)),
+                      _heroStat(t('avg'), CurrencyService.formatPrice(usd?.avgSell, lang)),
+                      _heroStat(t('stations'), CurrencyService.localizeDigits('${usd?.stationCount ?? 0}', lang)),
+                    ],
+                  ),
+                  if (updated != null) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(Icons.schedule_rounded, size: 13, color: Colors.white54),
+                        const SizedBox(width: 4),
+                        Text('${t('updated')} ${CurrencyStrings.timeAgo(updated, lang)}',
+                            style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _heroStat(String label, String value) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsetsDirectional.only(end: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📭 چارتی بەتاڵ
+  // 📋 لیستی بازاڕ
   // ═══════════════════════════════════════════════════════════
-  Widget _buildEmptyChart(bool isDark) {
+  Widget _buildGroupFilter(bool isDark, String lang) {
+    Widget chip(String key) {
+      final active = _group == key;
+      return Padding(
+        padding: const EdgeInsetsDirectional.only(start: 6),
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _group = key);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: active ? _green : (isDark ? Colors.white10 : Colors.white),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: active ? _green : (isDark ? Colors.white12 : Colors.grey.shade300)),
+            ),
+            child: Text(
+              CurrencyStrings.of(lang, key),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: active ? Colors.white : (isDark ? Colors.white70 : Colors.grey.shade700),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(mainAxisSize: MainAxisSize.min, children: [chip('all'), chip('fiat'), chip('gold')]);
+  }
+
+  List<Widget> _buildMarketList(bool isDark, String lang) {
+    final types = CurrencyService.getCurrencyTypesForLang(lang).where((t) {
+      if (_group == 'all') return true;
+      return t['group'] == _group;
+    }).toList();
+
+    // ئەوانەی نرخیان هەیە سەرەتا
+    final markets = _snapshot?.markets ?? const <String, CurrencyMarket>{};
+    types.sort((a, b) {
+      final ha = markets[a['key']]?.hasData ?? false;
+      final hb = markets[b['key']]?.hasData ?? false;
+      if (ha != hb) return ha ? -1 : 1;
+      return CurrencyService.getOrder(a['key']!).compareTo(CurrencyService.getOrder(b['key']!));
+    });
+
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverList.builder(
+          itemCount: types.length,
+          itemBuilder: (_, i) => _MarketCard(
+            type: types[i],
+            market: markets[types[i]['key']],
+            lang: lang,
+            isDark: isDark,
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => CurrencyStationsByTypeScreen(currencyType: types[i]['key']!)),
+              );
+              if (mounted) _load(silent: true);
+            },
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildSectionHeader(String title, bool isDark, {Widget? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+      child: Row(
+        children: [
+          Container(width: 4, height: 20, decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(4))),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+          ),
+          if (trailing != null) trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmpty(bool isDark, IconData icon, String text) {
     return Container(
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
-        color: isDark ? _primaryDark : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.grey.shade200,
-        ),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.show_chart_rounded,
-            size: 50,
-            color: isDark ? Colors.white24 : Colors.grey.shade300,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'هیچ داتایەک نییە بۆ چارت',
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white54 : Colors.grey,
-              fontWeight: FontWeight.bold,
+          Icon(icon, size: 48, color: Colors.grey.shade400),
+          const SizedBox(height: 10),
+          Text(text, style: TextStyle(color: isDark ? Colors.white60 : Colors.grey, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎴 کارتی هەر دراوێک
+// ═══════════════════════════════════════════════════════════
+class _MarketCard extends StatelessWidget {
+  final Map<String, String> type;
+  final CurrencyMarket? market;
+  final String lang;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _MarketCard({
+    required this.type,
+    required this.market,
+    required this.lang,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    String t(String k) => CurrencyStrings.of(lang, k);
+    final key = type['key']!;
+    final color = CurrencyService.hexToColor(type['color']!);
+    final m = market;
+    final hasData = m?.hasData ?? false;
+    final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final sub = isDark ? Colors.white60 : Colors.grey.shade600;
+    final stale = CurrencyStrings.isStale(m?.lastUpdated);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withValues(alpha: hasData ? 0.25 : 0.1), width: 1.4),
+            ),
+            child: Opacity(
+              opacity: hasData ? 1 : 0.55,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.7)]),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        alignment: Alignment.center,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Text(CurrencyService.getSymbol(key),
+                                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${type['flag']} ${type['name']}',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                            const SizedBox(height: 4),
+                            Text(
+                              hasData
+                                  ? '${CurrencyService.localizeDigits('${m!.stationCount}', lang)} ${t('stations')}'
+                                      '${m.lastUpdated != null ? ' • ${CurrencyStrings.timeAgo(m.lastUpdated, lang)}' : ''}'
+                                  : t('no_prices'),
+                              style: TextStyle(fontSize: 11, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (m?.lastChange != null) _ChangeChip(change: m!.lastChange!, lang: lang),
+                      const SizedBox(width: 4),
+                      Icon(lang == 'en' ? Icons.chevron_right_rounded : Icons.chevron_left_rounded,
+                          color: isDark ? Colors.white38 : Colors.grey.shade400),
+                    ],
+                  ),
+                  if (hasData) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _PriceBox(
+                            label: t('best_sell'),
+                            value: CurrencyService.formatPrice(m!.bestSellPrice, lang),
+                            station: m.bestSell?['station_name']?.toString(),
+                            color: const Color(0xFF10B981),
+                            isDark: isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _PriceBox(
+                            label: t('best_buy'),
+                            value: CurrencyService.formatPrice(m.bestBuyPrice, lang),
+                            station: m.bestBuy?['station_name']?.toString(),
+                            color: const Color(0xFF3B82F6),
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          '${t('per')} ${CurrencyService.localizeDigits('${CurrencyService.getQuoteUnit(key)}', lang)} ${type['unit']}',
+                          style: TextStyle(fontSize: 10, color: sub, fontWeight: FontWeight.w600),
+                        ),
+                        const Spacer(),
+                        if (m.spread != null)
+                          Text(
+                            '${t('spread')}: ${CurrencyService.formatPrice(m.spread, lang)}',
+                            style: TextStyle(fontSize: 10, color: sub, fontWeight: FontWeight.w700),
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            'دوای یەکەم نوێکردنەوەی نرخ، چارت لێرە دەردەکەوێت',
-            style: TextStyle(
-              fontSize: 10,
-              color: isDark ? Colors.white38 : Colors.grey.shade500,
+        ),
+      ),
+    );
+  }
+}
+
+class _PriceBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? station;
+  final Color color;
+  final bool isDark;
+
+  const _PriceBox({
+    required this.label,
+    required this.value,
+    required this.station,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+          ),
+          if (station != null && station!.isNotEmpty)
+            Text(
+              station!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey.shade600),
             ),
-            textAlign: TextAlign.center,
+        ],
+      ),
+    );
+  }
+}
+
+/// ▲ / ▼ دوایین گۆڕانکاری
+class _ChangeChip extends StatelessWidget {
+  final double change;
+  final String lang;
+  final bool onDark;
+
+  const _ChangeChip({required this.change, required this.lang, this.onDark = false});
+
+  @override
+  Widget build(BuildContext context) {
+    if (change == 0) return const SizedBox.shrink();
+    final up = change > 0;
+    final color = up ? const Color(0xFFEF4444) : const Color(0xFF10B981);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: onDark ? 0.25 : 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 12, color: onDark ? Colors.white : color),
+          const SizedBox(width: 2),
+          Text(
+            CurrencyService.formatPrice(change.abs(), lang),
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: onDark ? Colors.white : color),
           ),
         ],
       ),
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 📝 ناونیشانی بەش
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildSectionTitle(String title, bool isDark) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 20,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_primaryGreen, _primaryGreenDark],
+class _LiveBadge extends StatelessWidget {
+  final String label;
+  final bool flash;
+
+  const _LiveBadge({required this.label, required this.flash});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: flash ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: flash ? Colors.white : const Color(0xFF10B981),
+              shape: BoxShape.circle,
             ),
-            borderRadius: BorderRadius.circular(4),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w900,
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🎴 کارتی جۆر
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildTypeCard(Map<String, String> type, bool isDark) {
-    final key = type['key']!;
-    final name = type['name']!;
-    final colorStr = type['color']!;
-    final color = _hexToColor(colorStr);
-
-    final cheapest = _cheapest[key];
-    final cheapestBuy = (cheapest?['buy_price'] as num?)?.toDouble();
-    final cheapestSell = (cheapest?['sell_price'] as num?)?.toDouble();
-    final cheapestStationName = cheapest?['station_name']?.toString() ?? '';
-    final cheapestAddress = cheapest?['station_address']?.toString() ?? '';
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CurrencyStationsByTypeScreen(currencyType: key),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? _primaryDark : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.1),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                // 🎨 ئایکۆن
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [color, color.withValues(alpha: 0.7)],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.attach_money_rounded,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-
-                // 📝 ناو + زانیاری
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF1A1A2E),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      if (cheapestStationName.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.emoji_events_rounded,
-                              color: Color(0xFF10B981),
-                              size: 13,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                cheapestStationName,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.grey.shade700,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (cheapestAddress.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_rounded,
-                                size: 10,
-                                color: isDark ? Colors.white38 : Colors.grey,
-                              ),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  cheapestAddress,
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: isDark
-                                        ? Colors.white38
-                                        : Colors.grey.shade600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ] else
-                        Text(
-                          'هیچ نرخێک نییە',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? Colors.white38 : Colors.grey,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                // 💰 نرخ
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (cheapestBuy != null && cheapestBuy > 0)
-                      Text(
-                        'کڕین: ${cheapestBuy.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isDark
-                              ? Colors.white54
-                              : Colors.grey.shade600,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    const SizedBox(height: 2),
-                    Text(
-                      cheapestSell != null
-                          ? cheapestSell.toStringAsFixed(0)
-                          : '--',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: color,
-                      ),
-                    ),
-                    Text(
-                      'د.ع / فرۆشتن',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: color.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            // ✅ دوگمەی خوارەوە
-            if (cheapestSell != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                height: 1,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.grey.shade200,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.arrow_upward_rounded,
-                    color: Color(0xFF10B981),
-                    size: 14,
-                  ),
-                  const SizedBox(width: 4),
-                  const Text(
-                    'لە هەرزان بۆ گران',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFF10B981),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    Icons.chevron_left_rounded,
-                    color: isDark ? Colors.white38 : Colors.grey,
-                    size: 18,
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+        ],
       ),
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Helpers
-  // ═══════════════════════════════════════════════════════════
-  Color _hexToColor(String hex) {
-    try {
-      hex = hex.replaceAll('#', '');
-      if (hex.length == 6) hex = 'FF$hex';
-      return Color(int.parse(hex, radix: 16));
-    } catch (_) {
-      return AppColors.primary;
-    }
+class _Skeleton extends StatelessWidget {
+  final bool isDark;
+  const _Skeleton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final base = isDark ? Colors.white10 : Colors.grey.shade200;
+    return Container(
+      height: 130,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(width: 50, height: 50, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(15))),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(height: 14, width: 140, color: base),
+                const SizedBox(height: 8),
+                Container(height: 10, width: 90, color: base),
+                const Spacer(),
+                Container(height: 36, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(12))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

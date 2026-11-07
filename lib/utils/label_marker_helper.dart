@@ -3,9 +3,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-/// 🏷️ یاریدەدەر بۆ دروستکردنی Marker ی تایبەت بە ناوی گەڕەک
+/// 🏷️ یاریدەدەر بۆ دروستکردنی Marker ی تایبەت — Ultra Pro Max
 class LabelMarkerHelper {
-  /// دروستکردنی BitmapDescriptor لە Text
+  LabelMarkerHelper._();
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 createLabelMarker
+  // ═══════════════════════════════════════════════════════════
   static Future<BitmapDescriptor> createLabelMarker({
     required String text,
     Color textColor = Colors.white,
@@ -19,7 +23,7 @@ class LabelMarkerHelper {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
 
-    // ═══ پێکهاتەی Text ═══
+    // ═══ Text ═══
     final textPainter = TextPainter(
       text: TextSpan(
         text: text,
@@ -36,7 +40,7 @@ class LabelMarkerHelper {
 
     textPainter.layout(maxWidth: 500);
 
-    // ═══ قەبارەی Label ═══
+    // ═══ قەبارە ═══
     final width = textPainter.width + (padding * 2);
     final height = textPainter.height + (padding * 2);
 
@@ -55,10 +59,7 @@ class LabelMarkerHelper {
     );
 
     // باکگراوند
-    canvas.drawRRect(
-      rrect,
-      Paint()..color = backgroundColor,
-    );
+    canvas.drawRRect(rrect, Paint()..color = backgroundColor);
 
     // چوارچێوە
     if (borderWidth > 0) {
@@ -72,10 +73,7 @@ class LabelMarkerHelper {
     }
 
     // ═══ Text ═══
-    textPainter.paint(
-      canvas,
-      Offset(padding, padding),
-    );
+    textPainter.paint(canvas, Offset(padding, padding));
 
     // ═══ گۆڕین بۆ Image ═══
     final picture = recorder.endRecording();
@@ -85,7 +83,9 @@ class LabelMarkerHelper {
     return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
   }
 
-  /// دروستکردنی Label بۆ گەڕەک بە ڕەنگی تایبەت
+  // ═══════════════════════════════════════════════════════════
+  // 🏘️ createNeighborhoodLabel
+  // ═══════════════════════════════════════════════════════════
   static Future<BitmapDescriptor> createNeighborhoodLabel({
     required String name,
     required Color color,

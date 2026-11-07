@@ -98,3 +98,14 @@ local.properties
 # ═══════════════════════════════════════════════════════════
 *.log
 secrets.json
+
+# Signing
+key.properties
+*.jks
+*.keystore
+
+# Local junk
+errors.txt
+*.zip
+*.apk
+project-tree.txt

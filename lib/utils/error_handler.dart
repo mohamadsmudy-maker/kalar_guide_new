@@ -1,11 +1,17 @@
+// lib/utils/error_handler.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'app_logger.dart';   // ✅ ئەم import ـە زیاد بکە
+import 'app_logger.dart';
 
 /// ⚠️ بەڕێوەبردنی هەڵەکان
 class ErrorHandler {
-  /// ✅ وەرگرتنی نامەی هەڵەی بەکارهێنەر-دۆستانە
+  ErrorHandler._();
+
+  // ═══════════════════════════════════════════════════════════
+  // 📝 getUserMessage
+  // ═══════════════════════════════════════════════════════════
   static String getUserMessage(Object error) {
+    // Supabase
     if (error is PostgrestException) {
       switch (error.code) {
         case '23505':
@@ -21,14 +27,11 @@ class ErrorHandler {
       }
     }
 
-    if (error is AuthException) {
-      return '⚠️ هەڵەی چوونەژوورەوە';
-    }
+    if (error is AuthException) return '⚠️ هەڵەی چوونەژوورەوە';
 
-    if (error is StorageException) {
-      return '⚠️ هەڵەی فایل';
-    }
+    if (error is StorageException) return '⚠️ هەڵەی فایل';
 
+    // Network
     final errorStr = error.toString();
 
     if (errorStr.contains('SocketException') ||
@@ -43,7 +46,9 @@ class ErrorHandler {
     return '❌ هەڵەیەک ڕووی دا';
   }
 
-  /// ✅ پیشاندانی هەڵە بە SnackBar
+  // ═══════════════════════════════════════════════════════════
+  // ❌ showError
+  // ═══════════════════════════════════════════════════════════
   static void showError(BuildContext context, Object error) {
     AppLogger.e('Error', error);
 
@@ -65,7 +70,9 @@ class ErrorHandler {
     );
   }
 
-  /// ✅ پیشاندانی سەرکەوتن
+  // ═══════════════════════════════════════════════════════════
+  // ✅ showSuccess
+  // ═══════════════════════════════════════════════════════════
   static void showSuccess(BuildContext context, String message) {
     if (!context.mounted) return;
 
@@ -85,7 +92,9 @@ class ErrorHandler {
     );
   }
 
-  /// ✅ پیشاندانی ئاگاداری
+  // ═══════════════════════════════════════════════════════════
+  // ⚠️ showWarning
+  // ═══════════════════════════════════════════════════════════
   static void showWarning(BuildContext context, String message) {
     if (!context.mounted) return;
 

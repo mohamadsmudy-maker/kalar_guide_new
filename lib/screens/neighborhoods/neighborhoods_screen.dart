@@ -1,442 +1,697 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 
-import '../../config/settings_provider.dart';
+import '../../config/app_colors.dart';
 import '../../models/neighborhood.dart';
-import '../../services/neighborhood_service.dart';
-import '../../widgets/common/auto_translate.dart';
-import '../../widgets/neighborhoods/neighborhood_card.dart';
 import 'neighborhood_details_screen.dart';
 
-/// 🏘️ شاشەی گەڕەکەکانی کەلار — ULTRA PRO
+/// 🏘️ شاشەی گەڕەکان — ULTRA PRO MAX V2
 class NeighborhoodsScreen extends StatefulWidget {
-  const NeighborhoodsScreen({super.key});
+  final VoidCallback? onMenuTap;
+  const NeighborhoodsScreen({super.key, this.onMenuTap});
 
   @override
   State<NeighborhoodsScreen> createState() => _NeighborhoodsScreenState();
 }
 
-class _NeighborhoodsScreenState extends State<NeighborhoodsScreen>
-    with TickerProviderStateMixin {
-  bool _loading = true;
-  List<Neighborhood> _neighborhoods = [];
-  List<Neighborhood> _filtered = [];
-  Map<String, dynamic> _stats = {};
-  final _searchCtrl = TextEditingController();
-  String _searchQuery = '';
+class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
+  final SupabaseClient _supabase = Supabase.instance.client;
+  final TextEditingController _searchController = TextEditingController();
 
-  late AnimationController _entryController;
-  late Animation<double> _entryAnimation;
+  List<Map<String, dynamic>> _neighborhoods = [];
+  List<Map<String, dynamic>> _filteredNeighborhoods = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  double _totalArea = 0;
+  int _totalStores = 0;
 
   @override
   void initState() {
     super.initState();
-    _entryController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _entryAnimation = CurvedAnimation(
-      parent: _entryController,
-      curve: Curves.easeOutCubic,
-    );
-    _loadData();
+    _fetchNeighborhoods();
   }
 
   @override
   void dispose() {
-    _entryController.dispose();
-    _searchCtrl.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _loading = true);
-
-    final results = await Future.wait([
-      NeighborhoodService.getAll(),
-      NeighborhoodService.getStats(),
-    ]);
-
+  // ═══════════════════════════════════════════════════════════
+  // 📥 Fetch
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _fetchNeighborhoods() async {
     if (mounted) {
       setState(() {
-        _neighborhoods = results[0] as List<Neighborhood>;
-        _filtered = _neighborhoods;
-        _stats = results[1] as Map<String, dynamic>;
-        _loading = false;
+        _isLoading = true;
+        _errorMessage = null;
       });
-      _entryController.forward(from: 0);
+    }
+
+    try {
+      final response = await _supabase
+          .from('neighborhoods')
+          .select()
+          .order('name_ku', ascending: true);
+
+      final data = List<Map<String, dynamic>>.from(response as List);
+
+      double areaSum = 0;
+      int storesSum = 0;
+      for (var item in data) {
+        areaSum +=
+            double.tryParse(item['area_km2']?.toString() ?? '0') ?? 0;
+        storesSum +=
+            int.tryParse(item['total_stores']?.toString() ?? '0') ?? 0;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _neighborhoods = data;
+        _filteredNeighborhoods = _neighborhoods;
+        _totalArea = areaSum;
+        _totalStores = storesSum;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ Fetch error: $e');
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'هەڵە لە هێنانی داتا';
+      });
+      _showSnack('هەڵە لە هێنانی داتا', isError: true);
     }
   }
 
-  void _onSearch(String query) {
+  void _filterNeighborhoods(String query) {
     setState(() {
-      _searchQuery = query.trim().toLowerCase();
-      if (_searchQuery.isEmpty) {
-        _filtered = _neighborhoods;
+      if (query.trim().isEmpty) {
+        _filteredNeighborhoods = _neighborhoods;
       } else {
-        _filtered = _neighborhoods.where((n) {
-          return n.nameKu.toLowerCase().contains(_searchQuery) ||
-              (n.nameAr?.toLowerCase().contains(_searchQuery) ?? false) ||
-              (n.nameEn?.toLowerCase().contains(_searchQuery) ?? false);
+        final q = query.toLowerCase();
+        _filteredNeighborhoods = _neighborhoods.where((n) {
+          final name = n['name_ku']?.toString().toLowerCase() ?? '';
+          return name.contains(q);
         }).toList();
       }
     });
   }
 
+  void _showSnack(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: isError ? AppColors.red : AppColors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Card Colors
+  // ═══════════════════════════════════════════════════════════
+  static const List<Color> _cardColors = [
+    AppColors.primary,
+    AppColors.pink,
+    AppColors.orange,
+    AppColors.green,
+    AppColors.purple,
+  ];
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏗️ Build
+  // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lang = context.watch<SettingsProvider>().languageId;
+    final bgColor =
+    isDark ? AppColors.darkBackground : AppColors.background;
 
     return Directionality(
-      textDirection: lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
+      textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildAppBar(isDark, lang),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: _buildStatsCard(isDark, lang),
-              ),
+        backgroundColor: bgColor,
+        body: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _fetchNeighborhoods,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: _buildSearchBar(isDark, lang),
-              ),
-            ),
-            _loading
-                ? const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF1E88E5),
-                ),
-              ),
-            )
-                : _filtered.isEmpty
-                ? SliverFillRemaining(
-              child: _buildEmptyState(isDark, lang),
-            )
-                : SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                      (context, i) => AnimatedBuilder(
-                    animation: _entryAnimation,
-                    builder: (context, child) {
-                      final delay = (i * 0.06).clamp(0.0, 1.0);
-                      final progress =
-                      ((_entryAnimation.value - delay) / 0.5)
-                          .clamp(0.0, 1.0);
-                      return Transform.translate(
-                        offset: Offset(0, 30 * (1 - progress)),
-                        child:
-                        Opacity(opacity: progress, child: child),
-                      );
-                    },
-                    child: NeighborhoodCard(
-                      neighborhood: _filtered[i],
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                NeighborhoodDetailsScreen(
-                                  neighborhood: _filtered[i],
-                                ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  childCount: _filtered.length,
-                ),
-              ),
-            ),
-          ],
+            slivers: [
+              _buildAppBar(isDark),
+              _buildStatsCard(isDark),
+              _buildSearchBar(isDark),
+              _buildListSliver(isDark),
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildAppBar(bool isDark, String lang) {
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 AppBar
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildAppBar(bool isDark) {
     return SliverAppBar(
-      expandedHeight: 180,
+      expandedHeight: 200.0,
+      floating: false,
       pinned: true,
-      backgroundColor: const Color(0xFF1E88E5),
-      foregroundColor: Colors.white,
       elevation: 0,
+      backgroundColor: AppColors.green,
       leading: IconButton(
-        icon: Icon(
-          lang == 'en'
-              ? Icons.arrow_back_rounded
-              : Icons.arrow_forward_rounded,
+        icon: const Icon(
+          Icons.arrow_back_ios_new_rounded,
           color: Colors.white,
         ),
         onPressed: () => Navigator.pop(context),
       ),
       flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        titlePadding: const EdgeInsets.only(
+          bottom: 20,
+          left: 16,
+          right: 16,
+        ),
+        title: const Text(
+          'گەڕەکانی کەلار',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            fontSize: 22,
+            shadows: [
+              Shadow(
+                color: Colors.black45,
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+        ),
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF1E88E5),
-                Color(0xFF00BCD4),
-                Color(0xFF10B981),
-              ],
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
+              colors: [AppColors.green, AppColors.primary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 16),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.location_city_rounded,
-                      color: Colors.white,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
+          child: Stack(
+            children: [
+              Positioned(
+                right: -20,
+                bottom: -10,
+                child: Icon(
+                  Icons.location_city_rounded,
+                  size: 180,
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+              SafeArea(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 30),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        AutoTranslate(
-                          text: 'گەڕەکانی کەلار 🏘️',
-                          lang: lang,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.3,
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
                           ),
-                          maxLines: 1,
+                          child: const Icon(
+                            Icons.location_city_rounded,
+                            color: Colors.white,
+                            size: 36,
+                          ),
                         ),
-                        const SizedBox(height: 4),
-                        AutoTranslate(
-                          text: '${_neighborhoods.length} گەڕەک',
-                          lang: lang,
+                        const SizedBox(height: 8),
+                        Text(
+                          '${_neighborhoods.length} گەڕەک',
                           style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
                           ),
-                          maxLines: 1,
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📊 Stats Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildStatsCard(bool isDark) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 10,
+          ),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black
+                    .withValues(alpha: isDark ? 0.3 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildStatItem(
+                Icons.landscape_rounded,
+                _totalArea.toStringAsFixed(1),
+                'کم²',
+                AppColors.orange,
+                isDark,
+              ),
+              _buildVerticalDivider(isDark),
+              _buildStatItem(
+                Icons.storefront_rounded,
+                '$_totalStores',
+                'شوێن',
+                AppColors.green,
+                isDark,
+              ),
+              _buildVerticalDivider(isDark),
+              _buildStatItem(
+                Icons.location_city_rounded,
+                '${_neighborhoods.length}',
+                'گەڕەک',
+                AppColors.primary,
+                isDark,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+      IconData icon,
+      String value,
+      String label,
+      Color color,
+      bool isDark,
+      ) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 24),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? Colors.white54 : AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerticalDivider(bool isDark) {
+    return Container(
+      height: 40,
+      width: 1,
+      color: isDark ? Colors.white12 : AppColors.divider,
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🔍 Search Bar
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildSearchBar(bool isDark) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black
+                    .withValues(alpha: isDark ? 0.3 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _searchController,
+            onChanged: _filterNeighborhoods,
+            style: TextStyle(
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              hintText: 'گەڕان بۆ گەڕەک...',
+              hintStyle: TextStyle(
+                color: isDark ? Colors.white54 : Colors.grey,
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: AppColors.primary,
+              ),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: isDark ? Colors.white54 : Colors.grey,
+                ),
+                onPressed: () {
+                  _searchController.clear();
+                  _filterNeighborhoods('');
+                },
+              )
+                  : null,
+              border: InputBorder.none,
+              contentPadding:
+              const EdgeInsets.symmetric(vertical: 16),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📋 List Sliver
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildListSliver(bool isDark) {
+    if (_isLoading) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildShimmerCard(isDark),
+          childCount: 6,
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.cloud_off_rounded,
+                  size: 60,
+                  color: AppColors.orange,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _errorMessage!,
+                  style: TextStyle(
+                    color: isDark
+                        ? Colors.white70
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _fetchNeighborhoods,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('دووبارە هەوڵبدەرەوە'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_filteredNeighborhoods.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search_off_rounded,
+                size: 60,
+                color: isDark
+                    ? Colors.white54
+                    : AppColors.textTertiary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'هیچ گەڕەکێک نەدۆزرایەوە',
+                style: TextStyle(
+                  color: isDark
+                      ? Colors.white70
+                      : AppColors.textSecondary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+              (context, index) {
+            final neighborhood = _filteredNeighborhoods[index];
+            final color = _cardColors[index % _cardColors.length];
+            return _buildNeighborhoodCard(neighborhood, color, isDark);
+          },
+          childCount: _filteredNeighborhoods.length,
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎴 Neighborhood Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildNeighborhoodCard(
+      Map<String, dynamic> neighborhood,
+      Color color,
+      bool isDark,
+      ) {
+    final name = neighborhood['name_ku']?.toString() ?? 'بێ ناو';
+    final areaDouble =
+        double.tryParse(neighborhood['area_km2']?.toString() ?? '0') ??
+            0;
+    final areaStr = areaDouble.toStringAsFixed(2);
+    final stores = neighborhood['total_stores']?.toString() ?? '0';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => NeighborhoodDetailsScreen(
+                neighborhood: Neighborhood.fromJson(neighborhood),
               ),
             ),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: isDark ? 0.1 : 0.08),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(
+              color: color.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: isDark
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                        ),
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 12,
+                        runSpacing: 4,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.storefront_rounded,
+                                size: 14,
+                                color: color,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$stores شوێن',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.white54
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.landscape_rounded,
+                                size: 14,
+                                color: color,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$areaStr کم²',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.white54
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Icon(
+                    Icons.location_city_rounded,
+                    color: color,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withValues(alpha: 0.1),
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatsCard(bool isDark, String lang) {
-    final totalStores = _stats['total_stores'] ?? 0;
-    final totalArea = (_stats['total_area_km2'] as num?)?.toDouble() ?? 0.0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1E88E5).withValues(alpha: 0.15),
-            const Color(0xFF10B981).withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF1E88E5).withValues(alpha: 0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          _buildStatItem(
-            icon: Icons.location_city_rounded,
-            value: '${_neighborhoods.length}',
-            labelKey: 'گەڕەک',
-            color: const Color(0xFF1E88E5),
-            isDark: isDark,
-            lang: lang,
-          ),
-          Container(
-            width: 1,
-            height: 40,
-            color: const Color(0xFF1E88E5).withValues(alpha: 0.2),
-          ),
-          _buildStatItem(
-            icon: Icons.storefront_rounded,
-            value: '$totalStores',
-            labelKey: 'شوێن',
-            color: const Color(0xFF10B981),
-            isDark: isDark,
-            lang: lang,
-          ),
-          Container(
-            width: 1,
-            height: 40,
-            color: const Color(0xFF1E88E5).withValues(alpha: 0.2),
-          ),
-          _buildStatItem(
-            icon: Icons.landscape_rounded,
-            value: totalArea.toStringAsFixed(1),
-            labelKey: 'کم²',
-            color: const Color(0xFFF59E0B),
-            isDark: isDark,
-            lang: lang,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required String labelKey,
-    required Color color,
-    required bool isDark,
-    required String lang,
-  }) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: color,
-              height: 1.0,
-            ),
-          ),
-          const SizedBox(height: 2),
-          AutoTranslate(
-            text: labelKey,
-            lang: lang,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white54 : Colors.grey.shade600,
-            ),
-            maxLines: 1,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(bool isDark, String lang) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _searchQuery.isNotEmpty
-              ? const Color(0xFF1E88E5).withValues(alpha: 0.4)
-              : Colors.transparent,
-          width: 2,
-        ),
-      ),
-      child: TextField(
-        controller: _searchCtrl,
-        onChanged: _onSearch,
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.black87,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-        decoration: InputDecoration(
-          hintText: lang == 'ar'
-              ? 'ابحث عن حي...'
-              : (lang == 'en'
-              ? 'Search neighborhood...'
-              : 'گەڕان بۆ گەڕەک...'),
-          hintStyle: TextStyle(
-            fontSize: 13,
-            color: isDark ? Colors.white38 : Colors.grey,
-          ),
-          prefixIcon: const Icon(
-            Icons.search_rounded,
-            color: Color(0xFF1E88E5),
-            size: 22,
-          ),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-            icon: const Icon(Icons.close_rounded, size: 18),
-            onPressed: () {
-              _searchCtrl.clear();
-              _onSearch('');
-            },
-          )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 14,
-            horizontal: 16,
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Shimmer
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildShimmerCard(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Shimmer.fromColors(
+        baseColor: isDark ? AppColors.darkBorder : Colors.grey.shade300,
+        highlightColor:
+        isDark ? AppColors.darkCard : Colors.grey.shade100,
+        child: Container(
+          height: 92,
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.darkCard : AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(bool isDark, String lang) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E88E5).withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.location_city_outlined,
-              size: 60,
-              color: Color(0xFF1E88E5),
-            ),
-          ),
-          const SizedBox(height: 16),
-          AutoTranslate(
-            text: _searchQuery.isEmpty
-                ? 'هیچ گەڕەکێک نییە'
-                : 'هیچ گەڕەکێک نەدۆزرایەوە',
-            lang: lang,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-            ),
-            maxLines: 2,
-          ),
-        ],
       ),
     );
   }

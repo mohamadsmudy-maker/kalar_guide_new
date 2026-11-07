@@ -1,7 +1,6 @@
 // lib/widgets/neighborhoods/neighborhood_card.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../config/settings_provider.dart';
 import '../../models/neighborhood.dart';
@@ -48,7 +47,7 @@ class NeighborhoodCard extends StatelessWidget {
     if (name.contains('مەطار') || name.contains('وێستگە')) {
       return Icons.local_gas_station_rounded;
     }
-    if (name.contains('شاری') || name.contains('سیتی')) {
+    if (name.contains('شاری') || name.contains('سێتی')) {
       return Icons.apartment_rounded;
     }
     if (name.contains('ناوچە')) return Icons.location_city_rounded;
@@ -69,6 +68,9 @@ class NeighborhoodCard extends StatelessWidget {
   // 🎴 Ultra Pro Card — Style ی بەشەکان (باریک)
   // ═══════════════════════════════════════════════════════════
   Widget _buildFull(bool isDark, Color color, String lang) {
+    // ✅ کورتکردنەوەی ژمارە دەییەکان بۆ 2 ژمارە
+    final areaStr = neighborhood.areaKm2.toStringAsFixed(2);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -129,7 +131,8 @@ class NeighborhoodCard extends StatelessWidget {
                   Text(
                     neighborhood.nameKu,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontFamily: 'Rabar',
+                      fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: isDark
                           ? Colors.white
@@ -139,35 +142,44 @@ class NeighborhoodCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
 
-                  // ═══ Stats Row ═══
+                  // ═══ Stats Row (بە شێوەیەکی ڕێکخراو) ═══
                   Row(
                     children: [
-                      // شوێن
-                      _buildMiniStat(
-                        icon: Icons.storefront_rounded,
-                        value: '${neighborhood.totalStores}',
-                        color: color,
-                        isDark: isDark,
-                      ),
-                      if (neighborhood.population > 0) ...[
-                        const SizedBox(width: 10),
-                        _buildMiniStat(
-                          icon: Icons.people_rounded,
-                          value: '${neighborhood.population}',
-                          color: const Color(0xFF10B981),
+                      // 1. شوێنەکان
+                      Flexible(
+                        child: _buildMiniStat(
+                          icon: Icons.storefront_rounded,
+                          value: '${neighborhood.totalStores} شوێن',
+                          color: color,
                           isDark: isDark,
                         ),
-                      ],
+                      ),
+
+                      // 2. ڕووبەر (ئەگەر هەبوو)
                       if (neighborhood.areaKm2 > 0) ...[
-                        const SizedBox(width: 10),
-                        _buildMiniStat(
-                          icon: Icons.square_foot_rounded,
-                          value:
-                          neighborhood.areaKm2.toStringAsFixed(1),
-                          color: const Color(0xFFF59E0B),
-                          isDark: isDark,
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: _buildMiniStat(
+                            icon: Icons.landscape_rounded,
+                            value: '$areaStr کم²', // ✅ ئێستا 2 ژمارەی دەییە
+                            color: const Color(0xFFF59E0B),
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+
+                      // 3. دانیشتووان (ئەگەر هەبوو)
+                      if (neighborhood.population > 0) ...[
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: _buildMiniStat(
+                            icon: Icons.people_rounded,
+                            value: '${neighborhood.population}',
+                            color: const Color(0xFF10B981),
+                            isDark: isDark,
+                          ),
                         ),
                       ],
                     ],
@@ -217,12 +229,17 @@ class NeighborhoodCard extends StatelessWidget {
       children: [
         Icon(icon, size: 12, color: color),
         const SizedBox(width: 3),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: isDark ? Colors.white70 : Colors.grey.shade700,
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Rabar',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white70 : Colors.grey.shade700,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -266,6 +283,7 @@ class NeighborhoodCard extends StatelessWidget {
               child: Text(
                 neighborhood.nameKu,
                 style: TextStyle(
+                  fontFamily: 'Rabar',
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                   color:
@@ -278,6 +296,7 @@ class NeighborhoodCard extends StatelessWidget {
             Text(
               '${neighborhood.totalStores}',
               style: TextStyle(
+                fontFamily: 'Rabar',
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
                 color: color,

@@ -1,15 +1,29 @@
+// lib/widgets/common/dynamic_text.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../config/settings_provider.dart';
-import '../../services/translation_service.dart';
 
-/// 🌍 تێکستی دینامیکی — بە AI وەردەگێڕدرێت
-class DynamicText extends StatefulWidget {
+import '../../config/settings_provider.dart';
+import 'auto_translate.dart';
+
+/// 🌍 تێکستی دینامیکی — بە AI وەردەگێڕدرێت (v2)
+///
+/// پێشتر ئەم widget ـە لۆجیکی وەرگێڕانی خۆی هەبوو (بێ cache، بێ سنوورداری،
+/// و گۆڕینی زمان بە post-frame hack). ئێستا تەنها بە زمانی ئەپەوە
+/// دەبەسترێتەوە و `AutoTranslate` کارەکە دەکات، بۆیە:
+///  • cache ی هاوبەش لەگەڵ `AutoTranslate` (هەمان دەق دووجار وەرناگێڕدرێت)
+///  • گۆڕینی زمان یەکسەر و بێ flicker
+///  • ڕێکخستنی داواکارییەکان (٣ هاوکات) و cooldown ی شکست
+///  • دەقی ژمارە/تەلەفۆن وەرنەگێڕدرێت
+class DynamicText extends StatelessWidget {
   final String text;
   final TextStyle? style;
   final TextAlign? textAlign;
   final int? maxLines;
   final TextOverflow? overflow;
+  final bool? softWrap;
+
+  /// false = دەقەکە وەک خۆی نیشان بدە
+  final bool translate;
 
   const DynamicText(
       this.text, {
@@ -18,66 +32,24 @@ class DynamicText extends StatefulWidget {
         this.textAlign,
         this.maxLines,
         this.overflow,
+        this.softWrap,
+        this.translate = true,
       });
 
   @override
-  State<DynamicText> createState() => _DynamicTextState();
-}
-
-class _DynamicTextState extends State<DynamicText> {
-  String _displayed = '';
-  String _currentLang = 'ku';
-
-  @override
-  void initState() {
-    super.initState();
-    _displayed = widget.text;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _translate());
-  }
-
-  @override
-  void didUpdateWidget(DynamicText oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.text != widget.text) {
-      _displayed = widget.text;
-      _translate();
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final newLang = context.watch<SettingsProvider>().languageId;
-    if (newLang != _currentLang) {
-      _currentLang = newLang;
-      _translate();
-    }
-  }
-
-  Future<void> _translate() async {
-    // ✅ ئەگەر کوردییە، هیچ وەرگێڕانێک پێویست نییە
-    if (_currentLang == 'ku') {
-      if (mounted) setState(() => _displayed = widget.text);
-      return;
-    }
-
-    // ✅ وەرگێڕان بە AI
-    final translated = await TranslationService.translate(
-      text: widget.text,
-      targetLanguage: _currentLang,
-    );
-
-    if (mounted) setState(() => _displayed = translated);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Text(
-      _displayed,
-      style: widget.style,
-      textAlign: widget.textAlign,
-      maxLines: widget.maxLines,
-      overflow: widget.overflow,
+    // تەنها کاتێک زمان بگۆڕێت دووبارە دروست دەبێتەوە
+    final lang = context.select<SettingsProvider, String>((s) => s.languageId);
+
+    return AutoTranslate(
+      text: text,
+      lang: lang,
+      style: style,
+      textAlign: textAlign,
+      maxLines: maxLines,
+      overflow: overflow,
+      softWrap: softWrap,
+      translate: translate,
     );
   }
 }

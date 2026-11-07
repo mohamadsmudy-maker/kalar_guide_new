@@ -1,4 +1,5 @@
-﻿$ErrorActionPreference = "Stop"
+﻿
+$ErrorActionPreference = "Stop"
 
 $SUPABASE_URL = "https://krqrhqrtmcpwpcsxkaql.supabase.co"
 $SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtycXJocnF0bWNwd3Bjc3hrYXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NDg4MzIsImV4cCI6MjEwNDUyNDgzMn0.2jFpZfH3x9POPboN841XM8pu6uqErX6Viq5Luvgbldo"

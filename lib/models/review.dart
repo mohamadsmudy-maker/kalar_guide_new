@@ -1,3 +1,5 @@
+// lib/models/review.dart
+
 /// ⭐ مۆدێلی هەڵسەنگاندن
 class Review {
   final String? id;
@@ -43,20 +45,25 @@ class Review {
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool includeNullables = false}) {
     return {
       if (id != null) 'id': id,
       'store_id': storeId,
-      if (userId != null) 'user_id': userId,
+      if (includeNullables || userId != null) 'user_id': userId,
       'user_name': userName,
-      if (userPhone != null) 'user_phone': userPhone,
+      if (includeNullables || userPhone != null) 'user_phone': userPhone,
       'rating': rating,
-      if (comment != null) 'comment': comment,
+      if (includeNullables || comment != null) 'comment': comment,
       'is_approved': isApproved,
     };
   }
 
-  /// ⏱️ کاتی "چەند لەمەوبەر"
+  Map<String, dynamic> toUpdateJson() {
+    final json = toJson(includeNullables: true);
+    json['updated_at'] = DateTime.now().toUtc().toIso8601String();
+    return json;
+  }
+
   String getTimeAgo() {
     if (createdAt == null) return '';
     final diff = DateTime.now().difference(createdAt!);
@@ -69,9 +76,35 @@ class Review {
     if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} مانگ لەمەوبەر';
     return '${(diff.inDays / 365).floor()} ساڵ لەمەوبەر';
   }
+
+  Review copyWith({
+    String? id, bool clearId = false,
+    int? storeId,
+    String? userId, bool clearUserId = false,
+    String? userName,
+    String? userPhone, bool clearUserPhone = false,
+    int? rating,
+    String? comment, bool clearComment = false,
+    DateTime? createdAt, bool clearCreatedAt = false,
+    DateTime? updatedAt, bool clearUpdatedAt = false,
+    bool? isApproved,
+  }) {
+    return Review(
+      id: clearId ? null : (id ?? this.id),
+      storeId: storeId ?? this.storeId,
+      userId: clearUserId ? null : (userId ?? this.userId),
+      userName: userName ?? this.userName,
+      userPhone: clearUserPhone ? null : (userPhone ?? this.userPhone),
+      rating: rating ?? this.rating,
+      comment: clearComment ? null : (comment ?? this.comment),
+      createdAt: clearCreatedAt ? null : (createdAt ?? this.createdAt),
+      updatedAt: clearUpdatedAt ? null : (updatedAt ?? this.updatedAt),
+      isApproved: isApproved ?? this.isApproved,
+    );
+  }
 }
 
-/// 📊 ئاماری هەڵسەنگاندنی شوێن
+/// 📊 ئاماری هەڵسەنگاندنی شوێن (وەک خۆی مایەوە، کێشەی نییە)
 class StoreRating {
   final int storeId;
   final int totalReviews;
@@ -96,10 +129,8 @@ class StoreRating {
   factory StoreRating.fromJson(Map<String, dynamic> json) {
     return StoreRating(
       storeId: int.tryParse(json['store_id']?.toString() ?? '0') ?? 0,
-      totalReviews:
-      int.tryParse(json['total_reviews']?.toString() ?? '0') ?? 0,
-      averageRating:
-      double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
+      totalReviews: int.tryParse(json['total_reviews']?.toString() ?? '0') ?? 0,
+      averageRating: double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
       count5: int.tryParse(json['count_5']?.toString() ?? '0') ?? 0,
       count4: int.tryParse(json['count_4']?.toString() ?? '0') ?? 0,
       count3: int.tryParse(json['count_3']?.toString() ?? '0') ?? 0,
@@ -108,26 +139,15 @@ class StoreRating {
     );
   }
 
-  /// 🔢 ڕێژەی هەر ئەستێرەیەک
   double percentFor(int stars) {
     if (totalReviews == 0) return 0;
     int count = 0;
     switch (stars) {
-      case 5:
-        count = count5;
-        break;
-      case 4:
-        count = count4;
-        break;
-      case 3:
-        count = count3;
-        break;
-      case 2:
-        count = count2;
-        break;
-      case 1:
-        count = count1;
-        break;
+      case 5: count = count5; break;
+      case 4: count = count4; break;
+      case 3: count = count3; break;
+      case 2: count = count2; break;
+      case 1: count = count1; break;
     }
     return (count / totalReviews) * 100;
   }

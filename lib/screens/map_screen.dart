@@ -1,10 +1,12 @@
 // lib/screens/map_screen.dart
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../config/settings_provider.dart';
@@ -14,8 +16,14 @@ import '../widgets/neighborhood_info_sheet.dart';
 import '../widgets/neighborhoods_drawer.dart';
 import '../widgets/search_bar_widget.dart';
 
-/// 🗺️ شاشەی نەخشەی گەڕەکان — ULTRA PRO V8
-/// ✅ ناوی هەموو گەڕەکەکان + فلتەرکردنی دووری (1 کم)
+/// 🗺️ شاشەی نەخشەی گەڕەکان — v2
+///
+/// نوێکارییەکان:
+///  • تایبەتمەندی: شوێنی زیندوو، دووری بۆ گەڕەک، 3D، دڵخوازەکان، compass، zoom،
+///    ٤ جۆری نەخشە، دۆزینەوەی گەڕەک بە شێوەی ناوخۆیی (بێ ئینتەرنێت)
+///  • جوانکاری: ئەنیمەیشنی هەڵبژاردن، کەمکردنەوەی ڕەنگی گەڕەکەکانی تر،
+///    مارکەری ناوی ڕوون (devicePixelRatio)، شێوازی شەوی باشتر
+///  • خێرایی: دروستکردنی مارکەر بە batch، cache ی زیرەک، بێ setState ی زیادە
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -23,83 +31,107 @@ class MapScreen extends StatefulWidget {
   State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen>
-    with TickerProviderStateMixin {
+class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // ═══════════════════════════════════════════════════════════
-  // 📊 State
+  // 📊 دۆخ
   // ═══════════════════════════════════════════════════════════
+  static const _kalarCenter = LatLng(34.628, 45.318);
+  static const _blue = Color(0xFF1E88E5);
+  static const double _sheetHeight = 340;
+  static const double _labelsMinZoom = 11;
+
   GoogleMapController? _controller;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
 
   List<Neighborhood> _all = [];
+  final Map<String, Color> _colors = {};
   Neighborhood? _selected;
   bool _loading = true;
-  bool _satellite = false;
-  bool _darkStyle = false;
+  bool _loadFailed = false;
+
+  // نمایش
+  MapType _mapType = MapType.normal;
+  bool? _darkOverride; // null = بەپێی تیمی ئەپ
   bool _showLabels = true;
+  bool _labelsZoomOk = true;
+  bool _isMenuOpen = false;
+  bool _favoritesOnly = false;
+  bool _showRoute = true;
+  final Set<String> _favorites = {}; // لە مێموری (بڕوانە تێبینی کۆتایی)
 
-  // ⭐ دووری — بگۆڕە بۆ 0.5، 1، 2، هتد
-  static const double _maxDistanceKm = 1.0;
-
+  // شوێنی بەکارهێنەر
   LatLng? _userLatLng;
+  double? _userAccuracy;
+  StreamSubscription<Position>? _posSub;
+  bool get _tracking => _posSub != null;
 
-  // ⭐ Cache ی Label Markers
-  final Map<String, BitmapDescriptor> _labelMarkers = {};
+  // کامێرا
+  final ValueNotifier<CameraPosition> _cam = ValueNotifier(
+    const CameraPosition(target: _kalarCenter, zoom: 13),
+  );
 
-  static const _kalarCenter = LatLng(34.628, 45.318);
+  // کاش
+  int _markersVersion = 0;
+  int _labelRun = 0;
+  final Map<String, BitmapDescriptor> _labelIcons = {};
+
+  // 🧩 دژە-تێکچوون (declutter): کام ناو جێی دەبێتەوە بەبێ تێکچوون
+  final Map<String, Size> _labelSizes = {}; // قەبارەی لۆجیکی هەر ناوێک
+  final Map<int, BitmapDescriptor> _dotIcons = {}; // خاڵی ڕەنگاوڕەنگ
+  final Map<String, double> _areas = {}; // ڕووبەر بۆ ڕیزبەندی گرنگی
+  Set<String> _labelVisible = {};
+  String? _declutterKey;
+  Set<Polygon>? _polygonCache;
+  String? _polygonCacheKey;
+  Set<Marker>? _markerCache;
+  String? _markerCacheKey;
+
+  bool _en = false;
+  String _t(String ku, String en) => _en ? en : ku;
 
   // ═══════════════════════════════════════════════════════════
-  // 🎬 Animations
+  // 🎬 ئەنیمەیشن
   // ═══════════════════════════════════════════════════════════
-  late AnimationController _fadeController;
-  late AnimationController _pulseController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _pulseAnimation;
+  late final AnimationController _fadeController;
+  late final AnimationController _pulseController;
+  late final AnimationController _selectController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<double> _pulseAnimation;
+  int _selectStep = 10; // 0..10
 
   // ═══════════════════════════════════════════════════════════
-  // 🎨 Palette — 25 ڕەنگی جیاواز
+  // 🎨 ڕەنگ و شێواز
   // ═══════════════════════════════════════════════════════════
   static const List<Color> _vibrantPalette = [
-    Color(0xFFE53935), // 🔴 سوور
-    Color(0xFFD81B60), // 🩷 پینکی
-    Color(0xFF8E24AA), // 🟣 مۆر
-    Color(0xFF5E35B1), // 🟪 مۆری تۆخ
-    Color(0xFF3949AB), // 🔵 شینی تۆخ
-    Color(0xFF1E88E5), // 🔵 شین
-    Color(0xFF039BE5), // 🌊 شینی ئاسمانی
-    Color(0xFF00ACC1), // 🩵 سیانی
-    Color(0xFF00897B), // 💚 سەوزی تۆخ
-    Color(0xFF43A047), // 🟢 سەوز
-    Color(0xFF7CB342), // 🟩 سەوزی ڕووناک
-    Color(0xFFC0CA33), // 💛 زەردی تۆخ
-    Color(0xFFFDD835), // 🟡 زەرد
-    Color(0xFFFFB300), // 🟠 زەردی پرتەقاڵی
-    Color(0xFFFB8C00), // 🟧 پرتەقاڵی
-    Color(0xFFF4511E), // 🧡 پرتەقاڵی سوور
-    Color(0xFF6D4C41), // 🟤 قاوەیی
-    Color(0xFF546E7A), // 🩶 خۆڵەمێشی شین
-    Color(0xFF00BFA5), // 💎 تورکوازی
-    Color(0xFF64DD17), // 🍀 سەوزی لایم
-    Color(0xFFAA00FF), // 💜 مۆری درەوشاوە
-    Color(0xFFFF4081), // 🌸 پینکی درەوشاوە
-    Color(0xFF2962FF), // 💙 شینی درەوشاوە
-    Color(0xFFFF6D00), // 🔥 نارنجی درەوشاوە
-    Color(0xFF00C853), // 💚 سەوزی درەوشاوە
+    Color(0xFFE53935), Color(0xFFD81B60), Color(0xFF8E24AA), Color(0xFF5E35B1),
+    Color(0xFF3949AB), Color(0xFF1E88E5), Color(0xFF039BE5), Color(0xFF00ACC1),
+    Color(0xFF00897B), Color(0xFF43A047), Color(0xFF7CB342), Color(0xFFC0CA33),
+    Color(0xFFFDD835), Color(0xFFFFB300), Color(0xFFFB8C00), Color(0xFFF4511E),
+    Color(0xFF6D4C41), Color(0xFF546E7A), Color(0xFF00BFA5), Color(0xFF64DD17),
+    Color(0xFFAA00FF), Color(0xFFFF4081), Color(0xFF2962FF), Color(0xFFFF6D00),
+    Color(0xFF00C853),
   ];
 
-  // ═══════════════════════════════════════════════════════════
-  // 🗺️ Map Styles
-  // ═══════════════════════════════════════════════════════════
   static const String _darkMapStyle = '''
   [
-    {"elementType": "geometry", "stylers": [{"color": "#242f3e"}]},
-    {"elementType": "labels.text.fill", "stylers": [{"color": "#746855"}]},
-    {"elementType": "labels.text.stroke", "stylers": [{"color": "#242f3e"}]},
-    {"featureType": "road", "elementType": "geometry", "stylers": [{"color": "#38414e"}]},
-    {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#17263c"}]}
+    {"elementType": "geometry", "stylers": [{"color": "#1d2433"}]},
+    {"elementType": "labels.text.fill", "stylers": [{"color": "#8e9bb0"}]},
+    {"elementType": "labels.text.stroke", "stylers": [{"color": "#1d2433"}]},
+    {"featureType": "administrative", "elementType": "geometry.stroke", "stylers": [{"color": "#3a4660"}]},
+    {"featureType": "poi", "elementType": "labels.text.fill", "stylers": [{"color": "#7d8aa3"}]},
+    {"featureType": "poi.park", "elementType": "geometry", "stylers": [{"color": "#1f3a34"}]},
+    {"featureType": "road", "elementType": "geometry", "stylers": [{"color": "#2f3b52"}]},
+    {"featureType": "road", "elementType": "geometry.stroke", "stylers": [{"color": "#1d2433"}]},
+    {"featureType": "road.highway", "elementType": "geometry", "stylers": [{"color": "#44547a"}]},
+    {"featureType": "transit", "elementType": "geometry", "stylers": [{"color": "#2a3550"}]},
+    {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#0f1a2e"}]},
+    {"featureType": "water", "elementType": "labels.text.fill", "stylers": [{"color": "#4e6a94"}]}
   ]
   ''';
 
+  // ═══════════════════════════════════════════════════════════
+  // 🔄 ژیانی widget
+  // ═══════════════════════════════════════════════════════════
   @override
   void initState() {
     super.initState();
@@ -108,10 +140,8 @@ class _MapScreenState extends State<MapScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
+    _fadeAnimation =
+        CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
 
     _pulseController = AnimationController(
       vsync: this,
@@ -121,95 +151,97 @@ class _MapScreenState extends State<MapScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    _selectController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+      value: 1,
+    )..addListener(() {
+      final step = (_selectController.value * 10).round();
+      if (step != _selectStep && mounted) {
+        setState(() => _selectStep = step);
+      }
+    });
+
     _init();
   }
 
   @override
   void dispose() {
+    _labelRun++; // وەستاندنی هەر کارێکی مارکەر
+    _posSub?.cancel();
     _fadeController.dispose();
     _pulseController.dispose();
+    _selectController.dispose();
+    _cam.dispose();
     _controller?.dispose();
     super.dispose();
   }
 
   Future<void> _init() async {
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _loadFailed = false;
+      });
+    }
     try {
-      _all = await NeighborhoodService.getAll();
-      if (mounted) {
-        setState(() => _loading = false);
-        _fadeController.forward();
-      }
+      final data = await NeighborhoodService.getAll()
+          .timeout(const Duration(seconds: 20));
+      if (!mounted) return;
 
-      // ⭐ دروستکردنی Label Markers
+      _all = data;
+      _colors
+        ..clear()
+        ..addEntries([
+          for (int i = 0; i < data.length; i++)
+            MapEntry(_keyOf(data[i]), _colorFor(data[i], i)),
+        ]);
+      _polygonCacheKey = null;
+      _markerCacheKey = null;
+      _declutterKey = null;
+      _areas
+        ..clear()
+        ..addEntries([
+          for (final n in data)
+            if (n.hasBoundary && n.boundaryPoints.length >= 3)
+              MapEntry(_keyOf(n), _polygonArea(n.boundaryPoints)),
+        ]);
+
+      setState(() => _loading = false);
+      _fadeController.forward(from: 0);
+
+      // ئەگەر نەخشە پێشتر دروست بووبێت (دووبارە هەوڵدانەوە)
+      if (_controller != null && _selected == null) {
+        _fitAll(animate: false);
+      }
       await _prepareLabelMarkers();
     } catch (e) {
-      debugPrint('❌ init error: $e');
-      if (mounted) setState(() => _loading = false);
+      debugPrint('❌ هەڵە لە دەستپێکردن: $e');
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _loadFailed = true;
+        });
+      }
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📏 حسابکردنی دووری نێوان دوو خاڵ (Haversine — بە کم)
+  // 🧰 یارمەتیدەرەکان
   // ═══════════════════════════════════════════════════════════
-  double _calculateDistance(LatLng from, LatLng to) {
-    const earthRadius = 6371.0; // کم
-    final dLat = _toRadians(to.latitude - from.latitude);
-    final dLon = _toRadians(to.longitude - from.longitude);
+  String _keyOf(Neighborhood n) => n.id ?? n.nameKu;
 
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(_toRadians(from.latitude)) *
-            math.cos(_toRadians(to.latitude)) *
-            math.sin(dLon / 2) *
-            math.sin(dLon / 2);
+  bool _isSelected(Neighborhood n) =>
+      _selected != null && _keyOf(_selected!) == _keyOf(n);
 
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    return earthRadius * c;
-  }
+  bool _isFav(Neighborhood n) => _favorites.contains(_keyOf(n));
 
-  double _toRadians(double degrees) => degrees * math.pi / 180;
+  List<Neighborhood> get _visibleNeighborhoods => _favoritesOnly
+      ? _all.where(_isFav).toList(growable: false)
+      : _all;
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 وەرگرتنی ناوەندی گەڕەک
-  // ═══════════════════════════════════════════════════════════
-  LatLng? _getNeighborhoodCenter(Neighborhood n) {
-    if (n.hasCenter) {
-      return LatLng(n.centerLatitude!, n.centerLongitude!);
-    } else if (n.hasBoundary && n.boundaryPoints.length >= 3) {
-      return _centroid(n.boundaryPoints);
-    }
-    return null;
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 لیستی گەڕەکەکانی دیار (فلتەرکراو بەپێی دووری)
-  // ═══════════════════════════════════════════════════════════
-  List<Neighborhood> get _visibleNeighborhoods {
-    // ⭐ کاتێک هیچ گەڕەکێک هەڵنەبژێردراوە → هەموو پیشان بدە
-    if (_selected == null) return _all;
-
-    // ⭐ کاتێک گەڕەکێک هەڵبژێردراوە → تەنها گەڕەکەکانی نزیک
-    final selectedCenter = _getNeighborhoodCenter(_selected!);
-    if (selectedCenter == null) return [_selected!];
-
-    return _all.where((n) {
-      // گەڕەکی هەڵبژێردراو هەمیشە پیشان بدە
-      if (n.id == _selected!.id) return true;
-
-      // پشکنینی دووری
-      final center = _getNeighborhoodCenter(n);
-      if (center == null) return false;
-
-      final distance = _calculateDistance(selectedCenter, center);
-      return distance <= _maxDistanceKm;
-    }).toList();
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 ڕەنگی گەڕەک
-  // ═══════════════════════════════════════════════════════════
-  Color _getColorForNeighborhood(Neighborhood n, int index) {
+  Color _colorFor(Neighborhood n, int index) {
     final name = n.nameKu;
-
     if (name.contains('زانکۆ')) return const Color(0xFF1E88E5);
     if (name.contains('شاری') || name.contains('سیتی')) {
       return const Color(0xFFE53935);
@@ -225,188 +257,17 @@ class _MapScreenState extends State<MapScreen>
     if (name.contains('مەطار') || name.contains('وێستگە')) {
       return const Color(0xFF00BFA5);
     }
-
     return _vibrantPalette[index % _vibrantPalette.length];
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🏷️ دروستکردنی Label Markers
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _prepareLabelMarkers() async {
-    for (int i = 0; i < _all.length; i++) {
-      final n = _all[i];
-      if (!n.hasCenter && !n.hasBoundary) continue;
+  Color _color(Neighborhood n) => _colors[_keyOf(n)] ?? _blue;
 
-      final color = _getColorForNeighborhood(n, i);
-      final key = '${n.id}_${n.nameKu}';
-
-      if (!_labelMarkers.containsKey(key)) {
-        try {
-          final marker = await _createLabelMarker(
-            name: n.nameKu,
-            color: color,
-          );
-          _labelMarkers[key] = marker;
-        } catch (e) {
-          debugPrint('❌ Label error for ${n.nameKu}: $e');
-        }
-      }
+  LatLng? _centerOf(Neighborhood n) {
+    if (n.hasCenter) return LatLng(n.centerLatitude!, n.centerLongitude!);
+    if (n.hasBoundary && n.boundaryPoints.length >= 3) {
+      return _centroid(n.boundaryPoints);
     }
-
-    if (mounted) setState(() {});
-  }
-
-  Future<BitmapDescriptor> _createLabelMarker({
-    required String name,
-    required Color color,
-  }) async {
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: name,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w900,
-          color: Colors.white,
-          fontFamily: 'Rabar',
-          height: 1.2,
-        ),
-      ),
-      textDirection: TextDirection.rtl,
-      textAlign: TextAlign.center,
-    );
-
-    textPainter.layout(maxWidth: 300);
-
-    const padding = 14.0;
-    final width = textPainter.width + (padding * 2);
-    final height = textPainter.height + (padding * 2);
-
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, width, height),
-      const Radius.circular(18),
-    );
-
-    canvas.drawShadow(
-      Path()..addRRect(rrect),
-      Colors.black.withValues(alpha: 0.4),
-      6,
-      true,
-    );
-
-    canvas.drawRRect(
-      rrect,
-      Paint()..color = color,
-    );
-
-    canvas.drawRRect(
-      rrect,
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
-    );
-
-    textPainter.paint(
-      canvas,
-      const Offset(padding, padding),
-    );
-
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(
-      width.toInt(),
-      height.toInt(),
-    );
-    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-
-    return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🗺️ Polygons — فلتەرکراو بەپێی دووری
-  // ═══════════════════════════════════════════════════════════
-  Set<Polygon> get _visiblePolygons {
-    final visible = _visibleNeighborhoods
-        .where((n) => n.hasBoundary)
-        .toList();
-
-    if (visible.isEmpty) return {};
-
-    return visible
-        .asMap()
-        .entries
-        .map((entry) {
-      final n = entry.value;
-      final globalIdx = _all.indexOf(n);
-      final isSelected = _selected?.id == n.id;
-
-      final baseColor = _getColorForNeighborhood(n, globalIdx);
-
-      return Polygon(
-        polygonId: PolygonId(n.id ?? n.nameKu),
-        points: n.boundaryPoints,
-        strokeColor: isSelected
-            ? const Color(0xFFFF6F00)
-            : baseColor,
-        strokeWidth: isSelected ? 5 : 2,
-        fillColor: isSelected
-            ? const Color(0xFFFFC107).withValues(alpha: 0.40)
-            : baseColor.withValues(alpha: 0.20),
-        consumeTapEvents: true,
-        geodesic: true,
-        onTap: () {
-          HapticFeedback.selectionClick();
-          _selectNeighborhood(n);
-        },
-      );
-    }).toSet();
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🏷️ Markers — ناوی گەڕەکەکانی دیار
-  // ═══════════════════════════════════════════════════════════
-  Set<Marker> get _visibleMarkers {
-    final markers = <Marker>{};
-
-    // ⭐ ناوی گەڕەکەکانی دیار
-    if (_showLabels) {
-      for (final n in _visibleNeighborhoods) {
-        final center = _getNeighborhoodCenter(n);
-        if (center == null) continue;
-
-        final key = '${n.id}_${n.nameKu}';
-        final labelIcon = _labelMarkers[key];
-        if (labelIcon == null) continue;
-
-        markers.add(Marker(
-          markerId: MarkerId('label_${n.id ?? n.nameKu}'),
-          position: center,
-          icon: labelIcon,
-          anchor: const Offset(0.5, 0.5),
-          consumeTapEvents: true,
-          onTap: () {
-            HapticFeedback.selectionClick();
-            _selectNeighborhood(n);
-          },
-        ));
-      }
-    }
-
-    // ⭐ Marker ی شوێنی بەکارهێنەر
-    if (_userLatLng != null) {
-      markers.add(Marker(
-        markerId: const MarkerId('user'),
-        position: _userLatLng!,
-        icon: BitmapDescriptor.defaultMarkerWithHue(
-          BitmapDescriptor.hueGreen,
-        ),
-        infoWindow: const InfoWindow(title: 'تۆ', snippet: 'شوێنی ئێستا'),
-      ));
-    }
-
-    return markers;
+    return null;
   }
 
   LatLng _centroid(List<LatLng> pts) {
@@ -418,66 +279,622 @@ class _MapScreenState extends State<MapScreen>
     return LatLng(lat / pts.length, lon / pts.length);
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 Select Neighborhood
-  // ═══════════════════════════════════════════════════════════
-  void _selectNeighborhood(Neighborhood n) {
-    setState(() => _selected = n);
+  LatLngBounds? _boundsOf(Iterable<LatLng> pts) {
+    double? minLat, maxLat, minLng, maxLng;
+    for (final p in pts) {
+      minLat = minLat == null ? p.latitude : math.min(minLat, p.latitude);
+      maxLat = maxLat == null ? p.latitude : math.max(maxLat, p.latitude);
+      minLng = minLng == null ? p.longitude : math.min(minLng, p.longitude);
+      maxLng = maxLng == null ? p.longitude : math.max(maxLng, p.longitude);
+    }
+    if (minLat == null) return null;
+    return LatLngBounds(
+      southwest: LatLng(minLat, minLng!),
+      northeast: LatLng(maxLat!, maxLng!),
+    );
+  }
 
-    final center = _getNeighborhoodCenter(n);
-    if (center != null) {
-      _controller?.animateCamera(
-        CameraUpdate.newLatLngZoom(center, 15),
+  /// ray-casting: ئایا خاڵەکە لەناو پۆلیگۆنەکەدایە؟ (بێ ئینتەرنێت)
+  bool _contains(List<LatLng> poly, LatLng p) {
+    var inside = false;
+    for (int i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      final a = poly[i], b = poly[j];
+      final crosses = (a.latitude > p.latitude) != (b.latitude > p.latitude) &&
+          p.longitude <
+              (b.longitude - a.longitude) *
+                  (p.latitude - a.latitude) /
+                  (b.latitude - a.latitude) +
+                  a.longitude;
+      if (crosses) inside = !inside;
+    }
+    return inside;
+  }
+
+  Neighborhood? _findContaining(LatLng p) {
+    for (final n in _all) {
+      if (n.hasBoundary &&
+          n.boundaryPoints.length >= 3 &&
+          _contains(n.boundaryPoints, p)) {
+        return n;
+      }
+    }
+    return null;
+  }
+
+  double? _distanceToSelected() {
+    final u = _userLatLng;
+    final c = _selected == null ? null : _centerOf(_selected!);
+    if (u == null || c == null) return null;
+    return Geolocator.distanceBetween(
+        u.latitude, u.longitude, c.latitude, c.longitude);
+  }
+
+  String _formatDistance(double m) => m < 1000
+      ? '${m.round()} ${_t('مەتر', 'm')}'
+      : '${(m / 1000).toStringAsFixed(1)} ${_t('کم', 'km')}';
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏷️ مارکەری ناو
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _prepareLabelMarkers() async {
+    final run = ++_labelRun;
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+
+    final pending = _all
+        .where((n) =>
+    (n.hasCenter || n.hasBoundary) &&
+        !_labelIcons.containsKey(_keyOf(n)))
+        .toList();
+    if (pending.isEmpty) return;
+
+    // خاڵەکان (یەک دانە بۆ هەر ڕەنگێک)
+    final colors = {for (final n in pending) _color(n).toARGB32()};
+    for (final c in colors) {
+      if (_dotIcons.containsKey(c)) continue;
+      try {
+        _dotIcons[c] = await _createDotMarker(Color(c), dpr);
+      } catch (e) {
+        debugPrint('❌ dot marker: $e');
+      }
+      if (!mounted || run != _labelRun) return;
+    }
+
+    const batchSize = 8;
+    for (int i = 0; i < pending.length; i += batchSize) {
+      final chunk = pending.skip(i).take(batchSize);
+      final results = await Future.wait(
+        chunk.map<Future<(String, BitmapDescriptor, Size)?>>((n) async {
+          try {
+            final r = await _createLabelMarker(n.nameKu, _color(n), dpr);
+            return (_keyOf(n), r.icon, r.size);
+          } catch (e) {
+            debugPrint('❌ مارکەری ${n.nameKu}: $e');
+            return null;
+          }
+        }),
       );
+      if (!mounted || run != _labelRun) return;
+      for (final r in results) {
+        if (r == null) continue;
+        _labelIcons[r.$1] = r.$2;
+        _labelSizes[r.$1] = r.$3;
+      }
+      _declutterKey = null;
+      _declutter(force: true);
     }
   }
 
+  /// خاڵێکی بچووکی ڕەنگاوڕەنگ بۆ ئەو گەڕەکانەی ناوەکەیان جێی نابێتەوە.
+  Future<BitmapDescriptor> _createDotMarker(Color color, double dpr) async {
+    const size = 14.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)..scale(dpr, dpr);
+    const c = Offset(size / 2, size / 2);
+    canvas.drawCircle(c, size / 2, Paint()..color = Colors.white);
+    canvas.drawCircle(c, size / 2 - 2.2, Paint()..color = color);
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage((size * dpr).ceil(), (size * dpr).ceil());
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    img.dispose();
+    picture.dispose();
+    return BitmapDescriptor.bytes(
+      data!.buffer.asUint8List(),
+      imagePixelRatio: dpr,
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════
-  // 📍 Locate User
+  // 🧩 دژە-تێکچوونی ناوەکان (Label collision / declutter)
   // ═══════════════════════════════════════════════════════════
+  /// ڕووبەری پۆلیگۆن (shoelace) — تەنها بۆ بەراوردکردن.
+  double _polygonArea(List<LatLng> pts) {
+    double a = 0;
+    for (int i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      a += (pts[j].longitude + pts[i].longitude) *
+          (pts[j].latitude - pts[i].latitude);
+    }
+    return a.abs() / 2;
+  }
+
+  /// Web-Mercator → پیکسڵی لۆجیکی لە زوومی [zoom] (هەمان سیستەمی Google Maps).
+  Offset _project(LatLng p, double zoom) {
+    final scale = 256.0 * math.pow(2, zoom);
+    final x = (p.longitude + 180) / 360 * scale;
+    final s = math.sin(p.latitude * math.pi / 180).clamp(-0.9999, 0.9999);
+    final y = (0.5 - math.log((1 + s) / (1 - s)) / (4 * math.pi)) * scale;
+    return Offset(x, y);
+  }
+
+  /// بڕیار دەدات کام ناو پیشان بدرێت بەبێ ئەوەی بکەوێتە سەر یەکتر.
+  /// ڕیزبەندی گرنگی: هەڵبژێردراو ← دڵخواز ← گەورەترین گەڕەک.
+  void _declutter({bool force = false}) {
+    final cam = _cam.value;
+    // زووم بە 0.1 و بیرینگ بە 5° گرد دەکرێتەوە تا بێهودە دووبارە نەبێتەوە
+    final zq = (cam.zoom * 10).round();
+    final bq = (cam.bearing / 5).round();
+    final key = '$zq|$bq|${_selected == null ? '-' : _keyOf(_selected!)}|'
+        '${_favorites.length}|$_favoritesOnly|${_labelSizes.length}';
+    if (!force && key == _declutterKey) return;
+    _declutterKey = key;
+
+    final zoom = zq / 10.0;
+    final angle = -cam.bearing * math.pi / 180;
+    final cosA = math.cos(angle), sinA = math.sin(angle);
+
+    final candidates = <(Neighborhood, Offset)>[];
+    for (final n in _visibleNeighborhoods) {
+      final c = _centerOf(n);
+      if (c == null || !_labelSizes.containsKey(_keyOf(n))) continue;
+      final p = _project(c, zoom);
+      // سووڕاندن بەپێی bearing (ناوەکان هەمیشە ڕاستن لەسەر شاشە)
+      candidates.add((n, Offset(p.dx * cosA - p.dy * sinA, p.dx * sinA + p.dy * cosA)));
+    }
+
+    int rank(Neighborhood n) => _isSelected(n) ? 0 : (_isFav(n) ? 1 : 2);
+    candidates.sort((a, b) {
+      final r = rank(a.$1).compareTo(rank(b.$1));
+      if (r != 0) return r;
+      return (_areas[_keyOf(b.$1)] ?? 0).compareTo(_areas[_keyOf(a.$1)] ?? 0);
+    });
+
+    // سێبەری ناو مارکەرەکە (6px) لادەبرێت و 2px بۆشایی زیاد دەکرێت
+    const shrink = 6.0 - 2.0;
+    final placed = <Rect>[];
+    final visible = <String>{};
+    for (final (n, p) in candidates) {
+      final k = _keyOf(n);
+      final s = _labelSizes[k]!;
+      final r = Rect.fromCenter(
+        center: p,
+        width: s.width - shrink * 2,
+        height: s.height - shrink * 2,
+      );
+      if (_isSelected(n) || !placed.any(r.overlaps)) {
+        placed.add(r);
+        visible.add(k);
+      }
+    }
+
+    if (!mounted) return;
+    final changed = visible.length != _labelVisible.length ||
+        !visible.containsAll(_labelVisible);
+    if (changed || force) {
+      setState(() {
+        _labelVisible = visible;
+        _markersVersion++;
+      });
+    }
+  }
+
+  Future<({BitmapDescriptor icon, Size size})> _createLabelMarker(
+      String name,
+      Color color,
+      double dpr,
+      ) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)..scale(dpr, dpr);
+
+    final tp = TextPainter(
+      text: TextSpan(
+        text: name,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          fontFamily: 'Rabar',
+          height: 1.2,
+        ),
+      ),
+      textDirection: ui.TextDirection.rtl,
+      textAlign: TextAlign.center,
+    )..layout(maxWidth: 180);
+
+    const padH = 10.0, padV = 6.0, shadow = 6.0;
+    final w = math.max(tp.width + padH * 2, 28.0);
+    final h = math.max(tp.height + padV * 2, 24.0);
+    final totalW = w + shadow * 2;
+    final totalH = h + shadow * 2;
+
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(shadow, shadow, w, h),
+      const Radius.circular(14),
+    );
+
+    canvas.drawShadow(
+        Path()..addRRect(rrect), Colors.black.withValues(alpha: 0.45), 4, true);
+    canvas.drawRRect(rrect, Paint()..color = color);
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8,
+    );
+    tp.paint(canvas, Offset(shadow + padH, shadow + padV));
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(
+      (totalW * dpr).ceil(),
+      (totalH * dpr).ceil(),
+    );
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    img.dispose();
+    picture.dispose();
+
+    return (
+    icon: BitmapDescriptor.bytes(
+      data!.buffer.asUint8List(),
+      imagePixelRatio: dpr,
+    ),
+    size: Size(totalW, totalH),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🗺️ polygon / marker / polyline / circle
+  // ═══════════════════════════════════════════════════════════
+  Set<Polygon> get _visiblePolygons {
+    final key = '${_selected == null ? '-' : _keyOf(_selected!)}|$_selectStep|'
+        '$_favoritesOnly|${_favorites.length}|${_all.length}';
+    if (_polygonCache != null && _polygonCacheKey == key) {
+      return _polygonCache!;
+    }
+
+    final t = _selectStep / 10.0;
+    final hasSel = _selected != null;
+    final polygons = <Polygon>{};
+
+    for (final n in _visibleNeighborhoods) {
+      if (!n.hasBoundary) continue;
+      final sel = _isSelected(n);
+      final dim = hasSel && !sel;
+      final base = _color(n);
+
+      polygons.add(Polygon(
+        polygonId: PolygonId(_keyOf(n)),
+        points: n.boundaryPoints,
+        strokeColor: base.withValues(alpha: sel ? 1.0 : (dim ? 0.35 : 0.6)),
+        strokeWidth: sel ? (2 + 3 * t).round() : (_isFav(n) ? 3 : 2),
+        fillColor: base.withValues(
+            alpha: sel ? 0.15 + 0.35 * t : (dim ? 0.07 : 0.15)),
+        consumeTapEvents: true,
+        geodesic: true,
+        zIndex: sel ? 2 : (_isFav(n) ? 1 : 0),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _selectNeighborhood(n);
+        },
+      ));
+    }
+
+    _polygonCacheKey = key;
+    return _polygonCache = polygons;
+  }
+
+  Set<Marker> get _visibleMarkers {
+    final key = '$_showLabels|$_labelsZoomOk|$_markersVersion|$_userLatLng|'
+        '$_favoritesOnly|${_all.length}|'
+        '${_selected == null ? '-' : _keyOf(_selected!)}';
+    if (_markerCache != null && _markerCacheKey == key) return _markerCache!;
+
+    final markers = <Marker>{};
+
+    if (_showLabels && _labelsZoomOk) {
+      for (final n in _visibleNeighborhoods) {
+        final k = _keyOf(n);
+        final center = _centerOf(n);
+        if (center == null) continue;
+
+        // ناو ئەگەر جێی دەبێتەوە، دەنا خاڵێکی بچووک
+        final showLabel = _labelVisible.contains(k);
+        final icon = showLabel
+            ? _labelIcons[k]
+            : _dotIcons[_color(n).toARGB32()];
+        if (icon == null) continue;
+
+        markers.add(Marker(
+          markerId: MarkerId('label_$k'),
+          position: center,
+          icon: icon,
+          anchor: const Offset(0.5, 0.5),
+          zIndexInt: _isSelected(n) ? 3 : (showLabel ? 2 : 1),
+          consumeTapEvents: true,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            _selectNeighborhood(n);
+          },
+        ));
+      }
+    }
+
+    final u = _userLatLng;
+    if (u != null) {
+      markers.add(Marker(
+        markerId: const MarkerId('user'),
+        position: u,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        zIndexInt: 10,
+        infoWindow: InfoWindow(
+          title: _t('تۆ', 'You'),
+          snippet: _t('شوێنی ئێستا', 'Current location'),
+        ),
+      ));
+    }
+
+    _markerCacheKey = key;
+    return _markerCache = markers;
+  }
+
+  Set<Circle> get _userCircles {
+    final pos = _userLatLng, acc = _userAccuracy;
+    if (pos == null || acc == null) return const {};
+    return {
+      Circle(
+        circleId: const CircleId('user_accuracy'),
+        center: pos,
+        radius: acc.clamp(5.0, 500.0),
+        fillColor: _blue.withValues(alpha: 0.12),
+        strokeColor: _blue.withValues(alpha: 0.5),
+        strokeWidth: 1,
+      ),
+    };
+  }
+
+  Set<Polyline> get _routeLines {
+    final u = _userLatLng;
+    final c = _selected == null ? null : _centerOf(_selected!);
+    if (!_showRoute || u == null || c == null) return const {};
+    return {
+      Polyline(
+        polylineId: const PolylineId('to_selected'),
+        points: [u, c],
+        color: _color(_selected!),
+        width: 4,
+        geodesic: true,
+        patterns: [PatternItem.dash(18), PatternItem.gap(10)],
+        zIndex: 5,
+      ),
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎥 کامێرا
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _safeAnimate(CameraUpdate u, {bool animate = true}) async {
+    final c = _controller;
+    if (c == null) return;
+    try {
+      animate ? await c.animateCamera(u) : await c.moveCamera(u);
+    } catch (e) {
+      debugPrint('⚠️ camera: $e');
+    }
+  }
+
+  Future<void> _fitAll({bool animate = true}) async {
+    final pts = <LatLng>[];
+    for (final n in _visibleNeighborhoods) {
+      if (n.hasBoundary) {
+        pts.addAll(n.boundaryPoints);
+      } else {
+        final c = _centerOf(n);
+        if (c != null) pts.add(c);
+      }
+    }
+    final b = _boundsOf(pts);
+    if (b == null) {
+      await _safeAnimate(CameraUpdate.newLatLngZoom(_kalarCenter, 13),
+          animate: animate);
+      return;
+    }
+    final extraNorth = (b.northeast.latitude - b.southwest.latitude) * 0.12;
+    await _safeAnimate(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: b.southwest,
+          northeast:
+          LatLng(b.northeast.latitude + extraNorth, b.northeast.longitude),
+        ),
+        40,
+      ),
+      animate: animate,
+    );
+  }
+
+  Future<void> _focusOn(Neighborhood n) async {
+    if (n.hasBoundary && n.boundaryPoints.length >= 3) {
+      final b = _boundsOf(n.boundaryPoints)!;
+      final extraSouth = (b.northeast.latitude - b.southwest.latitude) * 0.8;
+      await _safeAnimate(CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest:
+          LatLng(b.southwest.latitude - extraSouth, b.southwest.longitude),
+          northeast: b.northeast,
+        ),
+        48,
+      ));
+      return;
+    }
+    final c = _centerOf(n);
+    if (c != null) await _safeAnimate(CameraUpdate.newLatLngZoom(c, 15));
+  }
+
+  void _selectNeighborhood(Neighborhood n) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selected = n;
+      _isMenuOpen = false;
+      _selectStep = 0;
+    });
+    _selectController.forward(from: 0);
+    _declutter();
+    _focusOn(n);
+  }
+
+  void _clearSelection() {
+    if (_selected == null) return;
+    setState(() {
+      _selected = null;
+      _isMenuOpen = false;
+      _selectStep = 10;
+    });
+    _declutter();
+  }
+
+  void _toggleTilt() {
+    final c = _cam.value;
+    final to3d = c.tilt < 1;
+    _safeAnimate(CameraUpdate.newCameraPosition(CameraPosition(
+      target: c.target,
+      zoom: to3d ? math.max(c.zoom, 15.5) : c.zoom,
+      bearing: c.bearing,
+      tilt: to3d ? 55 : 0,
+    )));
+  }
+
+  void _resetNorth() {
+    final c = _cam.value;
+    _safeAnimate(CameraUpdate.newCameraPosition(
+      CameraPosition(target: c.target, zoom: c.zoom),
+    ));
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📍 شوێنی بەکارهێنەر
+  // ═══════════════════════════════════════════════════════════
+  Future<bool> _ensureLocation() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      _showSnackBar(_t('GPS ی مۆبایلەکەت بکەرەوە', 'Please turn on GPS'),
+          Colors.orange.shade800, Icons.location_off_rounded);
+      return false;
+    }
+    var perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) {
+      _showSnackBar(
+        perm == LocationPermission.deniedForever
+            ? _t('مۆڵەتی شوێن لە ڕێکخستنەکانی مۆبایل بکەرەوە',
+            'Enable location permission in settings')
+            : _t('مۆڵەتی شوێن نەدرا', 'Location permission denied'),
+        Colors.red,
+        Icons.location_disabled_rounded,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  void _applyPosition(Position p) {
+    if (!mounted) return;
+    setState(() {
+      _userLatLng = LatLng(p.latitude, p.longitude);
+      _userAccuracy = p.accuracy;
+    });
+  }
+
   Future<void> _locateUser() async {
     HapticFeedback.mediumImpact();
+    setState(() => _isMenuOpen = false);
     try {
-      final permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        await Geolocator.requestPermission();
-      }
+      if (!await _ensureLocation()) return;
 
-      final position = await Geolocator.getCurrentPosition();
-      final latLng = LatLng(position.latitude, position.longitude);
-
+      final pos = await Geolocator.getCurrentPosition()
+          .timeout(const Duration(seconds: 15));
       if (!mounted) return;
-      setState(() => _userLatLng = latLng);
+      _applyPosition(pos);
 
-      _controller?.animateCamera(
-        CameraUpdate.newLatLngZoom(latLng, 16),
-      );
+      final ll = LatLng(pos.latitude, pos.longitude);
+      _safeAnimate(CameraUpdate.newLatLngZoom(ll, 16));
 
-      final nearest = await NeighborhoodService.findNeighborhoodByLocation(
-        lat: position.latitude,
-        lng: position.longitude,
-      );
-
-      if (nearest != null && mounted) {
+      // سەرەتا ناوخۆیی، ئەگەر نەبوو سێرڤەر
+      final nearest = _findContaining(ll) ??
+          await NeighborhoodService.findNeighborhoodByLocation(
+            lat: pos.latitude,
+            lng: pos.longitude,
+          );
+      if (!mounted) return;
+      if (nearest != null) {
         _selectNeighborhood(nearest);
         _showSnackBar(
-          'نزیکترین گەڕەک: ${nearest.nameKu}',
+          '${_t('نزیکترین گەڕەک', 'Nearest neighborhood')}: ${nearest.nameKu}',
           Colors.green.shade700,
           Icons.location_on_rounded,
         );
       }
     } catch (e) {
-      if (!mounted) return;
-      _showSnackBar(
-        'نەتوانرا شوێن بدۆزرێتەوە',
-        Colors.red,
-        Icons.error_outline_rounded,
-      );
+      debugPrint('❌ شوێن: $e');
+      _showSnackBar(_t('نەتوانرا شوێن بدۆزرێتەوە', 'Could not get location'),
+          Colors.red, Icons.error_outline_rounded);
     }
   }
 
+  Future<void> _toggleTracking() async {
+    HapticFeedback.selectionClick();
+    setState(() => _isMenuOpen = false);
+
+    if (_tracking) {
+      await _posSub?.cancel();
+      if (!mounted) return;
+      setState(() => _posSub = null);
+      _showSnackBar(_t('شوێنی زیندوو کوژایەوە', 'Live location off'),
+          Colors.blueGrey, Icons.gps_off_rounded);
+      return;
+    }
+
+    try {
+      if (!await _ensureLocation()) return;
+      final sub = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 8,
+        ),
+      ).listen(
+        _applyPosition,
+        onError: (e) => debugPrint('⚠️ position stream: $e'),
+      );
+      if (!mounted) {
+        sub.cancel();
+        return;
+      }
+      setState(() => _posSub = sub);
+      _showSnackBar(_t('شوێنی زیندوو چالاک بوو', 'Live location on'),
+          Colors.green.shade700, Icons.gps_fixed_rounded);
+    } catch (e) {
+      debugPrint('❌ tracking: $e');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ⚙️ کردارەکان
+  // ═══════════════════════════════════════════════════════════
   void _showSnackBar(String message, Color color, IconData icon) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    if (!mounted) return;
+    final m = ScaffoldMessenger.of(context);
+    m.hideCurrentSnackBar();
+    m.showSnackBar(
       SnackBar(
         content: Row(
           children: [
@@ -487,177 +904,230 @@ class _MapScreenState extends State<MapScreen>
               child: Text(
                 message,
                 style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+                    fontWeight: FontWeight.w700, color: Colors.white),
               ),
             ),
           ],
         ),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         duration: const Duration(seconds: 3),
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Toggles
-  // ═══════════════════════════════════════════════════════════
-  void _toggleSatellite() {
+  void _cycleMapType() {
     HapticFeedback.selectionClick();
-    setState(() => _satellite = !_satellite);
+    const order = [
+      MapType.normal,
+      MapType.hybrid,
+      MapType.satellite,
+      MapType.terrain,
+    ];
+    setState(() {
+      _mapType = order[(order.indexOf(_mapType) + 1) % order.length];
+    });
   }
 
-  void _toggleDarkStyle() {
-    HapticFeedback.selectionClick();
-    setState(() => _darkStyle = !_darkStyle);
+  String _mapTypeLabel(MapType t) {
+    switch (t) {
+      case MapType.normal:
+        return _t('ئاسایی', 'Normal');
+      case MapType.hybrid:
+        return _t('هایبرید', 'Hybrid');
+      case MapType.satellite:
+        return 'Satellite';
+      case MapType.terrain:
+        return _t('شاخ', 'Terrain');
+      default:
+        return '';
+    }
   }
 
-  void _toggleLabels() {
+  void _toggleFavorite(Neighborhood n) {
+    HapticFeedback.mediumImpact();
+    final k = _keyOf(n);
+    final added = _favorites.add(k);
+    if (!added) _favorites.remove(k);
+    setState(() {
+      if (_favorites.isEmpty) _favoritesOnly = false;
+    });
+    _declutter();
+    _showSnackBar(
+      added
+          ? _t('زیادکرا بۆ دڵخوازەکان', 'Added to favorites')
+          : _t('لە دڵخوازەکان لابرا', 'Removed from favorites'),
+      added ? Colors.pink.shade600 : Colors.blueGrey,
+      added ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+    );
+  }
+
+  void _zoomBy(double delta) {
     HapticFeedback.selectionClick();
-    setState(() => _showLabels = !_showLabels);
+    _safeAnimate(CameraUpdate.zoomBy(delta));
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎨 UI
+  // 🧱 UI
   // ═══════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<SettingsProvider>().languageId;
+    _en = lang == 'en';
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mapDark = _darkOverride ?? isDark;
+    final fg = isDark ? Colors.white : const Color(0xFF1A1A2E);
 
     return Directionality(
-      textDirection: lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
-      child: Scaffold(
-        key: _scaffoldKey,
-        appBar: AppBar(
-          backgroundColor: isDark
-              ? const Color(0xFF1A1A22)
-              : Colors.white,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          centerTitle: true,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+      textDirection: _en ? TextDirection.ltr : TextDirection.rtl,
+      child: PopScope(
+        canPop: _selected == null && !_isMenuOpen,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          setState(() {
+            _selected = null;
+            _isMenuOpen = false;
+            _selectStep = 10;
+          });
+          _declutter();
+        },
+        child: Scaffold(
+          key: _scaffoldKey,
+          appBar: AppBar(
+            backgroundColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back_rounded, color: fg),
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                Navigator.of(context).pop();
+              },
+              tooltip: _t('گەڕانەوە', 'Back'),
             ),
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              Navigator.of(context).pop();
-            },
-            tooltip: 'گەڕانەوە',
-          ),
-          title: Text(
-            _selected != null
-                ? 'گەڕەکانی نزیک ${_selected!.nameKu}'
-                : 'نەخشەی گەڕەکان 🗺️',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                _showLabels
-                    ? Icons.label_rounded
-                    : Icons.label_off_rounded,
-                color: _showLabels
-                    ? const Color(0xFF10B981)
-                    : (isDark ? Colors.white54 : Colors.grey),
+            title: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: Text(
+                _selected?.nameKu ?? _t('نەخشەی گەڕەکان 🗺️', 'Neighborhoods 🗺️'),
+                key: ValueKey(_selected?.nameKu),
+                style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w900, color: fg),
               ),
-              onPressed: _toggleLabels,
-              tooltip: _showLabels
-                  ? 'شاردنەوەی ناوەکان'
-                  : 'پیشاندانی ناوەکان',
             ),
-            IconButton(
-              icon: Icon(
-                Icons.menu_rounded,
-                color: isDark ? Colors.white : const Color(0xFF1E88E5),
-              ),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              tooltip: 'لیستی گەڕەکان',
-            ),
-          ],
-        ),
-        drawer: NeighborhoodsDrawer(
-          neighborhoods: _all,
-          current: _selected,
-          onSelected: _selectNeighborhood,
-        ),
-        body: Stack(
-          children: [
-            // ═══ Map ═══
-            _loading
-                ? _buildLoadingScreen(isDark)
-                : FadeTransition(
-              opacity: _fadeAnimation,
-              child: GoogleMap(
-                initialCameraPosition: const CameraPosition(
-                  target: _kalarCenter,
-                  zoom: 13,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _showLabels ? Icons.label_rounded : Icons.label_off_rounded,
+                  color: _showLabels
+                      ? const Color(0xFF10B981)
+                      : (isDark ? Colors.white54 : Colors.grey),
                 ),
-                mapType:
-                _satellite ? MapType.satellite : MapType.normal,
-                style: _satellite
-                    ? null
-                    : (_darkStyle ? _darkMapStyle : null),
-                polygons: _visiblePolygons,
-                markers: _visibleMarkers,
-                myLocationEnabled: false,
-                myLocationButtonEnabled: false,
-                compassEnabled: true,
-                zoomControlsEnabled: false,
-                mapToolbarEnabled: false,
-                buildingsEnabled: true,
-                indoorViewEnabled: false,
-                trafficEnabled: false,
-                onMapCreated: (c) => _controller = c,
-                onTap: (_) {
-                  if (_selected != null) {
-                    setState(() => _selected = null);
-                  }
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _showLabels = !_showLabels);
                 },
+                tooltip: _showLabels
+                    ? _t('شاردنەوەی ناوەکان', 'Hide labels')
+                    : _t('پیشاندانی ناوەکان', 'Show labels'),
               ),
-            ),
-
-            // ═══ Search Bar ═══
-            if (!_loading) _buildSearchBar(isDark),
-
-            // ═══ Right Controls ═══
-            if (!_loading) _buildRightControls(isDark),
-
-            // ═══ Bottom Info Sheet ═══
-            if (_selected != null)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: NeighborhoodInfoSheet(
-                  neighborhood: _selected!,
-                  onClose: () => setState(() => _selected = null),
+              IconButton(
+                icon: Icon(Icons.menu_rounded,
+                    color: isDark ? Colors.white : _blue),
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                tooltip: _t('لیستی گەڕەکان', 'Neighborhoods'),
+              ),
+            ],
+          ),
+          drawer: NeighborhoodsDrawer(
+            neighborhoods: _all,
+            current: _selected,
+            onSelected: _selectNeighborhood,
+            favoriteKeys: _favorites,
+          ),
+          body: Stack(
+            children: [
+              if (_loading)
+                _buildLoadingScreen(isDark)
+              else
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: GoogleMap(
+                    initialCameraPosition:
+                    const CameraPosition(target: _kalarCenter, zoom: 13),
+                    mapType: _mapType,
+                    style: (_mapType == MapType.normal && mapDark)
+                        ? _darkMapStyle
+                        : null,
+                    polygons: _visiblePolygons,
+                    markers: _visibleMarkers,
+                    circles: _userCircles,
+                    polylines: _routeLines,
+                    myLocationEnabled: false,
+                    myLocationButtonEnabled: false,
+                    compassEnabled: false, // compass ی خۆمان هەیە
+                    zoomControlsEnabled: false,
+                    mapToolbarEnabled: false,
+                    buildingsEnabled: true,
+                    indoorViewEnabled: false,
+                    trafficEnabled: false,
+                    rotateGesturesEnabled: true,
+                    tiltGesturesEnabled: true,
+                    onMapCreated: (c) {
+                      _controller = c;
+                      Future.delayed(const Duration(milliseconds: 350), () {
+                        if (mounted && _selected == null) {
+                          _fitAll(animate: false);
+                        }
+                      });
+                    },
+                    onCameraIdle: _declutter,
+                    onCameraMove: (pos) {
+                      _cam.value = pos;
+                      final ok = pos.zoom >= _labelsMinZoom;
+                      if (ok != _labelsZoomOk) {
+                        setState(() => _labelsZoomOk = ok);
+                      }
+                    },
+                    onTap: (_) {
+                      if (_selected != null || _isMenuOpen) {
+                        setState(() {
+                          _selected = null;
+                          _isMenuOpen = false;
+                          _selectStep = 10;
+                        });
+                        _declutter();
+                      }
+                    },
+                  ),
                 ),
-              ),
-
-            // ═══ Empty State ═══
-            if (!_loading && _all.isEmpty)
-              _buildEmptyState(isDark),
-          ],
+              if (!_loading) _buildSearchBar(isDark),
+              if (!_loading) _buildDistanceChip(isDark),
+              if (!_loading) _buildLeftControls(isDark),
+              if (!_loading) _buildRightSideMenu(isDark),
+              if (_selected != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: NeighborhoodInfoSheet(
+                    neighborhood: _selected!,
+                    onClose: _clearSelection,
+                    distanceMeters: _distanceToSelected(),
+                    isFavorite: _isFav(_selected!),
+                    onToggleFavorite: () => _toggleFavorite(_selected!),
+                  ),
+                ),
+              if (!_loading && (_all.isEmpty || _loadFailed))
+                _buildEmptyState(isDark),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔄 Loading Screen
-  // ═══════════════════════════════════════════════════════════
   Widget _buildLoadingScreen(bool isDark) {
     return Container(
       color: isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
@@ -667,38 +1137,33 @@ class _MapScreenState extends State<MapScreen>
           children: [
             AnimatedBuilder(
               animation: _pulseAnimation,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1E88E5), Color(0xFF6C5CE7)],
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1E88E5)
-                              .withValues(alpha: 0.4),
-                          blurRadius: 30,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.map_rounded,
-                      color: Colors.white,
-                      size: 42,
-                    ),
+              builder: (context, child) => Transform.scale(
+                scale: _pulseAnimation.value,
+                child: child,
+              ),
+              child: Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1E88E5), Color(0xFF6C5CE7)],
                   ),
-                );
-              },
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: _blue.withValues(alpha: 0.4),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.map_rounded,
+                    color: Colors.white, size: 42),
+              ),
             ),
             const SizedBox(height: 24),
             Text(
-              'خەریکی بارکردنی گەڕەکان...',
+              _t('خەریکی بارکردنی گەڕەکان...', 'Loading neighborhoods...'),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
@@ -707,7 +1172,7 @@ class _MapScreenState extends State<MapScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'کەمێک چاوەڕوان بە',
+              _t('کەمێک چاوەڕوان بە', 'Please wait a moment'),
               style: TextStyle(
                 fontSize: 11,
                 color: isDark ? Colors.white54 : Colors.grey,
@@ -719,9 +1184,6 @@ class _MapScreenState extends State<MapScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔍 Search Bar
-  // ═══════════════════════════════════════════════════════════
   Widget _buildSearchBar(bool isDark) {
     return Positioned(
       top: 12,
@@ -743,8 +1205,7 @@ class _MapScreenState extends State<MapScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black
-                      .withValues(alpha: isDark ? 0.3 : 0.12),
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.12),
                   blurRadius: 20,
                   offset: const Offset(0, 6),
                   spreadRadius: -4,
@@ -761,164 +1222,414 @@ class _MapScreenState extends State<MapScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 Right Controls
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildRightControls(bool isDark) {
+  /// چیپی دووری: «١.٢ کم دوورە لە تۆوە»
+  Widget _buildDistanceChip(bool isDark) {
+    final d = _distanceToSelected();
+    return Positioned(
+      top: 76,
+      left: 0,
+      right: 0,
+      child: IgnorePointer(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: d == null
+              ? const SizedBox.shrink()
+              : Center(
+            key: ValueKey(d.round()),
+            child: Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2A2A35) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black
+                        .withValues(alpha: isDark ? 0.35 : 0.14),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.straighten_rounded,
+                      size: 16, color: _color(_selected!)),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${_formatDistance(d)} ${_t('دوورە لە تۆوە', 'away')}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color:
+                      isDark ? Colors.white : const Color(0xFF1A1A2E),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  double get _bottomOffset => _selected != null ? _sheetHeight : 30.0;
+
+  /// compass + zoom (لای چەپ)
+  Widget _buildLeftControls(bool isDark) {
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
-      right: 16,
-      bottom: _selected != null ? 340 : 100,
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            _buildGlassButton(
-              icon: Icons.my_location_rounded,
-              color: const Color(0xFF1E88E5),
-              tooltip: 'شوێنی من',
-              onTap: _locateUser,
-              isDark: isDark,
-              isPulsing: true,
-            ),
-            const SizedBox(height: 10),
-            _buildGlassButton(
-              icon: _satellite
-                  ? Icons.map_rounded
-                  : Icons.satellite_alt_rounded,
-              color: _satellite
-                  ? const Color(0xFFF59E0B)
-                  : const Color(0xFF64748B),
-              tooltip: _satellite ? 'نەخشەی ئاسایی' : 'Satellite',
-              onTap: _toggleSatellite,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 10),
-            if (_selected != null) ...[
-              _buildGlassButton(
-                icon: Icons.close_rounded,
-                color: const Color(0xFFEF4444),
-                tooltip: 'لابردنی هەڵبژاردن',
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  setState(() => _selected = null);
-                },
-                isDark: isDark,
-              ),
-              const SizedBox(height: 10),
-            ],
-            _buildGlassButton(
-              icon: _darkStyle
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode_rounded,
-              color: _darkStyle
-                  ? const Color(0xFF8B5CF6)
-                  : const Color(0xFF64748B),
-              tooltip: _darkStyle ? 'شێوازی ڕۆژ' : 'شێوازی شەو',
-              onTap: _toggleDarkStyle,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 10),
-            _buildGlassButton(
-              icon: Icons.gps_fixed_rounded,
-              color: const Color(0xFFE91E63),
-              tooltip: 'کەلار',
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _controller?.animateCamera(
-                  CameraUpdate.newLatLngZoom(_kalarCenter, 13),
-                );
-                setState(() => _selected = null);
-              },
-              isDark: isDark,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 Glass Button
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildGlassButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-    required bool isDark,
-    String? tooltip,
-    bool isPulsing = false,
-  }) {
-    final button = Material(
-      color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-      elevation: 4,
-      shadowColor: color.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: color.withValues(alpha: 0.25),
-              width: 1.5,
-            ),
-          ),
-          child: isPulsing
-              ? AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _pulseAnimation.value,
-                child: Icon(icon, color: color, size: 24),
+      left: 16,
+      bottom: _bottomOffset,
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ValueListenableBuilder<CameraPosition>(
+            valueListenable: _cam,
+            builder: (context, cam, _) {
+              final rotated = cam.bearing.abs() > 1 || cam.tilt > 1;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: rotated
+                        ? Padding(
+                      key: const ValueKey('compass'),
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _miniButton(
+                        isDark: isDark,
+                        onTap: _resetNorth,
+                        child: Transform.rotate(
+                          angle: -cam.bearing * math.pi / 180,
+                          child: const Icon(Icons.navigation_rounded,
+                              color: Color(0xFFE53935), size: 22),
+                        ),
+                      ),
+                    )
+                        : const SizedBox.shrink(key: ValueKey('none')),
+                  ),
+                  _miniButton(
+                    isDark: isDark,
+                    onTap: () => _zoomBy(1),
+                    child: const Icon(Icons.add_rounded, color: _blue),
+                  ),
+                  const SizedBox(height: 8),
+                  _miniButton(
+                    isDark: isDark,
+                    onTap: () => _zoomBy(-1),
+                    child: const Icon(Icons.remove_rounded, color: _blue),
+                  ),
+                ],
               );
             },
-          )
-              : Icon(icon, color: color, size: 24),
+          ),
         ),
       ),
     );
-
-    return tooltip != null
-        ? Tooltip(
-      message: tooltip,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A35) : Colors.black87,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      textStyle: const TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.w700,
-        fontSize: 12,
-      ),
-      child: button,
-    )
-        : button;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📭 Empty State
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildEmptyState(bool isDark) {
+  Widget _miniButton({
+    required bool isDark,
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
+    return Material(
+      color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+      elevation: 4,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(width: 40, height: 40, child: Center(child: child)),
+      ),
+    );
+  }
+
+  List<_MenuAction> _menuActions() {
+    final sel = _selected;
+    final is3d = _cam.value.tilt > 1;
+    return [
+      _MenuAction(
+        icon: Icons.my_location_rounded,
+        label: _t('شوێنی من', 'My location'),
+        color: _blue,
+        pulsing: true,
+        onTap: _locateUser,
+      ),
+      _MenuAction(
+        icon: _tracking ? Icons.gps_fixed_rounded : Icons.gps_not_fixed_rounded,
+        label: _tracking
+            ? _t('وەستاندنی شوێنی زیندوو', 'Stop live location')
+            : _t('شوێنی زیندوو', 'Live location'),
+        color: const Color(0xFF10B981),
+        active: _tracking,
+        onTap: _toggleTracking,
+      ),
+      _MenuAction(
+        icon: Icons.layers_rounded,
+        label: '${_t('جۆری نەخشە', 'Map type')}: ${_mapTypeLabel(_mapType)}',
+        color: const Color(0xFFF59E0B),
+        onTap: _cycleMapType,
+      ),
+      _MenuAction(
+        icon: (_darkOverride ?? Theme.of(context).brightness == Brightness.dark)
+            ? Icons.light_mode_rounded
+            : Icons.dark_mode_rounded,
+        label: (_darkOverride ?? Theme.of(context).brightness == Brightness.dark)
+            ? _t('شێوازی ڕۆژ', 'Day style')
+            : _t('شێوازی شەو', 'Night style'),
+        color: const Color(0xFF8B5CF6),
+        onTap: () {
+          final cur =
+              _darkOverride ?? Theme.of(context).brightness == Brightness.dark;
+          setState(() => _darkOverride = !cur);
+        },
+      ),
+      _MenuAction(
+        icon: Icons.view_in_ar_rounded,
+        label: is3d ? _t('دوو ڕەهەند', '2D view') : _t('سێ ڕەهەند (3D)', '3D view'),
+        color: const Color(0xFF06B6D4),
+        active: is3d,
+        onTap: _toggleTilt,
+      ),
+      if (sel != null && _userLatLng != null)
+        _MenuAction(
+          icon: Icons.timeline_rounded,
+          label: _showRoute
+              ? _t('شاردنەوەی هێڵی دووری', 'Hide distance line')
+              : _t('پیشاندانی هێڵی دووری', 'Show distance line'),
+          color: const Color(0xFF3B82F6),
+          active: _showRoute,
+          onTap: () => setState(() => _showRoute = !_showRoute),
+        ),
+      if (sel != null)
+        _MenuAction(
+          icon: _isFav(sel)
+              ? Icons.favorite_rounded
+              : Icons.favorite_border_rounded,
+          label: _isFav(sel)
+              ? _t('لابردن لە دڵخواز', 'Remove favorite')
+              : _t('زیادکردن بۆ دڵخواز', 'Add to favorites'),
+          color: const Color(0xFFEC4899),
+          active: _isFav(sel),
+          onTap: () => _toggleFavorite(sel),
+        ),
+      if (_favorites.isNotEmpty)
+        _MenuAction(
+          icon: Icons.star_rounded,
+          label: _favoritesOnly
+              ? _t('هەموو گەڕەکەکان', 'Show all')
+              : _t('تەنها دڵخوازەکان', 'Favorites only'),
+          color: const Color(0xFFFFB300),
+          active: _favoritesOnly,
+          onTap: () {
+            setState(() => _favoritesOnly = !_favoritesOnly);
+            _declutter();
+            _fitAll();
+          },
+        ),
+      _MenuAction(
+        icon: Icons.zoom_out_map_rounded,
+        label: _t('هەموو گەڕەکەکان', 'Fit all'),
+        color: const Color(0xFFE91E63),
+        onTap: () {
+          _clearSelection();
+          _fitAll();
+        },
+      ),
+      if (sel != null)
+        _MenuAction(
+          icon: Icons.close_rounded,
+          label: _t('لابردنی هەڵبژاردن', 'Clear selection'),
+          color: const Color(0xFFEF4444),
+          onTap: _clearSelection,
+        ),
+    ];
+  }
+
+  Widget _buildRightSideMenu(bool isDark) {
     return Positioned.fill(
-      child: IgnorePointer(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // بەرزی بەردەست = بەرزی نەخشە - ژێرەوە - FAB - خانەی گەڕان
+          final maxMenuHeight = math.max(
+              0.0, constraints.maxHeight - _bottomOffset - 40 - 130);
+
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutCubic,
+                right: 16,
+                bottom: _bottomOffset,
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedOpacity(
+                          opacity: _isMenuOpen ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          child: AnimatedSlide(
+                            offset: _isMenuOpen
+                                ? Offset.zero
+                                : const Offset(0, 0.2),
+                            duration: const Duration(milliseconds: 300),
+                            child: IgnorePointer(
+                              ignoring: !_isMenuOpen,
+                              child: ConstrainedBox(
+                                constraints:
+                                BoxConstraints(maxHeight: maxMenuHeight),
+                                child: SingleChildScrollView(
+                                  reverse: true,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      for (final a in _menuActions()) ...[
+                                        _buildActionButton(a, isDark),
+                                        const SizedBox(height: 12),
+                                      ],
+                                      const SizedBox(height: 4),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        FloatingActionButton(
+                          heroTag: null,
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            setState(() => _isMenuOpen = !_isMenuOpen);
+                          },
+                          backgroundColor:
+                          isDark ? const Color(0xFF1A1A22) : Colors.white,
+                          elevation: 6,
+                          mini: true,
+                          shape: const CircleBorder(),
+                          child: AnimatedRotation(
+                            turns: _isMenuOpen ? 0.125 : 0,
+                            duration: const Duration(milliseconds: 300),
+                            child: Icon(
+                              Icons.add_rounded,
+                              color: _isMenuOpen
+                                  ? const Color(0xFFEF4444)
+                                  : _blue,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildActionButton(_MenuAction a, bool isDark) {
+    final icon = Icon(a.icon, color: a.color, size: 22);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF2A2A35) : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            a.label,
+            // مێنیوەکە LTR ـە، بەڵام دەقەکە کوردییە → RTL تا «3D» تێک نەچێت
+            textDirection: _en ? TextDirection.ltr : TextDirection.rtl,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Material(
+          color: a.active
+              ? Color.alphaBlend(a.color.withValues(alpha: 0.16),
+              isDark ? const Color(0xFF1A1A22) : Colors.white)
+              : (isDark ? const Color(0xFF1A1A22) : Colors.white),
+          elevation: 4,
+          shadowColor: a.color.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _isMenuOpen = false);
+              a.onTap();
+            },
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: a.color.withValues(alpha: a.active ? 0.6 : 0.25),
+                  width: 1.5,
+                ),
+              ),
+              child: a.pulsing
+                  ? AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) => Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: child,
+                ),
+                child: icon,
+              )
+                  : icon,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(bool isDark) {
+    final failed = _loadFailed;
+
+    return Positioned.fill(
+      child: Container(
+        color: (isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9))
+            .withValues(alpha: 0.92),
         child: Center(
           child: Container(
             padding: const EdgeInsets.all(24),
             margin: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF1A1A22).withValues(alpha: 0.95)
-                  : Colors.white.withValues(alpha: 0.95),
+              color: isDark ? const Color(0xFF1A1A22) : Colors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black
-                      .withValues(alpha: isDark ? 0.3 : 0.1),
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -928,29 +1639,54 @@ class _MapScreenState extends State<MapScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.map_outlined,
+                  failed ? Icons.wifi_off_rounded : Icons.map_outlined,
                   size: 60,
-                  color: const Color(0xFF1E88E5)
-                      .withValues(alpha: 0.5),
+                  color: _blue.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'هیچ گەڕەکێک نەدۆزرایەوە',
+                  failed
+                      ? _t('کێشە لە بارکردنی گەڕەکەکان',
+                      'Problem loading neighborhoods')
+                      : _t('هیچ گەڕەکێک نەدۆزرایەوە', 'No neighborhoods found'),
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
-                    color: isDark
-                        ? Colors.white
-                        : const Color(0xFF1A1A2E),
+                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'داتای گەڕەکان لە Supabase نەهاتووە',
+                  failed
+                      ? _t('ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەوە',
+                      'Check your connection and try again')
+                      : _t('داتای گەڕەکان لە Supabase نەهاتووە',
+                      'No data was returned from Supabase'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white54 : Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    _init();
+                  },
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: Text(
+                    _t('دووبارە هەوڵبدەوە', 'Try again'),
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ],
@@ -960,4 +1696,23 @@ class _MapScreenState extends State<MapScreen>
       ),
     );
   }
+}
+
+/// داتای یەک دوگمەی مێنیو
+class _MenuAction {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final bool pulsing;
+  final bool active;
+
+  const _MenuAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.pulsing = false,
+    this.active = false,
+  });
 }

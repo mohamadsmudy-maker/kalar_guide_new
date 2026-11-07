@@ -1,12 +1,12 @@
 // lib/screens/admin/admin_complaints.dart
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_colors.dart';
-import '../../config/settings_provider.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../services/complaints_pdf_service.dart';
 import '../../services/storage_service.dart';
@@ -15,7 +15,7 @@ import 'all_complaints_map.dart';
 import 'complaint_details_pro_sheet.dart';
 import 'complaint_filter_sheet.dart';
 
-/// 📋 شاشەی بەڕێوەبردنی سکاڵاکان — ULTRA PRO V2 + گەڕەک
+/// 📋 شاشەی بەڕێوەبردنی سکاڵاکان — ULTRA PRO MAX V4
 class AdminComplaintsProScreen extends StatefulWidget {
   const AdminComplaintsProScreen({super.key});
 
@@ -26,38 +26,20 @@ class AdminComplaintsProScreen extends StatefulWidget {
 
 class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     with TickerProviderStateMixin {
-  late TabController _tabController;
-  String _filter = 'all';
-  String _sortBy = 'priority';
-  String _q = '';
-  String? _filterNeighborhood;
-  List<Map<String, dynamic>> _complaints = [];
-  List<Map<String, dynamic>> _filtered = [];
-  List<String> _neighborhoods = [];
-  bool _loading = true;
-  bool _isDeleting = false;
-  bool _generatingPdf = false;
-  bool _selectMode = false;
-
-  final TextEditingController _searchCtrl = TextEditingController();
-  final ScrollController _scrollCtrl = ScrollController();
-  final Set<String> _selectedIds = {};
-  final Set<String> _hiddenIds = {};
-
-  DateTime _fromDate = DateTime.now().subtract(const Duration(days: 30));
-  DateTime _toDate = DateTime.now();
-  String? _filterAuthority;
-  Set<String> _filterStatuses = {};
-  bool _onlyWithVoice = false;
-  bool _onlyWithImages = false;
-
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-  late AnimationController _staggerController;
-
   // ═══════════════════════════════════════════════════════════
-  // 🎨 ڕەنگەکان
+  // 📊 State
   // ═══════════════════════════════════════════════════════════
+  static const List<String> _tabKeys = [
+    'all',
+    'pending',
+    'approved',
+    'completed',
+    'rejected',
+  ];
+  static const int _fetchLimit = 500;
+  static const Duration _overdueAfter = Duration(hours: 72);
+  static const String _defaultSort = 'priority';
+
   static const List<Color> _neighborhoodColors = [
     Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFF9800),
     Color(0xFF9C27B0), Color(0xFFF44336), Color(0xFF009688),
@@ -65,11 +47,79 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     Color(0xFF00BCD4), Color(0xFF8BC34A), Color(0xFFFF5722),
   ];
 
+  late final TabController _tabController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
+  late final AnimationController _staggerController;
+
+  final TextEditingController _searchCtrl = TextEditingController();
+  final Set<String> _selectedIds = {};
+
+  List<Map<String, dynamic>> _complaints = [];
+  List<String> _neighborhoods = [];
+
+  // Cached derived data (rebuilt by _recompute)
+  final Map<String, List<Map<String, dynamic>>> _tabLists = {
+    for (final k in _tabKeys) k: <Map<String, dynamic>>[],
+  };
+  final Map<String, int> _scores = {};
+  final Map<String, int> _nbCounts = {};
+  int _allCount = 0;
+  int _pendingCount = 0;
+  int _approvedCount = 0;
+  int _completedCount = 0;
+  int _rejectedCount = 0;
+  int _overdueCount = 0;
+
+  bool _loading = true;
+  bool _loadFailed = false;
+  bool _isDeleting = false;
+  bool _generatingPdf = false;
+  bool _selectMode = false;
+
+  // Filters
+  String _sortBy = _defaultSort;
+  String _q = '';
+  String? _filterNeighborhood;
+  String? _filterAuthority;
+  Set<String> _filterStatuses = {};
+  bool _onlyWithVoice = false;
+  bool _onlyWithImages = false;
+  bool _dateFilterActive = false;
+  late DateTime _fromDate;
+  late DateTime _toDate;
+  late final DateTime _defaultFrom;
+
+  Timer? _searchDebounce;
+  Timer? _realtimeDebounce;
+  RealtimeChannel? _channel;
+
+  String get _currentTabKey => _tabKeys[_tabController.index];
+  List<Map<String, dynamic>> get _currentList => _tabLists[_currentTabKey]!;
+
+  bool get _hasActiveFilters =>
+      _q.isNotEmpty ||
+          _sortBy != _defaultSort ||
+          _filterAuthority != null ||
+          _filterStatuses.isNotEmpty ||
+          _onlyWithVoice ||
+          _onlyWithImages ||
+          _filterNeighborhood != null ||
+          _dateFilterActive;
+
+  // ═══════════════════════════════════════════════════════════
+  // 🔁 Lifecycle
+  // ═══════════════════════════════════════════════════════════
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
-    _tabController.addListener(_onTabChange);
+    final now = DateTime.now();
+    _defaultFrom = now.subtract(const Duration(days: 30));
+    _fromDate = _defaultFrom;
+    _toDate = now;
+
+    _tabController = TabController(length: _tabKeys.length, vsync: this)
+      ..addListener(_onTabChange);
 
     _pulseController = AnimationController(
       vsync: this,
@@ -81,19 +131,27 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
 
     _staggerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 600),
     );
 
     _fetchComplaints();
     _fetchNeighborhoods();
+    _subscribeRealtime();
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_onTabChange);
-    _tabController.dispose();
+    _searchDebounce?.cancel();
+    _realtimeDebounce?.cancel();
+    if (_channel != null) {
+      try {
+        Supabase.instance.client.removeChannel(_channel!);
+      } catch (_) {}
+    }
+    _tabController
+      ..removeListener(_onTabChange)
+      ..dispose();
     _searchCtrl.dispose();
-    _scrollCtrl.dispose();
     _pulseController.dispose();
     _staggerController.dispose();
     super.dispose();
@@ -101,13 +159,30 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
 
   void _onTabChange() {
     if (!mounted || _tabController.indexIsChanging) return;
-    final index = _tabController.index;
-    if (index < 0 || index >= 5) return;
+    setState(() {}); // refresh "N results" + select-all target
+  }
 
-    const filters = ['all', 'pending', 'approved', 'completed', 'rejected'];
-    if (_filter != filters[index]) {
-      setState(() => _filter = filters[index]);
-      _applyFilters();
+  // ═══════════════════════════════════════════════════════════
+  // 📡 Realtime (auto refresh when anything changes)
+  // ═══════════════════════════════════════════════════════════
+  void _subscribeRealtime() {
+    try {
+      _channel = Supabase.instance.client
+          .channel('admin-complaints-live')
+          .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'complaints',
+        callback: (_) {
+          _realtimeDebounce?.cancel();
+          _realtimeDebounce = Timer(const Duration(milliseconds: 1500), () {
+            if (mounted && !_loading) _fetchComplaints(showLoader: false);
+          });
+        },
+      )
+          .subscribe();
+    } catch (e) {
+      debugPrint('⚠️ realtime unavailable: $e');
     }
   }
 
@@ -116,219 +191,348 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
   // ═══════════════════════════════════════════════════════════
   Future<void> _fetchNeighborhoods() async {
     try {
-      // ⭐ لابردنی is_active و display_order کە لە خشتەکەدا نین
       final res = await Supabase.instance.client
           .from('neighborhoods')
           .select('name_ku')
           .order('name_ku');
-
-      if (mounted) {
-        setState(() {
-          _neighborhoods = (res as List)
-              .map((e) => e['name_ku']?.toString() ?? '')
-              .where((s) => s.isNotEmpty)
-              .toList();
-        });
-        debugPrint('✅ Fetched ${_neighborhoods.length} neighborhoods');
-      }
+      if (!mounted) return;
+      setState(() {
+        _neighborhoods = (res as List)
+            .map((e) => e['name_ku']?.toString() ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList();
+        _recompute();
+      });
     } catch (e) {
       debugPrint('⚠️ fetch neighborhoods error: $e');
-      // ⭐ دڵنیابەرەوە کە لیستەکە بەتاڵ نابێت
-      if (mounted) setState(() => _neighborhoods = []);
     }
   }
 
   Future<void> _fetchComplaints({bool showLoader = true}) async {
     if (!mounted) return;
-    if (showLoader) setState(() => _loading = true);
+    if (showLoader) {
+      setState(() {
+        _loading = true;
+        _loadFailed = false;
+      });
+    }
 
     try {
-      debugPrint('🔄 Fetching complaints...');
-
       final res = await Supabase.instance.client
           .from('complaints')
           .select()
           .order('created_at', ascending: false)
-          .limit(500);
+          .limit(_fetchLimit);
 
       final complaints = (res as List)
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
 
-      debugPrint('✅ Fetched ${complaints.length} complaints');
-
+      if (!mounted) return;
       final fetchedIds = complaints.map((c) => c['id'].toString()).toSet();
-      _hiddenIds.removeWhere((id) => !fetchedIds.contains(id));
-      _selectedIds.removeWhere((id) => !fetchedIds.contains(id));
-      if (_selectedIds.isEmpty && _selectMode) _selectMode = false;
 
-      if (mounted) {
-        setState(() {
-          _complaints = complaints;
-          _loading = false;
-        });
-        _applyFilters();
-        _staggerController.forward(from: 0);
-      }
+      setState(() {
+        _complaints = complaints;
+        _loading = false;
+        _loadFailed = false;
+        _selectedIds.removeWhere((id) => !fetchedIds.contains(id));
+        if (_selectedIds.isEmpty) _selectMode = false;
+        _recompute();
+      });
+      if (showLoader) _staggerController.forward(from: 0);
     } catch (e) {
       debugPrint('❌ Fetch error: $e');
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🔍 Filters
-  // ═══════════════════════════════════════════════════════════
-  void _applyFilters() {
-    var list = List<Map<String, dynamic>>.from(_complaints);
-
-    if (_filter != 'all') {
-      if (_filter == 'approved') {
-        list = list.where((c) =>
-        c['status'] == 'approved' || c['status'] == 'in_progress')
-            .toList();
-      } else {
-        list = list.where((c) => c['status'] == _filter).toList();
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = _complaints.isEmpty;
+      });
+      if (_complaints.isNotEmpty) {
+        _snack('نوێکردنەوە سەرنەکەوت — ئینتەرنێت بپشکنە', Colors.orange);
       }
     }
-
-    if (_filterStatuses.isNotEmpty) {
-      list = list.where((c) => _filterStatuses.contains(c['status'])).toList();
-    }
-
-    if (_filterAuthority != null) {
-      list = list.where((c) => c['responsible_authority'] == _filterAuthority).toList();
-    }
-
-    if (_filterNeighborhood != null) {
-      list = list.where((c) => c['neighborhood_name'] == _filterNeighborhood).toList();
-    }
-
-    if (_onlyWithVoice) {
-      list = list.where((c) =>
-      c['voice_url'] != null && c['voice_url'].toString().isNotEmpty)
-          .toList();
-    }
-
-    if (_onlyWithImages) {
-      list = list.where((c) {
-        final imgs = c['images'];
-        return imgs is List && imgs.isNotEmpty;
-      }).toList();
-    }
-
-    if (_q.isNotEmpty) {
-      list = list.where((c) {
-        final text =
-        "${c['title']}${c['description']}${c['responsible_authority']}${c['neighborhood_name']}"
-            .toLowerCase();
-        return text.contains(_q);
-      }).toList();
-    }
-
-    switch (_sortBy) {
-      case 'oldest':
-        list.sort(_sortByDate);
-        break;
-      case 'priority':
-        list.sort((a, b) {
-          final pa = _priorityScore(a);
-          final pb = _priorityScore(b);
-          if (pa != pb) return pb.compareTo(pa);
-          return _sortByDateDesc(a, b);
-        });
-        break;
-      case 'newest':
-      default:
-        list.sort(_sortByDateDesc);
-    }
-
-    if (mounted) setState(() => _filtered = list);
   }
 
-  int _sortByDate(Map<String, dynamic> a, Map<String, dynamic> b) {
-    final da = DateTime.tryParse(a['created_at']?.toString() ?? '');
-    final db = DateTime.tryParse(b['created_at']?.toString() ?? '');
-    if (da == null || db == null) return 0;
-    return da.compareTo(db);
+  // ═══════════════════════════════════════════════════════════
+  // 🟢 WhatsApp Sharing with All Details
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _shareComplaintToWhatsApp(Map<String, dynamic> c) async {
+    final title = c['title'] ?? 'بێ ناونیشان';
+    final desc = c['description'] ?? 'بێ وەسف';
+    final authority = c['responsible_authority'] ?? 'نەزانراو';
+    final neighborhood = c['neighborhood_name'] ?? 'نەزانراو';
+
+    // 📍 لۆکەیشن
+    final lat = c['latitude'];
+    final lng = c['longitude'];
+    String locationText = 'شوێن تۆمار نەکراوە';
+    if (lat != null && lng != null) {
+      locationText = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+    }
+
+    // 🎙️ ڤۆیس
+    final voiceUrl = c['voice_url']?.toString() ?? '';
+    String voiceText = voiceUrl.isNotEmpty ? voiceUrl : 'دەنگی بۆ نەنێردراوە';
+
+    // 🖼️ وێنەکان
+    final List images = c['images'] is List
+        ? c['images'] as List
+        : (c['images'] is String && (c['images'] as String).isNotEmpty ? [c['images']] : []);
+
+    String imagesText = '';
+    if (images.isNotEmpty) {
+      for (int i = 0; i < images.length; i++) {
+        imagesText += '🖼️ وێنەی ${i + 1}: ${images[i]}\n';
+      }
+    } else {
+      imagesText = 'هیچ وێنەیەک نییە\n';
+    }
+
+    // ✍️ دروستکردنی پەیامەکە بە شێوەیەکی جوان
+    final message = '''
+🔔 *سکاڵا* 🔔
+
+📌 *ناونیشان:* $title
+📝 *وەسف:* $desc
+🏢 *لایەنی پەیوەندیدار:* $authority
+📍 *گەڕەک:* $neighborhood
+
+🗺️ *لینکی شوێن:*
+$locationText
+
+🎙️ *لینکی دەنگ:*
+$voiceText
+
+$imagesText
+''';
+
+    // ✅ چاککردنی لینک بۆ ئەوەی لە هەموو ئامێرەکان کار بکات
+    final Uri whatsappUri = Uri.parse(
+        "https://wa.me/?text=${Uri.encodeComponent(message)}"
+    );
+
+    try {
+      if (!await launchUrl(whatsappUri, mode: LaunchMode.externalApplication)) {
+        throw 'Could not launch WhatsApp';
+      }
+    } catch (e) {
+      _snack('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.', Colors.red);
+    }
   }
 
-  int _sortByDateDesc(Map<String, dynamic> a, Map<String, dynamic> b) =>
-      _sortByDate(b, a);
+  // ═══════════════════════════════════════════════════════════
+  // 🔍 Filtering / sorting (pure, cached per tab)
+  // ═══════════════════════════════════════════════════════════
+  DateTime? _created(Map<String, dynamic> c) =>
+      DateTime.tryParse(c['created_at']?.toString() ?? '')?.toLocal();
 
   int _priorityScore(Map<String, dynamic> c) {
-    int score = 0;
+    var score = 0;
     final s = c['status']?.toString();
     if (s == 'pending') score += 100;
     if (s == 'in_progress') score += 60;
 
-    final created = DateTime.tryParse(c['created_at']?.toString() ?? '');
+    final created = _created(c);
     if (created != null) {
       final hours = DateTime.now().difference(created).inHours;
-      if (hours < 6) score += 50;
-      else if (hours < 24) score += 30;
-      else if (hours < 72) score += 15;
+      if (hours < 6) {
+        score += 50;
+      } else if (hours < 24) {
+        score += 30;
+      } else if (hours < 72) {
+        score += 15;
+      }
     }
-
     if ((c['voice_url']?.toString() ?? '').isNotEmpty) score += 20;
     if (c['images'] is List && (c['images'] as List).isNotEmpty) score += 10;
-
     return score;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📊 Stats
-  // ═══════════════════════════════════════════════════════════
-  int get _allCount => _complaints.length;
-  int get _pendingCount =>
-      _complaints.where((c) => c['status'] == 'pending').length;
-  int get _approvedCount => _complaints
-      .where((c) => c['status'] == 'approved' || c['status'] == 'in_progress')
-      .length;
-  int get _rejectedCount =>
-      _complaints.where((c) => c['status'] == 'rejected').length;
-  int get _completedCount =>
-      _complaints.where((c) => c['status'] == 'completed').length;
-
-  double get _completionRate {
-    if (_allCount == 0) return 0;
-    return (_completedCount / _allCount) * 100;
+  bool _isOverdue(Map<String, dynamic> c) {
+    if (c['status'] != 'pending') return false;
+    final created = _created(c);
+    return created != null &&
+        DateTime.now().difference(created) > _overdueAfter;
   }
+
+  bool _matchesTab(Map<String, dynamic> c, String key) {
+    final s = c['status']?.toString();
+    switch (key) {
+      case 'all':
+        return true;
+      case 'approved':
+        return s == 'approved' || s == 'in_progress';
+      default:
+        return s == key;
+    }
+  }
+
+  bool _matchesCommon(Map<String, dynamic> c) {
+    if (_filterStatuses.isNotEmpty && !_filterStatuses.contains(c['status'])) {
+      return false;
+    }
+    if (_filterAuthority != null &&
+        c['responsible_authority'] != _filterAuthority) {
+      return false;
+    }
+    if (_filterNeighborhood != null &&
+        c['neighborhood_name'] != _filterNeighborhood) {
+      return false;
+    }
+    if (_onlyWithVoice && (c['voice_url']?.toString() ?? '').isEmpty) {
+      return false;
+    }
+    if (_onlyWithImages) {
+      final imgs = c['images'];
+      if (!(imgs is List && imgs.isNotEmpty)) return false;
+    }
+    if (_dateFilterActive) {
+      final d = _created(c);
+      if (d == null) return false;
+      final from = DateTime(_fromDate.year, _fromDate.month, _fromDate.day);
+      final to =
+      DateTime(_toDate.year, _toDate.month, _toDate.day, 23, 59, 59);
+      if (d.isBefore(from) || d.isAfter(to)) return false;
+    }
+    if (_q.isNotEmpty) {
+      final text =
+      "${c['title']} ${c['description']} ${c['responsible_authority']} ${c['neighborhood_name']}"
+          .toLowerCase();
+      if (!text.contains(_q)) return false;
+    }
+    return true;
+  }
+
+  int _cmpDate(Map<String, dynamic> a, Map<String, dynamic> b) {
+    final da = _created(a);
+    final db = _created(b);
+    if (da == null || db == null) return 0;
+    return da.compareTo(db);
+  }
+
+  /// Rebuilds every cached value. Call inside setState.
+  void _recompute() {
+    _allCount = _complaints.length;
+    _pendingCount = 0;
+    _approvedCount = 0;
+    _completedCount = 0;
+    _rejectedCount = 0;
+    _overdueCount = 0;
+    _nbCounts.clear();
+    _scores.clear();
+
+    for (final c in _complaints) {
+      switch (c['status']) {
+        case 'pending':
+          _pendingCount++;
+          break;
+        case 'approved':
+        case 'in_progress':
+          _approvedCount++;
+          break;
+        case 'completed':
+          _completedCount++;
+          break;
+        case 'rejected':
+          _rejectedCount++;
+          break;
+      }
+      if (_isOverdue(c)) _overdueCount++;
+      final nb = c['neighborhood_name']?.toString();
+      if (nb != null && nb.isNotEmpty) {
+        _nbCounts[nb] = (_nbCounts[nb] ?? 0) + 1;
+      }
+      _scores[c['id'].toString()] = _priorityScore(c);
+    }
+
+    final common = _complaints.where(_matchesCommon).toList();
+
+    int cmp(Map<String, dynamic> a, Map<String, dynamic> b) {
+      switch (_sortBy) {
+        case 'oldest':
+          return _cmpDate(a, b);
+        case 'priority':
+          final pa = _scores[a['id'].toString()] ?? 0;
+          final pb = _scores[b['id'].toString()] ?? 0;
+          if (pa != pb) return pb.compareTo(pa);
+          return _cmpDate(b, a);
+        default:
+          return _cmpDate(b, a);
+      }
+    }
+
+    for (final key in _tabKeys) {
+      _tabLists[key] = common.where((c) => _matchesTab(c, key)).toList()
+        ..sort(cmp);
+    }
+  }
+
+  void _refilter() {
+    if (!mounted) return;
+    setState(_recompute);
+  }
+
+  double get _completionRate =>
+      _allCount == 0 ? 0 : (_completedCount / _allCount) * 100;
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎨 Helpers
+  // ═══════════════════════════════════════════════════════════
+  String _ku(Object n) => n.toString().replaceAllMapped(
+    RegExp(r'\d'),
+        (m) => '٠١٢٣٤٥٦٧٨٩'[int.parse(m[0]!)],
+  );
 
   Color _color(String? s) {
     switch (s) {
-      case 'pending': return const Color(0xFFFF9800);
+      case 'pending':
+        return const Color(0xFFFF9800);
       case 'approved':
-      case 'in_progress': return const Color(0xFF2ECC71);
-      case 'rejected': return const Color(0xFFE74C3C);
-      case 'completed': return const Color(0xFF3498DB);
-      default: return Colors.grey;
+      case 'in_progress':
+        return const Color(0xFF2ECC71);
+      case 'rejected':
+        return const Color(0xFFE74C3C);
+      case 'completed':
+        return const Color(0xFF3498DB);
+      default:
+        return Colors.grey;
     }
   }
 
   IconData _icon(String? s) {
     switch (s) {
-      case 'pending': return Icons.hourglass_top_rounded;
+      case 'pending':
+        return Icons.hourglass_top_rounded;
       case 'approved':
-      case 'in_progress': return Icons.verified_rounded;
-      case 'rejected': return Icons.cancel_rounded;
-      case 'completed': return Icons.check_circle_rounded;
-      default: return Icons.help_outline_rounded;
+      case 'in_progress':
+        return Icons.verified_rounded;
+      case 'rejected':
+        return Icons.cancel_rounded;
+      case 'completed':
+        return Icons.check_circle_rounded;
+      default:
+        return Icons.help_outline_rounded;
     }
   }
 
   String _statusText(String? s) {
     switch (s) {
-      case 'pending': return 'چاوەڕوان';
-      case 'approved': return 'پەسەندکراو';
-      case 'in_progress': return 'لە ئارادایە';
-      case 'rejected': return 'ڕەتکراو';
-      case 'completed': return 'جێبەجێکرا';
-      default: return s ?? '';
+      case 'pending':
+        return 'چاوەڕوان';
+      case 'approved':
+        return 'پەسەندکراو';
+      case 'in_progress':
+        return 'لە ئارادایە';
+      case 'rejected':
+        return 'ڕەتکراو';
+      case 'completed':
+        return 'جێبەجێکرا';
+      default:
+        return s ?? '';
     }
   }
 
-  Color _getNeighborhoodColor(String? name) {
+  Color _neighborhoodColor(String? name) {
     if (name == null) return Colors.grey;
     final idx = _neighborhoods.indexOf(name);
     if (idx < 0) return Colors.grey;
@@ -337,17 +541,49 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
 
   String _timeAgo(String? dateStr) {
     if (dateStr == null) return '';
-    final date = DateTime.tryParse(dateStr);
+    final date = DateTime.tryParse(dateStr)?.toLocal();
     if (date == null) return '';
     final diff = DateTime.now().difference(date);
     if (diff.inMinutes < 1) return 'ئێستا';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} خولەک لەمەوبەر';
-    if (diff.inHours < 24) return '${diff.inHours} کاتژمێر لەمەوبەر';
-    if (diff.inDays < 7) return '${diff.inDays} ڕۆژ لەمەوبەر';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} هەفتە لەمەوبەر';
-    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} مانگ لەمەوبەر';
-    return '${(diff.inDays / 365).floor()} ساڵ لەمەوبەر';
+    if (diff.inMinutes < 60) return '${_ku(diff.inMinutes)} خولەک لەمەوبەر';
+    if (diff.inHours < 24) return '${_ku(diff.inHours)} کاتژمێر لەمەوبەر';
+    if (diff.inDays < 7) return '${_ku(diff.inDays)} ڕۆژ لەمەوبەر';
+    if (diff.inDays < 30) {
+      return '${_ku((diff.inDays / 7).floor())} هەفتە لەمەوبەر';
+    }
+    if (diff.inDays < 365) {
+      return '${_ku((diff.inDays / 30).floor())} مانگ لەمەوبەر';
+    }
+    return '${_ku((diff.inDays / 365).floor())} ساڵ لەمەوبەر';
   }
+
+  void _snack(String msg, Color color, {SnackBarAction? action}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content:
+          Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: color,
+          behavior: SnackBarBehavior.floating,
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: Duration(seconds: action == null ? 2 : 5),
+          action: action,
+        ),
+      );
+  }
+
+  Color _bg(bool isDark) =>
+      isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF4F6F9);
+  Color _surface(bool isDark) =>
+      isDark ? const Color(0xFF1A1A22) : Colors.white;
+
+  void _exitSelectMode() => setState(() {
+    _selectMode = false;
+    _selectedIds.clear();
+  });
 
   // ═══════════════════════════════════════════════════════════
   // 🎨 Build
@@ -355,36 +591,42 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final lang = context.watch<SettingsProvider>().languageId;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor:
-        isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF4F6F9),
-        body: _loading
-            ? _buildSkeleton(isDark)
-            : NestedScrollView(
-          headerSliverBuilder: (context, inner) => [
-            _buildSliverAppBar(isDark),
-            _buildSliverTabBar(isDark),
-            _buildSliverStats(isDark),
-            _buildSliverNeighborhoodFilter(isDark),
-            _buildSliverSearch(isDark),
-          ],
-          body: RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async =>
-            await _fetchComplaints(showLoader: false),
-            child: TabBarView(
-              controller: _tabController,
-              children:
-              List.generate(5, (i) => _buildList(isDark, lang)),
-            ),
-          ),
+    Widget body;
+    if (_loading && _complaints.isEmpty) {
+      body = _buildSkeleton(isDark);
+    } else if (_loadFailed) {
+      body = _buildError(isDark);
+    } else {
+      body = NestedScrollView(
+        headerSliverBuilder: (context, inner) => [
+          _buildSliverAppBar(isDark),
+          _buildSliverTabBar(isDark),
+          _buildSliverStats(isDark),
+          _buildSliverNeighborhoodFilter(isDark),
+          _buildSliverSearch(isDark),
+        ],
+        body: TabBarView(
+          controller: _tabController,
+          children: [for (final k in _tabKeys) _buildList(k, isDark)],
         ),
-        floatingActionButton:
-        _selectMode ? _buildBulkActionsFab() : _buildFilterFab(),
+      );
+    }
+
+    return PopScope(
+      canPop: !_selectMode,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _selectMode) _exitSelectMode();
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: _bg(isDark),
+          body: body,
+          floatingActionButton: (_loading && _complaints.isEmpty) || _loadFailed
+              ? null
+              : (_selectMode ? _buildBulkActionsFab() : _buildFilterFab()),
+        ),
       ),
     );
   }
@@ -393,6 +635,10 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
   // 📱 AppBar
   // ═══════════════════════════════════════════════════════════
   Widget _buildSliverAppBar(bool isDark) {
+    final list = _currentList;
+    final allSelected =
+        list.isNotEmpty && list.every((c) => _selectedIds.contains('${c['id']}'));
+
     return SliverAppBar(
       expandedHeight: 140,
       pinned: true,
@@ -402,14 +648,11 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
       leading: _selectMode
           ? IconButton(
         icon: const Icon(Icons.close_rounded),
-        onPressed: () => setState(() {
-          _selectMode = false;
-          _selectedIds.clear();
-        }),
+        onPressed: _exitSelectMode,
       )
           : null,
       title: _selectMode
-          ? Text('${_selectedIds.length} هەڵبژێردراو',
+          ? Text('${_ku(_selectedIds.length)} هەڵبژێردراو',
           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))
           : null,
       actions: [
@@ -436,8 +679,8 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             onSelected: (v) {
               switch (v) {
                 case 'select':
@@ -447,7 +690,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                   _fetchComplaints(showLoader: false);
                   break;
                 case 'sort':
-                  _showFilterSheet(isDark);
+                  _showFilterSheet();
                   break;
               }
             },
@@ -457,20 +700,21 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
               _popupItem('refresh', 'نوێکردنەوە', Icons.refresh_rounded),
             ],
           ),
-        ] else ...[
+        ] else
           IconButton(
-            icon: Icon(_selectedIds.length == _filtered.length
+            tooltip: allSelected ? 'لابردنی هەڵبژاردن' : 'هەموو',
+            icon: Icon(allSelected
                 ? Icons.deselect_rounded
                 : Icons.select_all_rounded),
             onPressed: () => setState(() {
-              if (_selectedIds.length == _filtered.length) {
-                _selectedIds.clear();
+              final ids = list.map((c) => c['id'].toString());
+              if (allSelected) {
+                _selectedIds.removeAll(ids);
               } else {
-                _selectedIds.addAll(_filtered.map((c) => c['id'].toString()));
+                _selectedIds.addAll(ids);
               }
             }),
           ),
-        ],
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
@@ -505,22 +749,33 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                         color: Colors.white, size: 26),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('بەڕێوەبردنی سکاڵاکان',
+                        const Text('بەڕێوەبردنی سکاڵاکان',
                             style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 20,
                                 color: Colors.white)),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Row(children: [
-                          Icon(Icons.verified_rounded,
-                              size: 12, color: Color(0xFF4CAF50)),
-                          SizedBox(width: 4),
-                          Text('ULTRA PRO • گەڕەک • WHATSAPP',
+                          AnimatedBuilder(
+                            animation: _pulseAnimation,
+                            builder: (_, __) => Transform.scale(
+                              scale: _pulseAnimation.value,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                    color: Color(0xFF4CAF50),
+                                    shape: BoxShape.circle),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text('ڕاستەوخۆ • گەڕەک • WHATSAPP',
                               style: TextStyle(
                                   fontSize: 10,
                                   color: Color(0xFF4CAF50),
@@ -560,7 +815,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
           isScrollable: true,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.white60,
+          unselectedLabelColor: isDark ? Colors.white60 : Colors.grey.shade700,
           labelStyle:
           const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
           unselectedLabelStyle:
@@ -577,7 +832,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
             _buildTab('ڕەتکراو', _rejectedCount, Icons.cancel_rounded),
           ],
         ),
-        isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF4F6F9),
+        _bg(isDark),
       ),
     );
   }
@@ -598,7 +853,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
               color: AppColors.primary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text('$count',
+            child: Text(_ku(count),
                 style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -609,9 +864,13 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📈 Stats
+  // ═══════════════════════════════════════════════════════════
   Widget _buildSliverStats(bool isDark) {
+    const green = Color(0xFF10B981);
     return SliverToBoxAdapter(
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -623,6 +882,9 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                 _buildMiniStat('چاوەڕوان', _pendingCount,
                     Icons.hourglass_top_rounded, const Color(0xFFFF9800), isDark),
                 const SizedBox(width: 8),
+                _buildMiniStat('دواکەوتوو', _overdueCount,
+                    Icons.warning_amber_rounded, const Color(0xFFE53935), isDark),
+                const SizedBox(width: 8),
                 _buildMiniStat('تەواو', _completedCount,
                     Icons.check_circle_rounded, const Color(0xFF3498DB), isDark),
               ],
@@ -632,12 +894,11 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  const Color(0xFF10B981).withValues(alpha: 0.15),
-                  const Color(0xFF10B981).withValues(alpha: 0.05),
+                  green.withValues(alpha: 0.15),
+                  green.withValues(alpha: 0.05),
                 ]),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                border: Border.all(color: green.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -660,21 +921,31 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF10B981))),
+                                color: green)),
                         const SizedBox(height: 4),
                         Row(children: [
-                          Text('${_completionRate.toStringAsFixed(1)}%',
+                          Text('${_ku(_completionRate.toStringAsFixed(1))}%',
                               style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF10B981))),
+                                  color: green)),
                           const Spacer(),
-                          Text('$_completedCount لە $_allCount',
+                          Text('${_ku(_completedCount)} لە ${_ku(_allCount)}',
                               style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.grey.shade600,
                                   fontWeight: FontWeight.bold)),
                         ]),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: _completionRate / 100,
+                            minHeight: 5,
+                            color: green,
+                            backgroundColor: green.withValues(alpha: 0.15),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -691,9 +962,9 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
       String label, int value, IconData icon, Color color, bool isDark) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          color: _surface(isDark),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.2)),
           boxShadow: [
@@ -714,7 +985,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
             child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(height: 6),
-          Text('$value',
+          Text(_ku(value),
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -734,136 +1005,114 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🏘️ Neighborhood Filter
+  // 🏘️ Neighborhood filter
   // ═══════════════════════════════════════════════════════════
+  Widget _nbChip({
+    required bool isDark,
+    required bool selected,
+    required Color color,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    int count = 0,
+    List<Color>? selectedGradient,
+  }) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 8),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? LinearGradient(
+                colors: selectedGradient ??
+                    [color, Color.lerp(color, Colors.white, 0.2)!])
+                : null,
+            color: selected ? null : _surface(isDark),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? color : color.withValues(alpha: 0.3),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 14, color: selected ? Colors.white : color),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: selected
+                        ? Colors.white
+                        : (isDark ? Colors.white70 : Colors.black87))),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.3)
+                      : color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(_ku(count),
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: selected ? Colors.white : color)),
+              ),
+            ],
+          ]),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSliverNeighborhoodFilter(bool isDark) {
-    if (_neighborhoods.isEmpty) return const SliverToBoxAdapter(child: SizedBox());
+    if (_neighborhoods.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
 
     return SliverToBoxAdapter(
-      child: Container(
+      child: SizedBox(
         height: 50,
-        margin: const EdgeInsets.only(top: 8),
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: _neighborhoods.length + 1,
           itemBuilder: (context, index) {
             if (index == 0) {
-              final isSelected = _filterNeighborhood == null;
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(end: 8),
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _filterNeighborhood = null);
-                    _applyFilters();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                          colors: [Color(0xFF6C5CE7), Color(0xFF9C27B0)])
-                          : null,
-                      color: isSelected
-                          ? null
-                          : (isDark ? const Color(0xFF1A1A22) : Colors.white),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFF6C5CE7)
-                            : (isDark ? Colors.white12 : Colors.grey.shade200),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.location_city_rounded,
-                          size: 14,
-                          color: isSelected ? Colors.white : const Color(0xFF6C5CE7)),
-                      const SizedBox(width: 6),
-                      Text('هەموو گەڕەکەکان',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              color: isSelected
-                                  ? Colors.white
-                                  : (isDark ? Colors.white70 : Colors.black87))),
-                    ]),
-                  ),
-                ),
+              return _nbChip(
+                isDark: isDark,
+                selected: _filterNeighborhood == null,
+                color: const Color(0xFF6C5CE7),
+                icon: Icons.location_city_rounded,
+                label: 'هەموو گەڕەکەکان',
+                selectedGradient: const [Color(0xFF6C5CE7), Color(0xFF9C27B0)],
+                onTap: () {
+                  _filterNeighborhood = null;
+                  _refilter();
+                },
               );
             }
-
             final name = _neighborhoods[index - 1];
-            final isSelected = _filterNeighborhood == name;
-            final color = _getNeighborhoodColor(name);
-            final count = _complaints
-                .where((c) => c['neighborhood_name'] == name)
-                .length;
-
-            return Padding(
-              padding: const EdgeInsetsDirectional.only(end: 8),
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _filterNeighborhood =
-                  isSelected ? null : name);
-                  _applyFilters();
-                },
-                child: Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? LinearGradient(colors: [
-                      color,
-                      Color.lerp(color, Colors.white, 0.2)!
-                    ])
-                        : null,
-                    color: isSelected
-                        ? null
-                        : (isDark ? const Color(0xFF1A1A22) : Colors.white),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected
-                          ? color
-                          : color.withValues(alpha: 0.3),
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.place_rounded,
-                        size: 14,
-                        color: isSelected ? Colors.white : color),
-                    const SizedBox(width: 6),
-                    Text(name,
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            color: isSelected
-                                ? Colors.white
-                                : (isDark ? Colors.white70 : Colors.black87))),
-                    if (count > 0) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.white.withValues(alpha: 0.3)
-                              : color.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text('$count',
-                            style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: isSelected ? Colors.white : color)),
-                      ),
-                    ],
-                  ]),
-                ),
-              ),
+            final selected = _filterNeighborhood == name;
+            return _nbChip(
+              isDark: isDark,
+              selected: selected,
+              color: _neighborhoodColor(name),
+              icon: Icons.place_rounded,
+              label: name,
+              count: _nbCounts[name] ?? 0,
+              onTap: () {
+                _filterNeighborhood = selected ? null : name;
+                _refilter();
+              },
             );
           },
         ),
@@ -871,6 +1120,9 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🔎 Search
+  // ═══════════════════════════════════════════════════════════
   Widget _buildSliverSearch(bool isDark) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -878,7 +1130,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
         child: Column(children: [
           Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+              color: _surface(isDark),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -890,26 +1142,30 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
             ),
             child: TextField(
               controller: _searchCtrl,
+              textInputAction: TextInputAction.search,
               onChanged: (v) {
-                setState(() => _q = v.toLowerCase());
-                _applyFilters();
+                _searchDebounce?.cancel();
+                _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+                  _q = v.trim().toLowerCase();
+                  _refilter();
+                });
+                setState(() {}); // keeps the clear button in sync
               },
-              style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black87),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
               decoration: InputDecoration(
                 hintText: 'گەڕان بەدوای ناونیشان، گەڕەک، لایەن...',
                 hintStyle: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white54 : Colors.grey),
+                    fontSize: 12, color: isDark ? Colors.white54 : Colors.grey),
                 prefixIcon: const Icon(Icons.search_rounded,
                     color: AppColors.primary, size: 22),
-                suffixIcon: _q.isNotEmpty
+                suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
                   icon: const Icon(Icons.close_rounded, size: 18),
                   onPressed: () {
+                    _searchDebounce?.cancel();
                     _searchCtrl.clear();
-                    setState(() => _q = '');
-                    _applyFilters();
+                    _q = '';
+                    _refilter();
                   },
                 )
                     : null,
@@ -922,8 +1178,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
           const SizedBox(height: 8),
           Row(children: [
             Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
@@ -932,7 +1187,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                 const Icon(Icons.filter_alt_rounded,
                     size: 12, color: AppColors.primary),
                 const SizedBox(width: 4),
-                Text('${_filtered.length} ئەنجام',
+                Text('${_ku(_currentList.length)} ئەنجام',
                     style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
@@ -940,12 +1195,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
               ]),
             ),
             const Spacer(),
-            if (_sortBy != 'newest' ||
-                _filterAuthority != null ||
-                _filterStatuses.isNotEmpty ||
-                _onlyWithVoice ||
-                _onlyWithImages ||
-                _filterNeighborhood != null)
+            if (_hasActiveFilters)
               GestureDetector(
                 onTap: _clearAllFilters,
                 child: Container(
@@ -974,118 +1224,122 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
   }
 
   void _clearAllFilters() {
+    _searchDebounce?.cancel();
     _searchCtrl.clear();
-    setState(() {
-      _q = '';
-      _sortBy = 'newest';
-      _filterAuthority = null;
-      _filterNeighborhood = null;
-      _filterStatuses.clear();
-      _onlyWithVoice = false;
-      _onlyWithImages = false;
-    });
-    _applyFilters();
+    _q = '';
+    _sortBy = _defaultSort;
+    _filterAuthority = null;
+    _filterNeighborhood = null;
+    _filterStatuses = {};
+    _onlyWithVoice = false;
+    _onlyWithImages = false;
+    _dateFilterActive = false;
+    _fromDate = _defaultFrom;
+    _toDate = DateTime.now();
+    _refilter();
   }
 
   // ═══════════════════════════════════════════════════════════
   // 📋 List
   // ═══════════════════════════════════════════════════════════
-  Widget _buildList(bool isDark, String lang) {
-    if (_filtered.isEmpty) return _buildEmpty(isDark);
+  Widget _buildList(String tabKey, bool isDark) {
+    final list = _tabLists[tabKey]!;
 
-    return ListView.builder(
-      controller: _scrollCtrl,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-      physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: _filtered.length,
-      itemBuilder: (context, i) {
-        final c = _filtered[i];
-        if (_hiddenIds.contains(c['id'].toString())) {
-          return const SizedBox.shrink();
-        }
-        return AnimatedBuilder(
-          animation: _staggerController,
-          builder: (context, child) {
-            final delay = (i * 0.05).clamp(0.0, 1.0);
-            final progress =
-            ((_staggerController.value - delay) / 0.5).clamp(0.0, 1.0);
-            return Transform.translate(
-              offset: Offset(0, 30 * (1 - progress)),
-              child: Opacity(opacity: progress, child: child),
-            );
-          },
-          child: _buildCard(c, isDark, lang),
-        );
-      },
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () => _fetchComplaints(showLoader: false),
+      child: list.isEmpty
+          ? _buildEmpty(isDark)
+          : ListView.builder(
+        key: PageStorageKey('complaints_$tabKey'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: list.length,
+        itemBuilder: (context, i) {
+          final c = list[i];
+          final card = _buildCard(c, isDark);
+          if (i >= 8) return card;
+          return AnimatedBuilder(
+            animation: _staggerController,
+            builder: (context, child) {
+              final delay = (i * 0.07).clamp(0.0, 0.6);
+              final p =
+              ((_staggerController.value - delay) / 0.4).clamp(0.0, 1.0);
+              return Transform.translate(
+                offset: Offset(0, 30 * (1 - p)),
+                child: Opacity(opacity: p, child: child),
+              );
+            },
+            child: card,
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildCard(Map<String, dynamic> c, bool isDark, String lang) {
+  void _toggleSelect(String id) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (!_selectedIds.remove(id)) _selectedIds.add(id);
+      if (_selectedIds.isEmpty) _selectMode = false;
+    });
+  }
+
+  Widget _buildCard(Map<String, dynamic> c, bool isDark) {
     final id = c['id'].toString();
-    final status = c['status'] ?? 'pending';
+    final status = c['status']?.toString() ?? 'pending';
     final color = _color(status);
     final icon = _icon(status);
-    final statusText = _statusText(status);
-    final priority = _priorityScore(c);
+    final priority = _scores[id] ?? 0;
     final isSelected = _selectedIds.contains(id);
     final isPending = status == 'pending';
     final isInProgress = status == 'in_progress' || status == 'approved';
+    final overdue = _isOverdue(c);
 
-    final neighborhoodName = c['neighborhood_name']?.toString();
-    final neighborhoodColor = _getNeighborhoodColor(neighborhoodName);
+    final nbName = c['neighborhood_name']?.toString();
+    final nbColor = _neighborhoodColor(nbName);
 
-    List images = [];
-    try {
-      if (c['images'] is List) images = c['images'];
-      else if (c['images'] is String) images = [c['images']];
-    } catch (_) {}
+    final List images = c['images'] is List
+        ? c['images'] as List
+        : (c['images'] is String && (c['images'] as String).isNotEmpty
+        ? [c['images']]
+        : const []);
 
-    final voiceUrl = c['voice_url']?.toString() ?? '';
-    final hasVoice = voiceUrl.isNotEmpty;
-    final timeAgo = _timeAgo(c['created_at']?.toString());
-
+    final hasVoice = (c['voice_url']?.toString() ?? '').isNotEmpty;
     final userPhone = (c['user_phone']?.toString() ??
         c['phone']?.toString() ??
         c['contact_phone']?.toString() ??
         '')
         .trim();
+    // تێبینی: ئێمە چیتر پێویستمان بەمە نییە بۆ شاردنەوەی دوگمەکە، بەڵام بۆ پەیوەندی بەکاردێت
     final hasPhone = userPhone.isNotEmpty;
+    final title = (c['title']?.toString().trim().isNotEmpty ?? false)
+        ? c['title'].toString()
+        : 'بێ ناونیشان';
 
     return GestureDetector(
       onLongPress: () {
-        if (!_selectMode) {
-          HapticFeedback.mediumImpact();
-          setState(() {
-            _selectMode = true;
-            _selectedIds.add(id);
-          });
-        }
+        if (_selectMode) return;
+        HapticFeedback.mediumImpact();
+        setState(() {
+          _selectMode = true;
+          _selectedIds.add(id);
+        });
       },
-      onTap: () {
-        if (_selectMode) {
-          HapticFeedback.selectionClick();
-          setState(() {
-            if (isSelected) {
-              _selectedIds.remove(id);
-              if (_selectedIds.isEmpty) _selectMode = false;
-            } else {
-              _selectedIds.add(id);
-            }
-          });
-        } else {
-          _showDetails(c);
-        }
-      },
-      child: Container(
+      onTap: () => _selectMode ? _toggleSelect(id) : _showDetails(c),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          color: _surface(isDark),
           borderRadius: BorderRadius.circular(20),
           border: isSelected
               ? Border.all(color: AppColors.primary, width: 2.5)
               : isPending
               ? Border.all(
-              color: color.withValues(alpha: 0.4), width: 1.5)
+              color: (overdue ? Colors.red : color)
+                  .withValues(alpha: 0.4),
+              width: 1.5)
               : null,
           boxShadow: [
             BoxShadow(
@@ -1093,12 +1347,6 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),
-            if (isPending && !isSelected)
-              BoxShadow(
-                color: color.withValues(alpha: 0.12),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
             if (isSelected)
               BoxShadow(
                 color: AppColors.primary.withValues(alpha: 0.3),
@@ -1113,9 +1361,9 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
               height: 4,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  color.withValues(alpha: 0.3),
-                  color,
-                  color.withValues(alpha: 0.3),
+                  (overdue ? Colors.red : color).withValues(alpha: 0.3),
+                  overdue ? Colors.red : color,
+                  (overdue ? Colors.red : color).withValues(alpha: 0.3),
                 ]),
                 borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(20)),
@@ -1126,15 +1374,13 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
             child: Row(children: [
               if (_selectMode)
                 Padding(
-                  padding: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsetsDirectional.only(end: 8),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : Colors.transparent,
+                      color: isSelected ? AppColors.primary : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isSelected
@@ -1151,9 +1397,9 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                 ),
               if (priority >= 100 && !_selectMode)
                 Padding(
-                  padding: const EdgeInsets.only(left: 6),
+                  padding: const EdgeInsetsDirectional.only(end: 6),
                   child: AnimatedBuilder(
-                    animation: _pulseController,
+                    animation: _pulseAnimation,
                     builder: (context, _) => Transform.scale(
                       scale: _pulseAnimation.value,
                       child: Container(
@@ -1163,9 +1409,8 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.red.withValues(alpha: 0.5),
-                              blurRadius: 8,
-                            ),
+                                color: Colors.red.withValues(alpha: 0.5),
+                                blurRadius: 8),
                           ],
                         ),
                         child: const Icon(Icons.priority_high_rounded,
@@ -1174,62 +1419,24 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                     ),
                   ),
                 ),
-              Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: color.withValues(alpha: 0.4)),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(icon, color: color, size: 12),
-                  const SizedBox(width: 4),
-                  Text(statusText,
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: color)),
-                ]),
-              ),
-
-              // ⭐ ناوی گەڕەک
-              if (neighborhoodName != null && neighborhoodName.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: neighborhoodColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: neighborhoodColor.withValues(alpha: 0.4)),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.place_rounded,
-                        color: neighborhoodColor, size: 11),
-                    const SizedBox(width: 3),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 100),
-                      child: Text(neighborhoodName,
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              color: neighborhoodColor),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                  ]),
+              _chip(_statusText(status), icon, color),
+              if (overdue) ...[
+                const SizedBox(width: 6),
+                _chip('دواکەوتوو', Icons.warning_amber_rounded, Colors.red),
+              ],
+              if (nbName != null && nbName.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: _chip(nbName, Icons.place_rounded, nbColor,
+                      maxWidth: 90),
                 ),
               ],
-
               const Spacer(),
-              Text(timeAgo,
+              Text(_timeAgo(c['created_at']?.toString()),
                   style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color:
-                      isDark ? Colors.white54 : Colors.grey.shade600)),
+                      color: isDark ? Colors.white54 : Colors.grey.shade600)),
             ]),
           ),
           Padding(
@@ -1238,37 +1445,34 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (images.isNotEmpty)
-                  Hero(
-                    tag: 'complaint_img_$id',
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Stack(children: [
-                        OptimizedNetworkImage(
-                          imageUrl: images.first.toString(),
-                          width: 70,
-                          height: 70,
-                          fit: BoxFit.cover,
-                        ),
-                        if (images.length > 1)
-                          Positioned(
-                            bottom: 4,
-                            left: 4,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.7),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text('+${images.length - 1}',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold)),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Stack(children: [
+                      OptimizedNetworkImage(
+                        imageUrl: images.first.toString(),
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                      ),
+                      if (images.length > 1)
+                        Positioned(
+                          bottom: 4,
+                          left: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(6),
                             ),
+                            child: Text('+${_ku(images.length - 1)}',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold)),
                           ),
-                      ]),
-                    ),
+                        ),
+                    ]),
                   )
                 else
                   Container(
@@ -1289,13 +1493,12 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(c['title'] ?? 'بێ ناونیشان',
+                      Text(title,
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 14,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF1A1A2E),
+                              color:
+                              isDark ? Colors.white : const Color(0xFF1A1A2E),
                               height: 1.3),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
@@ -1319,12 +1522,10 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
           ),
           if (!_selectMode)
             Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF0F0F14)
-                    : const Color(0xFFF8F9FA),
+                color:
+                isDark ? const Color(0xFF0F0F14) : const Color(0xFFF8F9FA),
                 borderRadius:
                 const BorderRadius.vertical(bottom: Radius.circular(20)),
               ),
@@ -1358,11 +1559,24 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                     ),
                   ),
                   const SizedBox(width: 6),
+                ] else
+                  const Spacer(),
+
+                // ✅ دوگمەی شێرکردن (Share) هەمیشە بەردەستە
+                _buildIconBtn(
+                    Icons.share_rounded,
+                    const Color(0xFF25D366),
+                        () => _shareComplaintToWhatsApp(c)
+                ),
+                const SizedBox(width: 6),
+
+                // ✅ دوگمەی چات (تەنها ئەگەر ژمارەی مۆبایل هەبوو)
+                if (hasPhone) ...[
+                  _buildIconBtn(Icons.chat_rounded, const Color(0xFF25D366),
+                          () => _sendWhatsApp(c)),
+                  const SizedBox(width: 6),
                 ],
-                if (hasPhone)
-                  _buildIconBtn(Icons.chat_rounded,
-                      const Color(0xFF25D366), () => _sendWhatsApp(c)),
-                if (hasPhone) const SizedBox(width: 6),
+
                 _buildIconBtn(Icons.visibility_rounded, AppColors.primary,
                         () => _showDetails(c)),
                 const SizedBox(width: 6),
@@ -1372,6 +1586,32 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
             ),
         ]),
       ),
+    );
+  }
+
+  Widget _chip(String label, IconData icon, Color color, {double? maxWidth}) {
+    final text = Text(label,
+        style:
+        TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: color, size: 11),
+        const SizedBox(width: 3),
+        maxWidth == null
+            ? text
+            : Flexible(
+            child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: text)),
+      ]),
     );
   }
 
@@ -1412,8 +1652,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.8)]),
+          gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.8)]),
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
@@ -1438,24 +1677,35 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
 
   Widget _buildIconBtn(IconData icon, Color color, VoidCallback? onTap) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+      onTap: onTap == null
+          ? null
+          : () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Opacity(
+        opacity: onTap == null ? 0.4 : 1,
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Icon(icon, color: color, size: 16),
         ),
-        child: Icon(icon, color: color, size: 16),
       ),
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🫥 Empty / error / skeleton
+  // ═══════════════════════════════════════════════════════════
   Widget _buildEmpty(bool isDark) {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        SizedBox(height: MediaQuery.sizeOf(context).height * 0.15),
+        SizedBox(height: MediaQuery.sizeOf(context).height * 0.08),
         Center(
           child: Column(children: [
             Container(
@@ -1465,8 +1715,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.assignment_outlined,
-                  size: 70,
-                  color: isDark ? Colors.white24 : AppColors.primary),
+                  size: 70, color: isDark ? Colors.white24 : AppColors.primary),
             ),
             const SizedBox(height: 20),
             Text('هیچ سکاڵایەک نەدۆزرایەوە',
@@ -1475,15 +1724,15 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
                     fontSize: 16,
                     color: isDark ? Colors.white70 : const Color(0xFF1A1A2E))),
             const SizedBox(height: 8),
-            Text('لەم فلتەر و بەروارەدا هیچ ئەنجامێک نییە',
+            Text(
+                _hasActiveFilters
+                    ? 'لەم فلتەر و بەروارەدا هیچ ئەنجامێک نییە'
+                    : 'هێشتا هیچ سکاڵایەک نەنێردراوە',
                 style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white38 : Colors.grey.shade600)),
             const SizedBox(height: 20),
-            if (_q.isNotEmpty ||
-                _filterAuthority != null ||
-                _filterNeighborhood != null ||
-                _filterStatuses.isNotEmpty)
+            if (_hasActiveFilters)
               ElevatedButton.icon(
                 onPressed: _clearAllFilters,
                 icon: const Icon(Icons.filter_alt_off_rounded),
@@ -1495,52 +1744,87 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     );
   }
 
-  Widget _buildSkeleton(bool isDark) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 6,
-      itemBuilder: (_, i) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        height: 160,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+  Widget _buildError(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.wifi_off_rounded,
+                size: 64, color: isDark ? Colors.white38 : Colors.grey),
+            const SizedBox(height: 16),
+            Text('نەتوانرا سکاڵاکان بار بکرێن',
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+            const SizedBox(height: 8),
+            Text('ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەرەوە',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white54 : Colors.grey.shade600)),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _fetchComplaints,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('دووبارە هەوڵبدەرەوە'),
+            ),
+          ],
         ),
-        child: const Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton(bool isDark) {
+    return SafeArea(
+      child: AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (_, __) => ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: 6,
+          itemBuilder: (_, i) => Opacity(
+            opacity: 0.5 + (_pulseAnimation.value - 0.95) * 4,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              height: 150,
+              decoration: BoxDecoration(
+                color: _surface(isDark),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🎛 FABs + sheets
+  // ═══════════════════════════════════════════════════════════
   Widget _buildFilterFab() {
     return FloatingActionButton.extended(
-      onPressed: () => _showFilterSheet(
-          Theme.of(context).brightness == Brightness.dark),
+      onPressed: _showFilterSheet,
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       icon: const Icon(Icons.tune_rounded),
-      label: const Text('فلتەر',
-          style: TextStyle(fontWeight: FontWeight.w900)),
+      label:
+      const Text('فلتەر', style: TextStyle(fontWeight: FontWeight.w900)),
     );
   }
 
   Widget _buildBulkActionsFab() {
     return FloatingActionButton.extended(
       onPressed: _showBulkActions,
-      backgroundColor: Colors.red.shade600,
+      backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
-      icon: const Icon(Icons.delete_sweep_rounded),
-      label: Text('سڕینەوە (${_selectedIds.length})',
+      icon: const Icon(Icons.auto_fix_high_rounded),
+      label: Text('کار (${_ku(_selectedIds.length)})',
           style: const TextStyle(fontWeight: FontWeight.w900)),
     );
   }
 
-  void _showFilterSheet(bool isDark) {
+  void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1555,16 +1839,19 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
         onlyWithImages: _onlyWithImages,
         complaints: _complaints,
         onApply: (result) {
-          setState(() {
-            _sortBy = result.sortBy;
-            _fromDate = result.fromDate;
-            _toDate = result.toDate;
-            _filterAuthority = result.authority;
-            _filterStatuses = result.statuses;
-            _onlyWithVoice = result.onlyWithVoice;
-            _onlyWithImages = result.onlyWithImages;
-          });
-          _applyFilters();
+          bool sameDay(DateTime a, DateTime b) =>
+              a.year == b.year && a.month == b.month && a.day == b.day;
+          _sortBy = result.sortBy;
+          _fromDate = result.fromDate;
+          _toDate = result.toDate;
+          _filterAuthority = result.authority;
+          _filterStatuses = result.statuses;
+          _onlyWithVoice = result.onlyWithVoice;
+          _onlyWithImages = result.onlyWithImages;
+          // the date range only filters the list once the admin changed it
+          _dateFilterActive = !sameDay(result.fromDate, _defaultFrom) ||
+              !sameDay(result.toDate, DateTime.now());
+          _refilter();
         },
       ),
     );
@@ -1591,81 +1878,237 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // ⚡ Status updates (optimistic + undo)
+  // ═══════════════════════════════════════════════════════════
   Future<void> _quickUpdate(Map<String, dynamic> c, String newStatus) async {
+    final old = c['status']?.toString() ?? 'pending';
+    if (old == newStatus) return;
+
+    setState(() {
+      c['status'] = newStatus;
+      _recompute();
+    });
+
     try {
       await Supabase.instance.client
           .from('complaints')
           .update({'status': newStatus}).eq('id', c['id']);
-
-      if (mounted) {
-        setState(() => c['status'] = newStatus);
-        _applyFilters();
-        HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ گۆڕدرا بۆ: ${_statusText(newStatus)}'),
-            backgroundColor: _color(newStatus),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
-
-      if (newStatus == 'in_progress') {
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (!mounted) return;
-        HapticFeedback.heavyImpact();
-        await WhatsAppComplaintService.sendComplaint(
-          context: context,
-          complaint: c,
-          showPreview: false,
-        );
-      }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
-        );
-      }
+      debugPrint('❌ quickUpdate error: $e');
+      if (!mounted) return;
+      setState(() {
+        c['status'] = old;
+        _recompute();
+      });
+      _snack('گۆڕینی دۆخ سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+      return;
+    }
+
+    if (!mounted) return;
+    HapticFeedback.mediumImpact();
+    _snack(
+      '✅ گۆڕدرا بۆ: ${_statusText(newStatus)}',
+      _color(newStatus),
+      action: SnackBarAction(
+        label: 'گەڕاندنەوە',
+        textColor: Colors.white,
+        onPressed: () => _revertStatus(c, old),
+      ),
+    );
+
+    // 🟢 ناردنی بۆ واتسئاپ ئەگەر پەسەندکرا
+    if (newStatus == 'in_progress') {
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
+      HapticFeedback.heavyImpact();
+      await _shareComplaintToWhatsApp(c);
     }
   }
 
-  Future<void> _delete(Map<String, dynamic> c) async {
+  Future<void> _revertStatus(Map<String, dynamic> c, String old) async {
+    try {
+      await Supabase.instance.client
+          .from('complaints')
+          .update({'status': old}).eq('id', c['id']);
+      if (!mounted) return;
+      setState(() {
+        c['status'] = old;
+        _recompute();
+      });
+    } catch (e) {
+      debugPrint('❌ revert error: $e');
+      _snack('گەڕاندنەوە سەرنەکەوت', Colors.red);
+    }
+  }
+
+  Future<void> _showBulkActions() async {
+    if (_selectedIds.isEmpty) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Widget tile(String key, String label, IconData icon, Color color) =>
+        ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          title: Text(label,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+          onTap: () => Navigator.pop(context, key),
+        );
+
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: _surface(isDark),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Text(
+                    'کار لەسەر ${_ku(_selectedIds.length)} سکاڵا',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w900, fontSize: 16)),
+              ),
+              tile('in_progress', 'پەسەندکردن', Icons.verified_rounded,
+                  const Color(0xFF2ECC71)),
+              tile('completed', 'جێبەجێکردن (تەواو)',
+                  Icons.check_circle_rounded, const Color(0xFF3498DB)),
+              tile('rejected', 'ڕەتکردنەوە', Icons.cancel_rounded,
+                  const Color(0xFFE74C3C)),
+              const Divider(),
+              tile('delete', 'سڕینەوە', Icons.delete_sweep_rounded, Colors.red),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted || choice == null) return;
+    if (choice == 'delete') {
+      await _bulkDelete();
+    } else {
+      await _bulkSetStatus(choice);
+    }
+  }
+
+  Future<void> _bulkSetStatus(String status) async {
+    final ids = _selectedIds.toList();
+    final previous = <String, String>{
+      for (final c in _complaints)
+        if (ids.contains(c['id'].toString()))
+          c['id'].toString(): c['status']?.toString() ?? 'pending',
+    };
+
+    try {
+      await Supabase.instance.client
+          .from('complaints')
+          .update({'status': status}).inFilter('id', ids);
+    } catch (e) {
+      debugPrint('❌ bulk status error: $e');
+      _snack('گۆڕین سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      for (final c in _complaints) {
+        if (ids.contains(c['id'].toString())) c['status'] = status;
+      }
+      _selectMode = false;
+      _selectedIds.clear();
+      _recompute();
+    });
+    HapticFeedback.mediumImpact();
+    _snack(
+      '✅ ${_ku(ids.length)} سکاڵا گۆڕدرا بۆ: ${_statusText(status)}',
+      _color(status),
+      action: SnackBarAction(
+        label: 'گەڕاندنەوە',
+        textColor: Colors.white,
+        onPressed: () async {
+          try {
+            // group by previous status to restore each correctly
+            final groups = <String, List<String>>{};
+            previous.forEach((id, s) => (groups[s] ??= []).add(id));
+            for (final e in groups.entries) {
+              await Supabase.instance.client
+                  .from('complaints')
+                  .update({'status': e.key}).inFilter('id', e.value);
+            }
+            await _fetchComplaints(showLoader: false);
+          } catch (_) {
+            _snack('گەڕاندنەوە سەرنەکەوت', Colors.red);
+          }
+        },
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🗑 Delete
+  // ═══════════════════════════════════════════════════════════
+  Future<bool> _confirm(String title, String body, String yes) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => Directionality(
+      builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red),
-            SizedBox(width: 8),
-            Text('سڕینەوەی سکاڵا'),
+          title: Row(children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.red),
+            const SizedBox(width: 8),
+            Expanded(child: Text(title)),
           ]),
-          content: const Text(
-              'ئایا دڵنیایت؟ هەموو وێنە و دەنگەکانیشی دەسڕدرێنەوە.'),
+          content: Text(body),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(ctx, false),
               child: const Text('نەخێر'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red, foregroundColor: Colors.white),
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('بەڵێ، بسڕەوە'),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(yes),
             ),
           ],
         ),
       ),
     );
+    return ok ?? false;
+  }
 
-    if (ok != true) return;
+  Future<void> _delete(Map<String, dynamic> c) async {
+    if (_isDeleting) return;
+    if (!await _confirm('سڕینەوەی سکاڵا',
+        'ئایا دڵنیایت؟ هەموو وێنە و دەنگەکانیشی دەسڕدرێنەوە و ناگەڕێتەوە.',
+        'بەڵێ، بسڕەوە')) {
+      return;
+    }
+
     setState(() => _isDeleting = true);
-
     try {
       await Supabase.instance.client
           .from('complaints')
@@ -1674,65 +2117,38 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
 
       try {
         await StorageService.deleteComplaintFiles(complaint: c);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('⚠️ file cleanup failed: $e');
+      }
 
-      if (mounted) {
-        setState(() {
-          _hiddenIds.add(c['id'].toString());
-          _complaints
-              .removeWhere((x) => x['id'].toString() == c['id'].toString());
-        });
-        _applyFilters();
-        HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('✅ سکاڵا سڕایەوە'),
-            backgroundColor: Colors.green));
-      }
+      if (!mounted) return;
+      setState(() {
+        _complaints.removeWhere((x) => x['id'].toString() == c['id'].toString());
+        _selectedIds.remove(c['id'].toString());
+        _recompute();
+      });
+      HapticFeedback.mediumImpact();
+      _snack('✅ سکاڵا سڕایەوە', Colors.green);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
-        );
-      }
+      debugPrint('❌ delete error: $e');
+      _snack('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
   }
 
-  Future<void> _showBulkActions() async {
-    if (_selectedIds.isEmpty) return;
+  Future<void> _bulkDelete() async {
+    if (_selectedIds.isEmpty || _isDeleting) return;
+    final n = _selectedIds.length;
+    if (!await _confirm('سڕینەوەی ${_ku(n)} سکاڵا',
+        'ئایا دڵنیایت لە سڕینەوەی هەموو ئەم سکاڵایانە؟ ناگەڕێنەوە.', 'بەڵێ')) {
+      return;
+    }
 
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('سڕینەوەی ${_selectedIds.length} سکاڵا'),
-          content:
-          const Text('ئایا دڵنیایت لە سڕینەوەی هەموو ئەم سکاڵایانە؟'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('نەخێر'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red, foregroundColor: Colors.white),
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('بەڵێ'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (ok != true) return;
-
+    setState(() => _isDeleting = true);
     try {
       final ids = _selectedIds.toList();
-      final complaintsToDelete = _complaints
+      final toDelete = _complaints
           .where((c) => ids.contains(c['id'].toString()))
           .toList();
 
@@ -1741,55 +2157,53 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
           .delete()
           .inFilter('id', ids);
 
-      for (final c in complaintsToDelete) {
+      for (final c in toDelete) {
         try {
           await StorageService.deleteComplaintFiles(complaint: c);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('⚠️ file cleanup failed: $e');
+        }
       }
 
-      if (mounted) {
-        setState(() {
-          _hiddenIds.addAll(ids);
-          _complaints.removeWhere((c) => ids.contains(c['id'].toString()));
-          _selectMode = false;
-          _selectedIds.clear();
-        });
-        _applyFilters();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('✅ ${ids.length} سکاڵا سڕانەوە'),
-            backgroundColor: Colors.green));
-      }
+      if (!mounted) return;
+      setState(() {
+        _complaints.removeWhere((c) => ids.contains(c['id'].toString()));
+        _selectMode = false;
+        _selectedIds.clear();
+        _recompute();
+      });
+      HapticFeedback.heavyImpact();
+      _snack('✅ ${_ku(ids.length)} سکاڵا سڕانەوە', Colors.green);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
-        );
-      }
+      debugPrint('❌ bulk delete error: $e');
+      _snack('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📄 PDF
+  // ═══════════════════════════════════════════════════════════
   Future<void> _generatePdf() async {
     if (_generatingPdf) return;
+    final list = _currentList;
+    if (list.isEmpty) {
+      _snack('هیچ سکاڵایەک نییە', Colors.orange);
+      return;
+    }
+
     setState(() => _generatingPdf = true);
     try {
-      if (_filtered.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('هیچ سکاڵایەک نییە'),
-            backgroundColor: Colors.orange));
-        return;
-      }
       await ComplaintsPdfService.generateReport(
         context: context,
-        complaints: _filtered,
+        complaints: list,
         fromDate: _fromDate,
         toDate: _toDate,
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
-        );
-      }
+      debugPrint('❌ pdf error: $e');
+      _snack('دروستکردنی PDF سەرنەکەوت', Colors.red);
     } finally {
       if (mounted) setState(() => _generatingPdf = false);
     }
@@ -1814,6 +2228,5 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(_SliverTabBarDelegate old) =>
-      old.tabBar != tabBar || old.backgroundColor != backgroundColor;
+  bool shouldRebuild(_SliverTabBarDelegate old) => true;
 }

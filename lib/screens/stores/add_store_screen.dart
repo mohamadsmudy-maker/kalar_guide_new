@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,7 +12,7 @@ import '../../config/app_colors.dart';
 import '../../services/image_service.dart';
 import 'map_picker.dart';
 
-/// 🏪 شاشەی زیادکردن / دەستکاریکردنی شوێن — Full Pro Edition
+/// 🏪 شاشەی زیادکردن / دەستکاریکردنی شوێن — Full Pro Edition V7
 class AddStoreScreen extends StatefulWidget {
   final Map<String, dynamic>? storeToEdit;
 
@@ -24,6 +27,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _descController = TextEditingController();
+  final _vendorCodeController = TextEditingController();
 
   String? _selectedMainCategory;
   String? _selectedSubCategory;
@@ -32,16 +36,17 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
   List<String> _mainCategories = [];
   List<String> _subCategories = [];
 
-  // ✅ وێنەکان
   final List<XFile> _storeImages = [];
   XFile? _logoImage;
 
-  // ✅ وێنە کۆنەکان (لە کاتی دەستکاریکردن)
   List<String> _existingImages = [];
   String? _existingLogo;
 
   bool _loading = false;
   bool _gettingLocation = false;
+
+  String _detectedNeighborhood = 'دەستنیشان نەکراوە';
+  bool _isLoadingNeighborhood = false;
 
   double? _latitude;
   double? _longitude;
@@ -54,9 +59,18 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       _phoneController.text = widget.storeToEdit!['phone'] ?? '';
       _addressController.text = widget.storeToEdit!['address'] ?? '';
       _descController.text = widget.storeToEdit!['description'] ?? '';
-      _selectedMainCategory = widget.storeToEdit!['category'];
+      _vendorCodeController.text = widget.storeToEdit!['vendor_code'] ?? '';
+
+      _selectedMainCategory = widget.storeToEdit!['category'] ??
+          widget.storeToEdit!['sector'];
       _selectedSubCategory = widget.storeToEdit!['sub_category'];
-      _storeType = widget.storeToEdit!['type'] ?? 'حکومی';
+      _storeType = widget.storeToEdit!['type'] ??
+          widget.storeToEdit!['ownership_type'] ??
+          'حکومی';
+
+      _detectedNeighborhood =
+          widget.storeToEdit!['neighborhood_name'] ?? 'دەستنیشان نەکراوە';
+
       _latitude = double.tryParse(
         widget.storeToEdit!['latitude']?.toString() ?? '',
       );
@@ -64,20 +78,40 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         widget.storeToEdit!['longitude']?.toString() ?? '',
       );
 
-      // ✅ وێنەکانی کۆن
       final oldImages = widget.storeToEdit!['images'];
       if (oldImages is List) {
         _existingImages = List<String>.from(
-          oldImages.map((e) => e.toString()),
+          oldImages.map((e) => e.toString()).where((e) => e.isNotEmpty),
         );
-      } else if (widget.storeToEdit!['image'] != null &&
-          widget.storeToEdit!['image'].toString().isNotEmpty) {
-        _existingImages = [widget.storeToEdit!['image'].toString()];
+      }
+      if (_existingImages.isEmpty) {
+        final singleImage = widget.storeToEdit!['image']?.toString() ?? '';
+        if (singleImage.isNotEmpty) {
+          _existingImages = [singleImage];
+        }
       }
 
       _existingLogo = widget.storeToEdit!['logo']?.toString();
+    } else {
+      _generateRandomVendorCode();
     }
     _fetchCategories();
+  }
+
+  void _generateRandomVendorCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const nums = '0123456789';
+    final rand = Random();
+
+    String result = '';
+    for (int i = 0; i < 4; i++) {
+      result += chars[rand.nextInt(chars.length)];
+    }
+    for (int i = 0; i < 3; i++) {
+      result += nums[rand.nextInt(nums.length)];
+    }
+
+    _vendorCodeController.text = result;
   }
 
   @override
@@ -86,6 +120,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _descController.dispose();
+    _vendorCodeController.dispose();
     super.dispose();
   }
 
@@ -128,8 +163,10 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
 
       if (mounted) {
         setState(() {
-          _subCategories =
-              rawList.map((e) => e['name'].toString()).toList();
+          _subCategories = rawList
+              .map((e) => e['name'].toString())
+              .toSet()
+              .toList();
           if (_selectedSubCategory != null &&
               !_subCategories.contains(_selectedSubCategory)) {
             _selectedSubCategory = null;
@@ -144,10 +181,39 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     final pickedList = await picker.pickMultiImage(imageQuality: 70);
-    if (pickedList.isNotEmpty) {
+    if (pickedList.isNotEmpty && mounted) {
       setState(() {
-        int remainingSlots = 3 - _storeImages.length;
+        final remainingSlots = 3 - _storeImages.length;
         _storeImages.addAll(pickedList.take(remainingSlots));
+      });
+    }
+  }
+
+  Future<void> _detectNeighborhood(double lat, double lng) async {
+    setState(() {
+      _isLoadingNeighborhood = true;
+      _detectedNeighborhood = 'دەستنیشان دەکرێت...';
+    });
+
+    try {
+      final response = await Supabase.instance.client.rpc(
+          'get_neighborhood_by_location',
+          params: {
+            'p_longitude': lng,
+            'p_latitude': lat,
+          });
+
+      setState(() {
+        _detectedNeighborhood =
+        response != null ? response.toString() : 'گەڕەک نەدۆزرایەوە';
+      });
+    } catch (e) {
+      setState(() {
+        _detectedNeighborhood = 'هەڵە لە دۆزینەوە';
+      });
+    } finally {
+      setState(() {
+        _isLoadingNeighborhood = false;
       });
     }
   }
@@ -155,10 +221,10 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
   Future<void> _getCurrentLocation() async {
     setState(() => _gettingLocation = true);
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         _showSnackBar('تکایە GPS هەڵبکە ⚠', Colors.orange);
-        setState(() => _gettingLocation = false);
+        if (mounted) setState(() => _gettingLocation = false);
         return;
       }
 
@@ -167,19 +233,22 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           _showSnackBar('مۆڵەتی لۆکەیشن ڕەتکرایەوە ❌', Colors.red);
-          setState(() => _gettingLocation = false);
+          if (mounted) setState(() => _gettingLocation = false);
           return;
         }
       }
 
-      Position position = await Geolocator.getCurrentPosition(
+      final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      setState(() {
-        _latitude = position.latitude;
-        _longitude = position.longitude;
-      });
+      if (mounted) {
+        setState(() {
+          _latitude = position.latitude;
+          _longitude = position.longitude;
+        });
+        await _detectNeighborhood(position.latitude, position.longitude);
+      }
 
       _showSnackBar('GPS وەرگیرا ✅', Colors.green);
     } catch (e) {
@@ -200,7 +269,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       ),
     );
 
-    if (result == null) return;
+    if (result == null || !mounted) return;
 
     if (result is Map) {
       final location = result['location'] as gmaps.LatLng?;
@@ -218,8 +287,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         if (poiName.isNotEmpty && _nameController.text.trim().isEmpty) {
           _nameController.text = poiName;
         }
-        if (poiAddress.isNotEmpty &&
-            _addressController.text.trim().isEmpty) {
+        if (poiAddress.isNotEmpty && _addressController.text.trim().isEmpty) {
           _addressController.text = poiAddress;
         }
         if (poiPhone.isNotEmpty && _phoneController.text.trim().isEmpty) {
@@ -227,30 +295,34 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         }
       });
 
+      if (location != null) {
+        await _detectNeighborhood(location.latitude, location.longitude);
+      }
+
       _showSnackBar('زانیاری شوێنەکە هێنرا ✅', Colors.green);
     } else if (result is gmaps.LatLng) {
       setState(() {
         _latitude = result.latitude;
         _longitude = result.longitude;
       });
+      await _detectNeighborhood(result.latitude, result.longitude);
       _showSnackBar('شوێن هەڵبژێردرا ✅', Colors.green);
     }
   }
 
   void _showSnackBar(String message, Color color) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message, style: const TextStyle(fontSize: 12)),
-          backgroundColor: color,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontSize: 12)),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
-      );
-    }
+      ),
+    );
   }
 
   Future<void> _saveStore() async {
@@ -266,43 +338,50 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       _showSnackBar('ناونیشان بنووسە ⚠', Colors.orange);
       return;
     }
+    if (_latitude == null || _longitude == null) {
+      _showSnackBar('تکایە شوێنەکە دیاری بکە (GPS یان نەخشە) ⚠', Colors.orange);
+      return;
+    }
+    if (_phoneController.text.trim().isEmpty) {
+      _showSnackBar('ژمارەی مۆبایل پێویستە بۆ کۆدی نهێنی ⚠', Colors.orange);
+      return;
+    }
 
     setState(() => _loading = true);
 
     try {
       final storeName = _nameController.text.trim();
+      final editingId = widget.storeToEdit?['id'];
 
-      // ✅ پشکنینی ناوی دووبارە
       final existingStore = await Supabase.instance.client
           .from('dukan')
           .select('id')
-          .eq('name', storeName)
-          .neq('id', widget.storeToEdit?['id'] ?? -1)
+          .ilike('name', storeName)
+          .neq('id', editingId ?? -1)
           .maybeSingle();
 
       if (existingStore != null) {
         _showSnackBar('شوێنێک بەم ناوە پێشتر هەیە! ❌', Colors.red);
-        setState(() => _loading = false);
+        if (mounted) setState(() => _loading = false);
         return;
       }
 
-      // ✅ ١. بارکردنی هەموو وێنە نوێیەکان
-      List<String> newImageUrls = [];
+      final newImageUrls = <String>[];
       if (_storeImages.isNotEmpty) {
-        for (var img in _storeImages) {
+        for (final img in _storeImages) {
           try {
             final url = await ImageCompressionService.uploadImage(img);
-            newImageUrls.add(url);
+            if (url.isNotEmpty) newImageUrls.add(url);
           } catch (e) {
             debugPrint('❌ Image upload error: $e');
           }
         }
       }
 
-      // ✅ ٢. کۆکردنەوەی هەموو وێنەکان (کۆن + نوێ)
-      final allImages = [..._existingImages, ...newImageUrls];
+      final allImages = [..._existingImages, ...newImageUrls]
+          .where((e) => e.isNotEmpty)
+          .toList();
 
-      // ✅ ٣. بارکردنی لۆگۆ
       String logoUrl = _existingLogo ?? '';
       if (_logoImage != null) {
         try {
@@ -312,25 +391,43 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         }
       }
 
-      // ✅ ٤. دروستکردنی داتا
-      final storeData = {
+      final geoJsonPoint = jsonEncode({
+        "type": "Point",
+        "coordinates": [_longitude, _latitude]
+      });
+
+      final storeData = <String, dynamic>{
         'name': storeName,
-        'phone': _phoneController.text.trim().isNotEmpty
-            ? _phoneController.text.trim()
-            : null,
+        'phone': _phoneController.text.trim(),
         'address': _addressController.text.trim(),
         'description': _descController.text.trim(),
+
         'category': _selectedMainCategory,
         'sub_category': _selectedSubCategory,
+        'sector': _selectedMainCategory,
+
         'type': _storeType,
+        'ownership_type': _storeType,
+
         'latitude': _latitude,
         'longitude': _longitude,
+        'location': geoJsonPoint,
+
+        'neighborhood_name': _detectedNeighborhood,
+        'vendor_code': _vendorCodeController.text.trim(),
+
         'image': allImages.isNotEmpty ? allImages.first : '',
-        'images': allImages, // ✅ هەموو وێنەکان
+        'images': allImages,
         'logo': logoUrl.isNotEmpty ? logoUrl : null,
+
+        'is_approved': widget.storeToEdit?['is_approved'] ?? false,
+        'is_verified': widget.storeToEdit?['is_verified'] ?? false,
+        'average_rating': widget.storeToEdit?['average_rating'] ?? 0.0,
+        'total_reviews': widget.storeToEdit?['total_reviews'] ?? 0,
+        'services': widget.storeToEdit?['services'] ?? <dynamic>[],
       };
 
-      if (widget.storeToEdit == null) {
+      if (editingId == null) {
         storeData['created_at'] = DateTime.now().toIso8601String();
         await Supabase.instance.client.from('dukan').insert(storeData);
         _showSnackBar('زیادکرا ✅', Colors.green);
@@ -338,7 +435,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         await Supabase.instance.client
             .from('dukan')
             .update(storeData)
-            .eq('id', widget.storeToEdit!['id']);
+            .eq('id', editingId);
         _showSnackBar('نوێکرایەوە ✅', Colors.green);
       }
 
@@ -413,14 +510,13 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                // ✅ لۆگۆ
                 GestureDetector(
                   onTap: () async {
                     final picked = await ImagePicker().pickImage(
                       source: ImageSource.gallery,
                       imageQuality: 70,
                     );
-                    if (picked != null) {
+                    if (picked != null && mounted) {
                       setState(() => _logoImage = picked);
                     }
                   },
@@ -451,51 +547,13 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                       child: Image.network(
                         _existingLogo!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Column(
-                          mainAxisAlignment:
-                          MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.business_rounded,
-                              color: Colors.purple.shade400,
-                              size: 28,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'لۆگۆ',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.purple.shade700,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                        errorBuilder: (_, __, ___) =>
+                            _logoPlaceholder(),
                       ),
                     )
-                        : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.business_rounded,
-                          color: Colors.purple.shade400,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'لۆگۆ',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.purple.shade700,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                        : _logoPlaceholder(),
                   ),
                 ),
-
-                // ✅ وێنە کۆنەکان
                 ..._existingImages.asMap().entries.map((entry) {
                   return Container(
                     width: 100,
@@ -544,8 +602,6 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                     ),
                   );
                 }),
-
-                // ✅ وێنە نوێیەکان
                 ..._storeImages.asMap().entries.map((entry) {
                   return Container(
                     width: 100,
@@ -587,8 +643,6 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                     ),
                   );
                 }),
-
-                // ✅ دوگمەی زیادکردن
                 if (_storeImages.length + _existingImages.length < 3)
                   GestureDetector(
                     onTap: _pickImages,
@@ -596,8 +650,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color:
-                        AppColors.primary.withValues(alpha: 0.08),
+                        color: AppColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: AppColors.primary,
@@ -633,6 +686,28 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     );
   }
 
+  Widget _logoPlaceholder() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.business_rounded,
+          color: Colors.purple.shade400,
+          size: 28,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'لۆگۆ',
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.purple.shade700,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildInfoSection(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -654,6 +729,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                     setState(() {
                       _selectedMainCategory = val;
                       _selectedSubCategory = null;
+                      _subCategories = [];
                     });
                     if (val != null) _fetchSubCategories(val);
                   },
@@ -699,9 +775,49 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
           const SizedBox(height: 10),
           _buildTextField(
             _phoneController,
-            'مۆبایل',
+            'مۆبایل *',
             keyboard: TextInputType.phone,
             isDark: isDark,
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _vendorCodeController,
+            readOnly: true,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+              color: isDark ? Colors.amber : Colors.blue.shade800,
+            ),
+            decoration: InputDecoration(
+              labelText: 'کۆدی نهێنی (Vendor Code)',
+              labelStyle: TextStyle(
+                color: isDark ? Colors.amber.shade200 : Colors.blue.shade800,
+                fontWeight: FontWeight.bold,
+              ),
+              prefixIcon: Icon(Icons.vpn_key_rounded,
+                  color: isDark ? Colors.amber : Colors.blue.shade800),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.copy_rounded, size: 20),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: _vendorCodeController.text));
+                  _showSnackBar('کۆدەکە کۆپی کرا ✅', Colors.green);
+                },
+                tooltip: 'کۆپیکردن',
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+              fillColor: isDark
+                  ? Colors.amber.withValues(alpha: 0.1)
+                  : Colors.blue.shade50,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
+              isDense: true,
+            ),
           ),
           const SizedBox(height: 10),
           _buildTextField(_addressController, 'ناونیشان *', isDark: isDark),
@@ -731,12 +847,10 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               Expanded(
                 child: _buildLocationButton(
                   icon: Icons.my_location_rounded,
-                  label: _latitude != null
-                      ? 'GPS وەرگیرا ✓'
-                      : 'وەرگرتنی GPS',
-                  color: _latitude != null
-                      ? Colors.green
-                      : AppColors.primary,
+                  label:
+                  _latitude != null ? 'GPS وەرگیرا ✓' : 'وەرگرتنی GPS',
+                  color:
+                  _latitude != null ? Colors.green : AppColors.primary,
                   isLoading: _gettingLocation,
                   onTap: _gettingLocation ? null : _getCurrentLocation,
                 ),
@@ -769,18 +883,75 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                     size: 16,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    '${_latitude!.toStringAsFixed(5)}, ${_longitude!.toStringAsFixed(5)}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                  Expanded(
+                    child: Text(
+                      '${_latitude!.toStringAsFixed(5)}, ${_longitude!.toStringAsFixed(5)}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_city_rounded,
+                      color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'گەڕەک',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        _isLoadingNeighborhood
+                            ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                            : Text(
+                          _detectedNeighborhood,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1013,12 +1184,16 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               else
                 Icon(icon, color: color, size: 18),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

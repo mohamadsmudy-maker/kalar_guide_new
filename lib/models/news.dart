@@ -1,3 +1,5 @@
+// lib/models/news.dart
+
 /// 📰 مۆدێلی هەواڵ
 class News {
   final String? id;
@@ -8,8 +10,7 @@ class News {
   final int likes;
   final int views;
   final DateTime? createdAt;
-
-  // ⭐ خانەی نوێ — زانیاری شوێن
+  final String? newsType;
   final String? storeName;
   final String? storeLogo;
   final String? storeImage;
@@ -23,13 +24,13 @@ class News {
     this.likes = 0,
     this.views = 0,
     this.createdAt,
+    this.newsType,
     this.storeName,
     this.storeLogo,
     this.storeImage,
   });
 
   factory News.fromJson(Map<String, dynamic> json) {
-    // وێنەکان
     List<String> imgList = [];
     final raw = json['images'] ?? json['img'];
     if (raw is List) {
@@ -51,7 +52,6 @@ class News {
       }
     }
 
-    // ⭐ پارسکردنی زانیاری شوێن
     String? storeName;
     String? storeLogo;
     String? storeImage;
@@ -63,7 +63,6 @@ class News {
       storeImage = storeData['image']?.toString();
     }
 
-    // پشکنین: ئەگەر store_name ڕاستەوخۆ هەبوو (لە cache یان join ی تر)
     storeName ??= json['store_name']?.toString();
     storeLogo ??= json['store_logo']?.toString();
     storeImage ??= json['store_image']?.toString();
@@ -79,46 +78,45 @@ class News {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
+      newsType: json['news_type']?.toString(),
       storeName: storeName,
       storeLogo: storeLogo,
       storeImage: storeImage,
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({bool includeNullables = false}) {
     return {
       if (id != null) 'id': id,
-      'store_id': storeId,
+      if (includeNullables || storeId != null) 'store_id': storeId,
       'title': title,
       'description': description,
       'images': images,
       'likes': likes,
       'views': views,
-      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
-      // ⭐ زانیاری شوێن
-      if (storeName != null) 'store_name': storeName,
-      if (storeLogo != null) 'store_logo': storeLogo,
-      if (storeImage != null) 'store_image': storeImage,
+      if (includeNullables || newsType != null) 'news_type': newsType,
+      // زانیاری شوێن تەنها بۆ نیشاندانە، بۆ داتابەیس نا
     };
   }
 
-  /// وێنەی سەرەکی
+  Map<String, dynamic> toUpdateJson() {
+    final json = toJson(includeNullables: true);
+    json['updated_at'] = DateTime.now().toUtc().toIso8601String();
+    return json;
+  }
+
   String? get primaryImage => images.isNotEmpty ? images.first : null;
 
-  /// ئایا وێنەی هەیە؟
   bool get hasImage => primaryImage != null && primaryImage!.isNotEmpty;
 
-  /// ⭐ ئایا شوێن هەیە؟
   bool get hasStore => storeName != null && storeName!.isNotEmpty;
 
-  /// ⭐ لۆگۆ یان وێنەی شوێن
   String? get storeAvatar {
     if (storeLogo != null && storeLogo!.isNotEmpty) return storeLogo;
     if (storeImage != null && storeImage!.isNotEmpty) return storeImage;
     return null;
   }
 
-  /// کاتی "چەند لەمەوبەر"
   String getTimeAgo() {
     if (createdAt == null) return 'کەمێک پێش ئێستا';
 
@@ -133,29 +131,37 @@ class News {
 
   News copyWith({
     String? id,
+    bool clearId = false,
     String? storeId,
+    bool clearStoreId = false,
     String? title,
     String? description,
     List<String>? images,
     int? likes,
     int? views,
     DateTime? createdAt,
+    String? newsType,
+    bool clearNewsType = false,
     String? storeName,
+    bool clearStoreName = false,
     String? storeLogo,
+    bool clearStoreLogo = false,
     String? storeImage,
+    bool clearStoreImage = false,
   }) {
     return News(
-      id: id ?? this.id,
-      storeId: storeId ?? this.storeId,
+      id: clearId ? null : (id ?? this.id),
+      storeId: clearStoreId ? null : (storeId ?? this.storeId),
       title: title ?? this.title,
       description: description ?? this.description,
       images: images ?? this.images,
       likes: likes ?? this.likes,
       views: views ?? this.views,
       createdAt: createdAt ?? this.createdAt,
-      storeName: storeName ?? this.storeName,
-      storeLogo: storeLogo ?? this.storeLogo,
-      storeImage: storeImage ?? this.storeImage,
+      newsType: clearNewsType ? null : (newsType ?? this.newsType),
+      storeName: clearStoreName ? null : (storeName ?? this.storeName),
+      storeLogo: clearStoreLogo ? null : (storeLogo ?? this.storeLogo),
+      storeImage: clearStoreImage ? null : (storeImage ?? this.storeImage),
     );
   }
 }

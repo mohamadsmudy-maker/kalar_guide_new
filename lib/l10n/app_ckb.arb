@@ -1,0 +1,13 @@
+{
+  "@@locale": "ckb",
+  "appName": "ڕێبەری کەلار",
+  "nav_home": "سەرەکی",
+  "nav_places": "شوێنەکان",
+  "nav_categories": "بەشەکان",
+  "nav_favorites": "دڵخواز",
+  "nav_daily": "ڕۆژانە",
+  "welcome_guest": "میوانی خۆشەویست",
+  "settings": "ڕێکخستنەکان",
+  "emergency": "فریاکەوتن",
+  "events": "ڕووداوەکان"
+}

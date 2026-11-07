@@ -4,8 +4,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// 👨‍💻 شاشەی دەربارەی من — ULTRA PRO V4
+import 'package:kalar_guide_new/config/app_colors.dart';
+import 'package:kalar_guide_new/config/theme.dart'; // بۆ AppThemeColors
+
+/// 👨‍💻 شاشەی دەربارەی من — ULTRA PRO MAX V7
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
 
@@ -22,21 +26,65 @@ class _AboutScreenState extends State<AboutScreen>
   static const String _developerTitle = 'ئەندازیاری شارستانی';
   static const String _phone = '07701574997';
   static const String _whatsapp = '9647701574997';
-  static const String _appUrl = 'https://kalar-guide.com/app';
   static const String _playStoreUrl =
       'https://play.google.com/store/apps/details?id=com.muhammad.kalar.kalar_guide';
+
+  /// ✅ QR و لینکی هاوبەشکردن ڕاستەوخۆ بۆ Play Store دەچن
+  ///    (kalar-guide.com/app نەپشکنرا — ئەگەر کار دەکات، دەتوانیت بیگەڕێنیتەوە)
+  static const String _appUrl = _playStoreUrl;
+
+  // 📊 ئاماری ڕاستەقینە لە بنکەدراوەوە — تا دەگات، ژمارە کۆنەکان نیشان دەدرێن
+  int? _neighborhoodCount;
+  int? _storeCount;
+  bool _reduceMotion = false;
 
   String _appVersion = '1.0.0';
   String _buildNumber = '1';
 
   // ✨ Animations
-  late AnimationController _headerController;
-  late AnimationController _floatController;
-  late AnimationController _pulseController;
-  late AnimationController _entryController;
-  late Animation<double> _headerAnimation;
-  late Animation<double> _floatAnimation;
-  late Animation<double> _pulseAnimation;
+  late final AnimationController _headerController;
+  late final AnimationController _floatController;
+  late final AnimationController _pulseController;
+  late final AnimationController _entryController;
+  late final Animation<double> _headerAnimation;
+  late final Animation<double> _floatAnimation;
+  late final Animation<double> _pulseAnimation;
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎯 Services Data (const — بۆ ئەدای باشتر)
+  // ═══════════════════════════════════════════════════════════
+  static const List<_ServiceItem> _services = [
+    _ServiceItem(
+      icon: Icons.business_rounded,
+      label: 'دیزاینی بینا',
+      color: AppColors.primary,
+    ),
+    _ServiceItem(
+      icon: Icons.architecture_rounded,
+      label: 'نەخشەکێشان',
+      color: AppColors.purple,
+    ),
+    _ServiceItem(
+      icon: Icons.engineering_rounded,
+      label: 'سەرپەرشتی پڕۆژە',
+      color: AppColors.green,
+    ),
+    _ServiceItem(
+      icon: Icons.calculate_rounded,
+      label: 'حسابکردنی بڕیار',
+      color: AppColors.orange,
+    ),
+    _ServiceItem(
+      icon: Icons.phone_android_rounded,
+      label: 'گەشەپێدانی ئەپ',
+      color: AppColors.pink, // ⚠️ دڵنیابە لەوەی ئەم ڕەنگە لە AppColors دا هەیە، ئەگەنا بیکە بە Colors.pink
+    ),
+    _ServiceItem(
+      icon: Icons.palette_rounded,
+      label: 'دیزاینی گرافیک',
+      color: AppColors.teal,
+    ),
+  ];
 
   @override
   void initState() {
@@ -75,7 +123,58 @@ class _AboutScreenState extends State<AboutScreen>
     _headerController.forward();
     _entryController.forward();
     _loadVersion();
+    _loadStats();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ♿ ڕێزگرتن لە «کەمکردنەوەی جووڵە»ی سیستەم
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (_reduceMotion) {
+      _floatController.stop();
+      _pulseController.stop();
+      _entryController.value = 1;
+    } else {
+      if (!_floatController.isAnimating) _floatController.repeat(reverse: true);
+      if (!_pulseController.isAnimating) _pulseController.repeat(reverse: true);
+    }
+  }
+
+  Future<int?> _count(String table) async {
+    try {
+      final res = await Supabase.instance.client.from(table).select('id').count();
+      return res.count;
+    } catch (e) {
+      debugPrint('⚠️ count $table: $e');
+      return null;
+    }
+  }
+
+  Future<void> _loadStats() async {
+    final results = await Future.wait([_count('neighborhoods'), _count('dukan')]);
+    if (!mounted) return;
+    setState(() {
+      _neighborhoodCount = results[0];
+      _storeCount = results[1];
+    });
+  }
+
+  static String _ku(Object n) => n.toString().replaceAllMapped(
+        RegExp(r'\d'),
+        (m) => '٠١٢٣٤٥٦٧٨٩'[int.parse(m[0]!)],
+      );
+
+  /// ١٠٠+ بۆ ژمارە گەورەکان، ژمارەی ڕاستەقینە بۆ بچووکەکان
+  String _statText(int? n, String fallback) {
+    if (n == null || n <= 0) return fallback;
+    if (n >= 1000) return '${_ku((n ~/ 100) * 100)}+';
+    if (n >= 100) return '${_ku((n ~/ 10) * 10)}+';
+    return _ku(n);
+  }
+
+  String get _neighborhoodsText => _statText(_neighborhoodCount, '٥٩');
+  String get _storesText => _statText(_storeCount, '١٠٠+');
 
   @override
   void dispose() {
@@ -89,12 +188,11 @@ class _AboutScreenState extends State<AboutScreen>
   Future<void> _loadVersion() async {
     try {
       final info = await PackageInfo.fromPlatform();
-      if (mounted) {
-        setState(() {
-          _appVersion = info.version;
-          _buildNumber = info.buildNumber;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _appVersion = info.version;
+        _buildNumber = info.buildNumber;
+      });
     } catch (e) {
       debugPrint('⚠️ Version error: $e');
     }
@@ -106,68 +204,147 @@ class _AboutScreenState extends State<AboutScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
+    final textTheme = Theme.of(context).textTheme;
+
+    // ✅ بەکارهێنانی ThemeExtension بۆ ڕەنگی سەرکەوتوو و هەڵە
+    final ext = Theme.of(context).extension<AppThemeColors>();
+    final successColor = ext?.success ?? AppColors.green;
+    final dangerColor = ext?.danger ?? AppColors.red;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor:
-        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildAppBar(isDark),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildSectionTitle('📝 دەربارەی من', isDark),
-                    const SizedBox(height: 12),
-                    _buildBioCard(isDark, 0),
-                    const SizedBox(height: 20),
-                    _buildSectionTitle('📞 پەیوەندی', isDark),
-                    const SizedBox(height: 12),
-                    _buildContactCard(
-                      isDark: isDark,
-                      icon: Icons.phone_rounded,
-                      iconColor: const Color(0xFF10B981),
-                      title: 'ژمارەی مۆبایل',
-                      value: _phone,
-                      onTap: () => _call(_phone),
-                      itemIndex: 1,
-                    ),
-                    const SizedBox(height: 10),
-                    _buildContactCard(
-                      isDark: isDark,
-                      icon: Icons.chat_bubble_rounded,
-                      iconColor: const Color(0xFF25D366),
-                      title: 'واتسئاپ',
-                      value: _phone,
-                      onTap: () => _openWhatsApp(),
-                      itemIndex: 2,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildSectionTitle('🎯 خزمەتگوزارییەکان', isDark),
-                    const SizedBox(height: 12),
-                    _buildServicesCard(isDark, 3),
-                    const SizedBox(height: 20),
-                    _buildSectionTitle('🌐 هاوبەشکردن', isDark),
-                    const SizedBox(height: 12),
-                    _buildShareCard(isDark, 4),
-                    const SizedBox(height: 20),
-                    _buildSectionTitle('⭐ هەڵسەنگاندن', isDark),
-                    const SizedBox(height: 12),
-                    _buildRateCard(isDark, 5),
-                    const SizedBox(height: 24),
-                    _buildThanksCard(isDark, 6),
-                    const SizedBox(height: 20),
-                    _buildVersionCard(isDark, 7),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+      backgroundColor: bgColor,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          _buildAppBar(isDark),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildSectionTitle('📝 دەربارەی من', isDark, textTheme),
+                  const SizedBox(height: 12),
+                  _buildBioCard(isDark, 0, textTheme),
+                  const SizedBox(height: 20),
+                  _buildSectionTitle('📞 پەیوەندی', isDark, textTheme),
+                  const SizedBox(height: 12),
+                  _buildContactCard(
+                    isDark: isDark,
+                    icon: Icons.phone_rounded,
+                    iconColor: successColor,
+                    title: 'ژمارەی مۆبایل',
+                    value: _phone,
+                    onTap: () => _call(_phone),
+                    itemIndex: 1,
+                    textTheme: textTheme,
+                  ),
+                  const SizedBox(height: 10),
+                  _buildContactCard(
+                    isDark: isDark,
+                    icon: Icons.chat_bubble_rounded,
+                    iconColor: const Color(0xFF25D366),
+                    title: 'واتسئاپ',
+                    value: _phone,
+                    onTap: () => _openWhatsApp(),
+                    itemIndex: 2,
+                    textTheme: textTheme,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildSectionTitle('🎯 خزمەتگوزارییەکان', isDark, textTheme),
+                  const SizedBox(height: 12),
+                  _buildServicesCard(isDark, 3, textTheme),
+                  const SizedBox(height: 20),
+                  _buildSectionTitle('🌐 هاوبەشکردن', isDark, textTheme),
+                  const SizedBox(height: 12),
+                  _buildShareCard(isDark, 4, textTheme),
+                  const SizedBox(height: 20),
+                  _buildSectionTitle('⭐ هەڵسەنگاندن', isDark, textTheme),
+                  const SizedBox(height: 12),
+                  _buildRateCard(5, textTheme),
+                  const SizedBox(height: 24),
+                  _buildThanksCard(6),
+                  const SizedBox(height: 20),
+                  _buildVersionCard(isDark, 7, textTheme, successColor),
+                  const SizedBox(height: 10),
+                  _buildReportCard(isDark, 8, textTheme),
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🐞 ناردنی ڕاپۆرتی کێشە — وەشان خۆکارانە زیاد دەکرێت
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildReportCard(bool isDark, int itemIndex, TextTheme textTheme) {
+    return _entryWrap(
+      itemIndex: itemIndex,
+      child: Material(
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _openWhatsApp(
+              text: 'سڵاو، کێشەیەکم هەیە لە ئەپی ڕێبەری کەلار:\n\n'
+                  '...\n\n'
+                  '— وەشان: v$_appVersion ($_buildNumber)',
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.red.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.red.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.bug_report_rounded, color: AppColors.red, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'ناردنی ڕاپۆرتی کێشە',
+                        style: textTheme.titleSmall?.copyWith(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'ڕاستەوخۆ لە واتسئاپ، وەشانی ئەپەکەش دەنێردرێت',
+                        style: textTheme.labelSmall?.copyWith(
+                          fontSize: 11,
+                          color: isDark ? Colors.white54 : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_left_rounded, color: isDark ? Colors.white38 : Colors.grey[400]),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -180,7 +357,7 @@ class _AboutScreenState extends State<AboutScreen>
     return SliverAppBar(
       expandedHeight: 240,
       pinned: true,
-      backgroundColor: const Color(0xFF1A1B2E),
+      backgroundColor: AppColors.darkBackground,
       foregroundColor: Colors.white,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
@@ -188,9 +365,9 @@ class _AboutScreenState extends State<AboutScreen>
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Color(0xFF1A1B2E),
+                AppColors.darkBackground,
                 Color(0xFF2D1B4E),
-                Color(0xFF8B5CF6),
+                AppColors.purple,
               ],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
@@ -247,15 +424,15 @@ class _AboutScreenState extends State<AboutScreen>
                                 shape: BoxShape.circle,
                                 gradient: const LinearGradient(
                                   colors: [
-                                    Color(0xFFFFD700),
-                                    Color(0xFFFF8F00),
+                                    AppColors.yellow,
+                                    AppColors.orange,
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFFFD700)
+                                    color: AppColors.yellow
                                         .withValues(alpha: 0.5),
                                     blurRadius: 24,
                                     spreadRadius: 4,
@@ -268,7 +445,7 @@ class _AboutScreenState extends State<AboutScreen>
                                 child: Icon(
                                   Icons.person_rounded,
                                   size: 50,
-                                  color: Color(0xFF8B5CF6),
+                                  color: AppColors.purple,
                                 ),
                               ),
                             ),
@@ -328,7 +505,7 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   // 📝 Section Title
   // ═══════════════════════════════════════════════════════════
-  Widget _buildSectionTitle(String title, bool isDark) {
+  Widget _buildSectionTitle(String title, bool isDark, TextTheme textTheme) {
     return Row(
       children: [
         Container(
@@ -336,7 +513,7 @@ class _AboutScreenState extends State<AboutScreen>
           height: 20,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFFFD700), Color(0xFFFF8F00)],
+              colors: [AppColors.yellow, AppColors.orange],
             ),
             borderRadius: BorderRadius.circular(4),
           ),
@@ -344,10 +521,10 @@ class _AboutScreenState extends State<AboutScreen>
         const SizedBox(width: 8),
         Text(
           title,
-          style: TextStyle(
+          style: textTheme.titleMedium?.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w900,
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
         ),
       ],
@@ -357,16 +534,16 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   // 📝 Bio Card
   // ═══════════════════════════════════════════════════════════
-  Widget _buildBioCard(bool isDark, int itemIndex) {
+  Widget _buildBioCard(bool isDark, int itemIndex, TextTheme textTheme) {
     return _entryWrap(
       itemIndex: itemIndex,
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          color: isDark ? AppColors.darkCard : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+            color: AppColors.purple.withValues(alpha: 0.2),
             width: 1.5,
           ),
           boxShadow: [
@@ -385,13 +562,12 @@ class _AboutScreenState extends State<AboutScreen>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color:
-                    const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                    color: AppColors.purple.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.emoji_emotions_rounded,
-                    color: Color(0xFF8B5CF6),
+                    color: AppColors.purple,
                     size: 22,
                   ),
                 ),
@@ -399,12 +575,10 @@ class _AboutScreenState extends State<AboutScreen>
                 Expanded(
                   child: Text(
                     'سڵاو! من $_developerNameم',
-                    style: TextStyle(
+                    style: textTheme.titleSmall?.copyWith(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
-                      color: isDark
-                          ? Colors.white
-                          : const Color(0xFF1A1A2E),
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -417,10 +591,10 @@ class _AboutScreenState extends State<AboutScreen>
                   'دروستکردووە، بەبێ چاوەڕوانی هیچ داهاتێک. '
                   'هیوادارم ئەم ئەپە ببێتە هۆکاری ئاسانکاری بۆ '
                   'هاوڵاتییانی خۆشەویستمان.',
-              style: TextStyle(
+              style: textTheme.bodyMedium?.copyWith(
                 fontSize: 13,
                 height: 1.7,
-                color: isDark ? Colors.white70 : Colors.grey.shade700,
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 14),
@@ -431,21 +605,24 @@ class _AboutScreenState extends State<AboutScreen>
                   icon: Icons.apps_rounded,
                   value: '١٠+',
                   label: 'تایبەتمەندی',
-                  color: const Color(0xFF3B82F6),
+                  color: AppColors.primary,
+                  textTheme: textTheme,
                 ),
                 _buildMiniStat(
                   isDark: isDark,
                   icon: Icons.people_rounded,
-                  value: '٥٩',
+                  value: _neighborhoodsText,
                   label: 'گەڕەک',
-                  color: const Color(0xFF10B981),
+                  color: AppColors.green,
+                  textTheme: textTheme,
                 ),
                 _buildMiniStat(
                   isDark: isDark,
                   icon: Icons.storefront_rounded,
-                  value: '١٠٠+',
+                  value: _storesText,
                   label: 'شوێن',
-                  color: const Color(0xFFF59E0B),
+                  color: AppColors.orange,
+                  textTheme: textTheme,
                 ),
               ],
             ),
@@ -461,6 +638,7 @@ class _AboutScreenState extends State<AboutScreen>
     required String value,
     required String label,
     required Color color,
+    required TextTheme textTheme,
   }) {
     return Expanded(
       child: Container(
@@ -477,7 +655,7 @@ class _AboutScreenState extends State<AboutScreen>
             const SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(
+              style: textTheme.titleMedium?.copyWith(
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
                 color: color,
@@ -487,10 +665,10 @@ class _AboutScreenState extends State<AboutScreen>
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
+              style: textTheme.labelSmall?.copyWith(
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white60 : Colors.grey.shade700,
+                color: isDark ? Colors.white60 : AppColors.textSecondary,
               ),
             ),
           ],
@@ -510,6 +688,7 @@ class _AboutScreenState extends State<AboutScreen>
     required String value,
     required VoidCallback onTap,
     required int itemIndex,
+    required TextTheme textTheme,
   }) {
     return _entryWrap(
       itemIndex: itemIndex,
@@ -524,7 +703,7 @@ class _AboutScreenState extends State<AboutScreen>
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+              color: isDark ? AppColors.darkCard : AppColors.surface,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: iconColor.withValues(alpha: 0.25),
@@ -568,23 +747,22 @@ class _AboutScreenState extends State<AboutScreen>
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
+                        style: textTheme.labelSmall?.copyWith(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: isDark
                               ? Colors.white54
-                              : Colors.grey.shade600,
+                              : AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         value,
-                        style: TextStyle(
+                        style: textTheme.titleMedium?.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF1A1A2E),
+                          color:
+                          isDark ? Colors.white : AppColors.textPrimary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -595,14 +773,14 @@ class _AboutScreenState extends State<AboutScreen>
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: value));
                     HapticFeedback.mediumImpact();
-                    _showSnack('✅ کۆپی کرا', const Color(0xFF10B981));
+                    _showSnack('✅ کۆپی کرا', AppColors.green);
                   },
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.grey.shade100,
+                          : AppColors.backgroundGrey,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
@@ -629,49 +807,16 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   // 🎯 Services Card
   // ═══════════════════════════════════════════════════════════
-  Widget _buildServicesCard(bool isDark, int itemIndex) {
-    final services = [
-      {
-        'icon': Icons.business_rounded,
-        'label': 'دیزاینی بینا',
-        'color': const Color(0xFF3B82F6),
-      },
-      {
-        'icon': Icons.architecture_rounded,
-        'label': 'نەخشەکێشان',
-        'color': const Color(0xFF8B5CF6),
-      },
-      {
-        'icon': Icons.engineering_rounded,
-        'label': 'سەرپەرشتی پڕۆژە',
-        'color': const Color(0xFF10B981),
-      },
-      {
-        'icon': Icons.calculate_rounded,
-        'label': 'حسابکردنی بڕیار',
-        'color': const Color(0xFFF59E0B),
-      },
-      {
-        'icon': Icons.phone_android_rounded,
-        'label': 'گەشەپێدانی ئەپ',
-        'color': const Color(0xFFE91E63),
-      },
-      {
-        'icon': Icons.palette_rounded,
-        'label': 'دیزاینی گرافیک',
-        'color': const Color(0xFF06B6D4),
-      },
-    ];
-
+  Widget _buildServicesCard(bool isDark, int itemIndex, TextTheme textTheme) {
     return _entryWrap(
       itemIndex: itemIndex,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          color: isDark ? AppColors.darkCard : AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+            color: AppColors.purple.withValues(alpha: 0.15),
           ),
         ),
         child: GridView.count(
@@ -681,36 +826,34 @@ class _AboutScreenState extends State<AboutScreen>
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
           childAspectRatio: 1.0,
-          children: services.map((s) {
-            final color = s['color'] as Color;
+          children: _services.map((s) {
             return Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    color.withValues(alpha: 0.15),
-                    color.withValues(alpha: 0.05),
+                    s.color.withValues(alpha: 0.15),
+                    s.color.withValues(alpha: 0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(14),
-                border:
-                Border.all(color: color.withValues(alpha: 0.25)),
+                border: Border.all(color: s.color.withValues(alpha: 0.25)),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(s['icon'] as IconData, color: color, size: 22),
+                  Icon(s.icon, color: s.color, size: 22),
                   const SizedBox(height: 6),
                   Text(
-                    s['label'] as String,
-                    style: TextStyle(
+                    s.label,
+                    style: textTheme.labelSmall?.copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       color: isDark
                           ? Colors.white70
-                          : Colors.grey.shade700,
+                          : AppColors.textSecondary,
                       height: 1.2,
                     ),
                     textAlign: TextAlign.center,
@@ -729,16 +872,16 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   // 🌐 Share Card
   // ═══════════════════════════════════════════════════════════
-  Widget _buildShareCard(bool isDark, int itemIndex) {
+  Widget _buildShareCard(bool isDark, int itemIndex, TextTheme textTheme) {
     return _entryWrap(
       itemIndex: itemIndex,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          color: isDark ? AppColors.darkCard : AppColors.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+            color: AppColors.primary.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -761,17 +904,17 @@ class _AboutScreenState extends State<AboutScreen>
                 version: QrVersions.auto,
                 size: 140,
                 backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF1A1A2E),
+                foregroundColor: AppColors.textPrimary,
                 errorCorrectionLevel: QrErrorCorrectLevel.H,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               'سکان بکە بۆ داگرتنی ئەپ',
-              style: TextStyle(
+              style: textTheme.labelMedium?.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white70 : Colors.grey.shade700,
+                color: isDark ? Colors.white70 : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -781,7 +924,7 @@ class _AboutScreenState extends State<AboutScreen>
                   child: _buildShareButton(
                     icon: Icons.share_rounded,
                     label: 'هاوبەشکردن',
-                    color: const Color(0xFF3B82F6),
+                    color: AppColors.primary,
                     onTap: _shareApp,
                   ),
                 ),
@@ -790,16 +933,13 @@ class _AboutScreenState extends State<AboutScreen>
                   child: _buildShareButton(
                     icon: Icons.link_rounded,
                     label: 'کۆپیکردنی لینک',
-                    color: const Color(0xFF8B5CF6),
+                    color: AppColors.purple,
                     onTap: () {
                       Clipboard.setData(
                         const ClipboardData(text: _appUrl),
                       );
                       HapticFeedback.mediumImpact();
-                      _showSnack(
-                        '✅ لینک کۆپی کرا',
-                        const Color(0xFF10B981),
-                      );
+                      _showSnack('✅ لینک کۆپی کرا', AppColors.green);
                     },
                   ),
                 ),
@@ -859,7 +999,7 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   // ⭐ Rate Card
   // ═══════════════════════════════════════════════════════════
-  Widget _buildRateCard(bool isDark, int itemIndex) {
+  Widget _buildRateCard(int itemIndex, TextTheme textTheme) {
     return _entryWrap(
       itemIndex: itemIndex,
       child: GestureDetector(
@@ -869,13 +1009,13 @@ class _AboutScreenState extends State<AboutScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFFFFD700).withValues(alpha: 0.15),
-                const Color(0xFFFF8F00).withValues(alpha: 0.05),
+                AppColors.yellow.withValues(alpha: 0.15),
+                AppColors.orange.withValues(alpha: 0.05),
               ],
             ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+              color: AppColors.yellow.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -885,13 +1025,12 @@ class _AboutScreenState extends State<AboutScreen>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFF8F00)],
+                    colors: [AppColors.yellow, AppColors.orange],
                   ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFD700)
-                          .withValues(alpha: 0.5),
+                      color: AppColors.yellow.withValues(alpha: 0.5),
                       blurRadius: 12,
                     ),
                   ],
@@ -910,30 +1049,22 @@ class _AboutScreenState extends State<AboutScreen>
                   children: [
                     Text(
                       'ئەپەکە بەدڵتە؟',
-                      style: TextStyle(
+                      style: textTheme.titleMedium?.copyWith(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
-                        color: isDark
-                            ? Colors.white
-                            : const Color(0xFF1A1A2E),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'تکایە ٥ ئەستێرەمان پێبدە ⭐',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark
-                            ? Colors.white54
-                            : Colors.grey.shade600,
-                      ),
+                      style: textTheme.bodySmall?.copyWith(fontSize: 11),
                     ),
                   ],
                 ),
               ),
               const Icon(
                 Icons.chevron_left_rounded,
-                color: Color(0xFFFFD700),
+                color: AppColors.yellow,
                 size: 22,
               ),
             ],
@@ -946,21 +1077,21 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   // 💚 Thanks Card
   // ═══════════════════════════════════════════════════════════
-  Widget _buildThanksCard(bool isDark, int itemIndex) {
+  Widget _buildThanksCard(int itemIndex) {
     return _entryWrap(
       itemIndex: itemIndex,
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF10B981), Color(0xFF059669)],
+            colors: [AppColors.green, Color(0xFF059669)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.4),
+              color: AppColors.green.withValues(alpha: 0.4),
               blurRadius: 24,
               offset: const Offset(0, 12),
               spreadRadius: -4,
@@ -1032,18 +1163,18 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   // 📱 Version Card
   // ═══════════════════════════════════════════════════════════
-  Widget _buildVersionCard(bool isDark, int itemIndex) {
+  Widget _buildVersionCard(bool isDark, int itemIndex, TextTheme textTheme, Color successColor) {
     return _entryWrap(
       itemIndex: itemIndex,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+          color: isDark ? AppColors.darkCard : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.05)
-                : Colors.grey.shade200,
+                : AppColors.border,
           ),
         ),
         child: Row(
@@ -1051,12 +1182,12 @@ class _AboutScreenState extends State<AboutScreen>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                color: AppColors.purple.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.info_rounded,
-                color: Color(0xFF8B5CF6),
+                color: AppColors.purple,
                 size: 20,
               ),
             ),
@@ -1068,23 +1199,22 @@ class _AboutScreenState extends State<AboutScreen>
                 children: [
                   Text(
                     'وەشانی ئەپ',
-                    style: TextStyle(
+                    style: textTheme.labelSmall?.copyWith(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: isDark
                           ? Colors.white54
-                          : Colors.grey.shade600,
+                          : AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'v$_appVersion (build $_buildNumber)',
-                    style: TextStyle(
+                    style: textTheme.titleSmall?.copyWith(
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
-                      color: isDark
-                          ? Colors.white
-                          : const Color(0xFF1A1A2E),
+                      color:
+                      isDark ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -1096,27 +1226,27 @@ class _AboutScreenState extends State<AboutScreen>
                 vertical: 5,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                color: successColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                  color: successColor.withValues(alpha: 0.3),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.check_circle_rounded,
-                    color: Color(0xFF10B981),
+                    color: successColor,
                     size: 12,
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
-                    'نوێترین',
-                    style: TextStyle(
+                    'دامەزراوە',
+                    style: textTheme.labelSmall?.copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF10B981),
+                      color: successColor,
                     ),
                   ),
                 ],
@@ -1129,7 +1259,7 @@ class _AboutScreenState extends State<AboutScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // ⭐ Entry animation wrapper (کەمکردنەوەی دووبارەبوونەوە)
+  // ⭐ Entry animation wrapper
   // ═══════════════════════════════════════════════════════════
   Widget _entryWrap({
     required int itemIndex,
@@ -1154,13 +1284,22 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: color,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            msg,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: color,
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
   }
 
   Future<void> _call(String phone) async {
@@ -1169,41 +1308,40 @@ class _AboutScreenState extends State<AboutScreen>
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showSnack('⚠️ نەتوانرا پەیوەندی بکرێت', const Color(0xFFEF4444));
+        _showSnack('⚠️ نەتوانرا پەیوەندی بکرێت', AppColors.red);
       }
     } catch (e) {
       debugPrint('❌ Call error: $e');
-      _showSnack('⚠️ هەڵە لە پەیوەندیدا', const Color(0xFFEF4444));
+      _showSnack('⚠️ هەڵە لە پەیوەندیدا', AppColors.red);
     }
   }
 
-  Future<void> _openWhatsApp() async {
+  Future<void> _openWhatsApp({String? text}) async {
     try {
       final message = Uri.encodeComponent(
-        'سڵاو! دەربارەی ئەپی ڕێبەری کەلار قسەم پێوە بکە',
+        text ?? 'سڵاو! دەربارەی ئەپی ڕێبەری کەلار قسەم پێوە بکە',
       );
       final uri = Uri.parse('https://wa.me/$_whatsapp?text=$message');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalNonBrowserApplication,
-        );
-      } else {
-        _showSnack('⚠️ واتسئاپ دەستنەکەوێت', const Color(0xFFEF4444));
-      }
+      // ✅ canLaunchUrl لە Android 11+ بۆ https زۆرجار false دەداتەوە —
+      //    سەرەتا ئەپی واتسئاپ، ئەگەر نەبوو وێبگەڕ
+      var ok = false;
+      try {
+        ok = await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
+      } catch (_) {}
+      if (!ok) ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) _showSnack('⚠️ واتسئاپ دەستنەکەوێت', AppColors.red);
     } catch (e) {
       debugPrint('❌ WhatsApp error: $e');
-      _showSnack('⚠️ هەڵە لە واتسئاپدا', const Color(0xFFEF4444));
+      _showSnack('⚠️ هەڵە لە واتسئاپدا', AppColors.red);
     }
   }
 
   Future<void> _shareApp() async {
     try {
-      // ✅ شێوازی کۆن بۆ share_plus 10.x
       await Share.share(
         '🏙️ ئەپی ڕێبەری کەلار — ڕێبەری فەرمی شاری کەلار\n\n'
-            '✅ ٥٩ گەڕەک\n'
-            '✅ ١٠٠+ شوێن\n'
+            '✅ $_neighborhoodsText گەڕەک\n'
+            '✅ $_storesText شوێن\n'
             '✅ سکاڵا و ڕووداو\n'
             '✅ دراو و سووتەمەنی\n\n'
             'داگرتن: $_appUrl',
@@ -1211,24 +1349,38 @@ class _AboutScreenState extends State<AboutScreen>
       );
     } catch (e) {
       debugPrint('❌ Share error: $e');
-      _showSnack('⚠️ نەتوانرا هاوبەش بکرێت', const Color(0xFFEF4444));
+      _showSnack('⚠️ نەتوانرا هاوبەش بکرێت', AppColors.red);
     }
   }
 
   Future<void> _rateApp() async {
     try {
-      final uri = Uri.parse(_playStoreUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        _showSnack(
-          '⚠️ نەتوانرا Play Store بکرێتەوە',
-          const Color(0xFFEF4444),
-        );
-      }
+      // ✅ سەرەتا ئەپی Play Store، ئەگەر نەبوو وێبگەڕ
+      final market = Uri.parse('market://details?id=com.muhammad.kalar.kalar_guide');
+      var ok = false;
+      try {
+        ok = await launchUrl(market, mode: LaunchMode.externalApplication);
+      } catch (_) {}
+      if (!ok) ok = await launchUrl(Uri.parse(_playStoreUrl), mode: LaunchMode.externalApplication);
+      if (!ok) _showSnack('⚠️ نەتوانرا Play Store بکرێتەوە', AppColors.red);
     } catch (e) {
       debugPrint('❌ Rate error: $e');
-      _showSnack('⚠️ هەڵە لە کردنەوەی Play Store', const Color(0xFFEF4444));
+      _showSnack('⚠️ هەڵە لە کردنەوەی Play Store', AppColors.red);
     }
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🧱 Data Model
+// ═══════════════════════════════════════════════════════════
+class _ServiceItem {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _ServiceItem({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 }

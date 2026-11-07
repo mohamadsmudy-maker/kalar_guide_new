@@ -1,50 +1,54 @@
+// lib/config/settings_provider.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// ⚙️ بەڕێوەبردنی ڕێکخستنەکانی ئەپ — PRO EDITION
+/// ⚙️ بەڕێوەبردنی ڕێکخستن — Ultra Pro Max
 class SettingsProvider extends ChangeNotifier {
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 🔤 فۆنتەکان
-  // ═══════════════════════════════════════════════════
-  static const List<Map<String, String>> availableFonts = [
-    {'id': 'rabar', 'name': 'ڕەبەر (Rabar)', 'family': 'Rabar'},
-    {'id': 'cairo', 'name': 'قاهیرە (Cairo)', 'family': 'Cairo'},
-    {'id': 'noto_kufi', 'name': 'نۆتۆ کوفی', 'family': 'NotoKufiArabic'},
-    {'id': 'almarai', 'name': 'المرعی (Almarai)', 'family': 'Almarai'},
-    {'id': 'tajawal', 'name': 'تجوال (Tajawal)', 'family': 'Tajawal'},
-    {'id': 'amiri', 'name': 'أمیری (Amiri)', 'family': 'Amiri'},
-    {'id': 'changa', 'name': 'تشانگا (Changa)', 'family': 'Changa'},
-    {'id': 'elmesiri', 'name': 'المسیری (ElMessiri)', 'family': 'ElMessiri'},
-    {'id': 'harmattan', 'name': 'هرمتان (Harmattan)', 'family': 'Harmattan'},
-    {'id': 'lateef', 'name': 'لەتیف (Lateef)', 'family': 'Lateef'},
-    {'id': 'markazi', 'name': 'مرکزی', 'family': 'MarkaziText'},
-    {'id': 'mada', 'name': 'مدا (Mada)', 'family': 'Mada'},
-    {'id': 'scheherazade', 'name': 'شهرزاد', 'family': 'ScheherazadeNew'},
+  // ═══════════════════════════════════════════════════════════
+  static const List<FontOption> availableFonts = [
+    FontOption(id: 'rabar', name: 'ڕەبەر (Rabar)', family: 'Rabar'),
+    FontOption(id: 'cairo', name: 'قاهیرە (Cairo)', family: 'Cairo'),
+    FontOption(id: 'noto_kufi', name: 'نۆتۆ کوفی', family: 'NotoKufiArabic'),
+    FontOption(id: 'almarai', name: 'المرعی (Almarai)', family: 'Almarai'),
+    FontOption(id: 'tajawal', name: 'تجوال (Tajawal)', family: 'Tajawal'),
+    FontOption(id: 'amiri', name: 'أمیری (Amiri)', family: 'Amiri'),
+    FontOption(id: 'changa', name: 'تشانگا (Changa)', family: 'Changa'),
+    FontOption(id: 'elmesiri', name: 'المسیری', family: 'ElMessiri'),
+    FontOption(id: 'harmattan', name: 'هرمتان (Harmattan)', family: 'Harmattan'),
+    FontOption(id: 'lateef', name: 'لەتیف (Lateef)', family: 'Lateef'),
+    FontOption(id: 'markazi', name: 'مرکزی', family: 'MarkaziText'),
+    FontOption(id: 'mada', name: 'مدا (Mada)', family: 'Mada'),
+    FontOption(id: 'scheherazade', name: 'شهرزاد', family: 'ScheherazadeNew'),
+    FontOption(id: 'readex', name: 'ڕیدێکس', family: 'ReadexPro'),
+    FontOption(id: 'ibm_plex', name: 'IBM Plex', family: 'IBMPlexSansArabic'),
+    FontOption(id: 'rubik', name: 'ڕوبیک', family: 'Rubik'),
   ];
 
-  // ═══════════════════════════════════════════════════
-  // 📏 قەبارەکانی فۆنت
-  // ═══════════════════════════════════════════════════
-  static const List<Map<String, dynamic>> availableFontSizes = [
-    {'id': 'small', 'name': 'بچووک', 'scale': 0.85},
-    {'id': 'normal', 'name': 'ئاسایی', 'scale': 1.0},
-    {'id': 'large', 'name': 'گەورە', 'scale': 1.15},
-    {'id': 'xlarge', 'name': 'زۆر گەورە', 'scale': 1.3},
+  // ═══════════════════════════════════════════════════════════
+  // 📏 قەبارە
+  // ═══════════════════════════════════════════════════════════
+  static const List<FontSizeOption> availableFontSizes = [
+    FontSizeOption(id: 'small', name: 'بچووک', scale: 0.85),
+    FontSizeOption(id: 'normal', name: 'ئاسایی', scale: 1.0),
+    FontSizeOption(id: 'large', name: 'گەورە', scale: 1.15),
+    FontSizeOption(id: 'xlarge', name: 'زۆر گەورە', scale: 1.3),
   ];
 
-  // ═══════════════════════════════════════════════════
-  // 🌍 زمانەکان
-  // ═══════════════════════════════════════════════════
-  static const List<Map<String, String>> availableLanguages = [
-    {'id': 'ku', 'name': 'کوردی', 'native': 'کوردی', 'flag': '🇮🇶'},
-    {'id': 'ar', 'name': 'عەرەبی', 'native': 'العربية', 'flag': '🇸🇦'},
-    {'id': 'en', 'name': 'ئینگلیزی', 'native': 'English', 'flag': '🇬🇧'},
+  // ═══════════════════════════════════════════════════════════
+  // 🌍 زمان
+  // ═══════════════════════════════════════════════════════════
+  static const List<LanguageOption> availableLanguages = [
+    LanguageOption(id: 'ku', name: 'کوردی', native: 'کوردی', flag: '🇮🇶'),
+    LanguageOption(id: 'ar', name: 'عەرەبی', native: 'العربية', flag: '🇸🇦'),
+    LanguageOption(id: 'en', name: 'ئینگلیزی', native: 'English', flag: '🇬🇧'),
   ];
 
-  // ═══════════════════════════════════════════════════
-  // 📊 دۆخەکان
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 📊 دۆخ
+  // ═══════════════════════════════════════════════════════════
   String _fontFamily = 'Rabar';
   String _fontId = 'rabar';
   double _fontScale = 1.0;
@@ -61,17 +65,16 @@ class SettingsProvider extends ChangeNotifier {
   bool _isLoaded = false;
   bool get isLoaded => _isLoaded;
 
-  // ═══════════════════════════════════════════════════
-  // 🎨 TextTheme Cache
-  // ═══════════════════════════════════════════════════
   TextTheme? _cachedLightTextTheme;
   TextTheme? _cachedDarkTextTheme;
   TextTheme? _cachedBaseLight;
   TextTheme? _cachedBaseDark;
+  String _cachedFontId = '';
+  double _cachedFontScale = 1.0;
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 🔍 Getters
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   String get fontFamily => _fontFamily;
   String get fontId => _fontId;
   double get fontScale => _fontScale;
@@ -87,37 +90,44 @@ class SettingsProvider extends ChangeNotifier {
 
   bool get isRtl => _languageId != 'en';
 
+  FontOption get currentFont => availableFonts.firstWhere(
+        (f) => f.id == _fontId,
+    orElse: () => availableFonts[0],
+  );
+
+  FontSizeOption get currentFontSize => availableFontSizes.firstWhere(
+        (s) => s.id == _fontSizeId,
+    orElse: () => availableFontSizes[1],
+  );
+
+  LanguageOption get currentLanguage => availableLanguages.firstWhere(
+        (l) => l.id == _languageId,
+    orElse: () => availableLanguages[0],
+  );
+
   // ═══════════════════════════════════════════════════════════
-  // 🌍 Locale — ✅ چاککراو
+  // 🌍 Locale
   // ═══════════════════════════════════════════════════════════
-  /// ⚠️ گرنگ: Flutter بە فەرمی Kurdish پشتگیری ناکات
-  /// بۆیە بۆ کوردی، `ar_AE` بەکاردەهێنین (چونکە RTLـە)
   Locale get locale {
     switch (_languageId) {
-      case 'ar':
-        return const Locale('ar', 'AE');
       case 'en':
         return const Locale('en', 'US');
+      case 'ar':
       case 'ku':
       default:
-      // ✅ کوردی — عەرەبی بەکاردەهێنین چونکە:
-      // 1. RTLـە (وەک کوردی)
-      // 2. Flutter MaterialLocalizations پشتگیری دەکات
-      // 3. مێژوو و کاتەکان دروست کار دەکەن
         return const Locale('ar', 'AE');
     }
   }
 
-  /// 🎯 زمانەکانی پشتگیریکراو لە Flutter
   static const List<Locale> supportedLocales = [
-    Locale('ku', 'IQ'),  // کوردی (custom delegate)
-    Locale('ar', 'AE'),  // عەرەبی
-    Locale('en', 'US'),  // ئینگلیزی
+    Locale('ku', 'IQ'),
+    Locale('ar', 'AE'),
+    Locale('en', 'US'),
   ];
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 🚀 دەستپێکردن
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   SettingsProvider() {
     _loadSettings();
   }
@@ -132,10 +142,10 @@ class SettingsProvider extends ChangeNotifier {
       _languageId = prefs.getString('language_id') ?? 'ku';
 
       final font = availableFonts.firstWhere(
-            (f) => f['id'] == _fontId,
+            (f) => f.id == _fontId,
         orElse: () => availableFonts[0],
       );
-      _fontFamily = font['family']!;
+      _fontFamily = font.family;
 
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
       _newsNotifications = prefs.getBool('news_notifications') ?? true;
@@ -152,17 +162,18 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 🎨 Cache
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   void _invalidateTextThemeCache() {
     _cachedLightTextTheme = null;
     _cachedDarkTextTheme = null;
     _cachedBaseLight = null;
     _cachedBaseDark = null;
+    _cachedFontId = '';
   }
 
-  TextTheme getTextTheme(TextTheme base) {
+  TextTheme _applyFont(TextTheme base) {
     switch (_fontId) {
       case 'cairo':
         return GoogleFonts.cairoTextTheme(base);
@@ -188,42 +199,60 @@ class SettingsProvider extends ChangeNotifier {
         return GoogleFonts.madaTextTheme(base);
       case 'scheherazade':
         return GoogleFonts.scheherazadeNewTextTheme(base);
+      case 'readex':
+        return GoogleFonts.readexProTextTheme(base);
+      case 'ibm_plex':
+        return GoogleFonts.ibmPlexSansArabicTextTheme(base);
+      case 'rubik':
+        return GoogleFonts.rubikTextTheme(base);
       case 'rabar':
       default:
         return base.apply(fontFamily: 'Rabar');
     }
   }
 
+  TextTheme getTextTheme(TextTheme base) => _applyFont(base);
+
   TextTheme getLightTextTheme(TextTheme base) {
-    if (_cachedLightTextTheme != null && _cachedBaseLight == base) {
+    if (_cachedLightTextTheme != null &&
+        identical(_cachedBaseLight, base) &&
+        _cachedFontId == _fontId &&
+        _cachedFontScale == _fontScale) {
       return _cachedLightTextTheme!;
     }
     _cachedBaseLight = base;
-    _cachedLightTextTheme = getTextTheme(base);
+    _cachedFontId = _fontId;
+    _cachedFontScale = _fontScale;
+    _cachedLightTextTheme = _applyFont(base);
     return _cachedLightTextTheme!;
   }
 
   TextTheme getDarkTextTheme(TextTheme base) {
-    if (_cachedDarkTextTheme != null && _cachedBaseDark == base) {
+    if (_cachedDarkTextTheme != null &&
+        identical(_cachedBaseDark, base) &&
+        _cachedFontId == _fontId &&
+        _cachedFontScale == _fontScale) {
       return _cachedDarkTextTheme!;
     }
     _cachedBaseDark = base;
-    _cachedDarkTextTheme = getTextTheme(base);
+    _cachedFontId = _fontId;
+    _cachedFontScale = _fontScale;
+    _cachedDarkTextTheme = _applyFont(base);
     return _cachedDarkTextTheme!;
   }
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 🔤 گۆڕینی فۆنت
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   Future<void> setFont(String fontId) async {
     if (fontId == _fontId) return;
 
     final font = availableFonts.firstWhere(
-          (f) => f['id'] == fontId,
+          (f) => f.id == fontId,
       orElse: () => availableFonts[0],
     );
     _fontId = fontId;
-    _fontFamily = font['family']!;
+    _fontFamily = font.family;
 
     _invalidateTextThemeCache();
 
@@ -233,18 +262,18 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 📏 گۆڕینی قەبارە
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   Future<void> setFontSize(String sizeId) async {
     if (sizeId == _fontSizeId) return;
 
     final size = availableFontSizes.firstWhere(
-          (s) => s['id'] == sizeId,
+          (s) => s.id == sizeId,
       orElse: () => availableFontSizes[1],
     );
     _fontSizeId = sizeId;
-    _fontScale = (size['scale'] as num).toDouble();
+    _fontScale = size.scale;
 
     _invalidateTextThemeCache();
 
@@ -255,11 +284,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 🌍 گۆڕینی زمان
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   Future<void> setLanguage(String languageId) async {
     if (languageId == _languageId) return;
+    if (!availableLanguages.any((l) => l.id == languageId)) return;
 
     _languageId = languageId;
     final prefs = await SharedPreferences.getInstance();
@@ -268,10 +298,11 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // 🔔 ئاگادارکردنەوە
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   Future<void> setNotificationsEnabled(bool value) async {
+    if (value == _notificationsEnabled) return;
     _notificationsEnabled = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications_enabled', value);
@@ -279,6 +310,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setNewsNotifications(bool value) async {
+    if (value == _newsNotifications) return;
     _newsNotifications = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('news_notifications', value);
@@ -286,6 +318,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setComplaintNotifications(bool value) async {
+    if (value == _complaintNotifications) return;
     _complaintNotifications = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('complaint_notifications', value);
@@ -293,6 +326,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setOrderNotifications(bool value) async {
+    if (value == _orderNotifications) return;
     _orderNotifications = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('order_notifications', value);
@@ -300,6 +334,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setSoundEnabled(bool value) async {
+    if (value == _soundEnabled) return;
     _soundEnabled = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('sound_enabled', value);
@@ -307,15 +342,16 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> setVibrationEnabled(bool value) async {
+    if (value == _vibrationEnabled) return;
     _vibrationEnabled = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('vibration_enabled', value);
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════
-  // 🔄 گەڕاندنەوە بۆ دۆخی سەرەتا
-  // ═══════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 🔄 گەڕاندنەوە
+  // ═══════════════════════════════════════════════════════════
   Future<void> resetToDefaults() async {
     _fontId = 'rabar';
     _fontFamily = 'Rabar';
@@ -332,17 +368,115 @@ class SettingsProvider extends ChangeNotifier {
     _invalidateTextThemeCache();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('font_id');
-    await prefs.remove('font_size_id');
-    await prefs.remove('font_scale');
-    await prefs.remove('language_id');
-    await prefs.remove('notifications_enabled');
-    await prefs.remove('news_notifications');
-    await prefs.remove('complaint_notifications');
-    await prefs.remove('order_notifications');
-    await prefs.remove('sound_enabled');
-    await prefs.remove('vibration_enabled');
+    for (final key in [
+      'font_id',
+      'font_size_id',
+      'font_scale',
+      'language_id',
+      'notifications_enabled',
+      'news_notifications',
+      'complaint_notifications',
+      'order_notifications',
+      'sound_enabled',
+      'vibration_enabled',
+    ]) {
+      await prefs.remove(key);
+    }
 
     notifyListeners();
   }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📤 Export / Import
+  // ═══════════════════════════════════════════════════════════
+  Map<String, dynamic> toJson() => {
+    'font_id': _fontId,
+    'font_size_id': _fontSizeId,
+    'font_scale': _fontScale,
+    'language_id': _languageId,
+    'notifications_enabled': _notificationsEnabled,
+    'news_notifications': _newsNotifications,
+    'complaint_notifications': _complaintNotifications,
+    'order_notifications': _orderNotifications,
+    'sound_enabled': _soundEnabled,
+    'vibration_enabled': _vibrationEnabled,
+  };
+
+  Future<void> applyJson(Map<String, dynamic> json) async {
+    if (json['font_id'] is String) {
+      await setFont(json['font_id'] as String);
+    }
+    if (json['font_size_id'] is String) {
+      await setFontSize(json['font_size_id'] as String);
+    }
+    if (json['language_id'] is String) {
+      await setLanguage(json['language_id'] as String);
+    }
+    notifyListeners();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🧱 Data Models
+// ═══════════════════════════════════════════════════════════════
+@immutable
+class FontOption {
+  final String id;
+  final String name;
+  final String family;
+
+  const FontOption({
+    required this.id,
+    required this.name,
+    required this.family,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is FontOption && other.id == id);
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+@immutable
+class FontSizeOption {
+  final String id;
+  final String name;
+  final double scale;
+
+  const FontSizeOption({
+    required this.id,
+    required this.name,
+    required this.scale,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is FontSizeOption && other.id == id);
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+@immutable
+class LanguageOption {
+  final String id;
+  final String name;
+  final String native;
+  final String flag;
+
+  const LanguageOption({
+    required this.id,
+    required this.name,
+    required this.native,
+    required this.flag,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is LanguageOption && other.id == id);
+
+  @override
+  int get hashCode => id.hashCode;
 }
