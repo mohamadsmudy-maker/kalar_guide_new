@@ -106,3 +106,21 @@
 **دوای ڕاکردن:** ئەدمین، ڤێندەر و فەرمانگەکان دەبێت یەکجار دووبارە بچنە ژوورەوە.
 
 **هێشتا نەگۆڕدراون:** `reviews`، `news_likes`، `news_favorites`، `favorite_stores`، `event_interests`، `active_users` و storage. ئەگەر trigger ێک هەیە کە لە کاتی review دا `dukan` نوێ دەکاتەوە، دەبێت `security definer` بێت.
+
+---
+
+## 🔐 RLS بۆ داتای تایبەتی بەکارهێنەر (`20261109_rls_user_tables.sql`)
+
+دوای `20261108_rls_lockdown.sql` ڕای بکە.
+
+- لایک، دڵخوازەکان و "حەزم لێیە" ی ڕووداوەکان: تەنها خاوەنەکەی (و ئەدمین) دەیبینێت و دەیگۆڕێت.
+- Review: ئەوانەی پەسەند کراون بۆ هەمووان دیارن. نووسەر review ی خۆی دەگۆڕێت، ئەدمین هەمووی بەڕێوە دەبات.
+- trigger ـەکانی `reviews` دەگۆڕدرێن بۆ `security definer`، بۆ ئەوەی نمرەی شوێنەکان هەر نوێ ببێتەوە.
+
+## ✅ کوالیتی
+
+- `flutter analyze --fatal-infos`: **0 کێشە** (پێشتر ١٠٦).
+- `flutter test`: **84 تێست**، هەمووی سەرکەوتوو.
+- `supabase/tests/run.sh`: **49 پشکنینی RLS** لەسەر Postgres ی ڕاستەقینە.
+- GitHub Actions (`.github/workflows/ci.yml`) هەموو ئەمانە لە هەر push و PR ێکدا ڕادەکات.
+- فایلە گەورەکان دابەش کران: بەشی ڕووکار لە فایلی `*_ui.dart` دایە.
