@@ -8,9 +8,10 @@ int _min(String hm) {
   return int.parse(p[0]) * 60 + int.parse(p[1]);
 }
 
+/// کلیلی خشتە `dd-MM` ـە؛ ساڵی سەرچاوەکە ٢٠٢٦ ـە
 DateTime _date(String key) {
   final p = key.split('-');
-  return DateTime(int.parse(p[2]), int.parse(p[1]), int.parse(p[0]));
+  return DateTime(2026, int.parse(p[1]), int.parse(p[0]));
 }
 
 void main() {
@@ -65,11 +66,24 @@ void main() {
     test('ڕۆژی نەبوو لە خشتە (١٠ی تشرینی دووەم) هەژمار دەکرێت', () {
       final day = KalarPrayerTimes.forDay(DateTime(2026, 11, 10));
       expect(day.isOfficial, isFalse);
-      final before = kalarOfficialPrayerTimes['09-11-2026']!;
-      final after = kalarOfficialPrayerTimes['11-11-2026']!;
+      final before = kalarOfficialPrayerTimes['09-11']!;
+      final after = kalarOfficialPrayerTimes['11-11']!;
       for (final id in KalarPrayerTimes.ids) {
         final m = _min(day.times[id]!);
         expect(m, inInclusiveRange(_min(before[id]!) - 2, _min(after[id]!) + 2), reason: id);
+      }
+    });
+
+    test('خشتەکە بۆ ساڵانی تریش کار دەکات و جیاوازی ساڵانە < ٢ خولەکە', () {
+      expect(KalarPrayerTimes.forDay(DateTime(2027, 11, 7)).times['maghrib'], '17:04');
+      for (final day in [DateTime(2026, 1, 15), DateTime(2026, 6, 21), DateTime(2026, 11, 7)]) {
+        final a = KalarPrayerTimes.calculate(day);
+        for (final y in [2027, 2028, 2030]) {
+          final b = KalarPrayerTimes.calculate(DateTime(y, day.month, day.day));
+          for (final id in KalarPrayerTimes.ids) {
+            expect((_min(a[id]!) - _min(b[id]!)).abs(), lessThanOrEqualTo(1), reason: '$y $day $id');
+          }
+        }
       }
     });
 
@@ -94,5 +108,50 @@ void main() {
     test('دەقی هەڵە وەک خۆی دەگەڕێتەوە', () {
       expect(KalarPrayerTimes.format12('abc'), 'abc');
     });
+  });
+
+  group('گۆڕانکاری ئەدمین', () {
+    tearDown(() => KalarPrayerTimes.setAdminOverrides(const {}));
+
+    test('پێش خشتەی ناو ئەپ دەکەوێت', () {
+      KalarPrayerTimes.setAdminOverrides({
+        '07-11': {'fajr': '05:00', 'sunrise': '06:30', 'dhuhr': '11:47',
+                  'asr': '14:37', 'maghrib': '17:05', 'isha': '18:15'},
+      });
+      final d = KalarPrayerTimes.forDay(DateTime(2026, 11, 7));
+      expect(d.source, PrayerSource.admin);
+      expect(d.times['maghrib'], '17:05');
+      expect(KalarPrayerTimes.forDay(DateTime(2026, 11, 8)).source, PrayerSource.official);
+    });
+
+    test('ڕۆژی هەڵە (ڕیزبەندی تێکچوو) پشتگوێ دەخرێت', () {
+      KalarPrayerTimes.setAdminOverrides({
+        '07-11': {'fajr': '05:00', 'sunrise': '04:00', 'dhuhr': '11:47',
+                  'asr': '14:37', 'maghrib': '17:05', 'isha': '18:15'},
+      });
+      expect(KalarPrayerTimes.forDay(DateTime(2026, 11, 7)).source, PrayerSource.official);
+    });
+  });
+
+  group('normalize (پەیستکردن لە ئامۆژگاری)', () {
+    test('کاتی دوای نیوەڕۆ بێ پ.ن/د.ن', () {
+      expect(KalarPrayerTimes.normalize('fajr', '04:59'), '04:59');
+      expect(KalarPrayerTimes.normalize('dhuhr', '11:47'), '11:47');
+      expect(KalarPrayerTimes.normalize('dhuhr', '12:50'), '12:50');
+      expect(KalarPrayerTimes.normalize('dhuhr', '1:02'), '13:02');
+      expect(KalarPrayerTimes.normalize('asr', '02:42'), '14:42');
+      expect(KalarPrayerTimes.normalize('maghrib', '05:09'), '17:09');
+      expect(KalarPrayerTimes.normalize('isha', '06:20'), '18:20');
+      expect(KalarPrayerTimes.normalize('isha', '18:20'), '18:20');
+    });
+    test('ژمارەی کوردی و هەڵە', () {
+      expect(KalarPrayerTimes.normalize('asr', '٠٢:٤٢'), '14:42');
+      expect(KalarPrayerTimes.normalize('asr', '2:7'), isNull);
+      expect(KalarPrayerTimes.normalize('asr', 'x'), isNull);
+    });
+  });
+
+  test('format12 بە ژمارەی کوردی', () {
+    expect(KalarPrayerTimes.format12('17:04', kurdishDigits: true), '٥:٠٤ د.ن');
   });
 }

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:hijri/hijri_calendar.dart';
 
 import '../../services/prayer/kalar_prayer_times.dart';
+import '../../services/prayer/prayer_reminders.dart';
+import 'prayer_month_share.dart';
 
 /// 📅 بینینی هەفتانە و مانگانەی کاتەکانی نوێژ — ULTRA PRO
 class PrayerWeeklyView extends StatefulWidget {
@@ -29,6 +31,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
   List<Map<String, dynamic>> _monthData = [];
   int _selectedMonth = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
+  bool _kurdishDigits = false;
 
   static const List<String> _months = [
     'کانوونی دووەم',
@@ -50,6 +53,9 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadData();
+    PrayerReminderSettings.load().then((s) {
+      if (mounted) setState(() => _kurdishDigits = s.kurdishDigits);
+    });
   }
 
   @override
@@ -120,6 +126,25 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
             SliverAppBar(
               expandedHeight: 140,
               pinned: true,
+              actions: [
+                IconButton(
+                  tooltip: 'هاوبەشکردنی خشتەی مانگ',
+                  icon: const Icon(Icons.ios_share_rounded, color: Color(0xFFFFD700)),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PrayerMonthSharePage(
+                        year: _selectedYear,
+                        month: _selectedMonth,
+                        monthName: _months[_selectedMonth - 1],
+                        lat: widget.lat,
+                        lng: widget.lng,
+                        kurdishDigits: _kurdishDigits,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               backgroundColor: const Color(0xFF1A1B2E),
               foregroundColor: Colors.white,
               flexibleSpace: FlexibleSpaceBar(
@@ -537,7 +562,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
           ),
           const SizedBox(width: 6),
           Text(
-            KalarPrayerTimes.format12(time),
+            KalarPrayerTimes.format12(time, kurdishDigits: _kurdishDigits),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 11,

@@ -11,9 +11,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../config/app_colors.dart';
 import '../../services/prayer/kalar_prayer_times.dart';
+import '../../services/prayer/prayer_reminders.dart';
+import '../../services/prayer/prayer_times_repository.dart';
 import '../../services/prayer_notification_service.dart';
 import '../daily/qibla_finder_screen.dart';
-import '../prayer/adhan_settings_screen.dart';
+import '../prayer/prayer_settings_screen.dart';
 import '../prayer/prayer_weekly_view.dart';
 
 part 'prayer_times_screen_ui.dart';
@@ -22,7 +24,8 @@ part 'prayer_times_screen_ui.dart';
 ///
 /// ✅ کاتەکان یەکسەر پیشان دەدرێن (شوێن لە پاشەوە وردتر دەکرێتەوە)
 /// ✅ نوێبوونەوەی خۆکار لە نیوەشەو (ڕۆژی نوێ)
-/// ✅ ستریک بە دروستی سفر دەبێتەوە ئەگەر ڕۆژێک لەدەست بچێت
+/// ✅ کاتە فەرمییەکان: ئەدمین (Supabase) ← خشتەی ناو ئەپ ← هەژمار
+/// ✅ کارتی ڕەمەزان، بیرخستنەوەی هەینی، ژمارەی کوردی
 /// ✅ تەنها کاونتداونەکە هەموو چرکەیەک نوێ دەبێتەوە، نەک هەموو شاشەکە
 /// ✅ گوێگری ئەزان یەک جار تۆمار دەکرێت (leak نییە)
 class PrayerTimesScreen extends StatefulWidget {
@@ -129,6 +132,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   double _lng = _defaultLng;
 
   bool _notificationsEnabled = true;
+  PrayerReminderSettings _reminders = const PrayerReminderSettings();
+  bool get _kurdishDigits => _reminders.kurdishDigits;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   StreamSubscription<PlayerState>? _playerCompleteSub;
@@ -183,13 +188,19 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   // 🚀 Init
   // ═══════════════════════════════════════════════════════════
   Future<void> _initAll() async {
-    await _loadSettings();
+    await Future.wait([_loadSettings(), PrayerTimesRepository.loadCache()]);
     await _load();
     if (mounted) _fadeCtrl.forward();
 
     // پاشەکی: شوێن و ئاگادارکردنەوە — چاوەڕێی ناکەین
     unawaited(_initNotif());
     unawaited(_refineLocation());
+    unawaited(_refreshOfficial());
+  }
+
+  /// گۆڕانکاری ئەدمین لە سێرڤەرەوە — ئەگەر شتێک گۆڕا، دووبارە بار بکە
+  Future<void> _refreshOfficial() async {
+    if (await PrayerTimesRepository.refresh()) await _load(silent: true);
   }
 
   Future<void> _initNotif() async {
@@ -203,9 +214,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   Future<void> _loadSettings() async {
     final p = await SharedPreferences.getInstance();
+    final reminders = await PrayerReminderSettings.load();
     if (!mounted) return;
     setState(() {
       _notificationsEnabled = p.getBool('prayer_notif') ?? true;
+      _reminders = reminders;
     });
   }
 
@@ -421,12 +434,20 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   // 🔔 Notifications / Audio
   // ═══════════════════════════════════════════════════════════
   Future<void> _scheduleNotif() async {
-    if (!_notificationsEnabled || _prayers.isEmpty) return;
+    if (_prayers.isEmpty) return;
     try {
-      await PrayerNotificationService.scheduleAllPrayers(
-        prayerTimes: {for (final p in _prayers) p.name: p.time},
-        is24Hour: true, // کاتەکان بە HH:mm دەنێردرێن
-        enabled: _notificationsEnabled,
+      if (_notificationsEnabled) {
+        await PrayerNotificationService.scheduleAllPrayers(
+          prayerTimes: {for (final p in _prayers) p.name: p.time},
+          is24Hour: true, // کاتەکان بە HH:mm دەنێردرێن
+          enabled: true,
+        );
+      } else {
+        await PrayerNotificationService.cancelAll();
+      }
+      // هەینی و ڕەمەزان (scheduleAllPrayers پێشتر هەمووی سڕییەوە)
+      await PrayerNotificationService.scheduleReminders(
+        PrayerReminders.upcoming(DateTime.now(), _reminders),
       );
     } catch (e) {
       debugPrint('⚠️ schedule notif: $e');
@@ -453,7 +474,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   Future<void> _openSettings() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const AdhanSettingsScreen()),
+      MaterialPageRoute(builder: (_) => const PrayerSettingsScreen()),
     );
     // ڕێکخستنەکان لەوانەیە گۆڕابن
     await _loadSettings();
@@ -468,7 +489,24 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  String _formatDisplay(String time) => KalarPrayerTimes.format12(time);
+  String _formatDisplay(String time) =>
+      KalarPrayerTimes.format12(time, kurdishDigits: _kurdishDigits);
+
+  String _digits(String s) => _kurdishDigits ? KalarPrayerTimes.toKurdishDigits(s) : s;
+
+  /// نوێژی ئێستا: دوایین کاتێک کە ڕۆیشتووە. دوای خۆرهەڵاتن تا نیوەڕۆ و
+  /// پێش بەیانی هیچ نوێژێک "ئێستا" نییە.
+  String? get _currentId {
+    final now = DateTime.now();
+    _Prayer? last;
+    for (final p in _prayers) {
+      if (!p.on(now).isAfter(now)) last = p;
+    }
+    if (last == null || last.isSunrise) return null;
+    return last.id;
+  }
+
+  bool get _isRamadan => PrayerReminders.isRamadan(DateTime.now());
 
   // ═══════════════════════════════════════════════════════════
   // 🏗️ Build
@@ -500,8 +538,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               _buildDateCard(),
               const SizedBox(height: 14),
               _buildCountdownCard(),
-              const SizedBox(height: 14),
-              const SizedBox(height: 6),
+              if (_isRamadan) ...[
+                const SizedBox(height: 14),
+                _buildRamadanCard(),
+              ],
+              const SizedBox(height: 20),
               _buildSectionHeader(),
               const SizedBox(height: 12),
               for (final p in _prayers) _buildPrayerTile(p),

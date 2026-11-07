@@ -49,7 +49,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
             _toggleAdhan,
             active: _isPlayingAdhan,
           ),
-          _topIcon(Icons.settings_rounded, 'ڕێکخستنی ئەزان', _openSettings),
+          _topIcon(Icons.settings_rounded, 'ڕێکخستنی نوێژ', _openSettings),
           _topIcon(Icons.calendar_month_rounded, 'خشتەی هەفتانە', () {
             Navigator.push(
               context,
@@ -255,11 +255,11 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                     textDirection: TextDirection.ltr,
                     child: Row(
                       children: [
-                        Expanded(child: _timeBox(_PrayerTimesScreenState._two(r.inHours), 'سەعات')),
+                        Expanded(child: _timeBox(_digits(_PrayerTimesScreenState._two(r.inHours)), 'سەعات')),
                         _colon(),
-                        Expanded(child: _timeBox(_PrayerTimesScreenState._two(r.inMinutes % 60), 'خولەک')),
+                        Expanded(child: _timeBox(_digits(_PrayerTimesScreenState._two(r.inMinutes % 60)), 'خولەک')),
                         _colon(),
-                        Expanded(child: _timeBox(_PrayerTimesScreenState._two(r.inSeconds % 60), 'چرکە')),
+                        Expanded(child: _timeBox(_digits(_PrayerTimesScreenState._two(r.inSeconds % 60)), 'چرکە')),
                       ],
                     ),
                   ),
@@ -348,6 +348,97 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // 🌙 Ramadan Card
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildRamadanCard() {
+    String? time(String id) {
+      for (final p in _prayers) {
+        if (p.id == id) return p.time;
+      }
+      return null;
+    }
+
+    final suhoor = time('fajr');
+    final iftar = time('maghrib');
+    if (suhoor == null || iftar == null) return const SizedBox.shrink();
+    final dayOfRamadan = HijriCalendar.fromDate(DateTime.now()).hDay;
+
+    Widget column(String label, String hm, IconData icon) => Expanded(
+          child: Column(
+            children: [
+              Icon(icon, color: AppColors.yellow, size: 20),
+              const SizedBox(height: 4),
+              Text(label,
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(_formatDisplay(hm),
+                  textDirection: TextDirection.ltr,
+                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+            ],
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.purple.withValues(alpha: 0.35), AppColors.darkCard],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.yellow.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '🌙 ڕەمەزانی پیرۆز — ڕۆژی ${_digits('$dayOfRamadan')}',
+            style: const TextStyle(color: AppColors.yellow, fontSize: 14, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              column('کۆتایی پارشێو', suhoor, Icons.nightlight_round),
+              Container(width: 1, height: 44, color: Colors.white.withValues(alpha: 0.1)),
+              column('بەربانگ', iftar, Icons.wb_twilight_rounded),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // هەموو چرکەیەک لەگەڵ کاونتداونەکە نوێ دەبێتەوە
+          ValueListenableBuilder<_Countdown>(
+            valueListenable: _countdown,
+            builder: (context, cd, child) {
+              final now = DateTime.now();
+              final s = _Prayer('fajr', '', suhoor, Icons.circle, AppColors.yellow).on(now);
+              final i = _Prayer('maghrib', '', iftar, Icons.circle, AppColors.yellow).on(now);
+              final String text;
+              if (now.isBefore(s)) {
+                text = '${_left(s.difference(now))} ماوە بۆ کۆتایی پارشێو';
+              } else if (now.isBefore(i)) {
+                text = '${_left(i.difference(now))} ماوە بۆ بەربانگ';
+              } else {
+                text = 'بەربانگت پیرۆز بێت 🤲';
+              }
+              return Text(
+                text,
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _left(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final hs = h > 0 ? '${_digits('$h')} سەعات و ' : '';
+    return '$hs${_digits('$m')} خولەک';
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // 🏷️ Section Header
   // ═══════════════════════════════════════════════════════════
   Widget _buildSectionHeader() {
@@ -378,7 +469,8 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
   Widget _buildPrayerTile(_Prayer prayer) {
     final color = prayer.color;
     final isNext = _countdown.value.nextId == prayer.id;
-    final isPassed = !isNext && _isPassed(prayer);
+    final isCurrent = !isNext && _currentId == prayer.id;
+    final isPassed = !isNext && !isCurrent && _isPassed(prayer);
     final dim = Colors.white.withValues(alpha: 0.35);
 
     final iconBox = Container(
@@ -414,8 +506,10 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
         border: Border.all(
           color: isNext
               ? AppColors.orange
-              : (isPassed ? Colors.white.withValues(alpha: 0.05) : AppColors.darkBorder),
-          width: isNext ? 1.3 : 1,
+              : isCurrent
+                  ? AppColors.green.withValues(alpha: 0.7)
+                  : (isPassed ? Colors.white.withValues(alpha: 0.05) : AppColors.darkBorder),
+          width: isNext || isCurrent ? 1.3 : 1,
         ),
         boxShadow: isNext
             ? [
@@ -449,6 +543,9 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                 if (isNext) ...[
                   const SizedBox(height: 3),
                   _badge('داهاتوو', Colors.white),
+                ] else if (isCurrent) ...[
+                  const SizedBox(height: 3),
+                  _badge('کاتی ئێستا', AppColors.green),
                 ],
               ],
             ),

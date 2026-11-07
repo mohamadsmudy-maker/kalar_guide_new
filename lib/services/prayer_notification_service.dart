@@ -4,6 +4,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'prayer/prayer_reminders.dart';
+
 class PrayerNotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
   FlutterLocalNotificationsPlugin();
@@ -223,6 +225,45 @@ class PrayerNotificationService {
     } catch (e) {
       debugPrint('❌ Schedule error ($prayerName): $e');
     }
+  }
+
+  /// بیرخستنەوە یەکجارییەکان (هەینی، ڕەمەزان). دوای [scheduleAllPrayers]
+  /// بانگی بکە، چونکە ئەو هەموو ئاگادارکردنەوەکان دەسڕێتەوە.
+  static Future<void> scheduleReminders(List<PrayerReminder> reminders) async {
+    final scheduleMode = _exactAlarmGranted
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
+    for (final r in reminders) {
+      try {
+        await _notifications.zonedSchedule(
+          r.id,
+          r.title,
+          r.body,
+          tz.TZDateTime.from(r.at, tz.local),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              _channelId,
+              _channelName,
+              channelDescription: _channelDesc,
+              importance: Importance.high,
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher',
+              color: Color(0xFFFFD700),
+            ),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentSound: true,
+            ),
+          ),
+          androidScheduleMode: scheduleMode,
+          uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+        );
+      } catch (e) {
+        debugPrint('❌ reminder ${r.id}: $e');
+      }
+    }
+    debugPrint('✅ ${reminders.length} reminders scheduled');
   }
 
   static Future<void> scheduleTestNotification({

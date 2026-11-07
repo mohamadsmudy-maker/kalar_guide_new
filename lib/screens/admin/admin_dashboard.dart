@@ -19,6 +19,7 @@ import 'admin_events_screen.dart';
 import 'admin_emergency_services_screen.dart';
 import 'admin_fuel_stations.dart';
 import 'admin_currency_stations.dart';
+import 'admin_prayer_times.dart';
 import 'admin_weather.dart';
 import 'admin_notifications.dart';
 import 'admin_vendor_requests.dart';
@@ -644,6 +645,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: 'بەڕێوەبردنی کەشوهەوا',
           subtitle: 'نوێکردنەوەی پلەی گەرما و دۆخ',
           screen: () => const AdminWeatherScreen(),
+        ),
+        _DashItem(
+          id: 'prayer_times',
+          icon: Icons.mosque_rounded,
+          color: const Color(0xFF10B981),
+          title: 'کاتەکانی نوێژ',
+          subtitle: 'دەستکاری یان پەیستکردنی خشتەی ئامۆژگاری',
+          adminOnly: true,
+          screen: () => const AdminPrayerTimesScreen(),
         ),
       ]),
       _DashSection('system', '⚙️ ڕێکخستن و سیستەم', [

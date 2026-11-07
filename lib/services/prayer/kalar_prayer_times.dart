@@ -3,23 +3,37 @@ import 'package:adhan/adhan.dart';
 
 import '../../data/kalar_prayer_times.dart';
 
+/// سەرچاوەی کاتەکانی ڕۆژێک
+enum PrayerSource {
+  /// ئەدمین لە پانێڵەکەوە داینا (Supabase)
+  admin,
+
+  /// خشتەی فەرمی ناو ئەپ (amozhgary.tv)
+  official,
+
+  /// هەژمارکراو
+  calculated,
+}
+
 /// کاتەکانی نوێژی یەک ڕۆژ.
 class PrayerDay {
-  const PrayerDay(this.times, {required this.isOfficial});
+  const PrayerDay(this.times, {required this.source});
 
   /// `fajr`, `sunrise`, `dhuhr`, `asr`, `maghrib`, `isha` → `HH:mm` (٢٤ کاتژمێر)
   final Map<String, String> times;
+  final PrayerSource source;
 
-  /// true = لە خشتەی فەرمی ئامۆژگارییەوە هاتووە، false = هەژمارکراوە
-  final bool isOfficial;
+  /// true = کاتی فەرمییە (ئەدمین یان خشتەی ئامۆژگاری)
+  bool get isOfficial => source != PrayerSource.calculated;
 }
 
 /// تاکە سەرچاوەی کاتی نوێژ بۆ هەموو ئەپەکە.
 ///
-/// ١. ئەگەر ڕۆژەکە لە [kalarOfficialPrayerTimes] دا هەبێت، هەمان کاتی فەرمی.
-/// ٢. ئەگەرنا هەژمار دەکرێت بە ڕێکخستنێک کە لەگەڵ خشتەی ئامۆژگاری
-///    بەراورد کراوە (تشرینی دووەم ٢٠٢٦، ٢٩ ڕۆژ): خەوتنان ڕێک، ئەوانی تر
-///    ±١ خولەک، بەیانی ±٢ خولەک.
+/// ڕیزبەندی: ١) گۆڕانکاری ئەدمین (Supabase) ٢) خشتەی فەرمی ناو ئەپ
+/// ٣) هەژمار — بە ڕێکخستنێک کە لەگەڵ خشتەی ئامۆژگاری بەراورد کراوە
+/// (تشرینی دووەم: خەوتنان ڕێک، ئەوانی تر ±١، بەیانی ±٢ خولەک).
+///
+/// کلیلی خشتەکان `dd-MM` ـە (بێ ساڵ)، چونکە کاتەکان ساڵانە دووبارە دەبنەوە.
 class KalarPrayerTimes {
   KalarPrayerTimes._();
 
@@ -30,6 +44,20 @@ class KalarPrayerTimes {
   static const Duration _utcOffset = Duration(hours: 3);
 
   static const List<String> ids = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+
+  static final RegExp _hmPattern = RegExp(r'^([01]\d|2[0-3]):[0-5]\d$');
+
+  /// گۆڕانکارییەکانی ئەدمین — لە [PrayerTimesRepository] ەوە پڕ دەکرێتەوە
+  static Map<String, Map<String, String>> _admin = const {};
+
+  static void setAdminOverrides(Map<String, Map<String, String>> rows) {
+    _admin = {
+      for (final e in rows.entries)
+        if (isValidDay(e.value)) e.key: Map.unmodifiable(e.value),
+    };
+  }
+
+  static Map<String, Map<String, String>> get adminOverrides => _admin;
 
   static CalculationParameters get _params =>
       CalculationMethod.muslim_world_league.getParameters()
@@ -45,20 +73,42 @@ class KalarPrayerTimes {
           isha: 2,
         );
 
-  static String dateKey(DateTime d) =>
-      '${_two(d.day)}-${_two(d.month)}-${d.year}';
+  /// `dd-MM`
+  static String dayKey(DateTime d) => '${_two(d.day)}-${_two(d.month)}';
+
+  /// `dd-MM-yyyy`
+  static String dateKey(DateTime d) => '${dayKey(d)}-${d.year}';
+
+  static bool isValidTime(String? hm) => hm != null && _hmPattern.hasMatch(hm);
+
+  /// هەر ٦ کاتەکە هەن، دروستن و بە ڕیزن
+  static bool isValidDay(Map<String, String>? t) {
+    if (t == null) return false;
+    var prev = -1;
+    for (final id in ids) {
+      final v = t[id];
+      if (!isValidTime(v)) return false;
+      final m = toMinutes(v!);
+      if (m <= prev) return false;
+      prev = m;
+    }
+    return true;
+  }
 
   static PrayerDay forDay(
     DateTime day, {
     double lat = kalarLat,
     double lng = kalarLng,
   }) {
-    final official = kalarOfficialPrayerTimes[dateKey(day)];
-    if (official != null) return PrayerDay(official, isOfficial: true);
-    return PrayerDay(calculate(day, lat: lat, lng: lng), isOfficial: false);
+    final key = dayKey(day);
+    final admin = _admin[key];
+    if (admin != null) return PrayerDay(admin, source: PrayerSource.admin);
+    final official = kalarOfficialPrayerTimes[key];
+    if (official != null) return PrayerDay(official, source: PrayerSource.official);
+    return PrayerDay(calculate(day, lat: lat, lng: lng), source: PrayerSource.calculated);
   }
 
-  /// هەژمار بەبێ سەیرکردنی خشتەی فەرمی (بۆ تێست و شوێنی تر).
+  /// هەژمار بەبێ سەیرکردنی خشتەکان.
   static Map<String, String> calculate(
     DateTime day, {
     double lat = kalarLat,
@@ -79,8 +129,41 @@ class KalarPrayerTimes {
     };
   }
 
+  /// کاتی [id] لە ڕۆژی [day] وەک DateTime (کاتی ناوخۆیی).
+  static DateTime at(DateTime day, String id) {
+    final m = toMinutes(forDay(day).times[id]!);
+    return DateTime(day.year, day.month, day.day, m ~/ 60, m % 60);
+  }
+
+  static int toMinutes(String hm) {
+    final p = hm.split(':');
+    return int.parse(p[0]) * 60 + int.parse(p[1].substring(0, 2));
+  }
+
+  /// کاتێک لە شێوەی ئامۆژگاری (١٢ سەعاتی بێ پ.ن/د.ن) دەگۆڕێت بۆ `HH:mm`.
+  /// بەیانی و خۆرهەڵاتن هەمیشە پێش نیوەڕۆن؛ عەسر، ئێوارە و خەوتنان دوای
+  /// نیوەڕۆن؛ نیوەڕۆ لە نێوان ١١ و ١ دایە.
+  static String? normalize(String id, String raw) {
+    final m = RegExp(r'^(\d{1,2})[:.](\d{2})$').firstMatch(toLatinDigits(raw.trim()));
+    if (m == null) return null;
+    var h = int.parse(m.group(1)!);
+    final min = int.parse(m.group(2)!);
+    if (h > 23 || min > 59) return null;
+    switch (id) {
+      case 'fajr':
+      case 'sunrise':
+        if (h == 12) h = 0;
+      case 'dhuhr':
+        if (h < 9) h += 12;
+      default:
+        if (h < 12) h += 12;
+    }
+    final out = '${_two(h)}:${_two(min)}';
+    return isValidTime(out) ? out : null;
+  }
+
   /// `HH:mm` → `h:mm پ.ن` / `h:mm د.ن` (سیستەمی ١٢ سەعاتی)
-  static String format12(String hm) {
+  static String format12(String hm, {bool kurdishDigits = false}) {
     final p = hm.split(':');
     if (p.length < 2) return hm;
     final h24 = int.tryParse(p[0]);
@@ -88,7 +171,29 @@ class KalarPrayerTimes {
     if (h24 == null) return hm;
     final suffix = h24 < 12 ? 'پ.ن' : 'د.ن';
     final h = h24 % 12 == 0 ? 12 : h24 % 12;
-    return '$h:$m $suffix';
+    final text = '$h:$m';
+    return '${kurdishDigits ? toKurdishDigits(text) : text} $suffix';
+  }
+
+  static String toKurdishDigits(String s) {
+    const ku = '٠١٢٣٤٥٦٧٨٩';
+    final b = StringBuffer();
+    for (final c in s.codeUnits) {
+      b.write(c >= 48 && c <= 57 ? ku[c - 48] : String.fromCharCode(c));
+    }
+    return b.toString();
+  }
+
+  static String toLatinDigits(String s) {
+    const ku = '٠١٢٣٤٥٦٧٨٩';
+    const fa = '۰۱۲۳۴۵۶۷۸۹';
+    final b = StringBuffer();
+    for (final ch in s.split('')) {
+      final i = ku.indexOf(ch);
+      final j = fa.indexOf(ch);
+      b.write(i >= 0 ? '$i' : (j >= 0 ? '$j' : ch));
+    }
+    return b.toString();
   }
 
   static String _hm(DateTime d) {

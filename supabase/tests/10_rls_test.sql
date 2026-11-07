@@ -12,8 +12,9 @@ begin
   execute stmt;
   get diagnostics n = row_count;
   return n;
-exception when insufficient_privilege then
-  return -1;
+exception
+  when insufficient_privilege then return -1;
+  when check_violation then return -2;
 end $$;
 
 create function t.check(ok boolean, what text) returns void language plpgsql as $$
@@ -129,6 +130,21 @@ select t.as_user('00000000-0000-0000-0000-00000000000d');
 select app_login('07500000001', 'adminpass');
 select t.check((select count(*) from reviews) = 3, 'admin sees all reviews');
 select t.check(t.rows($$delete from reviews where is_approved = false$$) = 1, 'admin deletes reviews');
+
+-- ── prayer times (admin still logged in) ─────────────────────────
+select t.check(t.rows($$insert into prayer_times_official values
+  ('07-11', '05:05', '06:30', '11:47', '14:37', '17:04', '18:15')$$) = 1, 'admin adds prayer day');
+select t.check(t.rows($$insert into prayer_times_official values
+  ('08-11', '05:06', '04:00', '11:47', '14:37', '17:04', '18:15')$$) = -2, 'times out of order rejected');
+select t.check(t.rows($$insert into prayer_times_official values
+  ('32-11', '05:05', '06:30', '11:47', '14:37', '17:04', '18:15')$$) = -2, 'bad day rejected');
+
+select t.as_user('00000000-0000-0000-0000-0000000000ee');   -- guest
+select t.check((select maghrib from prayer_times_official where day_month = '07-11') = '17:04', 'guest reads prayer times');
+select t.check(t.rows($$update prayer_times_official set maghrib = '17:00'$$) = 0, 'guest cannot edit prayer times');
+select t.check(t.rows($$insert into prayer_times_official values
+  ('09-11', '05:07', '06:32', '11:47', '14:36', '17:02', '18:14')$$) = -1, 'guest cannot add prayer times');
+select t.as_user('00000000-0000-0000-0000-00000000000d');
 
 select app_logout();
 select t.check(app_role() = 'guest', 'logout clears the session');
