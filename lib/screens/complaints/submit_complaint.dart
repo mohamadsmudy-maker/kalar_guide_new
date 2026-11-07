@@ -17,6 +17,7 @@ import '../../services/location_service.dart';
 import '../../services/audio_service.dart';
 import '../../services/neighborhood_service.dart';
 import '../../widgets/voice_recorder_widget.dart';
+import '../../l10n/tr.dart';
 
 part 'submit_complaint_ui.dart';
 
@@ -394,7 +395,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -403,9 +404,9 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
               children: [
                 _sheetHandle(),
                 const SizedBox(height: 14),
-                const Text('جۆری کێشە هەڵبژێرە',
+                Text(tr('جۆری کێشە هەڵبژێرە'),
                     style:
-                    TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                 const SizedBox(height: 12),
                 Flexible(
                   child: ListView.separated(
@@ -452,12 +453,12 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(t.name,
+                                    Text(tr(t.name),
                                         style: const TextStyle(
                                             fontWeight: FontWeight.w800,
                                             fontSize: 13)),
                                     const SizedBox(height: 2),
-                                    Text(t.authority,
+                                    Text(tr(t.authority),
                                         style: TextStyle(
                                             fontSize: 11,
                                             color: Colors.grey.shade600)),
@@ -487,7 +488,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
   // ═══════════════════════════════════════════════════════════
   Future<void> _handleImagePicking() async {
     if (_images.length >= _maxImages) {
-      _showSnackBar('تەنها دەتوانیت تا ${_ku(_maxImages)} وێنە زیاد بکەیت ⚠',
+      _showSnackBar(trf('تەنها دەتوانیت تا {0} وێنە زیاد بکەیت ⚠', [_ku(_maxImages)]),
           Colors.orange);
       return;
     }
@@ -506,7 +507,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -515,16 +516,16 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
               children: [
                 _sheetHandle(),
                 const SizedBox(height: 16),
-                const Text('وێنەی کێشە هەڵبژێرە',
+                Text(tr('وێنەی کێشە هەڵبژێرە'),
                     style:
-                    TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                 const SizedBox(height: 20),
                 Row(
                   children: [
                     Expanded(
                       child: _buildSourceCard(
                         icon: Icons.camera_alt_rounded,
-                        label: 'کامێرا',
+                        label: tr('کامێرا'),
                         color: AppColors.primary,
                         onTap: () {
                           Navigator.pop(ctx);
@@ -536,7 +537,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                     Expanded(
                       child: _buildSourceCard(
                         icon: Icons.photo_library_rounded,
-                        label: 'گەلەری',
+                        label: tr('گەلەری'),
                         color: Colors.purple,
                         onTap: () {
                           Navigator.pop(ctx);
@@ -576,7 +577,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       _saveDraft();
     } on PlatformException catch (e) {
       debugPrint('❌ Image pick error: $e');
-      _showSnackBar('ناتوانم دەستم بگات بە کامێرا یان گەلەری — مۆڵەتەکان بپشکنە',
+      _showSnackBar(tr('ناتوانم دەستم بگات بە کامێرا یان گەلەری — مۆڵەتەکان بپشکنە'),
           Colors.red);
     } catch (e) {
       debugPrint('❌ Image pick error: $e');
@@ -701,7 +702,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
           final url = await ImageCompressionService.uploadImage(img)
               .timeout(const Duration(seconds: 60));
           done++;
-          _setStage('بارکردنی وێنەکان (${_ku(done)}/${_ku(_images.length)})...',
+          _setStage(trf('بارکردنی وێنەکان ({0}/{1})...', [_ku(done), _ku(_images.length)]),
               0.05 + 0.6 * done / _images.length);
           return url;
         }),
@@ -775,7 +776,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       HapticFeedback.heavyImpact();
       if (voiceFailed) {
         _showSnackBar(
-            'سکاڵا نێردرا، بەڵام دەنگەکە نەنێردرا ⚠', Colors.orange);
+            tr('سکاڵا نێردرا، بەڵام دەنگەکە نەنێردرا ⚠'), Colors.orange);
       }
       _showSuccessDialog();
     } on PostgrestException catch (e) {
@@ -783,26 +784,26 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       if (!mounted) return;
       final m = e.message;
       if (m.contains('voice_url')) {
-        _showSnackBar('⚠️ ستوونی voice_url لە داتابەیسدا نییە. ئەدمین ئاگادار بکە.',
+        _showSnackBar(tr('⚠️ ستوونی voice_url لە داتابەیسدا نییە. ئەدمین ئاگادار بکە.'),
             Colors.red);
       } else if (m.contains('neighborhood_id')) {
         _showSnackBar(
-            '⚠️ ستوونی neighborhood_id لە داتابەیسدا نییە.', Colors.red);
+            tr('⚠️ ستوونی neighborhood_id لە داتابەیسدا نییە.'), Colors.red);
       } else if (m.contains('row-level security')) {
         _showSnackBar(
-            '⚠️ کێشەی ئاسایش — تکایە دووبارە بچۆ ژوورەوە.', Colors.red);
+            tr('⚠️ کێشەی ئاسایش — تکایە دووبارە بچۆ ژوورەوە.'), Colors.red);
       } else {
-        _showSnackBar('هەڵەی داتابەیس، تکایە دووبارە هەوڵبدەرەوە', Colors.red);
+        _showSnackBar(tr('هەڵەی داتابەیس، تکایە دووبارە هەوڵبدەرەوە'), Colors.red);
       }
     } on TimeoutException {
       _showSnackBar(
-          'پەیوەندی زۆر هێواشە — تکایە ئینتەرنێت بپشکنە و دووبارە هەوڵبدەرەوە ⏱',
+          tr('پەیوەندی زۆر هێواشە — تکایە ئینتەرنێت بپشکنە و دووبارە هەوڵبدەرەوە ⏱'),
           Colors.red);
     } on SocketException {
-      _showSnackBar('ئینتەرنێت نییە — پەیوەندییەکەت بپشکنە 📡', Colors.red);
+      _showSnackBar(tr('ئینتەرنێت نییە — پەیوەندییەکەت بپشکنە 📡'), Colors.red);
     } catch (e) {
       debugPrint('❌ Submit error: $e');
-      _showSnackBar('هەڵەیەک ڕووی دا، تکایە دووبارە هەوڵبدەرەوە', Colors.red);
+      _showSnackBar(tr('هەڵەیەک ڕووی دا، تکایە دووبارە هەوڵبدەرەوە'), Colors.red);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -819,28 +820,28 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('دەتەوێت بڕۆیت؟',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
-          content: const Text('زانیارییەکانت وەک ڕەشنووس پاشەکەوت دەکرێن، یان دەتوانیت بیانسڕیتەوە.',
-              style: TextStyle(fontSize: 13, height: 1.5)),
+          title: Text(tr('دەتەوێت بڕۆیت؟'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+          content: Text(tr('زانیارییەکانت وەک ڕەشنووس پاشەکەوت دەکرێن، یان دەتوانیت بیانسڕیتەوە.'),
+              style: const TextStyle(fontSize: 13, height: 1.5)),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'stay'),
-              child: const Text('مانەوە'),
+              child: Text(tr('مانەوە')),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'discard'),
-              child: Text('سڕینەوە',
+              child: Text(tr('سڕینەوە'),
                   style: TextStyle(color: Colors.red.shade700)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, 'save'),
-              child: const Text('پاشەکەوت'),
+              child: Text(tr('پاشەکەوت')),
             ),
           ],
         ),
@@ -861,7 +862,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     showDialog<void>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Dialog(
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -873,9 +874,9 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                 _gradientIcon(Icons.location_off_rounded,
                     [Colors.red.shade400, Colors.red.shade700]),
                 const SizedBox(height: 20),
-                const Text('سنووری جوگرافی نەگونجاو',
+                Text(tr('سنووری جوگرافی نەگونجاو'),
                     style:
-                    TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -883,9 +884,9 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Text(
-                    'تکایە! ناردنی سکاڵا تەنها لە سنووری شاری کەلاردا بەردەستە.',
-                    style: TextStyle(fontSize: 13, height: 1.5),
+                  child: Text(
+                    tr('تکایە! ناردنی سکاڵا تەنها لە سنووری شاری کەلاردا بەردەستە.'),
+                    style: const TextStyle(fontSize: 13, height: 1.5),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -903,7 +904,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                           Navigator.pop(ctx);
                           _getAutomaticLocation();
                         },
-                        child: const Text('نوێکردنەوەی شوێن'),
+                        child: Text(tr('نوێکردنەوەی شوێن')),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -917,8 +918,8 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                               borderRadius: BorderRadius.circular(16)),
                         ),
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('تێدەگەم ✅',
-                            style: TextStyle(fontWeight: FontWeight.w900)),
+                        child: Text(tr('تێدەگەم ✅'),
+                            style: const TextStyle(fontWeight: FontWeight.w900)),
                       ),
                     ),
                   ],
@@ -938,7 +939,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       builder: (ctx) => PopScope(
         canPop: false,
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: AppLang.direction,
           child: Dialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28)),
@@ -956,14 +957,14 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('سکاڵاکەت نێردرا!',
+                  Text(tr('سکاڵاکەت نێردرا!'),
                       style:
-                      TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+                      const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
                   const SizedBox(height: 12),
                   Text(
-                    _neighborhoodName != null
-                        ? 'سکاڵاکەت نێردرا بۆ ${_type?.authority}\nگەڕەک: $_neighborhoodName'
-                        : 'سکاڵاکەت نێردرا بۆ ${_type?.authority}',
+                    tr(_neighborhoodName != null
+                        ? trf('سکاڵاکەت نێردرا بۆ {0}\nگەڕەک: {1}', [_type?.authority, _neighborhoodName])
+                        : trf('سکاڵاکەت نێردرا بۆ {0}', [_type?.authority])),
                     style: const TextStyle(
                         fontSize: 13, color: Colors.grey, height: 1.6),
                     textAlign: TextAlign.center,
@@ -983,8 +984,8 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                         Navigator.pop(ctx);
                         Navigator.pop(context, true); // ⭐ caller can refresh
                       },
-                      child: const Text('باشە ✅',
-                          style: TextStyle(
+                      child: Text(tr('باشە ✅'),
+                          style: const TextStyle(
                               fontWeight: FontWeight.w900, fontSize: 15)),
                     ),
                   ),
@@ -1003,7 +1004,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message,
+          content: Text(tr(message),
               style:
               const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           backgroundColor: color,
@@ -1028,7 +1029,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         if (didPop) _saveDraft();
       },
       child: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Scaffold(
           backgroundColor: const Color(0xFFF4F6F9),
           appBar: _buildAppBar(),
@@ -1138,16 +1139,16 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         children: [
           Icon(Icons.history_edu_rounded, color: Colors.amber.shade800),
           const SizedBox(width: 10),
-          const Expanded(
-            child: Text('ڕەشنووس بارکرا — دەتوانیت درێژە بدەیت',
-                style: TextStyle(
+          Expanded(
+            child: Text(tr('ڕەشنووس بارکرا — دەتوانیت درێژە بدەیت'),
+                style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Colors.black87)),
           ),
           TextButton(
             onPressed: _resetForm,
-            child: Text('دەستپێکی نوێ',
+            child: Text(tr('دەستپێکی نوێ'),
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -1205,17 +1206,17 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              garbage
+              tr(garbage
                   ? 'وێنەگرتن بە کامێرا'
-                  : 'وێنە بگرە (کامێرا یان گەلەری)',
+                  : 'وێنە بگرە (کامێرا یان گەلەری)'),
               style: const TextStyle(
                   fontWeight: FontWeight.bold, color: blue, fontSize: 13),
             ),
             const SizedBox(height: 4),
             Text(
-              garbage
+              tr(garbage
                   ? 'مەرجە وێنەی ڕاستەوخۆ بێت'
-                  : 'تا ${_ku(_maxImages)} وێنە',
+                  : trf('تا {0} وێنە', [_ku(_maxImages)])),
               style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
           ],

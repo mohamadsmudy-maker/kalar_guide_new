@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 
 import '../../services/fuel_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🗺️ نەخشەی وێستگەکانی سووتەمەنی
 class FuelStationsMapScreen extends StatefulWidget {
@@ -48,7 +49,7 @@ class _FuelStationsMapScreenState extends State<FuelStationsMapScreen> {
               gmaps.BitmapDescriptor.hueOrange,
             ),
             infoWindow: gmaps.InfoWindow(
-              title: station['station_name']?.toString() ?? 'وێستگە',
+              title: station['station_name']?.toString() ?? tr('وێستگە'),
               snippet:
               '${(station['price'] as num?)?.toStringAsFixed(0) ?? '--'} د.ع',
             ),
@@ -74,16 +75,16 @@ class _FuelStationsMapScreenState extends State<FuelStationsMapScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           backgroundColor: const Color(0xFF1A1B2E),
           foregroundColor: Colors.white,
-          title: const Text(
-            '🗺️ نەخشەی وێستگەکان',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          title: Text(
+            tr('🗺️ نەخشەی وێستگەکان'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         ),
         body: _loading
@@ -147,7 +148,7 @@ class _FuelStationsMapScreenState extends State<FuelStationsMapScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '${_stations.length} وێستگە',
+                            trf('{0} وێستگە', [_stations.length]),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -155,9 +156,9 @@ class _FuelStationsMapScreenState extends State<FuelStationsMapScreen> {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'لەسەر نەخشە نیشان دراون',
-                            style: TextStyle(
+                          Text(
+                            tr('لەسەر نەخشە نیشان دراون'),
+                            style: const TextStyle(
                               color: Colors.white54,
                               fontSize: 11,
                             ),

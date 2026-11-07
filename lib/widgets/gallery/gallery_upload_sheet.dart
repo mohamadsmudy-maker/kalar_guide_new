@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../models/gallery/gallery_category.dart';
 import '../../models/gallery/gallery_category_registry.dart';
+import '../../l10n/tr.dart';
 
 class GalleryUploadResult {
   final String title;
@@ -37,7 +38,7 @@ class _GalleryUploadSheetState extends State<GalleryUploadSheet> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           16, 16, 16,
@@ -48,8 +49,8 @@ class _GalleryUploadSheetState extends State<GalleryUploadSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('زانیارییەکانی وێنە',
-                  style: TextStyle(
+              Text(tr('زانیارییەکانی وێنە'),
+                  style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.w900)),
               const SizedBox(height: 16),
 
@@ -59,8 +60,8 @@ class _GalleryUploadSheetState extends State<GalleryUploadSheet> {
                 maxLength: 120,
                 autofocus: true,
                 decoration: InputDecoration(
-                  labelText: 'ناونیشان',
-                  hintText: 'بۆ نموونە: چیاى گۆیژە',
+                  labelText: tr('ناونیشان'),
+                  hintText: tr('بۆ نموونە: چیاى گۆیژە'),
                   filled: true,
                   fillColor: widget.isDark
                       ? AppColors.darkBorder
@@ -74,8 +75,8 @@ class _GalleryUploadSheetState extends State<GalleryUploadSheet> {
               const SizedBox(height: 8),
 
               // جۆر
-              const Text('جۆر',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+              Text(tr('جۆر'),
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -111,7 +112,7 @@ class _GalleryUploadSheetState extends State<GalleryUploadSheet> {
                               color: selected ? Colors.white : c.color),
                           const SizedBox(width: 6),
                           Text(
-                            c.label,
+                            tr(c.label),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -145,7 +146,7 @@ class _GalleryUploadSheetState extends State<GalleryUploadSheet> {
                     );
                   },
                   icon: const Icon(Icons.check_rounded),
-                  label: const Text('پاشەکەوتکردن'),
+                  label: Text(tr('پاشەکەوتکردن')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

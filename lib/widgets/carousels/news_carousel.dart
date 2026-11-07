@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 📰 کاروسێلی هەواڵەکان — Full Ultra Pro Max V2
 class NewsCarousel extends StatefulWidget {
@@ -420,7 +421,7 @@ class _NewsCarouselState extends State<NewsCarousel>
                                 color: Colors.white, size: 12),
                             const SizedBox(width: 4),
                             Text(
-                              newsType,
+                              tr(newsType),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
@@ -445,7 +446,7 @@ class _NewsCarouselState extends State<NewsCarousel>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        title,
+                        tr(title),
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
@@ -534,7 +535,7 @@ class _NewsCarouselState extends State<NewsCarousel>
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                name,
+                tr(name),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 11,
@@ -584,7 +585,7 @@ class _NewsCarouselState extends State<NewsCarousel>
           Icon(icon, color: Colors.white, size: 12),
           const SizedBox(width: 4),
           Text(
-            text,
+            tr(text),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 10,

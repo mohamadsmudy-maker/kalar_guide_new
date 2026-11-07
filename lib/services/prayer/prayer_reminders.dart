@@ -3,6 +3,7 @@ import 'package:hijri/hijri_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'kalar_prayer_times.dart';
+import '../../l10n/tr.dart';
 
 /// ڕێکخستنەکانی بیرخستنەوە (SharedPreferences).
 class PrayerReminderSettings {
@@ -80,7 +81,7 @@ class PrayerReminders {
             fridayBaseId + i,
             at,
             '🕌 نوێژی هەینی',
-            '${s.fridayMinutes} خولەکی ماوە بۆ بانگی نیوەڕۆی هەینی. خۆت ئامادە بکە.',
+            trf('{0} خولەکی ماوە بۆ بانگی نیوەڕۆی هەینی. خۆت ئامادە بکە.', [s.fridayMinutes]),
           ));
         }
       }
@@ -92,7 +93,7 @@ class PrayerReminders {
             suhoorBaseId + i,
             suhoor,
             '🌙 پارشێو',
-            '${s.ramadanMinutes} خولەکی ماوە بۆ بانگی بەیانی.',
+            trf('{0} خولەکی ماوە بۆ بانگی بەیانی.', [s.ramadanMinutes]),
           ));
         }
         final iftar = KalarPrayerTimes.at(day, 'maghrib').subtract(Duration(minutes: s.ramadanMinutes));
@@ -101,7 +102,7 @@ class PrayerReminders {
             iftarBaseId + i,
             iftar,
             '🌅 بەربانگ',
-            '${s.ramadanMinutes} خولەکی ماوە بۆ بانگی ئێوارە.',
+            trf('{0} خولەکی ماوە بۆ بانگی ئێوارە.', [s.ramadanMinutes]),
           ));
         }
       }

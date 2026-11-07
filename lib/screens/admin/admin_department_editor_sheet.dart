@@ -69,8 +69,8 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
   void _save() {
     if (_nameKuCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ناوی فەرمانگە پێویستە'),
+        SnackBar(
+          content: Text(tr('ناوی فەرمانگە پێویستە')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -113,7 +113,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
     final isEditing = widget.department != null;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.92,
@@ -161,9 +161,9 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      isEditing
+                      tr(isEditing
                           ? 'دەستکاریکردنی فەرمانگە'
-                          : 'زیادکردنی فەرمانگە',
+                          : 'زیادکردنی فەرمانگە'),
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
@@ -189,31 +189,31 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildField('ناوی کوردی *', _nameKuCtrl, isDark),
+                    _buildField(tr('ناوی کوردی *'), _nameKuCtrl, isDark),
                     const SizedBox(height: 10),
-                    _buildField('ناوی عەرەبی', _nameArCtrl, isDark),
+                    _buildField(tr('ناوی عەرەبی'), _nameArCtrl, isDark),
                     const SizedBox(height: 10),
-                    _buildField('ناوی ئینگلیزی', _nameEnCtrl, isDark),
+                    _buildField(tr('ناوی ئینگلیزی'), _nameEnCtrl, isDark),
                     const SizedBox(height: 10),
                     _buildField(
-                      'ژمارەی مۆبایل',
+                      tr('ژمارەی مۆبایل'),
                       _phoneCtrl,
                       isDark,
                       keyboard: TextInputType.phone,
                     ),
                     const SizedBox(height: 10),
-                    _buildField('ناونیشان', _addressCtrl, isDark),
+                    _buildField(tr('ناونیشان'), _addressCtrl, isDark),
                     const SizedBox(height: 10),
-                    _buildField('ماڵپەڕ', _websiteCtrl, isDark),
+                    _buildField(tr('ماڵپەڕ'), _websiteCtrl, isDark),
                     const SizedBox(height: 10),
                     _buildField(
-                      'لینکی وێنە (URL)',
+                      tr('لینکی وێنە (URL)'),
                       _imageCtrl,
                       isDark,
                     ),
                     const SizedBox(height: 10),
                     _buildField(
-                      'ژمارەی ڤێندەر (بۆ چوونەژوورەوەی فەرمانگە)',
+                      tr('ژمارەی ڤێندەر (بۆ چوونەژوورەوەی فەرمانگە)'),
                       _userPhoneCtrl,
                       isDark,
                       keyboard: TextInputType.phone,
@@ -238,7 +238,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'ڕەنگی فەرمانگە',
+                          tr('ڕەنگی فەرمانگە'),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
@@ -343,7 +343,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                     size: 22,
                   ),
                   label: Text(
-                    isEditing ? 'نوێکردنەوە' : 'زیادکردن',
+                    tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 15,

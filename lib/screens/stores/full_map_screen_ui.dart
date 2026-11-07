@@ -18,7 +18,7 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'نەتوانرا شوێنەکان بار بکرێن',
+                tr('نەتوانرا شوێنەکان بار بکرێن'),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -28,8 +28,8 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
             ),
             TextButton(
               onPressed: _isLoading ? null : _fetchStores,
-              child: const Text('دووبارە',
-                  style: TextStyle(fontWeight: FontWeight.w900)),
+              child: Text(tr('دووبارە'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -55,7 +55,7 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
             ),
           ),
           const SizedBox(width: 6),
-          Text(label,
+          Text(tr(label),
               style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
@@ -74,8 +74,8 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('ڕەنگی پینەکان',
-                style: TextStyle(
+            Text(tr('ڕەنگی پینەکان'),
+                style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                     color: Colors.grey)),
@@ -159,7 +159,7 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'شوێنەکانی نەخشە',
+                      tr('شوێنەکانی نەخشە'),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -173,7 +173,7 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
                       runSpacing: 2,
                       children: [
                         Text(
-                          '${_ku(total)} شوێن',
+                          trf('{0} شوێن', [_ku(total)]),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
@@ -182,10 +182,10 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
                           ),
                         ),
                         if (mapped > 0)
-                          _miniBadge('${_ku(mapped)} لەسەر نەخشە',
+                          _miniBadge(trf('{0} لەسەر نەخشە', [_ku(mapped)]),
                               Icons.location_on_rounded, const Color(0xFF10B981)),
                         if (noLocation > 0)
-                          _miniBadge('${_ku(noLocation)} بێ لۆکەیشن',
+                          _miniBadge(trf('{0} بێ لۆکەیشن', [_ku(noLocation)]),
                               Icons.location_off_rounded, Colors.orange),
                       ],
                     ),
@@ -221,7 +221,7 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
         children: [
           Icon(icon, size: 9, color: color),
           const SizedBox(width: 2),
-          Text(text,
+          Text(tr(text),
               style: TextStyle(
                   fontSize: 9, fontWeight: FontWeight.w900, color: color)),
         ],

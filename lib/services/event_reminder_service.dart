@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:flutter/material.dart' show Color;
+import '../l10n/tr.dart';
 
 class EventReminderService {
   static const _prefsKey = 'event_reminders';
@@ -51,8 +52,8 @@ class EventReminderService {
 
       await _notifications.zonedSchedule(
         eventId.hashCode,
-        '📅 یادخستنەوە: $eventTitle',
-        'دوای $minutesBefore خولەک دەست پێدەکات',
+        trf('📅 یادخستنەوە: {0}', [eventTitle]),
+        trf('دوای {0} خولەک دەست پێدەکات', [minutesBefore]),
         tzTime,
         const NotificationDetails(
           android: AndroidNotificationDetails(

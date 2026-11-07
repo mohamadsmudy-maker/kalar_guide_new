@@ -19,6 +19,7 @@ import 'package:kalar_guide_new/screens/map_screen.dart';
 import 'package:kalar_guide_new/screens/news/news_details.dart';
 import 'package:kalar_guide_new/screens/news/all_news_screen.dart';
 import 'package:kalar_guide_new/screens/gallery/gallery_screen.dart';
+import '../../l10n/tr.dart';
 
 const double _kBackToTopOffset = 600;
 const int _kCarouselCount = 5;
@@ -557,7 +558,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            title,
+            tr(title),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w900,
@@ -581,7 +582,7 @@ class _SectionHeader extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(moreLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+                    Text(tr(moreLabel), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
                     const SizedBox(width: 4),
                     Icon(_forwardIcon(context, small: true), size: 10, color: color),
                   ],
@@ -632,7 +633,7 @@ class _QuickTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  a.title,
+                  tr(a.title),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -690,7 +691,7 @@ class _ViewAllButton extends StatelessWidget {
                 const Icon(Icons.newspaper_rounded, color: AppColors.primary, size: 20),
                 const SizedBox(width: 10),
                 Text(
-                  label,
+                  tr(label),
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w900,
@@ -732,7 +733,7 @@ class _EmptyNews extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              label,
+              tr(label),
               style: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondary, fontWeight: FontWeight.w600),
             ),
           ],
@@ -851,7 +852,7 @@ class _NewsTile extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          title,
+                          tr(title),
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 13,
@@ -878,7 +879,7 @@ class _NewsTile extends StatelessWidget {
                                       const SizedBox(width: 3),
                                       Flexible(
                                         child: Text(
-                                          storeName,
+                                          tr(storeName),
                                           style: const TextStyle(
                                             fontSize: 9,
                                             color: AppColors.primary,
@@ -896,7 +897,7 @@ class _NewsTile extends StatelessWidget {
                             ],
                             Flexible(
                               child: Text(
-                                timeAgo,
+                                tr(timeAgo),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(fontSize: 10, color: subColor, fontWeight: FontWeight.w700),
@@ -947,7 +948,7 @@ class _Stat extends StatelessWidget {
       children: [
         Icon(icon, size: 12, color: color),
         const SizedBox(width: 4),
-        Text(value, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w800)),
+        Text(tr(value), style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w800)),
       ],
     );
   }
@@ -1087,7 +1088,7 @@ class _NoNewsCard extends StatelessWidget {
           const Icon(Icons.newspaper_rounded, size: 36, color: AppColors.textTertiary),
           const SizedBox(height: 10),
           Text(
-            title,
+            tr(title),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: FontWeight.w900,
@@ -1097,7 +1098,7 @@ class _NoNewsCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            subtitle,
+            tr(subtitle),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -1107,7 +1108,7 @@ class _NoNewsCard extends StatelessWidget {
           TextButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: Text(retryLabel, style: const TextStyle(fontWeight: FontWeight.w900)),
+            label: Text(tr(retryLabel), style: const TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),

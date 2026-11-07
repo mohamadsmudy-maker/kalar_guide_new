@@ -5,6 +5,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 
 import '../../services/translation_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🌐 Widget بۆ وەرگێڕانی خۆکار بەپێی زمان — v2
 ///
@@ -79,11 +80,15 @@ class _AutoTranslateState extends State<AutoTranslate> {
     super.dispose();
   }
 
+  /// وەرگێڕانی ئامادەی ناو ئەپ (lib/l10n/strings) — خێرا و بێ سێرڤەر
+  String? get _bundled => AppLang.tables[widget.lang]?[widget.text.trim()];
+
   bool get _needsTranslation =>
-      widget.translate && _shouldTranslate(widget.text, widget.lang);
+      widget.translate && _bundled == null && _shouldTranslate(widget.text, widget.lang);
 
   /// cache → هاوکات و بێ flicker؛ ئەگەرنا دەقی ڕەسەن
   String _initialText() {
+    if (widget.translate && widget.lang != 'ku' && _bundled != null) return _bundled!;
     if (!_needsTranslation) return widget.text;
     return _TranslationStore.get(widget.lang, widget.text) ?? widget.text;
   }
@@ -108,7 +113,7 @@ class _AutoTranslateState extends State<AutoTranslate> {
   @override
   Widget build(BuildContext context) {
     return Text(
-      _displayed,
+      tr(_displayed),
       style: widget.style,
       maxLines: widget.maxLines,
       textAlign: widget.textAlign,

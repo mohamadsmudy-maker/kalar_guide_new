@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
+import '../../l10n/tr.dart';
 import 'complaint_details_pro_sheet.dart';   // ✅ چاککرا
 
 /// 🗺️ نەخشەی گشتی سکاڵاکان (Pro Version)
@@ -103,7 +104,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
           position: gmaps.LatLng(lat, lng),
           icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(markerHue),
           infoWindow: gmaps.InfoWindow(
-            title: c['title'] ?? 'سکاڵا',
+            title: c['title'] ?? tr('سکاڵا'),
             snippet: "کلیک بکە بۆ وردەکاری",
           ),
           onTap: () {
@@ -178,7 +179,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFF1E1B2E),
         body: Stack(
@@ -241,10 +242,10 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        "نەخشەی گشتی سکاڵاکان",
-                        style: TextStyle(
+                        tr("نەخشەی گشتی سکاڵاکان"),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
@@ -343,9 +344,9 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'ڕەنگەکان:',
-                      style: TextStyle(
+                    Text(
+                      tr('ڕەنگەکان:'),
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: Colors.black54,
@@ -450,9 +451,9 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'سکاڵاکان لەسەر نەخشە',
-                            style: TextStyle(
+                          Text(
+                            tr('سکاڵاکان لەسەر نەخشە'),
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -460,7 +461,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${_filteredComplaints.length} سکاڵا',
+                            trf('{0} سکاڵا', [_filteredComplaints.length]),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14,
@@ -485,17 +486,17 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                             color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.close_rounded,
                                 color: Colors.white,
                                 size: 12,
                               ),
-                              SizedBox(width: 3),
+                              const SizedBox(width: 3),
                               Text(
-                                'سڕینەوە',
-                                style: TextStyle(
+                                tr('سڕینەوە'),
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -566,7 +567,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        statusLabel,
+                        tr(statusLabel),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -610,7 +611,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        complaint['title'] ?? '',
+                        tr(complaint['title'] ?? ''),
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 13,
@@ -621,7 +622,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "📍 ${complaint['responsible_authority'] ?? 'کەلار'}",
+                        trf('📍 {0}', [tr(complaint['responsible_authority'] ?? 'کەلار')]),
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade700,
@@ -686,7 +687,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
               ),
               const SizedBox(width: 5),
               Text(
-                label,
+                tr(label),
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.black87,
                   fontWeight: FontWeight.w900,
@@ -716,7 +717,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
           ),
           const SizedBox(width: 6),
           Text(
-            label,
+            tr(label),
             style: const TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.bold,

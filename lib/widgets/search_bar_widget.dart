@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../config/settings_provider.dart';
 import '../models/neighborhood.dart';
+import '../l10n/tr.dart';
 
 /// 🔎 خانەی گەڕان بۆ گەڕەک — v2
 ///
@@ -267,7 +268,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                       leading: Icon(Icons.location_city_rounded,
                           color: color),
                       title: Text(
-                        _displayName(n, lang),
+                        tr(_displayName(n, lang)),
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           color: fg,

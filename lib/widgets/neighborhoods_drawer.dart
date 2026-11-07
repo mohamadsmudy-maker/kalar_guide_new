@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../config/settings_provider.dart';
 import '../models/neighborhood.dart';
+import '../l10n/tr.dart';
 
 /// 📋 لیستی گەڕەکان — v2
 ///
@@ -253,7 +254,7 @@ class _NeighborhoodsDrawerState extends State<NeighborhoodsDrawer> {
                             ? color
                             : color.withValues(alpha: 0.2),
                         child: Text(
-                          _digits('${index + 1}', lang),
+                          tr(_digits('${index + 1}', lang)),
                           style: TextStyle(
                             color: selected ? Colors.white : color,
                             fontSize: 12,
@@ -265,7 +266,7 @@ class _NeighborhoodsDrawerState extends State<NeighborhoodsDrawer> {
                         children: [
                           Flexible(
                             child: Text(
-                              _displayName(n, lang),
+                              tr(_displayName(n, lang)),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -311,7 +312,7 @@ class _NeighborhoodsDrawerState extends State<NeighborhoodsDrawer> {
 
   Widget _message(String text, bool isDark) => Center(
     child: Text(
-      text,
+      tr(text),
       style: TextStyle(
         color: isDark ? Colors.white54 : Colors.grey,
         fontWeight: FontWeight.w600,

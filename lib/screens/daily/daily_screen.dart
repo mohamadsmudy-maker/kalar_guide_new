@@ -24,6 +24,7 @@ import '../videos/user_videos.dart';
 import 'prayer_times_screen.dart';
 import 'qibla_finder_screen.dart';
 import '../weather/weather_screen.dart';
+import '../../l10n/tr.dart';
 
 class DailyScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
@@ -212,7 +213,7 @@ class _DailyScreenState extends State<DailyScreen>
     if (_isAr) {
       return _digits('${arWeekdays[weekday]}، ${date.day} ${arMonths[month]} ${date.year}');
     }
-    return _digits('${kuWeekdays[weekday]}، ${date.day}ی ${kuMonths[month]} ${date.year}');
+    return _digits('${tr(kuWeekdays[weekday])}، ${date.day}ی ${tr(kuMonths[month])} ${date.year}');
   }
 
   String _timeLabel(DateTime date) {
@@ -601,7 +602,7 @@ class _DailyScreenState extends State<DailyScreen>
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _dateLabel(now),
+                          tr(_dateLabel(now)),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -619,7 +620,7 @@ class _DailyScreenState extends State<DailyScreen>
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          _timeLabel(now),
+                          tr(_timeLabel(now)),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -688,7 +689,7 @@ class _DailyScreenState extends State<DailyScreen>
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            _digits('$count'),
+            tr(_digits('$count')),
             style: TextStyle(
               color: isDark ? Colors.white70 : AppColors.primary,
               fontSize: 12,
@@ -901,7 +902,7 @@ class _ServiceCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      service.title,
+                      tr(service.title),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -913,7 +914,7 @@ class _ServiceCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      service.subtitle,
+                      tr(service.subtitle),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -1012,7 +1013,7 @@ class _PromoCard extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                title,
+                                tr(title),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -1023,7 +1024,7 @@ class _PromoCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                subtitle,
+                                tr(subtitle),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -1117,7 +1118,7 @@ class _LivePill extends StatelessWidget {
           const SizedBox(width: 5),
           Flexible(
             child: Text(
-              label,
+              tr(label),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -1180,4 +1181,4 @@ class _WeatherPill extends StatelessWidget {
       },
     );
   }
-}
+}

@@ -5,6 +5,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 🎉 شاشەی ئۆن بۆردینگ — ULTRA PRO MAX V2
 class OnboardingScreen extends StatefulWidget {
@@ -21,33 +22,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
   bool _isCompleting = false;
 
-  static const List<_OnboardingData> _pages = [
+  static final List<_OnboardingData> _pages = [
     _OnboardingData(
       icon: Icons.explore_rounded,
-      title: 'بەخێربێیت بۆ ڕێبەری کەلار',
+      title: tr('بەخێربێیت بۆ ڕێبەری کەلار'),
       description:
-      'هەموو شتێک دەربارەی شاری کەلار — گەڕەکان، شوێنەکان، ڕووداوەکان، و زۆر شتی تر.',
+      tr('هەموو شتێک دەربارەی شاری کەلار — گەڕەکان، شوێنەکان، ڕووداوەکان، و زۆر شتی تر.'),
       color: AppColors.primary,
     ),
     _OnboardingData(
       icon: Icons.location_city_rounded,
-      title: '٥٩ گەڕەکی کەلار',
+      title: tr('٥٩ گەڕەکی کەلار'),
       description:
-      'هەموو گەڕەکان بە ناو و سنوور و زانیاری تەواو. لەسەر نەخشە بیانبینە و بیانناسە.',
+      tr('هەموو گەڕەکان بە ناو و سنوور و زانیاری تەواو. لەسەر نەخشە بیانبینە و بیانناسە.'),
       color: AppColors.green,
     ),
     _OnboardingData(
       icon: Icons.storefront_rounded,
-      title: '١٨٩ شوێن لە شارەکەدا',
+      title: tr('١٨٩ شوێن لە شارەکەدا'),
       description:
-      'نەخۆشخانە، قوتابخانە، بەنزینخانە، بانک، مۆڵ، و هەموو شوێنەکانی تر بە دووری و شوێن.',
+      tr('نەخۆشخانە، قوتابخانە، بەنزینخانە، بانک، مۆڵ، و هەموو شوێنەکانی تر بە دووری و شوێن.'),
       color: AppColors.orange,
     ),
     _OnboardingData(
       icon: Icons.campaign_rounded,
-      title: 'سکاڵا و خزمەتگوزاری',
+      title: tr('سکاڵا و خزمەتگوزاری'),
       description:
-      'سکاڵاکانت بنێرە، نرخی دراو و بەنزین ببینە، کاتەکانی نوێژ و قیبلە بدۆزەرەوە.',
+      tr('سکاڵاکانت بنێرە، نرخی دراو و بەنزین ببینە، کاتەکانی نوێژ و قیبلە بدۆزەرەوە.'),
       color: AppColors.pink,
     ),
   ];
@@ -80,9 +81,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       setState(() => _isCompleting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
-            'هەڵە لە پاشەکەوتکردن، تکایە دووبارە هەوڵبدەرەوە',
-            style: TextStyle(fontWeight: FontWeight.w700),
+          content: Text(
+            tr('هەڵە لە پاشەکەوتکردن، تکایە دووبارە هەوڵبدەرەوە'),
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           backgroundColor: AppColors.red,
           behavior: SnackBarBehavior.floating,
@@ -117,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final currentColor = _pages[_currentPage].color;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bgColor,
         body: SafeArea(
@@ -129,7 +130,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: TextButton(
                   onPressed: _isCompleting ? null : _complete,
                   child: Text(
-                    'پەڕاندن',
+                    tr('پەڕاندن'),
                     style: TextStyle(
                       color: isDark
                           ? Colors.white54
@@ -199,9 +200,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     )
                         : Text(
-                      _currentPage == _pages.length - 1
+                      tr(_currentPage == _pages.length - 1
                           ? 'دەستپێکردن 🚀'
-                          : 'داهاتوو',
+                          : 'داهاتوو'),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -256,7 +257,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // 📝 ناونیشان
           Text(
-            data.title,
+            tr(data.title),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
@@ -269,7 +270,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // 📄 وەسف
           Text(
-            data.description,
+            tr(data.description),
             style: TextStyle(
               fontSize: 14,
               height: 1.6,

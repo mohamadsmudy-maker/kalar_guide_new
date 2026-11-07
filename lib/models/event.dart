@@ -1,3 +1,4 @@
+import '../l10n/tr.dart';
 // lib/models/event.dart
 
 /// 📅 مۆدێلی ڕووداو
@@ -218,7 +219,7 @@ class AppEvent {
   String getFormattedDate() {
     const months = ['کانوونی دووەم','شوبات','ئازار','نیسان','ئایار','حوزەیران',
       'تەممووز','ئاب','ئەیلوول','تشرینی یەکەم','تشرینی دووەم','کانوونی یەکەم'];
-    return '${startDate.day} ${months[startDate.month - 1]} ${startDate.year}';
+    return '${startDate.day} ${tr(months[startDate.month - 1])} ${startDate.year}';
   }
 
   String getFormattedTime() {

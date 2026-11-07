@@ -17,6 +17,7 @@ import '../../services/prayer_notification_service.dart';
 import '../daily/qibla_finder_screen.dart';
 import '../prayer/prayer_settings_screen.dart';
 import '../prayer/prayer_weekly_view.dart';
+import '../../l10n/tr.dart';
 
 part 'prayer_times_screen_ui.dart';
 
@@ -235,7 +236,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       'جمادی الأولی', 'جمادی الآخر', 'ڕەجەب', 'شەعبان',
       'ڕەمەزان', 'شەوال', 'ذو القعدة', 'ذو الحجة',
     ];
-    return (month >= 1 && month <= 12) ? ku[month - 1] : 'مانگ';
+    return (month >= 1 && month <= 12) ? tr(ku[month - 1]) : 'مانگ';
   }
 
   Future<void> _refineLocation() async {
@@ -553,7 +554,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     }
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light.copyWith(
           statusBarColor: Colors.transparent,

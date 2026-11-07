@@ -7,6 +7,7 @@ import '../../services/auth_service.dart';
 import '../../services/review_service.dart';
 import '../../widgets/reviews/rating_stars.dart';
 import 'add_review_screen.dart';
+import '../../l10n/tr.dart';
 
 /// ⭐ شاشەی کۆمێنت و هەڵسەنگاندنەکان
 class StoreReviewsScreen extends StatefulWidget {
@@ -63,8 +64,8 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
     final user = AuthSessionManager.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تکایە سەرەتا بچۆ ژوورەوە ⚠'),
+        SnackBar(
+          content: Text(tr('تکایە سەرەتا بچۆ ژوورەوە ⚠')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -96,9 +97,9 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
-          title: const Text(
-            'کۆمێنت و هەڵسەنگاندن',
-            style: TextStyle(
+          title: Text(
+            tr('کۆمێنت و هەڵسەنگاندن'),
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 17,
             ),
@@ -143,7 +144,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                 _buildEmptyState(isDark)
               else ...[
                 Text(
-                  'کۆمێنتەکان (${_reviews.length})',
+                  trf('کۆمێنتەکان ({0})', [_reviews.length]),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
@@ -166,9 +167,9 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.edit_rounded),
-          label: const Text(
-            'دەستکاری کۆمێنت',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          label: Text(
+            tr('دەستکاری کۆمێنت'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         )
             : null,
@@ -226,7 +227,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                '$total کۆمێنت',
+                trf('{0} کۆمێنت', [total]),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 12,
@@ -341,9 +342,9 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _userReview != null
+                    tr(_userReview != null
                         ? 'دەستکاری کۆمێنتی خۆت'
-                        : 'هەڵسەنگاندنی ئەم شوێنە',
+                        : 'هەڵسەنگاندنی ئەم شوێنە'),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -354,9 +355,9 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _userReview != null
+                    tr(_userReview != null
                         ? 'کۆمێنتەکەت نوێ بکەرەوە'
-                        : 'ئەزموونی خۆت لەگەڵ ئەم شوێنە باس بکە',
+                        : 'ئەزموونی خۆت لەگەڵ ئەم شوێنە باس بکە'),
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.white54 : Colors.grey.shade600,
@@ -415,9 +416,9 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                 radius: 20,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                 child: Text(
-                  review.userName.isNotEmpty
+                  tr(review.userName.isNotEmpty
                       ? review.userName[0].toUpperCase()
-                      : '?',
+                      : '?'),
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w900,
@@ -434,7 +435,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            review.userName,
+                            tr(review.userName),
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 13,
@@ -457,9 +458,9 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                               color: AppColors.primary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
-                              'تۆ',
-                              style: TextStyle(
+                            child: Text(
+                              tr('تۆ'),
+                              style: const TextStyle(
                                 fontSize: 9,
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w900,
@@ -479,7 +480,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          review.getTimeAgo(),
+                          tr(review.getTimeAgo()),
                           style: TextStyle(
                             fontSize: 10,
                             color: isDark
@@ -517,7 +518,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                review.comment!,
+                tr(review.comment!),
                 style: TextStyle(
                   fontSize: 12,
                   height: 1.6,
@@ -535,17 +536,17 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          title: const Text('سڕینەوەی کۆمێنت'),
-          content: const Text('ئایا دڵنیایت لە سڕینەوەی ئەم کۆمێنتە؟'),
+          title: Text(tr('سڕینەوەی کۆمێنت')),
+          content: Text(tr('ئایا دڵنیایت لە سڕینەوەی ئەم کۆمێنتە؟')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -553,7 +554,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('سڕینەوە'),
+              child: Text(tr('سڕینەوە')),
             ),
           ],
         ),
@@ -565,8 +566,8 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
     final success = await ReviewService.deleteReview(review.id!);
     if (mounted && success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ کۆمێنت سڕایەوە'),
+        SnackBar(
+          content: Text(tr('✅ کۆمێنت سڕایەوە')),
           backgroundColor: Colors.green,
         ),
       );
@@ -596,7 +597,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ کۆمێنتێک نییە هێشتا',
+            tr('هیچ کۆمێنتێک نییە هێشتا'),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -605,7 +606,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'ببە یەکەم کەس کە هەڵسەنگاندنی دەکات',
+            tr('ببە یەکەم کەس کە هەڵسەنگاندنی دەکات'),
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white54 : Colors.grey.shade600,

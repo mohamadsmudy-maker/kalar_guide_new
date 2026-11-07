@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/currency_service.dart';
+import '../l10n/tr.dart';
 
 /// 📈 Chart ی گۆڕانکاری هەموو دراوەکان — FULL PRO
 class MultiCurrencyChartWidget extends StatefulWidget {
@@ -286,10 +287,10 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
           _resetZoom();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تەنها ٥ دراو دەتوانرێت هەڵبژێردرێن'),
+            SnackBar(
+              content: Text(tr('تەنها ٥ دراو دەتوانرێت هەڵبژێردرێن')),
               backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
@@ -398,23 +399,23 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
           ),
         ),
         const SizedBox(width: 10),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'گۆڕانکاری هەموو دراوەکان',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                tr('گۆڕانکاری هەموو دراوەکان'),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Row(
                 children: [
-                  Icon(Icons.pinch_rounded, size: 10, color: Colors.grey),
-                  SizedBox(width: 3),
+                  const Icon(Icons.pinch_rounded, size: 10, color: Colors.grey),
+                  const SizedBox(width: 3),
                   Text(
-                    'Zoom بە دوو پەنجە',
-                    style: TextStyle(fontSize: 9, color: Colors.grey),
+                    tr('Zoom بە دوو پەنجە'),
+                    style: const TextStyle(fontSize: 9, color: Colors.grey),
                   ),
                 ],
               ),
@@ -485,7 +486,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
               ),
               child: Center(
                 child: Text(
-                  range['label']!,
+                  tr(range['label']!),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
@@ -520,7 +521,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
         children: [
           Expanded(
             child: _buildPriceTypeButton(
-              label: 'کڕین',
+              label: tr('کڕین'),
               icon: Icons.shopping_cart_rounded,
               value: 'buy',
               color: const Color(0xFF1E88E5),
@@ -528,7 +529,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
           ),
           Expanded(
             child: _buildPriceTypeButton(
-              label: 'فرۆشتن',
+              label: tr('فرۆشتن'),
               icon: Icons.sell_rounded,
               value: 'sell',
               color: const Color(0xFF10B981),
@@ -571,7 +572,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
             ),
             const SizedBox(width: 6),
             Text(
-              label,
+              tr(label),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
@@ -638,7 +639,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  code.toUpperCase(),
+                  tr(code.toUpperCase()),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
@@ -685,7 +686,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
           ),
           const SizedBox(width: 8),
           Text(
-            _isZoomed ? 'Zoom کراوە' : 'دۆخی ئاسایی',
+            tr(_isZoomed ? 'Zoom کراوە' : 'دۆخی ئاسایی'),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -876,7 +877,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
                       ),
                       children: [
                         TextSpan(
-                          text: '${spot.y.toStringAsFixed(0)} د.ع',
+                          text: trf('{0} د.ع', [spot.y.toStringAsFixed(0)]),
                           style: TextStyle(
                             color: widget.isDark
                                 ? Colors.white
@@ -985,7 +986,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
                 ),
                 child: Center(
                   child: Text(
-                    code.toUpperCase(),
+                    tr(code.toUpperCase()),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -1003,7 +1004,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      name,
+                      tr(name),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
@@ -1016,7 +1017,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _priceType == 'buy' ? 'نرخی کڕین' : 'نرخی فرۆشتن',
+                      tr(_priceType == 'buy' ? 'نرخی کڕین' : 'نرخی فرۆشتن'),
                       style: TextStyle(
                         fontSize: 9,
                         color: widget.isDark
@@ -1034,7 +1035,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${lastPrice.toStringAsFixed(0)} د.ع',
+                    trf('{0} د.ع', [lastPrice.toStringAsFixed(0)]),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -1072,7 +1073,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
                     ),
                   ] else
                     Text(
-                      'بێ گۆڕانکاری',
+                      tr('بێ گۆڕانکاری'),
                       style: TextStyle(
                         fontSize: 9,
                         color:
@@ -1112,7 +1113,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
           ),
           const SizedBox(height: 12),
           Text(
-            'هیچ داتایەک نییە لەم ماوەیەدا',
+            tr('هیچ داتایەک نییە لەم ماوەیەدا'),
             style: TextStyle(
               fontSize: 13,
               color: widget.isDark ? Colors.white54 : Colors.grey,
@@ -1121,7 +1122,7 @@ class _MultiCurrencyChartWidgetState extends State<MultiCurrencyChartWidget> {
           ),
           const SizedBox(height: 8),
           Text(
-            'ماوەیەکی تر هەڵبژێرە',
+            tr('ماوەیەکی تر هەڵبژێرە'),
             style: TextStyle(
               fontSize: 11,
               color: widget.isDark ? Colors.white38 : Colors.grey.shade500,

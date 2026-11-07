@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../services/prayer/kalar_prayer_times.dart';
 import '../../services/prayer/prayer_reminders.dart';
 import 'adhan_settings_screen.dart';
 import 'notification_test_screen.dart';
+import '../../l10n/tr.dart';
 
 /// ⚙️ ڕێکخستنی کاتەکانی نوێژ
 ///
@@ -68,70 +70,70 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFF0F1421),
         appBar: AppBar(
           backgroundColor: const Color(0xFF1A1B2E),
           foregroundColor: Colors.white,
-          title: const Text('ڕێکخستنی نوێژ', style: TextStyle(fontWeight: FontWeight.w900)),
+          title: Text(tr('ڕێکخستنی نوێژ'), style: const TextStyle(fontWeight: FontWeight.w900)),
         ),
         body: !_loaded
             ? const Center(child: CircularProgressIndicator(color: _gold))
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  _section('🔔 ئاگادارکردنەوە'),
+                  _section(tr('🔔 ئاگادارکردنەوە')),
                   _switchTile(
                     icon: Icons.notifications_active_rounded,
-                    title: 'ئاگادارکردنەوەی بانگ',
-                    subtitle: 'لە کاتی هەر بانگێکدا',
+                    title: tr('ئاگادارکردنەوەی بانگ'),
+                    subtitle: tr('لە کاتی هەر بانگێکدا'),
                     value: _notifications,
                     onChanged: (v) => _set(() => _notifications = v),
                   ),
                   _actionTile(
                     icon: Icons.music_note_rounded,
-                    title: 'دەنگی بانگ',
-                    subtitle: 'دەنگی جیاواز بۆ هەر نوێژێک',
+                    title: tr('دەنگی بانگ'),
+                    subtitle: tr('دەنگی جیاواز بۆ هەر نوێژێک'),
                     onTap: () => _push(const AdhanSettingsScreen()),
                   ),
                   const SizedBox(height: 16),
-                  _section('🕌 نوێژی هەینی'),
+                  _section(tr('🕌 نوێژی هەینی')),
                   _switchTile(
                     icon: Icons.mosque_rounded,
-                    title: 'بیرخستنەوەی هەینی',
-                    subtitle: 'پێش بانگی نیوەڕۆی هەینی',
+                    title: tr('بیرخستنەوەی هەینی'),
+                    subtitle: tr('پێش بانگی نیوەڕۆی هەینی'),
                     value: _friday,
                     onChanged: (v) => _set(() => _friday = v),
                   ),
                   if (_friday)
                     _minutesTile(_fridayMinutes, (v) => _set(() => _fridayMinutes = v)),
                   const SizedBox(height: 16),
-                  _section('🌙 ڕەمەزان'),
+                  _section(tr('🌙 ڕەمەزان')),
                   _switchTile(
                     icon: Icons.nights_stay_rounded,
-                    title: 'بیرخستنەوەی پارشێو و بەربانگ',
-                    subtitle: 'تەنها لە مانگی ڕەمەزاندا',
+                    title: tr('بیرخستنەوەی پارشێو و بەربانگ'),
+                    subtitle: tr('تەنها لە مانگی ڕەمەزاندا'),
                     value: _ramadan,
                     onChanged: (v) => _set(() => _ramadan = v),
                   ),
                   if (_ramadan)
                     _minutesTile(_ramadanMinutes, (v) => _set(() => _ramadanMinutes = v)),
                   const SizedBox(height: 16),
-                  _section('🔢 پیشاندان'),
+                  _section(tr('🔢 پیشاندان')),
                   _switchTile(
                     icon: Icons.translate_rounded,
-                    title: 'ژمارەی کوردی',
-                    subtitle: _kurdishDigits ? '٥:٠٤ د.ن' : '5:04 د.ن',
+                    title: tr('ژمارەی کوردی'),
+                    subtitle: KalarPrayerTimes.format12('17:04', kurdishDigits: _kurdishDigits),
                     value: _kurdishDigits,
                     onChanged: (v) => _set(() => _kurdishDigits = v),
                   ),
                   const SizedBox(height: 16),
-                  _section('🧪 تاقیکردنەوە'),
+                  _section(tr('🧪 تاقیکردنەوە')),
                   _actionTile(
                     icon: Icons.bug_report_rounded,
-                    title: 'تاقیکردنەوەی ئاگادارکردنەوە',
-                    subtitle: 'بزانە ئاگادارکردنەوەکان دەگەن',
+                    title: tr('تاقیکردنەوەی ئاگادارکردنەوە'),
+                    subtitle: tr('بزانە ئاگادارکردنەوەکان دەگەن'),
                     onTap: () => _push(const NotificationTestScreen()),
                   ),
                 ],
@@ -146,7 +148,7 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
   Widget _section(String title) => Padding(
         padding: const EdgeInsets.only(bottom: 10, top: 4),
         child: Text(
-          title,
+          tr(title),
           style: const TextStyle(color: _gold, fontSize: 14, fontWeight: FontWeight.w900),
         ),
       );
@@ -175,10 +177,10 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
+            Text(tr(title),
                 style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900)),
             const SizedBox(height: 2),
-            Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+            Text(tr(subtitle), style: const TextStyle(color: Colors.white54, fontSize: 11)),
           ],
         ),
       );
@@ -227,8 +229,8 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('چەند خولەک پێشتر؟',
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
+            Text(tr('چەند خولەک پێشتر؟'),
+                style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Wrap(
               runSpacing: 6,

@@ -15,7 +15,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
         children: [
           Expanded(
             child: _buildViewTab(
-              label: 'چارت',
+              label: tr('چارت'),
               icon: Icons.show_chart_rounded,
               value: 'chart',
               isDark: isDark,
@@ -23,7 +23,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
           ),
           Expanded(
             child: _buildViewTab(
-              label: 'ئامار',
+              label: tr('ئامار'),
               icon: Icons.bar_chart_rounded,
               value: 'stats',
               isDark: isDark,
@@ -31,7 +31,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
           ),
           Expanded(
             child: _buildViewTab(
-              label: 'لیست',
+              label: tr('لیست'),
               icon: Icons.list_alt_rounded,
               value: 'list',
               isDark: isDark,
@@ -53,7 +53,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
         children: [
           Expanded(
             child: _buildTypeTab(
-              label: 'نرخی نوێ',
+              label: tr('نرخی نوێ'),
               icon: Icons.trending_up_rounded,
               value: 'new_price',
               color: _primaryColor,
@@ -62,7 +62,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
           ),
           Expanded(
             child: _buildTypeTab(
-              label: 'نرخی کۆن',
+              label: tr('نرخی کۆن'),
               icon: Icons.history_rounded,
               value: 'old_price',
               color: Colors.orange,
@@ -91,7 +91,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              _isZoomed ? 'Zoom کراوە' : 'دۆخی ئاسایی',
+              tr(_isZoomed ? 'Zoom کراوە' : 'دۆخی ئاسایی'),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
@@ -181,10 +181,10 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'گۆڕانکاری نرخ',
-                  style: TextStyle(
+                  tr('گۆڕانکاری نرخ'),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
@@ -454,11 +454,11 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isUp
+                      tr(isUp
                           ? 'زیادبوونی گشتی'
                           : isDown
                           ? 'کەمبوونەوەی گشتی'
-                          : 'بێ گۆڕانکاری',
+                          : 'بێ گۆڕانکاری'),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
@@ -496,7 +496,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                     ),
                   ),
                   Text(
-                    'د.ع',
+                    tr('د.ع'),
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.white54 : Colors.grey,
@@ -513,7 +513,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
           children: [
             Expanded(
               child: _buildMiniStat(
-                'نزمترین',
+                tr('نزمترین'),
                 minPrice,
                 const Color(0xFF10B981),
                 isDark,
@@ -522,7 +522,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
             const SizedBox(width: 8),
             Expanded(
               child: _buildMiniStat(
-                'تێکڕا',
+                tr('تێکڕا'),
                 avgPrice,
                 const Color(0xFF1E88E5),
                 isDark,
@@ -531,7 +531,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
             const SizedBox(width: 8),
             Expanded(
               child: _buildMiniStat(
-                'بەرزترین',
+                tr('بەرزترین'),
                 maxPrice,
                 const Color(0xFFEF4444),
                 isDark,
@@ -653,7 +653,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  tr(title),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white54 : Colors.grey,
@@ -662,7 +662,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$suffix${value.toStringAsFixed(0)} د.ع',
+                  trf('{0}{1} د.ع', [suffix, value.toStringAsFixed(0)]),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -672,7 +672,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    subtitle,
+                    tr(subtitle),
                     style: TextStyle(
                       fontSize: 11,
                       color: color.withValues(alpha: 0.7),
@@ -707,7 +707,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
       child: Column(
         children: [
           Text(
-            label,
+            tr(label),
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
@@ -724,7 +724,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
             ),
           ),
           Text(
-            'د.ع',
+            tr('د.ع'),
             style: TextStyle(
               fontSize: 9,
               color: color.withValues(alpha: 0.7),
@@ -751,7 +751,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -826,7 +826,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                       Row(
                         children: [
                           Text(
-                            '${newPrice.toStringAsFixed(0)} د.ع',
+                            trf('{0} د.ع', [newPrice.toStringAsFixed(0)]),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
@@ -847,9 +847,9 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                                     .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text(
-                                'نوێترین',
-                                style: TextStyle(
+                              child: Text(
+                                tr('نوێترین'),
+                                style: const TextStyle(
                                   fontSize: 9,
                                   color: Color(0xFF10B981),
                                   fontWeight: FontWeight.bold,
@@ -862,7 +862,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                       if (oldPrice != null) ...[
                         const SizedBox(height: 2),
                         Text(
-                          'لە ${oldPrice.toStringAsFixed(0)} د.ع',
+                          trf('لە {0} د.ع', [oldPrice.toStringAsFixed(0)]),
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark ? Colors.white54 : Colors.grey,
@@ -913,7 +913,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    updatedBy,
+                    tr(updatedBy),
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.white54 : Colors.grey,
@@ -922,9 +922,9 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                   ),
                   const Spacer(),
                   Text(
-                    createdAt != null
+                    tr(createdAt != null
                         ? DateFormat('dd/MM/yyyy • HH:mm').format(createdAt)
-                        : '-',
+                        : '-'),
                     style: TextStyle(
                       fontSize: 10,
                       color: isDark ? Colors.white54 : Colors.grey,
@@ -955,7 +955,7 @@ extension _FuelChartScreenStateUi on _FuelChartScreenState {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        notes,
+                        tr(notes),
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark

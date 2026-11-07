@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 class GalleryEmptyState extends StatelessWidget {
   final bool isDark;
@@ -33,7 +34,7 @@ class GalleryEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            message,
+            tr(message),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
@@ -46,7 +47,7 @@ class GalleryEmptyState extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRefresh,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('نوێکردنەوە'),
+              label: Text(tr('نوێکردنەوە')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

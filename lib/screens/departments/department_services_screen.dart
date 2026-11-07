@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/settings_provider.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'department_service_details.dart';
+import '../../l10n/tr.dart';
 
 /// 📋 مامەڵەکانی فەرمانگە — ULTRA PRO
 class DepartmentServicesScreen extends StatefulWidget {
@@ -130,7 +131,7 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
                           ),
                           const SizedBox(height: 4),
                           AutoTranslate(
-                            text: '${_services.length} مامەڵە بەردەستە',
+                            text: trf('{0} مامەڵە بەردەستە', [_services.length]),
                             lang: lang,
                             style: const TextStyle(
                               color: Colors.white70,
@@ -320,14 +321,14 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
                     if (reqCount > 0)
                       _buildInfoBadge(
                         Icons.checklist_rounded,
-                        '$reqCount پێداویستی',
+                        trf('{0} پێداویستی', [reqCount]),
                         const Color(0xFF8B5CF6),
                         lang,
                       ),
                     if (feeCount > 0)
                       _buildInfoBadge(
                         Icons.attach_money_rounded,
-                        '$feeCount تێچوو',
+                        trf('{0} تێچوو', [feeCount]),
                         const Color(0xFF10B981),
                         lang,
                       ),
@@ -400,7 +401,7 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
           ),
           const SizedBox(height: 16),
           AutoTranslate(
-            text: 'هیچ مامەڵەیەک نییە',
+            text: tr('هیچ مامەڵەیەک نییە'),
             lang: lang,
             style: TextStyle(
               fontSize: 16,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/fuel_service.dart';
 import '../fuel/fuel_history_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 💰 نوێکردنەوەی نرخی بەنزینخانە + مێژوو
 class AdminFuelPricesScreen extends StatefulWidget {
@@ -58,7 +59,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -83,15 +84,15 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'نوێکردنەوەی نرخ',
-                      style: TextStyle(
+                    Text(
+                      tr('نوێکردنەوەی نرخ'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,
                       ),
                     ),
                     Text(
-                      FuelService.getNameKu(fuelType),
+                      tr(FuelService.getNameKu(fuelType)),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -121,7 +122,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'نرخی ئێستا: ${currentPrice.toStringAsFixed(0)} د.ع',
+                        trf('نرخی ئێستا: {0} د.ع', [currentPrice.toStringAsFixed(0)]),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -136,7 +137,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                   keyboardType: TextInputType.number,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: 'نرخی نوێ (د.ع)',
+                    labelText: tr('نرخی نوێ (د.ع)'),
                     prefixIcon: const Icon(
                       Icons.attach_money_rounded,
                       color: Color(0xFFFFD700),
@@ -158,8 +159,8 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                   controller: notesCtrl,
                   maxLines: 2,
                   decoration: InputDecoration(
-                    labelText: 'تێبینی (ئارەزوومەندانە)',
-                    hintText: 'بۆ نموونە: بەهۆی گۆڕانی نرخی نەوت',
+                    labelText: tr('تێبینی (ئارەزوومەندانە)'),
+                    hintText: tr('بۆ نموونە: بەهۆی گۆڕانی نرخی نەوت'),
                     prefixIcon: const Icon(
                       Icons.note_rounded,
                       color: Color(0xFFFFD700),
@@ -182,7 +183,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('پاشگەزبوونەوە'),
+              child: Text(tr('پاشگەزبوونەوە')),
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -196,8 +197,8 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                 final newPrice = double.tryParse(priceCtrl.text);
                 if (newPrice == null || newPrice < 0) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                      content: Text('تکایە نرخێکی دروست بنووسە'),
+                    SnackBar(
+                      content: Text(tr('تکایە نرخێکی دروست بنووسە')),
                       backgroundColor: Colors.orange,
                     ),
                   );
@@ -219,9 +220,9 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                 }
               },
               icon: const Icon(Icons.check_rounded, size: 18),
-              label: const Text(
-                'پاشەکەوتکردن',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              label: Text(
+                tr('پاشەکەوتکردن'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -244,8 +245,8 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ نرخ نوێکرایەوە'),
+          SnackBar(
+            content: Text(tr('✅ نرخ نوێکرایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -263,13 +264,13 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
     const fuelTypes = FuelService.fuelTypes;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
-            name,
+            tr(name),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
@@ -283,7 +284,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.history_rounded),
-              tooltip: 'مێژووی هەموو نرخەکان',
+              tooltip: tr('مێژووی هەموو نرخەکان'),
               onPressed: () => _openHistory(null),
             ),
           ],
@@ -300,7 +301,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
             const SizedBox(height: 20),
 
             // ✅ ناونیشانی بەش
-            _buildSectionTitle('جۆرەکانی سووتەمەنی'),
+            _buildSectionTitle(tr('جۆرەکانی سووتەمەنی')),
             const SizedBox(height: 12),
 
             // ✅ کارتەکان بە هەمان شێوازی FuelTypesScreen
@@ -367,7 +368,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  name,
+                  tr(name),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -388,7 +389,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          address,
+                          tr(address),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 11,
@@ -426,7 +427,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -506,7 +507,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        nameKu,
+                        tr(nameKu),
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
@@ -516,17 +517,17 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Row(
+                      Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.edit_rounded,
                             size: 11,
                             color: Colors.grey,
                           ),
-                          SizedBox(width: 3),
+                          const SizedBox(width: 3),
                           Text(
-                            'کلیک بکە بۆ دەستکاری',
-                            style: TextStyle(
+                            tr('کلیک بکە بۆ دەستکاری'),
+                            style: const TextStyle(
                               fontSize: 10,
                               color: Colors.grey,
                             ),
@@ -556,7 +557,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        hasPrice ? price.toStringAsFixed(0) : '--',
+                        tr(hasPrice ? price.toStringAsFixed(0) : '--'),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
@@ -566,7 +567,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'د.ع / لیتر',
+                      tr('د.ع / لیتر'),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -606,7 +607,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'بینینی مێژووی گۆڕانکاری',
+                      tr('بینینی مێژووی گۆڕانکاری'),
                       style: TextStyle(
                         fontSize: 11,
                         color: color,

@@ -12,6 +12,7 @@ import '../../services/location_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'store_details_dialog.dart';
+import '../../l10n/tr.dart';
 
 part 'full_map_screen_ui.dart';
 
@@ -444,7 +445,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
     if (c == null || spread < 0.00005 || _currentZoom >= 18.5) {
       await _showStoreListSheet(
         points: members,
-        title: '${_ku(members.length)} شوێن لێرە',
+        title: trf('{0} شوێن لێرە', [_ku(members.length)]),
       );
       return;
     }
@@ -473,7 +474,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
       ..showSnackBar(
         SnackBar(
           content:
-          Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: color,
           behavior: SnackBarBehavior.floating,
           shape:
@@ -488,7 +489,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
       final pos = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (pos == null) {
-        _snack('نەتوانرا شوێنی تۆ بدۆزرێتەوە — GPS و مۆڵەتەکان بپشکنە',
+        _snack(tr('نەتوانرا شوێنی تۆ بدۆزرێتەوە — GPS و مۆڵەتەکان بپشکنە'),
             Colors.orange);
         return;
       }
@@ -497,7 +498,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
       _mapController?.animateCamera(gmaps.CameraUpdate.newLatLngZoom(here, 16));
     } catch (e) {
       debugPrint('❌ location error: $e');
-      _snack('هەڵە لە وەرگرتنی شوێن', Colors.red);
+      _snack(tr('هەڵە لە وەرگرتنی شوێن'), Colors.red);
     }
   }
 
@@ -549,7 +550,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
       builder: (_) => _StoreListSheet(
         points: points ?? _filteredPoints,
         userPos: _myPos,
-        title: title ?? 'شوێنەکانی نەخشە',
+        title: title ?? tr('شوێنەکانی نەخشە'),
       ),
     );
 
@@ -579,7 +580,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
   Future<void> _goToStore(Map<String, dynamic> store) async {
     final p = _StorePoint.from(store);
     if (p.pos == null) {
-      _snack('ئەم شوێنە لۆکەیشنی نییە', Colors.orange);
+      _snack(tr('ئەم شوێنە لۆکەیشنی نییە'), Colors.orange);
       return;
     }
 
@@ -608,7 +609,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
         if (!didPop && _showLegend) setState(() => _showLegend = false);
       },
       child: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Scaffold(
           backgroundColor:
           isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
@@ -674,7 +675,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
                       icon: _currentMapType == gmaps.MapType.satellite
                           ? Icons.map_rounded
                           : Icons.satellite_rounded,
-                      tooltip: 'جۆری نەخشە',
+                      tooltip: tr('جۆری نەخشە'),
                       color: _currentMapType == gmaps.MapType.satellite
                           ? AppColors.primary
                           : const Color(0xFF455A64),
@@ -691,21 +692,21 @@ class _FullMapScreenState extends State<FullMapScreen> {
                     const SizedBox(height: 10),
                     _buildMapButton(
                       icon: Icons.center_focus_strong_rounded,
-                      tooltip: 'نیشاندانی هەموو شوێنەکان',
+                      tooltip: tr('نیشاندانی هەموو شوێنەکان'),
                       color: const Color(0xFF10B981),
                       onTap: _fitAll,
                     ),
                     const SizedBox(height: 10),
                     _buildMapButton(
                       icon: Icons.my_location_rounded,
-                      tooltip: 'شوێنی من',
+                      tooltip: tr('شوێنی من'),
                       color: const Color(0xFF1E88E5),
                       onTap: _goToCurrentLocation,
                     ),
                     const SizedBox(height: 10),
                     _buildMapButton(
                       icon: Icons.info_outline_rounded,
-                      tooltip: 'ڕەنگی پینەکان',
+                      tooltip: tr('ڕەنگی پینەکان'),
                       color: const Color(0xFF6C5CE7),
                       onTap: () {
                         HapticFeedback.lightImpact();
@@ -753,7 +754,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
         children: [
           Semantics(
             button: true,
-            label: 'گەڕانەوە',
+            label: tr('گەڕانەوە'),
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.lightImpact();
@@ -793,7 +794,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
                   fontSize: 14,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'گەڕان بەدوای شوێنەکان...',
+                  hintText: tr('گەڕان بەدوای شوێنەکان...'),
                   hintStyle: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white54 : Colors.grey,
@@ -806,7 +807,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                    tooltip: 'سڕینەوە',
+                    tooltip: tr('سڕینەوە'),
                     icon: Icon(
                       Icons.close_rounded,
                       size: 18,
@@ -898,7 +899,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
                           const SizedBox(width: 4),
                         ],
                         Text(
-                          cat,
+                          tr(cat),
                           style: TextStyle(
                             color: isSelected
                                 ? Colors.white
@@ -935,7 +936,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'هیچ شوێنێک نەدۆزرایەوە',
+                tr('هیچ شوێنێک نەدۆزرایەوە'),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -952,8 +953,8 @@ class _FullMapScreenState extends State<FullMapScreen> {
                 });
                 _applyFilter();
               },
-              child: const Text('سڕینەوەی فلتەر',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+              child: Text(tr('سڕینەوەی فلتەر'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
             ),
           ],
         ),
@@ -1027,7 +1028,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
     final list = _filtered;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: DraggableScrollableSheet(
         initialChildSize: 0.7,
         minChildSize: 0.4,
@@ -1081,7 +1082,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              widget.title,
+                              tr(widget.title),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
@@ -1092,9 +1093,9 @@ class _StoreListSheetState extends State<_StoreListSheet> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              widget.userPos != null
-                                  ? '${_ku(list.length)} شوێن • نزیکترین یەکەم'
-                                  : '${_ku(list.length)} شوێن',
+                              tr(widget.userPos != null
+                                  ? trf('{0} شوێن • نزیکترین یەکەم', [_ku(list.length)])
+                                  : trf('{0} شوێن', [_ku(list.length)])),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isDark
@@ -1134,7 +1135,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
                         fontWeight: FontWeight.w600,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'گەڕان بەدوای شوێن...',
+                        hintText: tr('گەڕان بەدوای شوێن...'),
                         hintStyle: TextStyle(
                           fontSize: 13,
                           color: isDark ? Colors.white38 : Colors.grey,
@@ -1171,7 +1172,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
                                 : Colors.grey.shade300),
                         const SizedBox(height: 12),
                         Text(
-                          'هیچ شوێنێک نەدۆزرایەوە',
+                          tr('هیچ شوێنێک نەدۆزرایەوە'),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -1330,7 +1331,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
         children: [
           Icon(icon, size: 9, color: color),
           const SizedBox(width: 3),
-          Text(text,
+          Text(tr(text),
               style: TextStyle(
                   fontSize: 9, fontWeight: FontWeight.w900, color: color)),
         ],

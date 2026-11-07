@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin_department_services_screen.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
+import '../../l10n/tr.dart';
 
 part 'admin_department_editor_sheet.dart';
 part 'admin_department_services.dart';
@@ -116,7 +117,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(department == null ? '✅ زیادکرا' : '✅ نوێکرایەوە'),
+            content: Text(tr(department == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -124,7 +125,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
         );
       }
     }
@@ -139,26 +140,25 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red),
-              SizedBox(width: 8),
-              Text('سڕینەوەی فەرمانگە'),
+              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const SizedBox(width: 8),
+              Text(tr('سڕینەوەی فەرمانگە')),
             ],
           ),
           content: Text(
-            'ئایا دڵنیایت لە سڕینەوەی "${department['name_ku']}"؟\n\n'
-                'هەموو مامەڵەکانی ئەم فەرمانگەش دەسڕدرێنەوە.',
+            trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟\n\nهەموو مامەڵەکانی ئەم فەرمانگەش دەسڕدرێنەوە.', [department['name_ku']]),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -166,7 +166,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('سڕینەوە'),
+              child: Text(tr('سڕینەوە')),
             ),
           ],
         ),
@@ -188,8 +188,8 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
       if (mounted) {
         HapticFeedback.heavyImpact();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ فەرمانگە سڕایەوە'),
+          SnackBar(
+            content: Text(tr('✅ فەرمانگە سڕایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -197,7 +197,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -228,13 +228,13 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
     final isVendor = role == 'department';
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
         appBar: AppBar(
           title: Text(
-            isVendor ? 'فەرمانگەکەم' : 'بەڕێوەبردنی فەرمانگەکان',
+            tr(isVendor ? 'فەرمانگەکەم' : 'بەڕێوەبردنی فەرمانگەکان'),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
@@ -282,7 +282,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                       color: isDark ? Colors.white : Colors.black87,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'گەڕان بەدوای فەرمانگەکان...',
+                      hintText: tr('گەڕان بەدوای فەرمانگەکان...'),
                       hintStyle: TextStyle(
                         fontSize: 13,
                         color: isDark ? Colors.white54 : Colors.grey,
@@ -324,9 +324,9 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
           foregroundColor: Colors.white,
           onPressed: () => _openEditor(),
           icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            'زیادکردنی فەرمانگە',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          label: Text(
+            tr('زیادکردنی فەرمانگە'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         ),
       ),
@@ -408,7 +408,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        name,
+                        tr(name),
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
@@ -432,7 +432,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                             const SizedBox(width: 3),
                             Expanded(
                               child: Text(
-                                address,
+                                tr(address),
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: isDark
@@ -457,7 +457,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                             ),
                             const SizedBox(width: 3),
                             Text(
-                              phone,
+                              tr(phone),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,
@@ -490,7 +490,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                 Expanded(
                   child: _buildActionButton(
                     icon: Icons.list_alt_rounded,
-                    label: 'مامەڵەکان',
+                    label: tr('مامەڵەکان'),
                     color: const Color(0xFF8B5CF6),
                     onTap: _isDeleting
                         ? null
@@ -508,7 +508,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                 Expanded(
                   child: _buildActionButton(
                     icon: Icons.edit_rounded,
-                    label: 'دەستکاری',
+                    label: tr('دەستکاری'),
                     color: Colors.blue,
                     onTap: _isDeleting
                         ? null
@@ -526,7 +526,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                 Expanded(
                   child: _buildActionButton(
                     icon: Icons.delete_outline_rounded,
-                    label: 'سڕینەوە',
+                    label: tr('سڕینەوە'),
                     color: Colors.red,
                     onTap: _isDeleting
                         ? null
@@ -557,7 +557,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
             Icon(icon, color: color, size: 16),
             const SizedBox(width: 5),
             Text(
-              label,
+              tr(label),
               style: TextStyle(
                 color: color,
                 fontSize: 11,
@@ -589,7 +589,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ فەرمانگەیەک نییە',
+            tr('هیچ فەرمانگەیەک نییە'),
             style: TextStyle(
               color: isDark ? Colors.white54 : Colors.grey,
               fontSize: 15,

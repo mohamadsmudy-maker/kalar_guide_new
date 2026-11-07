@@ -47,16 +47,16 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
           children: [
             Row(
               children: [
-                _buildMiniStat('کۆی', _allCount, Icons.assignment_rounded,
+                _buildMiniStat(tr('کۆی'), _allCount, Icons.assignment_rounded,
                     const Color(0xFF6C5CE7), isDark),
                 const SizedBox(width: 8),
-                _buildMiniStat('چاوەڕوان', _pendingCount,
+                _buildMiniStat(tr('چاوەڕوان'), _pendingCount,
                     Icons.hourglass_top_rounded, const Color(0xFFFF9800), isDark),
                 const SizedBox(width: 8),
-                _buildMiniStat('دواکەوتوو', _overdueCount,
+                _buildMiniStat(tr('دواکەوتوو'), _overdueCount,
                     Icons.warning_amber_rounded, const Color(0xFFE53935), isDark),
                 const SizedBox(width: 8),
-                _buildMiniStat('تەواو', _completedCount,
+                _buildMiniStat(tr('تەواو'), _completedCount,
                     Icons.check_circle_rounded, const Color(0xFF3498DB), isDark),
               ],
             ),
@@ -88,8 +88,8 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('ڕێژەی جێبەجێکردن',
-                            style: TextStyle(
+                        Text(tr('ڕێژەی جێبەجێکردن'),
+                            style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: green)),
@@ -101,7 +101,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                                   fontWeight: FontWeight.w900,
                                   color: green)),
                           const Spacer(),
-                          Text('${_ku(_completedCount)} لە ${_ku(_allCount)}',
+                          Text(trf('{0} لە {1}', [_ku(_completedCount), _ku(_allCount)]),
                               style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.grey.shade600,
@@ -156,14 +156,14 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
             child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(height: 6),
-          Text(_ku(value),
+          Text(tr(_ku(value)),
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                   color: color,
                   height: 1)),
           const SizedBox(height: 2),
-          Text(label,
+          Text(tr(label),
               style: TextStyle(
                   fontSize: 10,
                   color: isDark ? Colors.white54 : Colors.grey.shade600,
@@ -214,7 +214,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, size: 14, color: selected ? Colors.white : color),
             const SizedBox(width: 6),
-            Text(label,
+            Text(tr(label),
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -231,7 +231,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                       : color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(_ku(count),
+                child: Text(tr(_ku(count)),
                     style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -263,7 +263,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                 selected: _filterNeighborhood == null,
                 color: const Color(0xFF6C5CE7),
                 icon: Icons.location_city_rounded,
-                label: 'هەموو گەڕەکەکان',
+                label: tr('هەموو گەڕەکەکان'),
                 selectedGradient: const [Color(0xFF6C5CE7), Color(0xFF9C27B0)],
                 onTap: () {
                   _filterNeighborhood = null;
@@ -330,7 +330,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
   }
 
   Widget _chip(String label, IconData icon, Color color, {double? maxWidth}) {
-    final text = Text(label,
+    final text = Text(tr(label),
         style:
         TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color),
         maxLines: 1,
@@ -368,7 +368,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
         const SizedBox(width: 3),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 120),
-          child: Text(label,
+          child: Text(tr(label),
               style: TextStyle(
                   fontSize: 10, fontWeight: FontWeight.bold, color: color),
               maxLines: 1,
@@ -405,7 +405,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(icon, color: Colors.white, size: 14),
           const SizedBox(width: 4),
-          Text(label,
+          Text(tr(label),
               style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -458,16 +458,16 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                   size: 70, color: isDark ? Colors.white24 : AppColors.primary),
             ),
             const SizedBox(height: 20),
-            Text('هیچ سکاڵایەک نەدۆزرایەوە',
+            Text(tr('هیچ سکاڵایەک نەدۆزرایەوە'),
                 style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
                     color: isDark ? Colors.white70 : const Color(0xFF1A1A2E))),
             const SizedBox(height: 8),
             Text(
-                _hasActiveFilters
+                tr(_hasActiveFilters
                     ? 'لەم فلتەر و بەروارەدا هیچ ئەنجامێک نییە'
-                    : 'هێشتا هیچ سکاڵایەک نەنێردراوە',
+                    : 'هێشتا هیچ سکاڵایەک نەنێردراوە'),
                 style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white38 : Colors.grey.shade600)),
@@ -476,7 +476,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
               ElevatedButton.icon(
                 onPressed: _clearAllFilters,
                 icon: const Icon(Icons.filter_alt_off_rounded),
-                label: const Text('سڕینەوەی فلتەرەکان'),
+                label: Text(tr('سڕینەوەی فلتەرەکان')),
               ),
           ]),
         ),
@@ -494,13 +494,13 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
             Icon(Icons.wifi_off_rounded,
                 size: 64, color: isDark ? Colors.white38 : Colors.grey),
             const SizedBox(height: 16),
-            Text('نەتوانرا سکاڵاکان بار بکرێن',
+            Text(tr('نەتوانرا سکاڵاکان بار بکرێن'),
                 style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
                     color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
             const SizedBox(height: 8),
-            Text('ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەرەوە',
+            Text(tr('ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەرەوە'),
                 style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white54 : Colors.grey.shade600)),
@@ -508,7 +508,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
             ElevatedButton.icon(
               onPressed: _fetchComplaints,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('دووبارە هەوڵبدەرەوە'),
+              label: Text(tr('دووبارە هەوڵبدەرەوە')),
             ),
           ],
         ),
@@ -549,7 +549,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
       foregroundColor: Colors.white,
       icon: const Icon(Icons.tune_rounded),
       label:
-      const Text('فلتەر', style: TextStyle(fontWeight: FontWeight.w900)),
+      Text(tr('فلتەر'), style: const TextStyle(fontWeight: FontWeight.w900)),
     );
   }
 
@@ -559,7 +559,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       icon: const Icon(Icons.auto_fix_high_rounded),
-      label: Text('کار (${_ku(_selectedIds.length)})',
+      label: Text(trf('کار ({0})', [_ku(_selectedIds.length)]),
           style: const TextStyle(fontWeight: FontWeight.w900)),
     );
   }

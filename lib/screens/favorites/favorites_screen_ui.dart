@@ -12,7 +12,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
         children: [
           Icon(icon, size: 16),
           const SizedBox(width: 6),
-          Text(label),
+          Text(tr(label)),
           if (count > 0) ...[
             const SizedBox(width: 6),
             Container(
@@ -23,7 +23,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                _ku(count),
+                tr(_ku(count)),
                 style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -106,13 +106,13 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
       color: Colors.red.shade400,
       borderRadius: BorderRadius.circular(20),
     ),
-    child: const Column(
+    child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.heart_broken_rounded, color: Colors.white, size: 26),
-        SizedBox(height: 2),
-        Text('لابردن',
-            style: TextStyle(
+        const Icon(Icons.heart_broken_rounded, color: Colors.white, size: 26),
+        const SizedBox(height: 2),
+        Text(tr('لابردن'),
+            style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,
                 fontWeight: FontWeight.w900)),
@@ -155,7 +155,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
       ),
       child: Row(
         children: [
-          Text('${_ku(selectedCount)} / ${_ku(totalCount)} هەڵبژێردراو',
+          Text(trf('{0} / {1} هەڵبژێردراو', [_ku(selectedCount), _ku(totalCount)]),
               style: TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w900, color: color)),
           const Spacer(),
@@ -170,9 +170,9 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                   color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8)),
               child: Text(
-                selectedCount == totalCount && totalCount > 0
+                tr(selectedCount == totalCount && totalCount > 0
                     ? 'هەڵوەشاندنەوە'
-                    : 'هەموو',
+                    : 'هەموو'),
                 style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.w900, color: color),
               ),
@@ -193,14 +193,14 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                     height: 14,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                    : const Row(
+                    : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.delete_rounded,
+                    const Icon(Icons.delete_rounded,
                         color: Colors.white, size: 14),
-                    SizedBox(width: 4),
-                    Text('سڕینەوە',
-                        style: TextStyle(
+                    const SizedBox(width: 4),
+                    Text(tr('سڕینەوە'),
+                        style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
                             color: Colors.white)),
@@ -302,7 +302,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      (store['name'] ?? '').toString(),
+                      tr((store['name'] ?? '').toString()),
                       style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 15,
@@ -318,7 +318,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
-                            (store['address'] ?? 'کەلار').toString(),
+                            tr((store['address'] ?? 'کەلار').toString()),
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -342,7 +342,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                           const SizedBox(width: 8),
                         if (ago.isNotEmpty)
                           Flexible(
-                            child: Text(ago,
+                            child: Text(tr(ago),
                                 style: TextStyle(
                                     fontSize: 10,
                                     color: isDark
@@ -429,14 +429,14 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                         decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(8)),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.favorite_rounded,
+                            const Icon(Icons.favorite_rounded,
                                 color: Colors.pink, size: 12),
-                            SizedBox(width: 4),
-                            Text('دڵخواز',
-                                style: TextStyle(
+                            const SizedBox(width: 4),
+                            Text(tr('دڵخواز'),
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w900)),
@@ -460,7 +460,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          (news['title'] ?? '').toString(),
+                          tr((news['title'] ?? '').toString()),
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 15,
@@ -471,7 +471,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          (news['description'] ?? '').toString(),
+                          tr((news['description'] ?? '').toString()),
                           style: TextStyle(
                               fontSize: 12, height: 1.5, color: _sub(isDark)),
                           maxLines: 2,
@@ -485,7 +485,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                                   size: 12,
                                   color: _kPurple.withValues(alpha: 0.7)),
                               const SizedBox(width: 4),
-                              Text(ago,
+                              Text(tr(ago),
                                   style: TextStyle(
                                       fontSize: 10,
                                       color: isDark
@@ -543,14 +543,14 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
             ),
           ),
           const SizedBox(height: 20),
-          Text(title,
+          Text(tr(title),
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   color: _title(isDark)),
               textAlign: TextAlign.center),
           const SizedBox(height: 8),
-          Text(subtitle,
+          Text(tr(subtitle),
               style: TextStyle(fontSize: 12, height: 1.6, color: _sub(isDark)),
               textAlign: TextAlign.center),
         ],

@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 🌍 وەرگێڕانی دەق بە Gemini لە ڕێگەی Supabase Edge Function — ULTRA PRO MAX V2
@@ -42,7 +43,7 @@ class TranslationService {
 
     final key = '$targetLanguage\u0000$trimmed';
 
-    final cached = _cache.remove(key);
+    final cached = _cache.remove(key) ?? _disk[key];
     if (cached != null) {
       _cache[key] = cached; // LRU: بیهێنە کۆتایی
       return SynchronousFuture(cached);
@@ -67,7 +68,8 @@ class TranslationService {
   /// ئەگەر لە کاشدا هەبێت یەکسەر دەیگەڕێنێتەوە (بۆ نیشاندانی بێ چاوەڕوانی).
   static String? cachedOrNull(String text, String targetLanguage) {
     if (targetLanguage == _sourceLanguage) return text;
-    return _cache['$targetLanguage\u0000${text.trim()}'];
+    final k = '$targetLanguage\u0000${text.trim()}';
+    return _cache[k] ?? _disk[k];
   }
 
   static void clearCache() {
@@ -118,6 +120,44 @@ class TranslationService {
     while (_cache.length > _maxCacheEntries) {
       _cache.remove(_cache.keys.first);
     }
+    _disk[key] = value;
+    _saveDisk();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 💾 کاشی هەمیشەیی — دوای داخستنی ئەپیش دەمێنێت (کەمتر داواکاری بۆ Gemini)
+  // ═══════════════════════════════════════════════════════════
+  static const String _diskKey = 'translation_cache_v1';
+  static const int _maxDiskEntries = 3000;
+  static final Map<String, String> _disk = {};
+  static Timer? _saveTimer;
+
+  /// لە دەستپێکی ئەپدا یەکجار بانگ بکە.
+  static Future<void> loadDiskCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_diskKey);
+      if (raw == null) return;
+      final m = jsonDecode(raw);
+      if (m is Map) m.forEach((k, v) => _disk[k.toString()] = v.toString());
+    } catch (e) {
+      debugPrint('⚠️ translation cache load: $e');
+    }
+  }
+
+  static void _saveDisk() {
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(seconds: 2), () async {
+      while (_disk.length > _maxDiskEntries) {
+        _disk.remove(_disk.keys.first);
+      }
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_diskKey, jsonEncode(_disk));
+      } catch (e) {
+        debugPrint('⚠️ translation cache save: $e');
+      }
+    });
   }
 
   /// ژمارە، لینک، ئیمەیڵ یان تەنها هێما — پێویست بە وەرگێڕان ناکات.

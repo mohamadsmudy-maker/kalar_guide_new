@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/currency_service.dart';
 import '../../services/currency_pdf_service.dart';
 import '../../widgets/multi_currency_chart_widget.dart';
+import '../../l10n/tr.dart';
 
 /// 📈 شاشەی Chart ی هەموو دراوەکان
 class GlobalCurrencyChartScreen extends StatefulWidget {
@@ -57,14 +58,14 @@ class _GlobalCurrencyChartScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
-          title: const Text(
-            'Chart ی گشتی 📈',
-            style: TextStyle(
+          title: Text(
+            tr('Chart ی گشتی 📈'),
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 17,
               color: Colors.white,
@@ -132,7 +133,7 @@ class _GlobalCurrencyChartScreenState
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ داتایەک نییە',
+            tr('هیچ داتایەک نییە'),
             style: TextStyle(
               color: isDark ? Colors.white54 : Colors.grey,
               fontSize: 15,

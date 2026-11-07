@@ -13,6 +13,7 @@ import '../../widgets/multi_currency_chart_widget.dart';
 import 'currency_stations_by_type_screen.dart';
 import 'currency_strings.dart';
 import 'global_currency_chart_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 💱 شاشەی سەرەکی دراو — ULTRA PRO MAX
 ///   • نرخی ڕاستەوخۆ (Realtime) • باشترین کڕین و فرۆشتن • گۆڕینەوەی خێرا
@@ -104,7 +105,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
     final history = _snapshot?.history ?? const [];
     if (history.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(CurrencyStrings.of(lang, 'no_history')), backgroundColor: Colors.orange),
+        SnackBar(content: Text(tr(CurrencyStrings.of(lang, 'no_history'))), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -252,7 +253,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 400),
                             child: Text(
-                              CurrencyService.formatPrice(usd?.bestSellPrice, lang),
+                              tr(CurrencyService.formatPrice(usd?.bestSellPrice, lang)),
                               key: ValueKey(usd?.bestSellPrice),
                               style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, height: 1),
                             ),
@@ -309,11 +310,11 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(tr(label), style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
+              child: Text(tr(value), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -343,7 +344,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
               border: Border.all(color: active ? _green : (isDark ? Colors.white12 : Colors.grey.shade300)),
             ),
             child: Text(
-              CurrencyStrings.of(lang, key),
+              tr(CurrencyStrings.of(lang, key)),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
@@ -404,7 +405,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
           Container(width: 4, height: 20, decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(4))),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(title,
+            child: Text(tr(title),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
           ),
           if (trailing != null) trailing,
@@ -424,7 +425,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
         children: [
           Icon(icon, size: 48, color: Colors.grey.shade400),
           const SizedBox(height: 10),
-          Text(text, style: TextStyle(color: isDark ? Colors.white60 : Colors.grey, fontWeight: FontWeight.bold)),
+          Text(tr(text), style: TextStyle(color: isDark ? Colors.white60 : Colors.grey, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -492,7 +493,7 @@ class _MarketCard extends StatelessWidget {
                           fit: BoxFit.scaleDown,
                           child: Padding(
                             padding: const EdgeInsets.all(6),
-                            child: Text(CurrencyService.getSymbol(key),
+                            child: Text(tr(CurrencyService.getSymbol(key)),
                                 style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
                           ),
                         ),
@@ -508,10 +509,10 @@ class _MarketCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 4),
                             Text(
-                              hasData
+                              tr(hasData
                                   ? '${CurrencyService.localizeDigits('${m!.stationCount}', lang)} ${t('stations')}'
                                       '${m.lastUpdated != null ? ' • ${CurrencyStrings.timeAgo(m.lastUpdated, lang)}' : ''}'
-                                  : t('no_prices'),
+                                  : t('no_prices')),
                               style: TextStyle(fontSize: 11, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -602,15 +603,15 @@ class _PriceBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+          Text(tr(label), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
           const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+            child: Text(tr(value), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
           ),
           if (station != null && station!.isNotEmpty)
             Text(
-              station!,
+              tr(station!),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey.shade600),
@@ -646,7 +647,7 @@ class _ChangeChip extends StatelessWidget {
           Icon(up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 12, color: onDark ? Colors.white : color),
           const SizedBox(width: 2),
           Text(
-            CurrencyService.formatPrice(change.abs(), lang),
+            tr(CurrencyService.formatPrice(change.abs(), lang)),
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: onDark ? Colors.white : color),
           ),
         ],
@@ -682,7 +683,7 @@ class _LiveBadge extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+          Text(tr(label), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
         ],
       ),
     );

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide MapType;
 
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
+import '../../l10n/tr.dart';
 
 class NeighborhoodsMapScreen extends StatefulWidget {
   const NeighborhoodsMapScreen({super.key});
@@ -105,7 +106,7 @@ class _NeighborhoodsMapScreenState extends State<NeighborhoodsMapScreen> {
               markerId: MarkerId('marker_${item['id']}'),
               position: position,
               infoWindow: InfoWindow(
-                title: item['name_ku']?.toString() ?? 'گەڕەک',
+                title: item['name_ku']?.toString() ?? tr('گەڕەک'),
               ),
               icon: BitmapDescriptor.defaultMarkerWithHue(
                 BitmapDescriptor.hueAzure,
@@ -145,7 +146,7 @@ class _NeighborhoodsMapScreenState extends State<NeighborhoodsMapScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            title,
+            tr(title),
             style: const TextStyle(fontWeight: FontWeight.w900),
           ),
           backgroundColor: isDark ? AppColors.darkCard : AppColors.primary,
@@ -214,7 +215,7 @@ class _NeighborhoodsMapScreenState extends State<NeighborhoodsMapScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              _errorMessage ?? 'هەڵە',
+              tr(_errorMessage ?? 'هەڵە'),
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
               ),
@@ -224,7 +225,7 @@ class _NeighborhoodsMapScreenState extends State<NeighborhoodsMapScreen> {
             ElevatedButton.icon(
               onPressed: _loadMapData,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('دووبارە هەوڵبدەرەوە'),
+              label: Text(tr('دووبارە هەوڵبدەرەوە')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

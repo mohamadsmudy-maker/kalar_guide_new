@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../services/prayer/kalar_prayer_times.dart';
+import '../../l10n/tr.dart';
 
 /// 📤 خشتەی مانگانەی کاتەکانی نوێژ وەک وێنە — بۆ واتسئاپ و مزگەوتەکان
 class PrayerMonthSharePage extends StatefulWidget {
@@ -59,13 +60,13 @@ class _PrayerMonthSharePageState extends State<PrayerMonthSharePage> {
       await file.writeAsBytes(bytes!.buffer.asUint8List());
       await Share.shareXFiles(
         [XFile(file.path)],
-        text: 'کاتەکانی بانگی کەلار — ${widget.monthName} ${widget.year}\nئەپی ڕێبەری کەلار',
+        text: trf('کاتەکانی بانگی کەلار — {0} {1}\nئەپی ڕێبەری کەلار', [tr(widget.monthName), widget.year]),
       );
     } catch (e) {
       debugPrint('❌ share month: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('هاوبەشکردن سەرکەوتوو نەبوو')),
+          SnackBar(content: Text(tr('هاوبەشکردن سەرکەوتوو نەبوو'))),
         );
       }
     } finally {
@@ -83,8 +84,8 @@ class _PrayerMonthSharePageState extends State<PrayerMonthSharePage> {
       TableRow(
         decoration: const BoxDecoration(color: Color(0xFFEF8A3C)),
         children: [
-          _cell('ڕۆژ', header: true),
-          for (final c in _cols) _cell(c, header: true),
+          _cell(tr('ڕۆژ'), header: true),
+          for (final c in _cols) _cell(tr(c), header: true),
         ],
       ),
     ];
@@ -103,7 +104,7 @@ class _PrayerMonthSharePageState extends State<PrayerMonthSharePage> {
                   : (d.isEven ? Colors.white : const Color(0xFFFDF6EC)),
         ),
         children: [
-          _cell('${_d('$d')} ${_weekdays[date.weekday - 1]}', bold: true),
+          _cell('${_d('$d')} ${tr(_weekdays[date.weekday - 1])}', bold: true),
           for (final id in KalarPrayerTimes.ids) _cell(_t(day.times[id]!)),
         ],
       ));
@@ -116,17 +117,17 @@ class _PrayerMonthSharePageState extends State<PrayerMonthSharePage> {
         color: Colors.white,
         padding: const EdgeInsets.all(20),
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: AppLang.direction,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'کاتەکانی بانگ — کەلار',
-                style: TextStyle(color: Color(0xFF1A1B2E), fontSize: 26, fontWeight: FontWeight.w900),
+              Text(
+                tr('کاتەکانی بانگ — کەلار'),
+                style: const TextStyle(color: Color(0xFF1A1B2E), fontSize: 26, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 4),
               Text(
-                '${widget.monthName} ${_d('${widget.year}')}',
+                '${tr(widget.monthName)} ${_d('${widget.year}')}',
                 style: const TextStyle(color: Color(0xFFEF8A3C), fontSize: 18, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 14),
@@ -138,9 +139,9 @@ class _PrayerMonthSharePageState extends State<PrayerMonthSharePage> {
               ),
               const SizedBox(height: 10),
               Text(
-                anyCalculated
+                tr(anyCalculated
                     ? 'سەرچاوە: amozhgary.tv و هەژماری ئەپ • ئەپی ڕێبەری کەلار'
-                    : 'سەرچاوە: amozhgary.tv • ئەپی ڕێبەری کەلار',
+                    : 'سەرچاوە: amozhgary.tv • ئەپی ڕێبەری کەلار'),
                 style: const TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ],
@@ -150,13 +151,13 @@ class _PrayerMonthSharePageState extends State<PrayerMonthSharePage> {
     );
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFF0F1421),
         appBar: AppBar(
           backgroundColor: const Color(0xFF1A1B2E),
           foregroundColor: Colors.white,
-          title: Text('خشتەی ${widget.monthName}', style: const TextStyle(fontWeight: FontWeight.w900)),
+          title: Text(trf('خشتەی {0}', [tr(widget.monthName)]), style: const TextStyle(fontWeight: FontWeight.w900)),
         ),
         body: InteractiveViewer(
           constrained: false,
@@ -172,7 +173,7 @@ class _PrayerMonthSharePageState extends State<PrayerMonthSharePage> {
           icon: _busy
               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.share_rounded),
-          label: const Text('هاوبەشکردن', style: TextStyle(fontWeight: FontWeight.w900)),
+          label: Text(tr('هاوبەشکردن'), style: const TextStyle(fontWeight: FontWeight.w900)),
         ),
       ),
     );
@@ -181,7 +182,7 @@ class _PrayerMonthSharePageState extends State<PrayerMonthSharePage> {
   Widget _cell(String text, {bool header = false, bool bold = false}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 4),
         child: Text(
-          text,
+          tr(text),
           textAlign: TextAlign.center,
           maxLines: 1,
           style: TextStyle(

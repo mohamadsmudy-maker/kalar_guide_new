@@ -1,3 +1,4 @@
+import '../l10n/tr.dart';
 // lib/models/news.dart
 
 /// 📰 مۆدێلی هەواڵ
@@ -123,10 +124,10 @@ class News {
     final diff = DateTime.now().difference(createdAt!);
 
     if (diff.inSeconds < 60) return 'چەند چرکەیەک پێش ئێستا';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} دەقیقە لەمەوبەر';
-    if (diff.inHours < 24) return '${diff.inHours} سەعات لەمەوبەر';
-    if (diff.inDays < 30) return '${diff.inDays} ڕۆژ لەمەوبەر';
-    return '${(diff.inDays / 30).floor()} مانگ لەمەوبەر';
+    if (diff.inMinutes < 60) return trf('{0} دەقیقە لەمەوبەر', [diff.inMinutes]);
+    if (diff.inHours < 24) return trf('{0} سەعات لەمەوبەر', [diff.inHours]);
+    if (diff.inDays < 30) return trf('{0} ڕۆژ لەمەوبەر', [diff.inDays]);
+    return trf('{0} مانگ لەمەوبەر', [(diff.inDays / 30).floor()]);
   }
 
   News copyWith({

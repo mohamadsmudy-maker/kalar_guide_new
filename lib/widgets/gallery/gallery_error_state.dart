@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 class GalleryErrorState extends StatelessWidget {
   final bool isDark;
@@ -25,7 +26,7 @@ class GalleryErrorState extends StatelessWidget {
                 color: AppColors.orange, size: 60),
             const SizedBox(height: 16),
             Text(
-              message,
+              tr(message),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -36,7 +37,7 @@ class GalleryErrorState extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('دووبارە هەوڵبدەرەوە'),
+              label: Text(tr('دووبارە هەوڵبدەرەوە')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

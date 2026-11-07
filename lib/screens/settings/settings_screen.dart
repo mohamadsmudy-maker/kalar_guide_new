@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../config/theme_provider.dart';
+import '../../l10n/tr.dart';
 
 /// ⚙️ شاشەی ڕێکخستن — ULTRA PRO MAX V2
 class SettingsScreen extends StatefulWidget {
@@ -136,7 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     children.add(const SizedBox(height: 30));
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: pal.bg,
         body: CustomScrollView(
@@ -160,14 +161,14 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   _SectionDef _languageSection(_Pal pal, SettingsProvider settings) {
     return _SectionDef(
-      title: '🌍 زمان',
+      title: tr('🌍 زمان'),
       keywords: 'زمان language کوردی عەرەبی english',
       items: SettingsProvider.availableLanguages.map((lang) {
         final selected = settings.languageId == lang.id;
         return _SelectTile(
           pal: pal,
           selected: selected,
-          leading: Text(lang.flag, style: const TextStyle(fontSize: 26)),
+          leading: Text(tr(lang.flag), style: const TextStyle(fontSize: 26)),
           title: lang.name,
           subtitle: lang.native,
           trailing: _RadioDot(selected: selected, isDark: pal.isDark),
@@ -179,7 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   _SectionDef _fontSection(_Pal pal, SettingsProvider settings) {
     return _SectionDef(
-      title: '🔤 جۆری فۆنت',
+      title: tr('🔤 جۆری فۆنت'),
       keywords: 'فۆنت font typeface',
       items: [
         Container(
@@ -211,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        font.name,
+                        tr(font.name),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -236,7 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   _SectionDef _fontSizeSection(_Pal pal, SettingsProvider settings) {
     return _SectionDef(
-      title: '📏 قەبارەی فۆنت',
+      title: tr('📏 قەبارەی فۆنت'),
       keywords: 'قەبارە size scale گەورە بچووک',
       items: SettingsProvider.availableFontSizes.map((size) {
         final selected = settings.fontSizeId == size.id;
@@ -261,7 +262,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   _SectionDef _previewSection(_Pal pal, SettingsProvider settings) {
     return _SectionDef(
-      title: '👁️ پێشبینین',
+      title: tr('👁️ پێشبینین'),
       keywords: 'پێشبینین preview نموونە',
       items: [
         Container(
@@ -280,7 +281,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ناونیشان — Title',
+                  tr('ناونیشان — Title'),
                   style: TextStyle(
                     fontSize: 20 * settings.fontScale,
                     fontWeight: FontWeight.bold,
@@ -289,7 +290,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'ژێرناونیشان — Subtitle',
+                  tr('ژێرناونیشان — Subtitle'),
                   style: TextStyle(
                     fontSize: 15 * settings.fontScale,
                     fontWeight: FontWeight.w600,
@@ -298,8 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'ئەمە نموونەیەکی نووسینە بۆ پیشاندانی فۆنت و قەبارەکەت. '
-                      'دەتوانیت هەموو شتێک بە ئاسانی بگۆڕیت.',
+                  tr('ئەمە نموونەیەکی نووسینە بۆ پیشاندانی فۆنت و قەبارەکەت. دەتوانیت هەموو شتێک بە ئاسانی بگۆڕیت.'),
                   style: TextStyle(
                     fontSize: 13 * settings.fontScale,
                     color: pal.isDark ? Colors.white60 : Colors.black54,
@@ -335,27 +335,27 @@ class _SettingsScreenState extends State<SettingsScreen>
     }
 
     return _SectionDef(
-      title: '🌙 ڕەنگی ئەپ',
+      title: tr('🌙 ڕەنگی ئەپ'),
       keywords: 'ڕەنگ theme تاریک ڕووناک سیستەم dark light system',
       items: [
         option(
           mode: ThemeMode.light,
           icon: Icons.light_mode_rounded,
-          title: 'ڕووناک',
+          title: tr('ڕووناک'),
           subtitle: 'Light',
           color: Colors.orange,
         ),
         option(
           mode: ThemeMode.dark,
           icon: Icons.dark_mode_rounded,
-          title: 'تاریک',
+          title: tr('تاریک'),
           subtitle: 'Dark',
           color: Colors.purple,
         ),
         option(
           mode: ThemeMode.system,
           icon: Icons.settings_brightness_rounded,
-          title: 'سیستەم',
+          title: tr('سیستەم'),
           subtitle: 'System',
           color: Colors.blue,
         ),
@@ -388,14 +388,14 @@ class _SettingsScreenState extends State<SettingsScreen>
     }
 
     return _SectionDef(
-      title: '🔔 ئاگادارکردنەوە',
+      title: tr('🔔 ئاگادارکردنەوە'),
       keywords: 'ئاگادارکردنەوە notification هەواڵ سکاڵا داواکاری ئۆردەر '
           'دەنگ لەرینەوە news complaint order sound vibration',
       items: [
         sw(
           icon: Icons.notifications_active_rounded,
-          title: 'چالاککردنی ئاگادارکردنەوە',
-          subtitle: 'هەموو ئاگادارکردنەوەکان',
+          title: tr('چالاککردنی ئاگادارکردنەوە'),
+          subtitle: tr('هەموو ئاگادارکردنەوەکان'),
           color: AppColors.primary,
           value: master,
           dependsOnMaster: false,
@@ -403,40 +403,40 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
         sw(
           icon: Icons.newspaper_rounded,
-          title: 'هەواڵەکان',
-          subtitle: 'ئاگادارکردنەوە بۆ هەواڵی نوێ',
+          title: tr('هەواڵەکان'),
+          subtitle: tr('ئاگادارکردنەوە بۆ هەواڵی نوێ'),
           color: Colors.blue,
           value: settings.newsNotifications,
           onChanged: settings.setNewsNotifications,
         ),
         sw(
           icon: Icons.report_rounded,
-          title: 'سکاڵاکان',
-          subtitle: 'ئاگادارکردنەوە بۆ سکاڵاکانت',
+          title: tr('سکاڵاکان'),
+          subtitle: tr('ئاگادارکردنەوە بۆ سکاڵاکانت'),
           color: Colors.red,
           value: settings.complaintNotifications,
           onChanged: settings.setComplaintNotifications,
         ),
         sw(
           icon: Icons.shopping_bag_rounded,
-          title: 'داواکارییەکان',
-          subtitle: 'ئاگادارکردنەوە بۆ ئۆردەرەکانت',
+          title: tr('داواکارییەکان'),
+          subtitle: tr('ئاگادارکردنەوە بۆ ئۆردەرەکانت'),
           color: Colors.green,
           value: settings.orderNotifications,
           onChanged: settings.setOrderNotifications,
         ),
         sw(
           icon: Icons.volume_up_rounded,
-          title: 'دەنگ',
-          subtitle: 'دەنگی ئاگادارکردنەوە',
+          title: tr('دەنگ'),
+          subtitle: tr('دەنگی ئاگادارکردنەوە'),
           color: Colors.orange,
           value: settings.soundEnabled,
           onChanged: settings.setSoundEnabled,
         ),
         sw(
           icon: Icons.vibration_rounded,
-          title: 'لەرینەوە',
-          subtitle: 'لەرینەوەی مۆبایل',
+          title: tr('لەرینەوە'),
+          subtitle: tr('لەرینەوەی مۆبایل'),
           color: Colors.teal,
           value: settings.vibrationEnabled,
           onChanged: settings.setVibrationEnabled,
@@ -541,7 +541,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'ڕێکخستنەکان',
+                              tr('ڕێکخستنەکان'),
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
@@ -550,7 +550,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'زمان، فۆنت، ڕەنگ، ئاگادارکردنەوە',
+                              tr('زمان، فۆنت، ڕەنگ، ئاگادارکردنەوە'),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: pal.subText,
@@ -576,7 +576,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       child: IgnorePointer(
         child: Semantics(
           liveRegion: true,
-          label: _savedVisible ? 'پاشەکەوت کرا' : null,
+          label: _savedVisible ? tr('پاشەکەوت کرا') : null,
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 250),
             opacity: _savedVisible ? 1 : 0,
@@ -597,14 +597,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_rounded, color: Colors.white, size: 14),
-                    SizedBox(width: 4),
+                    const Icon(Icons.check_rounded, color: Colors.white, size: 14),
+                    const SizedBox(width: 4),
                     Text(
-                      'پاشەکەوت کرا',
-                      style: TextStyle(
+                      tr('پاشەکەوت کرا'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
@@ -656,7 +656,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'ڕێکخستنەکان خۆکارانە پاشەکەوت دەکرێن',
+                  tr('ڕێکخستنەکان خۆکارانە پاشەکەوت دەکرێن'),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -665,7 +665,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'هەر گۆڕانکارییەک دەستبەجێ پاشەکەوت دەکرێت',
+                  tr('هەر گۆڕانکارییەک دەستبەجێ پاشەکەوت دەکرێت'),
                   style: TextStyle(fontSize: 10, color: pal.subText),
                 ),
               ],
@@ -709,7 +709,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 fontWeight: FontWeight.w600,
               ),
               decoration: InputDecoration(
-                hintText: 'گەڕان بەدوای ڕێکخستن...',
+                hintText: tr('گەڕان بەدوای ڕێکخستن...'),
                 hintStyle: TextStyle(
                   fontSize: 12,
                   color: pal.isDark ? Colors.white38 : Colors.grey,
@@ -720,7 +720,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           if (active)
             IconButton(
-              tooltip: 'سڕینەوە',
+              tooltip: tr('سڕینەوە'),
               icon: Icon(
                 Icons.close_rounded,
                 size: 18,
@@ -745,7 +745,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         child: Semantics(
           header: true,
           child: Text(
-            title,
+            tr(title),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -765,7 +765,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           Icon(Icons.search_off_rounded, size: 52, color: pal.subText),
           const SizedBox(height: 12),
           Text(
-            'هیچ ڕێکخستنێک نەدۆزرایەوە',
+            tr('هیچ ڕێکخستنێک نەدۆزرایەوە'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -774,7 +774,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           const SizedBox(height: 4),
           Text(
-            'وشەیەکی تر تاقی بکەرەوە',
+            tr('وشەیەکی تر تاقی بکەرەوە'),
             style: TextStyle(fontSize: 12, color: pal.subText),
           ),
         ],
@@ -788,7 +788,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     final radius = BorderRadius.circular(14);
     return Semantics(
       button: true,
-      label: 'گەڕاندنەوە بۆ دۆخی سەرەتا',
+      label: tr('گەڕاندنەوە بۆ دۆخی سەرەتا'),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.red.withValues(alpha: pal.isDark ? 0.15 : 0.08),
@@ -806,26 +806,26 @@ class _SettingsScreenState extends State<SettingsScreen>
               HapticFeedback.mediumImpact();
               _showResetDialog(settings);
             },
-            child: const Padding(
-              padding: EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  _IconBadge(
+                  const _IconBadge(
                     icon: Icons.restore_rounded,
                     color: Colors.red,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'گەڕاندنەوە بۆ دۆخی سەرەتا',
-                      style: TextStyle(
+                      tr('گەڕاندنەوە بۆ دۆخی سەرەتا'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Colors.red,
                       ),
                     ),
                   ),
-                  Icon(Icons.chevron_left_rounded, color: Colors.red),
+                  const Icon(Icons.chevron_left_rounded, color: Colors.red),
                 ],
               ),
             ),
@@ -839,36 +839,36 @@ class _SettingsScreenState extends State<SettingsScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red),
-              SizedBox(width: 10),
+              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'گەڕاندنەوە بۆ دۆخی سەرەتا',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  tr('گەڕاندنەوە بۆ دۆخی سەرەتا'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
-          content: const Text(
-            'ئایا دڵنیایت؟ هەموو ڕێکخستنەکان دەگەڕێنەوە بۆ دۆخی سەرەتا.',
+          content: Text(
+            tr('ئایا دڵنیایت؟ هەموو ڕێکخستنەکان دەگەڕێنەوە بۆ دۆخی سەرەتا.'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('پاشگەزبوونەوە'),
+              child: Text(tr('پاشگەزبوونەوە')),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(
-                'بەڵێ، بیگەڕێنەوە',
-                style: TextStyle(color: Colors.red),
+              child: Text(
+                tr('بەڵێ، بیگەڕێنەوە'),
+                style: const TextStyle(color: Colors.red),
               ),
             ),
           ],
@@ -886,10 +886,10 @@ class _SettingsScreenState extends State<SettingsScreen>
       setState(() => _savedVisible = false);
       HapticFeedback.heavyImpact();
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            '✅ ڕێکخستنەکان گەڕێنرانەوە',
-            style: TextStyle(fontWeight: FontWeight.w900),
+            tr('✅ ڕێکخستنەکان گەڕێنرانەوە'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
           backgroundColor: _Pal.success,
           behavior: SnackBarBehavior.floating,
@@ -898,10 +898,10 @@ class _SettingsScreenState extends State<SettingsScreen>
     } catch (_) {
       if (!mounted) return;
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            '❌ نەتوانرا ڕێکخستنەکان بگەڕێنرێنەوە',
-            style: TextStyle(fontWeight: FontWeight.w900),
+            tr('❌ نەتوانرا ڕێکخستنەکان بگەڕێنرێنەوە'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
@@ -1082,7 +1082,7 @@ class _SelectTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
+                          tr(title),
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
@@ -1092,7 +1092,7 @@ class _SelectTile extends StatelessWidget {
                         if (subtitle != null) ...[
                           const SizedBox(height: 2),
                           Text(
-                            subtitle!,
+                            tr(subtitle!),
                             style: TextStyle(
                               fontSize: 11,
                               color: pal.subText,
@@ -1157,7 +1157,7 @@ class _SwitchTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      tr(title),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -1166,7 +1166,7 @@ class _SwitchTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      subtitle,
+                      tr(subtitle),
                       style: TextStyle(fontSize: 11, color: pal.subText),
                     ),
                   ],

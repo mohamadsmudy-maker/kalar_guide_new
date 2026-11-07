@@ -27,7 +27,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
         IconButton(
           icon: const Icon(Icons.refresh_rounded),
           onPressed: _refresh,
-          tooltip: 'نوێکردنەوە',
+          tooltip: tr('نوێکردنەوە'),
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -105,9 +105,9 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
-                              'ژمارەکانی فریاکەوتن',
-                              style: TextStyle(
+                            Text(
+                              tr('ژمارەکانی فریاکەوتن'),
+                              style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
@@ -118,12 +118,12 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                               children: [
                                 _pill(
                                   icon: Icons.phone_rounded,
-                                  label: '$count ژمارە',
+                                  label: trf('{0} ژمارە', [count]),
                                 ),
                                 const SizedBox(width: 8),
                                 _pill(
                                   icon: Icons.access_time_filled_rounded,
-                                  label: '٢٤/٧',
+                                  label: tr('٢٤/٧'),
                                 ),
                               ],
                             ),
@@ -154,7 +154,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
           Icon(icon, color: Colors.white, size: 12),
           const SizedBox(width: 4),
           Text(
-            label,
+            tr(label),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 11,
@@ -234,7 +234,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      cat.getName('ku'),
+                      tr(cat.getName('ku')),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
@@ -303,7 +303,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        sort.label,
+                        tr(sort.label),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
@@ -373,7 +373,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '$count ژمارە بەردەستە',
+                    trf('{0} ژمارە بەردەستە', [count]),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
@@ -382,7 +382,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                   ),
                   if (hasPosition && sortIsDistance)
                     Text(
-                      'ڕیزکراوە بەپێی دووری لە شوێنەکەت',
+                      tr('ڕیزکراوە بەپێی دووری لە شوێنەکەت'),
                       style: TextStyle(
                         fontSize: 10,
                         color: isDark ? Colors.white54 : Colors.grey.shade600,
@@ -399,15 +399,15 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                   color: Colors.green.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.my_location_rounded,
+                    const Icon(Icons.my_location_rounded,
                         color: Colors.green, size: 11),
-                    SizedBox(width: 3),
+                    const SizedBox(width: 3),
                     Text(
-                      'نزیک',
-                      style: TextStyle(
+                      tr('نزیک'),
+                      style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
                         color: Colors.green,
@@ -499,7 +499,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                 size: 60, color: Color(0xFFDC2626)),
             const SizedBox(height: 16),
             Text(
-              'هەڵە لە بارکردنی داتا',
+              tr('هەڵە لە بارکردنی داتا'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
@@ -519,7 +519,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
             FilledButton.icon(
               onPressed: _refresh,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('دووبارە هەوڵ بدە'),
+              label: Text(tr('دووبارە هەوڵ بدە')),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
               ),
@@ -563,7 +563,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
             ),
             const SizedBox(height: 20),
             Text(
-              searching ? 'هیچ ئەنجامێک نەدۆزرایەوە' : 'هیچ ژمارەیەک نییە',
+              tr(searching ? 'هیچ ئەنجامێک نەدۆزرایەوە' : 'هیچ ژمارەیەک نییە'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
@@ -572,9 +572,9 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
             ),
             const SizedBox(height: 8),
             Text(
-              searching
+              tr(searching
                   ? 'گەڕانەکەت هیچ ئەنجامێکی نەبوو'
-                  : 'تکایە داتا لە داتابەیس زیاد بکە',
+                  : 'تکایە داتا لە داتابەیس زیاد بکە'),
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? Colors.white54 : Colors.grey.shade600,

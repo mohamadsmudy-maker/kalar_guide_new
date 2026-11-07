@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../services/fuel_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🧮 حسابکەری نرخ
 class FuelCalculatorScreen extends StatefulWidget {
@@ -84,16 +85,16 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           backgroundColor: const Color(0xFF1A1B2E),
           foregroundColor: Colors.white,
-          title: const Text(
-            '🧮 حسابکەری نرخ',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          title: Text(
+            tr('🧮 حسابکەری نرخ'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         ),
         body: _loading
@@ -133,7 +134,7 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                     items: _fuelTypes.map((type) {
                       return DropdownMenuItem<String>(
                         value: type['key'],
-                        child: Text(type['name'] ?? ''),
+                        child: Text(tr(type['name'] ?? '')),
                       );
                     }).toList(),
                     onChanged: (v) async {
@@ -174,19 +175,19 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'نرخی هەر لیتر',
-                        style: TextStyle(
+                        tr('نرخی هەر لیتر'),
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                     Text(
-                      _pricePerLiter > 0
+                      tr(_pricePerLiter > 0
                           ? '${_pricePerLiter.toStringAsFixed(0)} د.ع'
-                          : '-- د.ع',
+                          : '-- د.ع'),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -208,7 +209,7 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                   fontWeight: FontWeight.w900,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'چەند لیتر؟',
+                  labelText: tr('چەند لیتر؟'),
                   labelStyle: TextStyle(
                     color: isDark ? Colors.white54 : Colors.grey,
                   ),
@@ -226,7 +227,7 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                     Icons.local_gas_station_rounded,
                     color: Color(0xFFFFD700),
                   ),
-                  suffixText: 'لیتر',
+                  suffixText: tr('لیتر'),
                 ),
               ),
               const SizedBox(height: 20),
@@ -261,9 +262,9 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                       size: 30,
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'کۆی گشتی',
-                      style: TextStyle(
+                    Text(
+                      tr('کۆی گشتی'),
+                      style: const TextStyle(
                         color: Color(0xFF0F1421),
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -280,9 +281,9 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'دیناری عێراقی',
-                      style: TextStyle(
+                    Text(
+                      tr('دیناری عێراقی'),
+                      style: const TextStyle(
                         color: Color(0xFF0F1421),
                         fontSize: 12,
                         fontWeight: FontWeight.w700,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../../models/gallery/gallery_image.dart';
+import '../../l10n/tr.dart';
 
 enum AdminAction { editTitle, editCategory, delete }
 
@@ -16,7 +17,7 @@ class GalleryAdminOptionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -34,24 +35,24 @@ class GalleryAdminOptionsSheet extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.edit_rounded,
                   color: AppColors.primary),
-              title: const Text('دەستکاری ناونیشان',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+              title: Text(tr('دەستکاری ناونیشان'),
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
               onTap: () =>
                   Navigator.pop(context, AdminAction.editTitle),
             ),
             ListTile(
               leading: const Icon(Icons.category_rounded,
                   color: AppColors.primary),
-              title: const Text('گۆڕینی جۆر',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+              title: Text(tr('گۆڕینی جۆر'),
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
               onTap: () =>
                   Navigator.pop(context, AdminAction.editCategory),
             ),
             ListTile(
               leading: const Icon(Icons.delete_rounded,
                   color: AppColors.red),
-              title: const Text('سڕینەوە',
-                  style: TextStyle(
+              title: Text(tr('سڕینەوە'),
+                  style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       color: AppColors.red)),
               onTap: () => Navigator.pop(context, AdminAction.delete),

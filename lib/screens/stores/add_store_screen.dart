@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../services/image_service.dart';
 import 'map_picker.dart';
+import '../../l10n/tr.dart';
 
 /// 🏪 شاشەی زیادکردن / دەستکاریکردنی شوێن — Full Pro Edition V7
 class AddStoreScreen extends StatefulWidget {
@@ -223,7 +224,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _showSnackBar('تکایە GPS هەڵبکە ⚠', Colors.orange);
+        _showSnackBar(tr('تکایە GPS هەڵبکە ⚠'), Colors.orange);
         if (mounted) setState(() => _gettingLocation = false);
         return;
       }
@@ -232,7 +233,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          _showSnackBar('مۆڵەتی لۆکەیشن ڕەتکرایەوە ❌', Colors.red);
+          _showSnackBar(tr('مۆڵەتی لۆکەیشن ڕەتکرایەوە ❌'), Colors.red);
           if (mounted) setState(() => _gettingLocation = false);
           return;
         }
@@ -250,9 +251,9 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         await _detectNeighborhood(position.latitude, position.longitude);
       }
 
-      _showSnackBar('GPS وەرگیرا ✅', Colors.green);
+      _showSnackBar(tr('GPS وەرگیرا ✅'), Colors.green);
     } catch (e) {
-      _showSnackBar('هەڵە: $e', Colors.red);
+      _showSnackBar(trf('هەڵە: {0}', [e]), Colors.red);
     } finally {
       if (mounted) setState(() => _gettingLocation = false);
     }
@@ -299,14 +300,14 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         await _detectNeighborhood(location.latitude, location.longitude);
       }
 
-      _showSnackBar('زانیاری شوێنەکە هێنرا ✅', Colors.green);
+      _showSnackBar(tr('زانیاری شوێنەکە هێنرا ✅'), Colors.green);
     } else if (result is gmaps.LatLng) {
       setState(() {
         _latitude = result.latitude;
         _longitude = result.longitude;
       });
       await _detectNeighborhood(result.latitude, result.longitude);
-      _showSnackBar('شوێن هەڵبژێردرا ✅', Colors.green);
+      _showSnackBar(tr('شوێن هەڵبژێردرا ✅'), Colors.green);
     }
   }
 
@@ -314,7 +315,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(fontSize: 12)),
+        content: Text(tr(message), style: const TextStyle(fontSize: 12)),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
@@ -327,23 +328,23 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
 
   Future<void> _saveStore() async {
     if (_nameController.text.trim().isEmpty) {
-      _showSnackBar('ناوی شوێن بنووسە ⚠', Colors.orange);
+      _showSnackBar(tr('ناوی شوێن بنووسە ⚠'), Colors.orange);
       return;
     }
     if (_selectedMainCategory == null) {
-      _showSnackBar('کەرت هەڵبژێرە ⚠', Colors.orange);
+      _showSnackBar(tr('کەرت هەڵبژێرە ⚠'), Colors.orange);
       return;
     }
     if (_addressController.text.trim().isEmpty) {
-      _showSnackBar('ناونیشان بنووسە ⚠', Colors.orange);
+      _showSnackBar(tr('ناونیشان بنووسە ⚠'), Colors.orange);
       return;
     }
     if (_latitude == null || _longitude == null) {
-      _showSnackBar('تکایە شوێنەکە دیاری بکە (GPS یان نەخشە) ⚠', Colors.orange);
+      _showSnackBar(tr('تکایە شوێنەکە دیاری بکە (GPS یان نەخشە) ⚠'), Colors.orange);
       return;
     }
     if (_phoneController.text.trim().isEmpty) {
-      _showSnackBar('ژمارەی مۆبایل پێویستە بۆ کۆدی نهێنی ⚠', Colors.orange);
+      _showSnackBar(tr('ژمارەی مۆبایل پێویستە بۆ کۆدی نهێنی ⚠'), Colors.orange);
       return;
     }
 
@@ -361,7 +362,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
           .maybeSingle();
 
       if (existingStore != null) {
-        _showSnackBar('شوێنێک بەم ناوە پێشتر هەیە! ❌', Colors.red);
+        _showSnackBar(tr('شوێنێک بەم ناوە پێشتر هەیە! ❌'), Colors.red);
         if (mounted) setState(() => _loading = false);
         return;
       }
@@ -430,19 +431,19 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       if (editingId == null) {
         storeData['created_at'] = DateTime.now().toIso8601String();
         await Supabase.instance.client.from('dukan').insert(storeData);
-        _showSnackBar('زیادکرا ✅', Colors.green);
+        _showSnackBar(tr('زیادکرا ✅'), Colors.green);
       } else {
         await Supabase.instance.client
             .from('dukan')
             .update(storeData)
             .eq('id', editingId);
-        _showSnackBar('نوێکرایەوە ✅', Colors.green);
+        _showSnackBar(tr('نوێکرایەوە ✅'), Colors.green);
       }
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       debugPrint('❌ Save store error: $e');
-      _showSnackBar('هەڵە: $e', Colors.red);
+      _showSnackBar(trf('هەڵە: {0}', [e]), Colors.red);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -454,13 +455,13 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
-            isEditing ? 'دەستکاریکردنی شوێن' : 'زیادکردنی شوێن',
+            tr(isEditing ? 'دەستکاریکردنی شوێن' : 'زیادکردنی شوێن'),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
@@ -500,9 +501,9 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'وێنەکان',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+          Text(
+            tr('وێنەکان'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -657,18 +658,18 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                           width: 2,
                         ),
                       ),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.add_rounded,
                             color: AppColors.primary,
                             size: 30,
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'زیادکردن',
-                            style: TextStyle(
+                            tr('زیادکردن'),
+                            style: const TextStyle(
                               fontSize: 11,
                               color: AppColors.primary,
                               fontWeight: FontWeight.bold,
@@ -697,7 +698,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         ),
         const SizedBox(height: 2),
         Text(
-          'لۆگۆ',
+          tr('لۆگۆ'),
           style: TextStyle(
             fontSize: 10,
             color: Colors.purple.shade700,
@@ -721,7 +722,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             children: [
               Expanded(
                 child: _buildDropdown(
-                  label: 'کەرت *',
+                  label: tr('کەرت *'),
                   value: _selectedMainCategory,
                   items: _mainCategories,
                   isDark: isDark,
@@ -738,7 +739,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildDropdown(
-                  label: 'ژێربەش',
+                  label: tr('ژێربەش'),
                   value: _selectedSubCategory,
                   items: _subCategories,
                   isDark: isDark,
@@ -753,7 +754,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             children: [
               Expanded(
                 child: _buildTypeButton(
-                  label: 'حکومی',
+                  label: tr('حکومی'),
                   icon: Icons.account_balance_rounded,
                   isSelected: _storeType == 'حکومی',
                   onTap: () => setState(() => _storeType = 'حکومی'),
@@ -762,7 +763,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildTypeButton(
-                  label: 'ناحکومی',
+                  label: tr('ناحکومی'),
                   icon: Icons.storefront_rounded,
                   isSelected: _storeType == 'ناحکومی',
                   onTap: () => setState(() => _storeType = 'ناحکومی'),
@@ -790,7 +791,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               color: isDark ? Colors.amber : Colors.blue.shade800,
             ),
             decoration: InputDecoration(
-              labelText: 'کۆدی نهێنی (Vendor Code)',
+              labelText: tr('کۆدی نهێنی (Vendor Code)'),
               labelStyle: TextStyle(
                 color: isDark ? Colors.amber.shade200 : Colors.blue.shade800,
                 fontWeight: FontWeight.bold,
@@ -801,9 +802,9 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                 icon: const Icon(Icons.copy_rounded, size: 20),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: _vendorCodeController.text));
-                  _showSnackBar('کۆدەکە کۆپی کرا ✅', Colors.green);
+                  _showSnackBar(tr('کۆدەکە کۆپی کرا ✅'), Colors.green);
                 },
-                tooltip: 'کۆپیکردن',
+                tooltip: tr('کۆپیکردن'),
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -848,7 +849,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                 child: _buildLocationButton(
                   icon: Icons.my_location_rounded,
                   label:
-                  _latitude != null ? 'GPS وەرگیرا ✓' : 'وەرگرتنی GPS',
+                  _latitude != null ? tr('GPS وەرگیرا ✓') : tr('وەرگرتنی GPS'),
                   color:
                   _latitude != null ? Colors.green : AppColors.primary,
                   isLoading: _gettingLocation,
@@ -859,7 +860,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               Expanded(
                 child: _buildLocationButton(
                   icon: Icons.map_rounded,
-                  label: 'نەخشە',
+                  label: tr('نەخشە'),
                   color: Colors.blueAccent,
                   onTap: _openMapPicker,
                 ),
@@ -924,7 +925,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'گەڕەک',
+                          tr('گەڕەک'),
                           style: TextStyle(
                             fontSize: 10,
                             color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
@@ -938,7 +939,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                             : Text(
-                          _detectedNeighborhood,
+                          tr(_detectedNeighborhood),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -980,9 +981,9 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                 ),
                 side: BorderSide(color: Colors.grey.shade400),
               ),
-              child: const Text(
-                'پاشگەزبوونەوە',
-                style: TextStyle(
+              child: Text(
+                tr('پاشگەزبوونەوە'),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
@@ -1008,7 +1009,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
                 isEditing ? Icons.save_rounded : Icons.add_circle_rounded,
               ),
               label: Text(
-                isEditing ? 'نوێکردنەوە' : 'تۆمارکردن',
+                tr(isEditing ? 'نوێکردنەوە' : 'تۆمارکردن'),
                 style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 14,
@@ -1066,7 +1067,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       initialValue: value,
       isExpanded: true,
       hint: Text(
-        'هەڵبژێرە',
+        tr('هەڵبژێرە'),
         style: TextStyle(
           fontSize: 11,
           color: isDark ? Colors.white54 : Colors.grey.shade500,
@@ -1076,7 +1077,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         return DropdownMenuItem(
           value: item,
           child: Text(
-            item,
+            tr(item),
             style: const TextStyle(fontSize: 12),
             overflow: TextOverflow.ellipsis,
           ),
@@ -1133,7 +1134,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               ),
               const SizedBox(width: 6),
               Text(
-                label,
+                tr(label),
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.grey.shade700,
                   fontWeight: FontWeight.bold,
@@ -1186,7 +1187,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  label,
+                  tr(label),
                   style: TextStyle(
                     color: color,
                     fontWeight: FontWeight.bold,

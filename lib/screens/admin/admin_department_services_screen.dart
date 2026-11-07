@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../l10n/tr.dart';
 
 /// 🏛️ شاشەی مامەڵەکانی فەرمانگە
 class AdminDepartmentServicesScreen extends StatefulWidget {
@@ -66,19 +67,19 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text('سڕینەوەی مامەڵە'),
+          title: Text(tr('سڕینەوەی مامەڵە')),
           content: Text(
             'ئایا دڵنیایت لە سڕینەوەی "${service['title_ku']}"؟',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -86,7 +87,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('سڕینەوە'),
+              child: Text(tr('سڕینەوە')),
             ),
           ],
         ),
@@ -105,8 +106,8 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ مامەڵە سڕایەوە'),
+          SnackBar(
+            content: Text(tr('✅ مامەڵە سڕایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -114,7 +115,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
         );
       }
     }
@@ -129,13 +130,13 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
     );
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
-            'مامەڵەکانی $name',
+            trf('مامەڵەکانی {0}', [name]),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 15,
@@ -173,9 +174,9 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
           foregroundColor: Colors.white,
           onPressed: () => _openEditor(),
           icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            'زیادکردنی مامەڵە',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          label: Text(
+            tr('زیادکردنی مامەڵە'),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -234,7 +235,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  title,
+                  tr(title),
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
@@ -258,7 +259,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
           if (description.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              description,
+              tr(description),
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? Colors.white70 : Colors.grey.shade700,
@@ -274,7 +275,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
                 const Icon(Icons.schedule_rounded, size: 14, color: Colors.blue),
                 const SizedBox(width: 6),
                 Text(
-                  'ماوە: $duration',
+                  trf('ماوە: {0}', [duration]),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -287,13 +288,13 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
 
           if (documents is List && documents.isNotEmpty) ...[
             const SizedBox(height: 10),
-            const Row(
+            Row(
               children: [
-                Icon(Icons.description_outlined, size: 14, color: Colors.green),
-                SizedBox(width: 6),
+                const Icon(Icons.description_outlined, size: 14, color: Colors.green),
+                const SizedBox(width: 6),
                 Text(
-                  'بەڵگەنامە پێویستەکان:',
-                  style: TextStyle(
+                  tr('بەڵگەنامە پێویستەکان:'),
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
@@ -324,13 +325,13 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
 
           if (fees is List && fees.isNotEmpty) ...[
             const SizedBox(height: 10),
-            const Row(
+            Row(
               children: [
-                Icon(Icons.attach_money_rounded, size: 14, color: Colors.orange),
-                SizedBox(width: 6),
+                const Icon(Icons.attach_money_rounded, size: 14, color: Colors.orange),
+                const SizedBox(width: 6),
                 Text(
-                  'نرخ:',
-                  style: TextStyle(
+                  tr('نرخ:'),
+                  style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Colors.orange,
@@ -375,7 +376,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ مامەڵەیەک نییە',
+            tr('هیچ مامەڵەیەک نییە'),
             style: TextStyle(
               color: isDark ? Colors.white54 : Colors.grey,
               fontSize: 15,
@@ -384,7 +385,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
           ),
           const SizedBox(height: 8),
           Text(
-            'کرتە لە دوگمەی خوارەوە بکە بۆ زیادکردن',
+            tr('کرتە لە دوگمەی خوارەوە بکە بۆ زیادکردن'),
             style: TextStyle(
               color: isDark ? Colors.white38 : Colors.grey.shade500,
               fontSize: 12,
@@ -478,8 +479,8 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
   Future<void> _save() async {
     if (_titleKuCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ناوی مامەڵە پێویستە'),
+        SnackBar(
+          content: Text(tr('ناوی مامەڵە پێویستە')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -530,8 +531,8 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ پاشەکەوتکرا'),
+          SnackBar(
+            content: Text(tr('✅ پاشەکەوتکرا')),
             backgroundColor: Colors.green,
           ),
         );
@@ -539,7 +540,7 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -552,7 +553,7 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
     final isEditing = widget.service != null;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -575,9 +576,9 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isEditing
+                      tr(isEditing
                           ? 'دەستکاریکردنی مامەڵە'
-                          : 'زیادکردنی مامەڵەی نوێ',
+                          : 'زیادکردنی مامەڵەی نوێ'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,
@@ -592,32 +593,32 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                _buildField('ناوی کوردی *', _titleKuCtrl),
+                _buildField(tr('ناوی کوردی *'), _titleKuCtrl),
                 const SizedBox(height: 10),
-                _buildField('ناوی عەرەبی', _titleArCtrl),
+                _buildField(tr('ناوی عەرەبی'), _titleArCtrl),
                 const SizedBox(height: 10),
-                _buildField('ناوی ئینگلیزی', _titleEnCtrl),
+                _buildField(tr('ناوی ئینگلیزی'), _titleEnCtrl),
                 const SizedBox(height: 10),
-                _buildField('وەسف', _descriptionCtrl, maxLines: 3),
+                _buildField(tr('وەسف'), _descriptionCtrl, maxLines: 3),
                 const SizedBox(height: 10),
                 _buildField(
-                  'ماوە (بۆ نموونە: ٣٠-٦٠ خولەک)',
+                  tr('ماوە (بۆ نموونە: ٣٠-٦٠ خولەک)'),
                   _durationCtrl,
                 ),
                 const SizedBox(height: 10),
                 _buildField(
-                  'بەڵگەنامەکان (هەر دێرێک = یەک بەڵگەنامە)',
+                  tr('بەڵگەنامەکان (هەر دێرێک = یەک بەڵگەنامە)'),
                   _documentsCtrl,
                   maxLines: 5,
                 ),
                 const SizedBox(height: 10),
                 _buildField(
-                  'نرخەکان (هەر دێرێک = یەک نرخ)',
+                  tr('نرخەکان (هەر دێرێک = یەک نرخ)'),
                   _feesCtrl,
                   maxLines: 4,
                 ),
                 const SizedBox(height: 10),
-                _buildField('تێبینی', _notesCtrl, maxLines: 2),
+                _buildField(tr('تێبینی'), _notesCtrl, maxLines: 2),
 
                 const SizedBox(height: 24),
 
@@ -644,7 +645,7 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
                     )
                         : const Icon(Icons.save_rounded),
                     label: Text(
-                      isEditing ? 'نوێکردنەوە' : 'زیادکردن',
+                      tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

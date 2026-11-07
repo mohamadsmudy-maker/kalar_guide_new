@@ -15,6 +15,7 @@ import '../services/neighborhood_service.dart';
 import '../widgets/neighborhood_info_sheet.dart';
 import '../widgets/neighborhoods_drawer.dart';
 import '../widgets/search_bar_widget.dart';
+import '../l10n/tr.dart';
 
 part 'map_screen_ui.dart';
 
@@ -904,7 +905,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                message,
+                tr(message),
                 style: const TextStyle(
                     fontWeight: FontWeight.w700, color: Colors.white),
               ),
@@ -1012,7 +1013,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               child: Text(
-                _selected?.nameKu ?? _t('نەخشەی گەڕەکان 🗺️', 'Neighborhoods 🗺️'),
+                tr(_selected?.nameKu ?? _t('نەخشەی گەڕەکان 🗺️', 'Neighborhoods 🗺️')),
                 key: ValueKey(_selected?.nameKu),
                 style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w900, color: fg),
@@ -1342,7 +1343,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ],
           ),
           child: Text(
-            a.label,
+            tr(a.label),
             // مێنیوەکە LTR ـە، بەڵام دەقەکە کوردییە → RTL تا «3D» تێک نەچێت
             textDirection: _en ? TextDirection.ltr : TextDirection.rtl,
             style: TextStyle(

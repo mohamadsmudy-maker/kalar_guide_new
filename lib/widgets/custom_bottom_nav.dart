@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n/tr.dart';
 
 /// 🎨 ناڤیگەیشنی ژێرەوە — Modern FAB Style — ULTRA PRO MAX V3
 ///
@@ -204,7 +205,7 @@ class _NavButton extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              badgeText,
+                              tr(badgeText),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 9,
@@ -228,7 +229,7 @@ class _NavButton extends StatelessWidget {
                     color: isSelected ? activeColor : idleColor,
                   ),
                   child: Text(
-                    item.label,
+                    tr(item.label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,

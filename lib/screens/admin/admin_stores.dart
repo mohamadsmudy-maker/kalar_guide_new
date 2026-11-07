@@ -7,6 +7,7 @@ import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../stores/add_store_screen.dart';
 import 'admin_store_services_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 🏪 شاشەی بەڕێوەبردنی شوێنەکان — PRO EDITION
 class AdminStoresScreen extends StatefulWidget {
@@ -117,17 +118,17 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
     bool confirm = await showDialog(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text("سڕینەوەی شوێن 🗑"),
-          content: const Text("ئایا دڵنیایت لە سڕینەوەی ئەم شوێنە؟"),
+          title: Text(tr("سڕینەوەی شوێن 🗑")),
+          content: Text(tr("ئایا دڵنیایت لە سڕینەوەی ئەم شوێنە؟")),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text("نەخێر"),
+              child: Text(tr("نەخێر")),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -135,7 +136,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("سڕینەوە"),
+              child: Text(tr("سڕینەوە")),
             ),
           ],
         ),
@@ -153,8 +154,8 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
       _fetchStores();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("شوێنەکە سڕایەوە 🗑"),
+          SnackBar(
+            content: Text(tr("شوێنەکە سڕایەوە 🗑")),
             backgroundColor: Colors.green,
           ),
         );
@@ -162,7 +163,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
         );
       }
     }
@@ -211,13 +212,13 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
     final filteredStores = _filteredStores;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFFF6F5F7),
         appBar: AppBar(
-          title: const Text(
-            "بەڕێوەبردنی شوێنەکان 🏪",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          title: Text(
+            tr("بەڕێوەبردنی شوێنەکان 🏪"),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -228,9 +229,9 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
           foregroundColor: Colors.white,
           onPressed: _openAddStore,
           icon: const Icon(Icons.add),
-          label: const Text(
-            "زیادکردنی شوێنی نوێ",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          label: Text(
+            tr("زیادکردنی شوێنی نوێ"),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
         body: Column(
@@ -255,7 +256,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                   onChanged: (val) =>
                       setState(() => _searchQuery = val.trim()),
                   decoration: InputDecoration(
-                    hintText: "گەڕان بەدوای شوێنەکان...",
+                    hintText: tr("گەڕان بەدوای شوێنەکان..."),
                     hintStyle: const TextStyle(
                       fontSize: 13,
                       color: Colors.grey,
@@ -294,19 +295,19 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
               child: Row(
                 children: [
                   _buildFilterChip(
-                    label: 'هەموو (${_allStores.length})',
+                    label: trf('هەموو ({0})', [_allStores.length]),
                     value: 'all',
                     color: AppColors.primary,
                   ),
                   const SizedBox(width: 6),
                   _buildFilterChip(
-                    label: 'بە لۆکەیشن (${_withLocationCount})',
+                    label: trf('بە لۆکەیشن ({0})', [_withLocationCount]),
                     value: 'with_location',
                     color: Colors.green,
                   ),
                   const SizedBox(width: 6),
                   _buildFilterChip(
-                    label: 'بێ لۆکەیشن (${_withoutLocationCount})',
+                    label: trf('بێ لۆکەیشن ({0})', [_withoutLocationCount]),
                     value: 'without_location',
                     color: Colors.orange,
                   ),
@@ -338,7 +339,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          "${filteredStores.length} شوێن",
+                          trf("{0} شوێن", [filteredStores.length]),
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -362,10 +363,10 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                 ),
               )
                   : filteredStores.isEmpty
-                  ? const Center(
+                  ? Center(
                 child: Text(
-                  "هیچ شوێنێک نەدۆزرایەوە 📍",
-                  style: TextStyle(
+                  tr("هیچ شوێنێک نەدۆزرایەوە 📍"),
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontWeight: FontWeight.bold,
                   ),
@@ -455,7 +456,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                       Row(
                         children: [
                           Text(
-                            "📞 ${store['phone'] ?? 'نییە'}",
+                            trf('📞 {0}', [tr(store['phone'] ?? 'نییە')]),
                             style: const TextStyle(
                               fontSize: 11,
                               color: Colors.grey,
@@ -485,7 +486,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                                   ),
                                   const SizedBox(width: 2),
                                   Text(
-                                    'لۆکەیشن',
+                                    tr('لۆکەیشن'),
                                     style: TextStyle(
                                       fontSize: 9,
                                       color: Colors.green.shade700,
@@ -518,7 +519,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                                   ),
                                   const SizedBox(width: 2),
                                   Text(
-                                    'بێ لۆکەیشن',
+                                    tr('بێ لۆکەیشن'),
                                     style: TextStyle(
                                       fontSize: 9,
                                       color: Colors.orange.shade700,
@@ -547,7 +548,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                   Expanded(
                     child: _buildActionButton(
                       icon: Icons.description_rounded,
-                      label: 'مامەڵەکان',
+                      label: tr('مامەڵەکان'),
                       color: const Color(0xFF8B5CF6),
                       onTap: () => _openStoreServices(store),
                     ),
@@ -560,7 +561,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                   Expanded(
                     child: _buildActionButton(
                       icon: Icons.edit_rounded,
-                      label: 'دەستکاری',
+                      label: tr('دەستکاری'),
                       color: Colors.blue,
                       onTap: () => _openEditStore(store),
                     ),
@@ -573,7 +574,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                   Expanded(
                     child: _buildActionButton(
                       icon: Icons.delete_outline_rounded,
-                      label: 'سڕینەوە',
+                      label: tr('سڕینەوە'),
                       color: Colors.red,
                       onTap: () => _deleteStore(store['id']),
                     ),
@@ -603,7 +604,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
             Icon(icon, color: color, size: 16),
             const SizedBox(width: 4),
             Text(
-              label,
+              tr(label),
               style: TextStyle(
                 color: color,
                 fontSize: 11,
@@ -641,7 +642,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
           ),
           child: Center(
             child: Text(
-              label,
+              tr(label),
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,

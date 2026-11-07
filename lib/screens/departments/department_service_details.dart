@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/settings_provider.dart';
 import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/service_details_widgets.dart';
+import '../../l10n/tr.dart';
 
 /// 📄 وردەکاری مامەڵەی فەرمانگە — ULTRA PRO
 ///
@@ -218,7 +219,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
       isDark: isDark,
       color: color,
       icon: Icons.info_outline_rounded,
-      title: 'وەسف',
+      title: tr('وەسف'),
       lang: lang,
       child: AutoTranslate(
         text: _description,
@@ -241,7 +242,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
       isDark: isDark,
       color: const Color(0xFF8B5CF6),
       icon: Icons.checklist_rounded,
-      title: 'پێداویستییەکان',
+      title: tr('پێداویستییەکان'),
       lang: lang,
       badge: '${_requirements.length}',
       child: Column(
@@ -264,7 +265,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
       isDark: isDark,
       color: const Color(0xFF10B981),
       icon: Icons.attach_money_rounded,
-      title: 'تێچووەکان',
+      title: tr('تێچووەکان'),
       lang: lang,
       badge: '${_fees.length}',
       child: Column(
@@ -286,14 +287,14 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
       isDark: isDark,
       color: const Color(0xFFF59E0B),
       icon: Icons.info_rounded,
-      title: 'زانیاری زیاتر',
+      title: tr('زانیاری زیاتر'),
       lang: lang,
       child: Column(
         children: [
           if (_hasDuration)
             ServiceDetailWidgets.buildInfoRow(
               icon: Icons.access_time_rounded,
-              label: 'ماوەی مامەڵە',
+              label: tr('ماوەی مامەڵە'),
               value: _duration,
               color: const Color(0xFFF59E0B),
               isDark: isDark,
@@ -303,7 +304,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
           if (_hasLocation)
             ServiceDetailWidgets.buildInfoRow(
               icon: Icons.location_on_rounded,
-              label: 'شوێنی مامەڵە',
+              label: tr('شوێنی مامەڵە'),
               value: _location,
               color: const Color(0xFFEF4444),
               isDark: isDark,
@@ -406,7 +407,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 AutoTranslate(
-                  text: 'پەیوەندی بە فەرمانگە',
+                  text: tr('پەیوەندی بە فەرمانگە'),
                   lang: lang,
                   style: const TextStyle(
                     color: Colors.white,
@@ -484,7 +485,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    badge,
+                    tr(badge),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,

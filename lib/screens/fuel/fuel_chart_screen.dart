@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../services/fuel_service.dart';
 import '../../services/fuel_pdf_service.dart';
+import '../../l10n/tr.dart';
 
 part 'fuel_chart_screen_ui.dart';
 
@@ -164,7 +165,7 @@ class _FuelChartScreenState extends State<FuelChartScreen>
             actions: [
               IconButton(
                 icon: const Icon(Icons.picture_as_pdf_rounded),
-                tooltip: 'ڕاپۆرتی PDF',
+                tooltip: tr('ڕاپۆرتی PDF'),
                 onPressed: _generatePdf,
               ),
               IconButton(
@@ -227,7 +228,7 @@ class _FuelChartScreenState extends State<FuelChartScreen>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    FuelService.getNameKu(widget.fuelType),
+                                    tr(FuelService.getNameKu(widget.fuelType)),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 22,
@@ -249,7 +250,7 @@ class _FuelChartScreenState extends State<FuelChartScreen>
                                           BorderRadius.circular(8),
                                         ),
                                         child: Text(
-                                          '${sorted.length} تۆمار',
+                                          trf('{0} تۆمار', [sorted.length]),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 11,
@@ -314,11 +315,11 @@ class _FuelChartScreenState extends State<FuelChartScreen>
           ),
 
           if (sorted.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               child: Center(
                 child: Text(
-                  'هیچ داتایەک نییە',
-                  style: TextStyle(color: Colors.grey, fontSize: 15),
+                  tr('هیچ داتایەک نییە'),
+                  style: const TextStyle(color: Colors.grey, fontSize: 15),
                 ),
               ),
             )
@@ -343,7 +344,7 @@ class _FuelChartScreenState extends State<FuelChartScreen>
                     _buildBigStatsSection(sorted, isDark),
                   ],
                   if (_viewMode == 'list') ...[
-                    _buildSectionTitle('📋 لیستی گۆڕانکارییەکان', isDark),
+                    _buildSectionTitle(tr('📋 لیستی گۆڕانکارییەکان'), isDark),
                     const SizedBox(height: 12),
                     ...sorted.reversed.toList().asMap().entries.map(
                           (entry) => _buildHistoryCard(
@@ -395,7 +396,7 @@ class _FuelChartScreenState extends State<FuelChartScreen>
             ),
             const SizedBox(width: 6),
             Text(
-              label,
+              tr(label),
               style: TextStyle(
                 color: isSelected
                     ? Colors.white
@@ -449,7 +450,7 @@ class _FuelChartScreenState extends State<FuelChartScreen>
             ),
             const SizedBox(width: 6),
             Text(
-              label,
+              tr(label),
               style: TextStyle(
                 color: isSelected
                     ? Colors.white

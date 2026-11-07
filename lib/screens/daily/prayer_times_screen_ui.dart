@@ -13,28 +13,28 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
       child: Row(
         children: [
           IconButton(
-            tooltip: 'گەڕانەوە',
+            tooltip: tr('گەڕانەوە'),
             icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 22),
             onPressed: () => Navigator.maybePop(context),
           ),
-          const Expanded(
+          Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'کاتەکانی نوێژ',
+                  tr('کاتەکانی نوێژ'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 Text(
-                  'ئەپی ڕێبەری کەلار',
+                  tr('ئەپی ڕێبەری کەلار'),
                   maxLines: 1,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.orange,
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
@@ -93,7 +93,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _errorMessage!,
+              tr(_errorMessage!),
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
             ),
           ),
@@ -142,7 +142,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                   children: [
                     Flexible(
                       child: Text(
-                        _hijriDate,
+                        tr(_hijriDate),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -161,7 +161,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  _gregorianDate,
+                  tr(_gregorianDate),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 11,
@@ -174,9 +174,9 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
           const SizedBox(width: 10),
           const Icon(Icons.location_on_rounded, color: AppColors.orange, size: 16),
           const SizedBox(width: 3),
-          const Text(
-            'کەلار',
-            style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900),
+          Text(
+            tr('کەلار'),
+            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900),
           ),
         ],
       ),
@@ -191,7 +191,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        text,
+        tr(text),
         style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.w900),
       ),
     );
@@ -235,7 +235,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'نوێژی داهاتوو: ${cd.nextName}',
+                        trf('نوێژی داهاتوو: {0}', [cd.nextName]),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -249,7 +249,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                 ),
                 const SizedBox(height: 16),
                 Semantics(
-                  label: 'ماوە: ${r.inHours} سەعات و ${r.inMinutes % 60} خولەک',
+                  label: trf('ماوە: {0} سەعات و {1} خولەک', [r.inHours, r.inMinutes % 60]),
                   excludeSemantics: true,
                   child: Directionality(
                     textDirection: TextDirection.ltr,
@@ -308,7 +308,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                v,
+                tr(v),
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 24,
@@ -321,7 +321,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
         ),
         const SizedBox(height: 5),
         Text(
-          label,
+          tr(label),
           maxLines: 1,
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.7),
@@ -368,11 +368,11 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
             children: [
               Icon(icon, color: AppColors.yellow, size: 20),
               const SizedBox(height: 4),
-              Text(label,
+              Text(tr(label),
                   style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w700)),
               const SizedBox(height: 2),
-              Text(_formatDisplay(hm),
+              Text(tr(_formatDisplay(hm)),
                   textDirection: TextDirection.ltr,
                   style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
             ],
@@ -414,14 +414,14 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
               final i = _Prayer('maghrib', '', iftar, Icons.circle, AppColors.yellow).on(now);
               final String text;
               if (now.isBefore(s)) {
-                text = '${_left(s.difference(now))} ماوە بۆ کۆتایی پارشێو';
+                text = trf('{0} ماوە بۆ کۆتایی پارشێو', [_left(s.difference(now))]);
               } else if (now.isBefore(i)) {
-                text = '${_left(i.difference(now))} ماوە بۆ بەربانگ';
+                text = trf('{0} ماوە بۆ بەربانگ', [_left(i.difference(now))]);
               } else {
                 text = 'بەربانگت پیرۆز بێت 🤲';
               }
               return Text(
-                text,
+                tr(text),
                 style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
               );
             },
@@ -453,10 +453,10 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
           ),
         ),
         const SizedBox(width: 8),
-        const Expanded(
+        Expanded(
           child: Text(
-            'کاتەکانی نوێژ',
-            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900),
+            tr('کاتەکانی نوێژ'),
+            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900),
           ),
         ),
       ],
@@ -531,7 +531,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  prayer.name,
+                  tr(prayer.name),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -569,7 +569,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                 child: Directionality(
                   textDirection: TextDirection.ltr,
                   child: Text(
-                    _formatDisplay(prayer.time),
+                    tr(_formatDisplay(prayer.time)),
                     style: TextStyle(
                       color: isNext ? Colors.white : (isPassed ? dim : color),
                       fontSize: 15,
@@ -590,15 +590,15 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
   // 🎨 Loading / Error
   // ═══════════════════════════════════════════════════════════
   Widget _buildLoading() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: AppColors.orange, strokeWidth: 3),
-          SizedBox(height: 16),
+          const CircularProgressIndicator(color: AppColors.orange, strokeWidth: 3),
+          const SizedBox(height: 16),
           Text(
-            'خەریکی هێنانی کاتەکان...',
-            style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
+            tr('خەریکی هێنانی کاتەکان...'),
+            style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -615,7 +615,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
             const Icon(Icons.error_outline_rounded, color: AppColors.red, size: 56),
             const SizedBox(height: 16),
             Text(
-              _errorMessage ?? 'هەڵە',
+              tr(_errorMessage ?? 'هەڵە'),
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
             ),
@@ -623,7 +623,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
             ElevatedButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('دووبارە'),
+              label: Text(tr('دووبارە')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange,
                 foregroundColor: Colors.black,

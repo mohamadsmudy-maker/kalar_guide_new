@@ -36,7 +36,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
             if (!_reduceMotion) _entryController.forward(from: 0);
             _loadData();
           },
-          tooltip: 'نوێکردنەوە',
+          tooltip: tr('نوێکردنەوە'),
         ),
         const SizedBox(width: 8),
       ],
@@ -126,7 +126,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              isAdmin ? 'پانێڵی ئەدمین' : 'پانێڵی بەڕێوەبردن',
+                              tr(isAdmin ? 'پانێڵی ئەدمین' : 'پانێڵی بەڕێوەبردن'),
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
@@ -152,13 +152,13 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                                   const SizedBox(width: 6),
                                   Flexible(
                                     child: Text(
-                                      hasError
+                                      tr(hasError
                                           ? (_lastUpdated == null
                                           ? 'کێشەی پەیوەندی'
-                                          : 'کێشەی پەیوەندی • دوایین نوێکردنەوە $_lastUpdatedText')
+                                          : trf('کێشەی پەیوەندی • دوایین نوێکردنەوە {0}', [_lastUpdatedText]))
                                           : (_lastUpdated == null
                                           ? 'سیستەم چالاکە'
-                                          : 'سیستەم چالاکە • $_lastUpdatedText'),
+                                          : trf('سیستەم چالاکە • {0}', [_lastUpdatedText]))),
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontSize: 11,
@@ -203,7 +203,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                _loadError ?? '',
+                tr(_loadError ?? ''),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -213,9 +213,9 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
             ),
             TextButton(
               onPressed: _loading ? null : () => _loadData(),
-              child: const Text(
-                'دووبارە',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+              child: Text(
+                tr('دووبارە'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
               ),
             ),
           ],
@@ -254,7 +254,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                 Icon(icon, color: Colors.white, size: 14),
                 const SizedBox(width: 6),
                 Text(
-                  label,
+                  tr(label),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -295,14 +295,14 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.notification_important_rounded,
+                  const Icon(Icons.notification_important_rounded,
                       color: Colors.white, size: 20),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    'پێویستی بە سەرنجە',
-                    style: TextStyle(
+                    tr('پێویستی بە سەرنجە'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -317,13 +317,13 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                 children: [
                   if (_pendingComplaints > 0)
                     chip(
-                      '${_ku(_pendingComplaints)} سکاڵای چاوەڕوان',
+                      trf('{0} سکاڵای چاوەڕوان', [_ku(_pendingComplaints)]),
                       Icons.hourglass_empty_rounded,
                           () => _push(const AdminComplaintsProScreen()),
                     ),
                   if (showRequests)
                     chip(
-                      '${_ku(_pendingRequests)} داوکاری ئەدمین',
+                      trf('{0} داوکاری ئەدمین', [_ku(_pendingRequests)]),
                       Icons.assignment_ind_rounded,
                           () => _push(const AdminVendorRequestsScreen()),
                     ),
@@ -408,7 +408,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            title,
+                            tr(title),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -478,9 +478,9 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
       itemIndex: itemIndex,
       colors: const [Color(0xFF10B981), Color(0xFF059669)],
       icon: Icons.people_rounded,
-      title: 'بەکارهێنەرانی چالاک',
+      title: tr('بەکارهێنەرانی چالاک'),
       semanticsLabel:
-      'بەکارهێنەرانی چالاک، ${_ku(_onlineUsers)} ئێستا لە خەتە',
+      trf('بەکارهێنەرانی چالاک، {0} ئێستا لە خەتە', [_ku(_onlineUsers)]),
       onTap: () => _push(const AdminLiveUsersScreen()),
       subtitle: Row(
         children: [
@@ -501,7 +501,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           ),
           const SizedBox(width: 6),
           Text(
-            '${_ku(_onlineUsers)} ئێستا لە خەتە',
+            trf('{0} ئێستا لە خەتە', [_ku(_onlineUsers)]),
             style: const TextStyle(
               color: Colors.white70,
               fontSize: 12,
@@ -536,7 +536,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           ),
           const SizedBox(width: 8),
           Text(
-            title,
+            tr(title),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w900,
@@ -566,7 +566,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
         _buildStatCard(
           p: p,
           icon: Icons.storefront_rounded,
-          label: 'شوێنەکان',
+          label: tr('شوێنەکان'),
           value: _totalStores,
           color: const Color(0xFFF59E0B),
           itemIndex: 3,
@@ -575,7 +575,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
         _buildStatCard(
           p: p,
           icon: Icons.business_rounded,
-          label: 'فەرمانگەکان',
+          label: tr('فەرمانگەکان'),
           value: _totalDepartments,
           color: const Color(0xFF10B981),
           itemIndex: 4,
@@ -584,7 +584,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
         _buildStatCard(
           p: p,
           icon: Icons.report_rounded,
-          label: 'کۆی سکاڵاکان',
+          label: tr('کۆی سکاڵاکان'),
           value: _totalComplaints,
           color: const Color(0xFFE91E63),
           itemIndex: 5,
@@ -593,7 +593,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
         _buildStatCard(
           p: p,
           icon: Icons.hourglass_empty_rounded,
-          label: 'سکاڵای چاوەڕوان',
+          label: tr('سکاڵای چاوەڕوان'),
           value: _pendingComplaints,
           color: const Color(0xFFEF4444),
           itemIndex: 6,
@@ -603,7 +603,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
         _buildStatCard(
           p: p,
           icon: Icons.assignment_ind_rounded,
-          label: 'داوکاری ئەدمین',
+          label: tr('داوکاری ئەدمین'),
           value: _pendingRequests,
           color: const Color(0xFF8B5CF6),
           itemIndex: 7,
@@ -615,7 +615,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
         _buildStatCard(
           p: p,
           icon: Icons.shopping_bag_rounded,
-          label: 'کاڵاکان',
+          label: tr('کاڵاکان'),
           value: _totalProducts,
           color: const Color(0xFFF97316),
           itemIndex: 8,
@@ -750,7 +750,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                                 : const Duration(milliseconds: 700),
                             curve: Curves.easeOutCubic,
                             builder: (context, v, _) => Text(
-                              _ku(v.round()),
+                              tr(_ku(v.round())),
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
@@ -765,7 +765,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                         fit: BoxFit.scaleDown,
                         alignment: AlignmentDirectional.centerStart,
                         child: Text(
-                          label,
+                          tr(label),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
@@ -850,7 +850,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                           children: [
                             Flexible(
                               child: Text(
-                                item.title,
+                                tr(item.title),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w900,
@@ -878,7 +878,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                                   ],
                                 ),
                                 child: Text(
-                                  _ku(badge),
+                                  tr(_ku(badge)),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
@@ -891,7 +891,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          item.subtitle,
+                          tr(item.subtitle),
                           style: TextStyle(fontSize: 11, color: p.textSub),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

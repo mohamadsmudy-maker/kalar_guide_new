@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/currency_service.dart';
+import '../l10n/tr.dart';
 
 enum _Range { week, month, all }
 
@@ -210,7 +211,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
                       reservedSize: 56,
                       interval: yInterval,
                       getTitlesWidget: (value, meta) => Text(
-                        _fmt(value),
+                        tr(_fmt(value)),
                         style: TextStyle(
                           fontSize: 10,
                           color: isDark ? Colors.white54 : Colors.grey,
@@ -227,7 +228,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
                       getTitlesWidget: (value, meta) => Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          dateText(value),
+                          tr(dateText(value)),
                           style: TextStyle(
                             fontSize: 9,
                             color: isDark ? Colors.white54 : Colors.grey,
@@ -259,7 +260,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
                             ? '\n${dateText(spot.x, full: true)}'
                             : '';
                         return LineTooltipItem(
-                          '${isBuy ? "کڕین" : "فرۆشتن"}: ${_fmt(spot.y)}$dateLine',
+                          trf('{0}: {1}{2}', [tr(isBuy ? 'کڕین' : 'فرۆشتن'), _fmt(spot.y), dateLine]),
                           TextStyle(
                             color: isBuy ? color : _sellColor,
                             fontWeight: FontWeight.bold,
@@ -367,7 +368,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            'گۆڕانکاری نرخ',
+            tr('گۆڕانکاری نرخ'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w900,
@@ -412,7 +413,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
               ),
             ),
             child: Text(
-              label,
+              tr(label),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -448,7 +449,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
         ),
         const SizedBox(width: 4),
         Text(
-          label,
+          tr(label),
           style: TextStyle(
             fontSize: 10,
             color: isDark ? Colors.white54 : Colors.grey,
@@ -508,7 +509,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          label,
+          tr(label),
           style: TextStyle(
             fontSize: 10,
             color: isDark ? Colors.white54 : Colors.grey,
@@ -517,7 +518,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
         ),
         const SizedBox(height: 4),
         Text(
-          value,
+          tr(value),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -526,7 +527,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
         ),
         if (sub.isNotEmpty)
           Text(
-            sub,
+            tr(sub),
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
@@ -552,7 +553,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
             size: 44, color: isDark ? Colors.white24 : Colors.grey.shade300),
         const SizedBox(height: 10),
         Text(
-          text,
+          tr(text),
           style: TextStyle(
             fontSize: 12,
             color: isDark ? Colors.white54 : Colors.grey,
@@ -587,7 +588,7 @@ class _CurrencyChartWidgetState extends State<CurrencyChartWidget> {
           ),
           const SizedBox(height: 12),
           Text(
-            text,
+            tr(text),
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white54 : Colors.grey,

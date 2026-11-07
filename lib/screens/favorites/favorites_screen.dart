@@ -11,6 +11,7 @@ import '../../widgets/common/optimized_network_image.dart';
 import '../../widgets/ultra_pro/ultra_pro_components.dart';
 import '../stores/store_details_dialog.dart';
 import '../news/news_details.dart';
+import '../../l10n/tr.dart';
 
 part 'favorites_screen_ui.dart';
 
@@ -303,7 +304,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       debugPrint('❌ Delete error: $e');
       if (!mounted) return;
       setState(() => list.insert(index > list.length ? list.length : index, item));
-      _showSnack('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+      _showSnack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
       return;
     }
 
@@ -313,14 +314,14 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: const Text('لە دڵخوازەکان لابرا',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(tr('لە دڵخوازەکان لابرا'),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           behavior: SnackBarBehavior.floating,
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 4),
           action: SnackBarAction(
-            label: 'گەڕاندنەوە',
+            label: tr('گەڕاندنەوە'),
             textColor: Colors.amber,
             onPressed: () => _undoRemove(kind, item),
           ),
@@ -340,7 +341,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       await _load(kind, silent: true);
     } catch (e) {
       debugPrint('❌ Undo error: $e');
-      _showSnack('گەڕاندنەوە سەرنەکەوت', Colors.red);
+      _showSnack(tr('گەڕاندنەوە سەرنەکەوت'), Colors.red);
     }
   }
 
@@ -348,22 +349,22 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('سڕینەوە',
-              style: TextStyle(fontWeight: FontWeight.w900)),
-          content: Text('دڵنیایت لە سڕینەوەی ${_ku(count)} دڵخواز؟'),
+          title: Text(tr('سڕینەوە'),
+              style: const TextStyle(fontWeight: FontWeight.w900)),
+          content: Text(trf('دڵنیایت لە سڕینەوەی {0} دڵخواز؟', [_ku(count)])),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('سڕینەوە'),
+              child: Text(tr('سڕینەوە')),
             ),
           ],
         ),
@@ -390,10 +391,10 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         _batchMode = false;
       });
       await _load(kind, silent: true);
-      _showSnack('${_ku(ids.length)} دڵخواز سڕایەوە', Colors.green);
+      _showSnack(trf('{0} دڵخواز سڕایەوە', [_ku(ids.length)]), Colors.green);
     } catch (e) {
       debugPrint('❌ Batch delete error: $e');
-      _showSnack('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+      _showSnack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
     } finally {
       if (mounted) setState(() => _deleting = false);
     }
@@ -438,9 +439,9 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     if (d == null) return '';
     final diff = DateTime.now().difference(d);
     if (diff.inMinutes < 1) return 'ئێستا';
-    if (diff.inMinutes < 60) return '${_ku(diff.inMinutes)} خولەک لەمەوبەر';
-    if (diff.inHours < 24) return '${_ku(diff.inHours)} کاتژمێر لەمەوبەر';
-    if (diff.inDays < 30) return '${_ku(diff.inDays)} ڕۆژ لەمەوبەر';
+    if (diff.inMinutes < 60) return trf('{0} خولەک لەمەوبەر', [_ku(diff.inMinutes)]);
+    if (diff.inHours < 24) return trf('{0} کاتژمێر لەمەوبەر', [_ku(diff.inHours)]);
+    if (diff.inDays < 30) return trf('{0} ڕۆژ لەمەوبەر', [_ku(diff.inDays)]);
     return '${_ku(d.year)}/${_ku(d.month)}/${_ku(d.day)}';
   }
 
@@ -451,7 +452,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       ..showSnackBar(
         SnackBar(
           content:
-          Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: color,
           behavior: SnackBarBehavior.floating,
           shape:
@@ -501,7 +502,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         if (!didPop && _batchMode) _exitBatch();
       },
       child: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Scaffold(
           backgroundColor: _bg(isDark),
           body: CustomScrollView(
@@ -529,8 +530,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
             backgroundColor: selectedCount > 0 ? Colors.grey : Colors.red,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.close_rounded),
-            label: const Text('هەڵوەشاندنەوە',
-                style: TextStyle(fontWeight: FontWeight.w900)),
+            label: Text(tr('هەڵوەشاندنەوە'),
+                style: const TextStyle(fontWeight: FontWeight.w900)),
           )
               : null,
         ),
@@ -540,12 +541,12 @@ class _FavoritesScreenState extends State<FavoritesScreen>
 
   Widget _buildLoggedOut(bool isDark) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: _bg(isDark),
         appBar: AppBar(
-          title: const Text('دڵخوازەکان',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+          title: Text(tr('دڵخوازەکان'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
           backgroundColor: _card(isDark),
           foregroundColor: isDark ? Colors.white : AppColors.primary,
           centerTitle: true,
@@ -553,11 +554,11 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         ),
         body: ProEmptyState(
           icon: Icons.favorite_rounded,
-          title: 'پێویستە بچیتە ژوورەوە',
-          subtitle: 'بۆ بینینی دڵخوازەکانت سەرەتا بچۆ ژوورەوە',
+          title: tr('پێویستە بچیتە ژوورەوە'),
+          subtitle: tr('بۆ بینینی دڵخوازەکانت سەرەتا بچۆ ژوورەوە'),
           color: Colors.pink,
           isDark: isDark,
-          actionLabel: 'چوونەژوورەوە',
+          actionLabel: tr('چوونەژوورەوە'),
           onAction: () {
             Navigator.pushNamed(context, '/auth').then((_) {
               if (mounted) {
@@ -590,11 +591,11 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       actions: [
         IconButton(
           icon: Icon(Icons.refresh_rounded, color: iconColor),
-          tooltip: 'نوێکردنەوە',
+          tooltip: tr('نوێکردنەوە'),
           onPressed: () async {
             HapticFeedback.lightImpact();
             await _loadAll(silent: true);
-            _showSnack('داتاکان نوێکرانەوە ✅', Colors.green);
+            _showSnack(tr('داتاکان نوێکرانەوە ✅'), Colors.green);
           },
         ),
         IconButton(
@@ -602,7 +603,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
             _batchMode ? Icons.close_rounded : Icons.checklist_rounded,
             color: iconColor,
           ),
-          tooltip: _batchMode ? 'هەڵوەشاندنەوە' : 'هەڵبژاردنی چەند',
+          tooltip: _batchMode ? tr('هەڵوەشاندنەوە') : tr('هەڵبژاردنی چەند'),
           onPressed: () {
             HapticFeedback.selectionClick();
             if (_batchMode) {
@@ -683,7 +684,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'دڵخوازەکان',
+                              tr('دڵخوازەکان'),
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
@@ -706,7 +707,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                                       color: _kPink, size: 12),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${_ku(total)} دڵخواز',
+                                    trf('{0} دڵخواز', [_ku(total)]),
                                     style: const TextStyle(
                                         color: _kPink,
                                         fontSize: 11,
@@ -745,11 +746,11 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         kind,
         ProEmptyState(
           icon: Icons.wifi_off_rounded,
-          title: 'نەتوانرا بارببێت',
-          subtitle: 'ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەوە',
+          title: tr('نەتوانرا بارببێت'),
+          subtitle: tr('ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەوە'),
           color: color,
           isDark: isDark,
-          actionLabel: 'دووبارە هەوڵبدەرەوە',
+          actionLabel: tr('دووبارە هەوڵبدەرەوە'),
           onAction: () => _load(kind),
         ),
       );
@@ -762,11 +763,11 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           isDark: isDark,
           icon: isStores ? Icons.place_outlined : Icons.article_outlined,
           title: isStores
-              ? 'هیچ شوێنێکی دڵخوازت نییە'
-              : 'هیچ هەواڵێکی دڵخوازت نییە',
+              ? tr('هیچ شوێنێکی دڵخوازت نییە')
+              : tr('هیچ هەواڵێکی دڵخوازت نییە'),
           subtitle: isStores
-              ? 'شوێنەکان بپشکنە و ئەوانەی حەزت لێیە\nزیاد بکە بۆ دڵخوازەکان'
-              : 'هەواڵەکان بپشکنە و ئەوانەی حەزت لێیە\nزیاد بکە بۆ دڵخوازەکان',
+              ? tr('شوێنەکان بپشکنە و ئەوانەی حەزت لێیە\nزیاد بکە بۆ دڵخوازەکان')
+              : tr('هەواڵەکان بپشکنە و ئەوانەی حەزت لێیە\nزیاد بکە بۆ دڵخوازەکان'),
           color: color,
         ),
       );
@@ -807,8 +808,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
               _buildEmptyState(
                 isDark: isDark,
                 icon: Icons.search_off_rounded,
-                title: 'هیچ ئەنجامێک نەدۆزرایەوە',
-                subtitle: 'گەڕانەکەت هیچ ئەنجامێکی نەبوو',
+                title: tr('هیچ ئەنجامێک نەدۆزرایەوە'),
+                subtitle: tr('گەڕانەکەت هیچ ئەنجامێکی نەبوو'),
                 color: color,
               ),
             )
@@ -889,8 +890,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                     fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   hintText: kind == _Kind.stores
-                      ? 'گەڕان بەدوای شوێنەکان...'
-                      : 'گەڕان بەدوای هەواڵەکان...',
+                      ? tr('گەڕان بەدوای شوێنەکان...')
+                      : tr('گەڕان بەدوای هەواڵەکان...'),
                   hintStyle: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.white38 : Colors.grey),
@@ -966,7 +967,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                               : (isDark ? Colors.white54 : Colors.grey)),
                       const SizedBox(width: 4),
                       Text(
-                        opt.$2,
+                        tr(opt.$2),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
@@ -981,7 +982,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
               ),
             ),
           const Spacer(),
-          Text('${_ku(shown)} ئەنجام',
+          Text(trf('{0} ئەنجام', [_ku(shown)]),
               style: TextStyle(
                   fontSize: 10, color: isDark ? Colors.white38 : Colors.grey)),
         ],

@@ -15,6 +15,7 @@ import '../currency/currency_strings.dart';
 import 'fuel_stations_map_screen.dart';
 import 'fuel_strings.dart';
 import 'station_details_screen.dart';
+import '../../l10n/tr.dart';
 
 /// ⛽ بەنزینخانەکانی یەک جۆر — ULTRA PRO MAX
 ///   ڕیزکردن (هەرزان / گران / نوێترین) • گەڕان • جیاوازی لە هەرزانترین
@@ -234,7 +235,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
               children: [
                 Icon(icon, size: 14, color: active ? Colors.white : Colors.white60),
                 const SizedBox(width: 4),
-                Text(label,
+                Text(tr(label),
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: active ? Colors.white : Colors.white70)),
               ],
             ),
@@ -251,11 +252,11 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
+                Text(tr(label), style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
                 FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(value, style: TextStyle(color: c, fontSize: 16, fontWeight: FontWeight.w900)),
+                  child: Text(tr(value), style: TextStyle(color: c, fontSize: 16, fontWeight: FontWeight.w900)),
                 ),
               ],
             ),
@@ -379,7 +380,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
                           Row(
                             children: [
                               Flexible(
-                                child: Text(name,
+                                child: Text(tr(name),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor)),
@@ -409,7 +410,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
                                 Icon(Icons.location_on_rounded, size: 12, color: sub),
                                 const SizedBox(width: 3),
                                 Expanded(
-                                  child: Text(address,
+                                  child: Text(tr(address),
                                       maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: sub)),
                                 ),
                               ],
@@ -422,7 +423,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
                                 Icon(stale ? Icons.warning_amber_rounded : Icons.schedule_rounded,
                                     size: 12, color: stale ? Colors.orange : sub),
                                 const SizedBox(width: 3),
-                                Text(CurrencyStrings.timeAgo(updatedAt, lang),
+                                Text(tr(CurrencyStrings.timeAgo(updatedAt, lang)),
                                     style: TextStyle(fontSize: 10, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600)),
                               ],
                             ),
@@ -442,7 +443,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(CurrencyService.formatPrice(price, lang),
+                          child: Text(tr(CurrencyService.formatPrice(price, lang)),
                               style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Colors.white)),
                         ),
                         const SizedBox(height: 3),
@@ -502,7 +503,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
             Icon(icon, color: color, size: 14),
             const SizedBox(width: 4),
             Flexible(
-              child: Text(label,
+              child: Text(tr(label),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
@@ -532,7 +533,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
         children: [
           Icon(Icons.local_gas_station_outlined, size: 72, color: isDark ? Colors.white24 : Colors.grey.shade300),
           const SizedBox(height: 14),
-          Text(text,
+          Text(tr(text),
               textAlign: TextAlign.center,
               style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontSize: 14, fontWeight: FontWeight.bold)),
         ],

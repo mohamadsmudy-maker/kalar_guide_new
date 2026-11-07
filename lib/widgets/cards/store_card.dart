@@ -6,6 +6,7 @@ import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../common/auto_translate.dart';
 import '../common/optimized_network_image.dart';
+import '../../l10n/tr.dart';
 
 /// 🏪 کارتی شوێن — ULTRA PRO MAX v2
 ///
@@ -271,7 +272,7 @@ class StoreCard extends StatelessWidget {
                                             size: 10, color: Colors.green),
                                         const SizedBox(width: 3),
                                         Text(
-                                          distanceText,
+                                          tr(distanceText),
                                           style: const TextStyle(
                                             fontSize: 9,
                                             color: Colors.green,

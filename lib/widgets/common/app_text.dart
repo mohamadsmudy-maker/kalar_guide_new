@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/settings_provider.dart';
 import '../../config/translations.dart';
+import '../../l10n/tr.dart';
 
 /// 🌍 تێکستی زیرەک — بۆ تێکستە سەرەکییەکان (دەستی)
 class AppText extends StatelessWidget {
@@ -35,8 +36,8 @@ class AppText extends StatelessWidget {
         : AppTranslations.t(keyName, lang);
 
     return Text(
-      // ئەگەر وەرگێڕان نەدۆزرایەوە، fallback بەکاربهێنە
-      text == keyName ? (fallback ?? keyName) : text,
+      tr(// ئەگەر وەرگێڕان نەدۆزرایەوە، fallback بەکاربهێنە
+      text == keyName ? (fallback ?? keyName) : text),
       style: style,
       textAlign: textAlign,
       maxLines: maxLines,

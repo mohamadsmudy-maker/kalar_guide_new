@@ -256,10 +256,10 @@ extension _MapScreenStateUi on _MapScreenState {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  failed
+                  tr(failed
                       ? _t('کێشە لە بارکردنی گەڕەکەکان',
                       'Problem loading neighborhoods')
-                      : _t('هیچ گەڕەکێک نەدۆزرایەوە', 'No neighborhoods found'),
+                      : _t('هیچ گەڕەکێک نەدۆزرایەوە', 'No neighborhoods found')),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -269,11 +269,11 @@ extension _MapScreenStateUi on _MapScreenState {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  failed
+                  tr(failed
                       ? _t('ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەوە',
                       'Check your connection and try again')
                       : _t('داتای گەڕەکان لە Supabase نەهاتووە',
-                      'No data was returned from Supabase'),
+                      'No data was returned from Supabase')),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,

@@ -7,6 +7,7 @@ import '../../models/news.dart';
 import '../../providers/news_providers.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import 'news_details.dart';
+import '../../l10n/tr.dart';
 
 /// 📰 شاشەی هەموو هەواڵەکان — ULTRA PRO MAX V2
 class AllNewsScreen extends ConsumerStatefulWidget {
@@ -91,13 +92,13 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
     }).toList();
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bgColor,
         appBar: AppBar(
-          title: const Text(
-            'هەموو هەواڵەکان',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17),
+          title: Text(
+            tr('هەموو هەواڵەکان'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17),
           ),
           backgroundColor: isDark ? AppColors.darkCard : AppColors.primary,
           foregroundColor: Colors.white,
@@ -139,7 +140,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
             color: isDark ? Colors.white : AppColors.textPrimary,
           ),
           decoration: InputDecoration(
-            hintText: 'گەڕان بەدوای هەواڵەکان...',
+            hintText: tr('گەڕان بەدوای هەواڵەکان...'),
             hintStyle: TextStyle(
               color: isDark ? Colors.white38 : AppColors.textTertiary,
             ),
@@ -199,7 +200,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                state.error!,
+                tr(state.error!),
                 style: TextStyle(
                   color: isDark ? Colors.white70 : AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
@@ -210,7 +211,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
               ElevatedButton.icon(
                 onPressed: () => ref.read(newsProvider.notifier).refresh(),
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('دووبارە هەوڵبدە'),
+                label: Text(tr('دووبارە هەوڵبدە')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -250,9 +251,9 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                _searchQuery.isEmpty
+                tr(_searchQuery.isEmpty
                     ? 'هیچ هەواڵێک نییە'
-                    : 'هیچ هەواڵێک نەدۆزرایەوە',
+                    : 'هیچ هەواڵێک نەدۆزرایەوە'),
                 style: TextStyle(
                   color: isDark ? Colors.white70 : AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
@@ -385,7 +386,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    newsType,
+                                    tr(newsType),
                                     style: TextStyle(
                                       fontSize: 9,
                                       color: typeColor,
@@ -398,7 +399,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                news.getTimeAgo(),
+                                tr(news.getTimeAgo()),
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: isDark
@@ -412,7 +413,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          news.title,
+                          tr(news.title),
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 13,

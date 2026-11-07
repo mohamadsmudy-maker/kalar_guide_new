@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/tr.dart';
 
 // ═══════════════════════════════════════════════════════════
 // 💎 ULTRA PRO DESIGN SYSTEM
@@ -192,7 +193,7 @@ class _ProEmptyStateState extends State<ProEmptyState>
 
             // 📝 Title
             Text(
-              widget.title,
+              tr(widget.title),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
@@ -207,7 +208,7 @@ class _ProEmptyStateState extends State<ProEmptyState>
             if (widget.subtitle != null) ...[
               const SizedBox(height: 10),
               Text(
-                widget.subtitle!,
+                tr(widget.subtitle!),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
@@ -259,7 +260,7 @@ class _ProEmptyStateState extends State<ProEmptyState>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        widget.actionLabel!,
+                        tr(widget.actionLabel!),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
@@ -458,7 +459,7 @@ class ProSectionHeader extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                title,
+                tr(title),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -469,7 +470,7 @@ class ProSectionHeader extends StatelessWidget {
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
                 Text(
-                  subtitle!,
+                  tr(subtitle!),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -499,7 +500,7 @@ class ProSectionHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    moreLabel ?? 'هەموو',
+                    tr(moreLabel ?? 'هەموو'),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
@@ -569,7 +570,7 @@ class ProBadge extends StatelessWidget {
             const SizedBox(width: 4),
           ],
           Text(
-            label,
+            tr(label),
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w900,

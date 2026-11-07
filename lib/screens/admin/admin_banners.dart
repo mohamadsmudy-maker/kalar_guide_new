@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../services/image_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🎨 شاشەی ڕێکخستنی سلایدەکان (Ultra Pro Max)
 class AdminReorderBannersScreen extends StatefulWidget {
@@ -62,7 +63,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar("هەڵە لە هێنانی داتا: $e", isError: true);
+        _showSnackBar(trf("هەڵە لە هێنانی داتا: {0}", [e]), isError: true);
       }
     }
   }
@@ -77,10 +78,10 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
       }
       if (mounted) {
         HapticFeedback.lightImpact();
-        _showSnackBar("ڕیزبەند نوێکرایەوە ✅");
+        _showSnackBar(tr("ڕیزبەند نوێکرایەوە ✅"));
       }
     } catch (e) {
-      _showSnackBar("هەڵە لە پاشەکەوتکردنی ڕیزبەند: $e", isError: true);
+      _showSnackBar(trf("هەڵە لە پاشەکەوتکردنی ڕیزبەند: {0}", [e]), isError: true);
     }
   }
 
@@ -88,8 +89,8 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
     if (banner['is_empty'] == true) return;
 
     bool ok = await _showConfirmDialog(
-      title: "سڕینەوەی '${banner['title']}'؟",
-      message: "ئایا دڵنیایت لە سڕینەوەی ئەم سلایدە؟",
+      title: trf("سڕینەوەی '{0}'؟", [banner['title']]),
+      message: tr("ئایا دڵنیایت لە سڕینەوەی ئەم سلایدە؟"),
     );
     if (!ok) return;
 
@@ -100,7 +101,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
           .eq('id', banner['id']);
       _fetchBanners();
     } catch (e) {
-      _showSnackBar("هەڵە لە سڕینەوە: $e", isError: true);
+      _showSnackBar(trf("هەڵە لە سڕینەوە: {0}", [e]), isError: true);
     }
   }
 
@@ -121,7 +122,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: isError ? Colors.red : Colors.green,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -136,15 +137,15 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
     return await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          content: Text(message, style: const TextStyle(fontSize: 13)),
+          title: Text(tr(title), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          content: Text(tr(message), style: const TextStyle(fontSize: 13)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text("نەخێر", style: TextStyle(color: Colors.grey)),
+              child: Text(tr("نەخێر"), style: const TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -153,7 +154,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("بەڵێ"),
+              child: Text(tr("بەڵێ")),
             ),
           ],
         ),
@@ -168,7 +169,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
     final bgColor = isDark ? AppColors.darkBackground : const Color(0xFFF6F5F7);
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bgColor,
         appBar: AppBar(
@@ -181,9 +182,9 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
               ),
             ),
           ),
-          title: const Text(
-            "ڕێکخستنی 5 سلایدی سەرەکی",
-            style: TextStyle(
+          title: Text(
+            tr("ڕێکخستنی 5 سلایدی سەرەکی"),
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
               color: Colors.white,
@@ -262,7 +263,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              "ڕاکێشە بۆ گۆڕینی شوێن • کرتە بکە بۆ دەستکاریکردن",
+              tr("ڕاکێشە بۆ گۆڕینی شوێن • کرتە بکە بۆ دەستکاریکردن"),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -345,7 +346,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
           ],
         ),
         title: Text(
-          isEmpty ? "شوێنی بەتاڵ ${index + 1}" : (banner['title'] ?? ''),
+          tr(isEmpty ? trf("شوێنی بەتاڵ {0}", [index + 1]) : (banner['title'] ?? '')),
           style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 13,
@@ -361,7 +362,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
           children: [
             const SizedBox(height: 2),
             Text(
-              isEmpty ? "کرتە بکە بۆ زیادکردن" : "نرخ: ${banner['price']} د.ع",
+              tr(isEmpty ? "کرتە بکە بۆ زیادکردن" : "نرخ: ${banner['price']} د.ع"),
               style: TextStyle(
                 fontSize: 11,
                 color: isDark ? Colors.white60 : Colors.grey,
@@ -532,7 +533,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
 
   Future<void> _saveSlide() async {
     if (_titleCtrl.text.trim().isEmpty && _adType == 'custom') {
-      _showSnackBar("تکایە ناونیشانی ڕیکلام پڕبکەرەوە ⚠", isError: true);
+      _showSnackBar(tr("تکایە ناونیشانی ڕیکلام پڕبکەرەوە ⚠"), isError: true);
       return;
     }
 
@@ -580,10 +581,10 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
 
       if (mounted) {
         Navigator.pop(context, data);
-        _showSnackBar("بە سەرکەوتوویی پاشەکەوتکرا ✅");
+        _showSnackBar(tr("بە سەرکەوتوویی پاشەکەوتکرا ✅"));
       }
     } catch (e) {
-      if (mounted) _showSnackBar("هەڵە: $e", isError: true);
+      if (mounted) _showSnackBar(trf("هەڵە: {0}", [e]), isError: true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -593,7 +594,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: isError ? Colors.orange : Colors.green,
         behavior: SnackBarBehavior.floating,
       ),
@@ -605,7 +606,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Dialog(
         insetPadding: const EdgeInsets.all(16),
         backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
@@ -620,7 +621,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "دەستکاری سلایدی ژمارە ${widget.slotIndex + 1}",
+                    trf("دەستکاری سلایدی ژمارە {0}", [widget.slotIndex + 1]),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -645,10 +646,10 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                 labelColor: AppColors.primary,
                 unselectedLabelColor: isDark ? Colors.white54 : Colors.grey,
                 indicatorColor: AppColors.primary,
-                tabs: const [
-                  Tab(icon: Icon(Icons.storefront_rounded, size: 18), text: "شوێن"),
-                  Tab(icon: Icon(Icons.article_rounded, size: 18), text: "هەواڵی شوێن"),
-                  Tab(icon: Icon(Icons.brush, size: 18), text: "وێنەی خۆت"),
+                tabs: [
+                  Tab(icon: const Icon(Icons.storefront_rounded, size: 18), text: tr("شوێن")),
+                  Tab(icon: const Icon(Icons.article_rounded, size: 18), text: tr("هەواڵی شوێن")),
+                  Tab(icon: const Icon(Icons.brush, size: 18), text: tr("وێنەی خۆت")),
                 ],
               ),
               const SizedBox(height: 12),
@@ -674,7 +675,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                       ),
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        "پاشگەزبوونەوە",
+                        tr("پاشگەزبوونەوە"),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white70 : Colors.black87,
@@ -696,7 +697,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                       ),
                       onPressed: _saveSlide,
                       child: Text(
-                        widget.currentBanner['is_empty'] == true ? "زیادکردن" : "نوێکردنەوە",
+                        tr(widget.currentBanner['is_empty'] == true ? "زیادکردن" : "نوێکردنەوە"),
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
@@ -723,7 +724,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
             });
           },
           decoration: InputDecoration(
-            hintText: "گەڕان بەدوای شوێن...",
+            hintText: tr("گەڕان بەدوای شوێن..."),
             prefixIcon: const Icon(Icons.search, color: AppColors.primary),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -737,7 +738,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
           child: _filteredStores.isEmpty
               ? Center(
             child: Text(
-              "هیچ شوێنێک نەدۆزرایەوە 📍",
+              tr("هیچ شوێنێک نەدۆزرایەوە 📍"),
               style: TextStyle(color: isDark ? Colors.white54 : Colors.grey),
             ),
           )
@@ -766,7 +767,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                     ),
                   ),
                   title: Text(
-                    s['name'] ?? '',
+                    tr(s['name'] ?? ''),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
@@ -774,7 +775,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                     ),
                   ),
                   subtitle: Text(
-                    s['address'] ?? '',
+                    tr(s['address'] ?? ''),
                     style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.grey),
                   ),
                   trailing: isSel ? const Icon(Icons.check_circle, color: AppColors.primary) : null,
@@ -812,9 +813,9 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _selectedStore != null
-                      ? "شوێنی هەڵبژێردراو: ${_selectedStore!['name']}"
-                      : "⚠️ سەرەتا لە خوارەوە شوێنێک هەڵبژێرە!",
+                  tr(_selectedStore != null
+                      ? trf("شوێنی هەڵبژێردراو: {0}", [_selectedStore!['name']])
+                      : "⚠️ سەرەتا لە خوارەوە شوێنێک هەڵبژێرە!"),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
@@ -837,7 +838,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                   child: ListTile(
                     dense: true,
                     title: Text(
-                      s['name'] ?? '',
+                      tr(s['name'] ?? ''),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -864,7 +865,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "هەواڵی ئەم شوێنە هەڵبژێرە:",
+                tr("هەواڵی ئەم شوێنە هەڵبژێرە:"),
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? Colors.white54 : Colors.grey,
@@ -877,7 +878,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                   _selectedStore = null;
                   _storeNews.clear();
                 }),
-                child: const Text("گۆڕینی شوێن 🔄", style: TextStyle(fontSize: 11)),
+                child: Text(tr("گۆڕینی شوێن 🔄"), style: const TextStyle(fontSize: 11)),
               ),
             ],
           ),
@@ -888,7 +889,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                 : _storeNews.isEmpty
                 ? Center(
               child: Text(
-                "ئەم شوێنە هیچ هەواڵێکی نییە 📭",
+                tr("ئەم شوێنە هیچ هەواڵێکی نییە 📭"),
                 style: TextStyle(color: isDark ? Colors.white54 : Colors.grey),
               ),
             )
@@ -920,7 +921,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                       ),
                     ),
                     title: Text(
-                      n['title'] ?? '',
+                      tr(n['title'] ?? ''),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -928,7 +929,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                       ),
                     ),
                     subtitle: Text(
-                      n['description'] ?? '',
+                      tr(n['description'] ?? ''),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey),
@@ -957,7 +958,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
         children: [
           const SizedBox(height: 6),
           Text(
-            "هەڵبژاردنی وێنە بە دەست 🖼️:",
+            tr("هەڵبژاردنی وێنە بە دەست 🖼️:"),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 12,
@@ -991,7 +992,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
                   const Icon(Icons.add_a_photo, color: AppColors.primary, size: 30),
                   const SizedBox(height: 6),
                   Text(
-                    "کرتە بکە بۆ هەڵبژاردنی وێنە لە گالەری 📸",
+                    tr("کرتە بکە بۆ هەڵبژاردنی وێنە لە گالەری 📸"),
                     style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontSize: 11),
                   ),
                 ],
@@ -1003,7 +1004,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
             controller: _titleCtrl,
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: InputDecoration(
-              labelText: "ناونیشانی ڕیکلام *",
+              labelText: tr("ناونیشانی ڕیکلام *"),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: isDark ? AppColors.darkCard : Colors.white,
@@ -1016,7 +1017,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
             keyboardType: TextInputType.number,
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: InputDecoration(
-              labelText: "نرخ (اختیاری)",
+              labelText: tr("نرخ (اختیاری)"),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: isDark ? AppColors.darkCard : Colors.white,

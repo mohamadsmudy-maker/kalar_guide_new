@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../l10n/tr.dart';
 
 /// 📊 چارت بۆ نیشاندانی دۆخی سکاڵاکان — ULTRA PRO MAX V2
 class ComplaintsChartWidget extends StatefulWidget {
@@ -125,7 +126,7 @@ class _ComplaintsChartWidgetState extends State<ComplaintsChartWidget> {
               ),
               const SizedBox(width: 10),
               Text(
-                'ئاماری سکاڵاکان',
+                tr('ئاماری سکاڵاکان'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
@@ -134,7 +135,7 @@ class _ComplaintsChartWidgetState extends State<ComplaintsChartWidget> {
               ),
               const Spacer(),
               Text(
-                'کۆی ${_ku(total)}',
+                trf('کۆی {0}', [_ku(total)]),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -147,7 +148,7 @@ class _ComplaintsChartWidgetState extends State<ComplaintsChartWidget> {
 
           // 🍩 Donut — tap a slice to highlight it
           Semantics(
-            label: 'چارتی سکاڵاکان. $summary',
+            label: trf('چارتی سکاڵاکان. {0}', [summary]),
             child: SizedBox(
               height: 190,
               child: Stack(
@@ -181,9 +182,9 @@ class _ComplaintsChartWidgetState extends State<ComplaintsChartWidget> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          _ku(_touched >= 0 && _touched < entries.length
+                          tr(_ku(_touched >= 0 && _touched < entries.length
                               ? entries[_touched].value
-                              : total),
+                              : total)),
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
@@ -195,9 +196,9 @@ class _ComplaintsChartWidgetState extends State<ComplaintsChartWidget> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _touched >= 0 && _touched < entries.length
+                          tr(_touched >= 0 && _touched < entries.length
                               ? (_labels[entries[_touched].key] ?? '')
-                              : 'سکاڵا',
+                              : 'سکاڵا'),
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -236,7 +237,7 @@ class _ComplaintsChartWidgetState extends State<ComplaintsChartWidget> {
       radius: touched ? 62 : 55,
       // tiny slices get no title — it would be unreadable and overlap
       showTitle: percent >= 6,
-      title: '${_ku(percent.round())}٪',
+      title: trf('{0}٪', [_ku(percent.round())]),
       titleStyle: const TextStyle(
         color: Colors.white,
         fontSize: 11,
@@ -260,7 +261,7 @@ class _ComplaintsChartWidgetState extends State<ComplaintsChartWidget> {
         ),
         const SizedBox(width: 4),
         Text(
-          '${_labels[entry.key]} (${_ku(entry.value)} • ${_ku(percent.round())}٪)',
+          trf('{0} ({1} • {2}٪)', [_labels[entry.key], _ku(entry.value), _ku(percent.round())]),
           style: TextStyle(
             fontSize: 10,
             fontWeight: active ? FontWeight.w900 : FontWeight.bold,

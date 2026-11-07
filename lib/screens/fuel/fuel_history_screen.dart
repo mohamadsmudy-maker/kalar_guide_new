@@ -5,6 +5,7 @@ import '../../widgets/fuel_chart_widget.dart';
 import 'package:provider/provider.dart';
 import '../../config/settings_provider.dart';
 import '../../utils/date_picker_helper.dart';
+import '../../l10n/tr.dart';
 /// 📜 شاشەی مێژووی نرخی سووتەمەنی — لەگەڵ چارت و PDF
 class FuelHistoryScreen extends StatefulWidget {
   final int stationId;
@@ -115,7 +116,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
     final filtered = _filteredHistory;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
@@ -124,18 +125,18 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'مێژووی نرخەکان',
-                style: TextStyle(
+              Text(
+                tr('مێژووی نرخەکان'),
+                style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 16,
                   color: Colors.white,
                 ),
               ),
               Text(
-                widget.fuelType != null
+                tr(widget.fuelType != null
                     ? '${widget.stationName} • ${FuelService.getNameKu(widget.fuelType!)}'
-                    : widget.stationName,
+                    : widget.stationName),
                 style: const TextStyle(
                   fontSize: 11,
                   color: Colors.white70,
@@ -160,7 +161,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                 ),
               )
                   : const Icon(Icons.picture_as_pdf_rounded),
-              tooltip: 'ڕاپۆرتی PDF',
+              tooltip: tr('ڕاپۆرتی PDF'),
               onPressed:
               _generatingPdf || filtered.isEmpty ? null : _generatePdf,
             ),
@@ -197,13 +198,13 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
               ],
 
               // ✅ ئاماری کورت
-              _buildSectionTitle('📊 ئاماری کورت', isDark),
+              _buildSectionTitle(tr('📊 ئاماری کورت'), isDark),
               const SizedBox(height: 12),
               _buildStats(filtered, isDark),
               const SizedBox(height: 20),
 
               // ✅ لیستی گۆڕانکارییەکان
-              _buildSectionTitle('📋 لیستی گۆڕانکارییەکان', isDark),
+              _buildSectionTitle(tr('📋 لیستی گۆڕانکارییەکان'), isDark),
               const SizedBox(height: 12),
 
               if (filtered.isEmpty)
@@ -267,9 +268,9 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'ماوەی بەروار',
-                    style: TextStyle(
+                  Text(
+                    tr('ماوەی بەروار'),
+                    style: const TextStyle(
                       color: Color(0xFF0F1421),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -277,7 +278,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${_formatDate(_fromDate)} بۆ ${_formatDate(_toDate)}',
+                    trf('{0} بۆ {1}', [_formatDate(_fromDate), _formatDate(_toDate)]),
                     style: const TextStyle(
                       color: Color(0xFF0F1421),
                       fontSize: 14,
@@ -309,10 +310,10 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
           color: isDark ? const Color(0xFF1A1B2E) : Colors.white,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            'هیچ داتایەک نییە',
-            style: TextStyle(color: Colors.grey),
+            tr('هیچ داتایەک نییە'),
+            style: const TextStyle(color: Colors.grey),
           ),
         ),
       );
@@ -382,7 +383,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
           Icon(icon, color: color, size: 18),
           const SizedBox(height: 6),
           Text(
-            label,
+            tr(label),
             style: TextStyle(
               fontSize: 10,
               color: isDark ? Colors.white54 : Colors.grey,
@@ -391,7 +392,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            value,
+            tr(value),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w900,
@@ -399,7 +400,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
             ),
           ),
           Text(
-            'د.ع',
+            tr('د.ع'),
             style: TextStyle(
               fontSize: 9,
               color: color.withValues(alpha: 0.7),
@@ -498,7 +499,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                       Row(
                         children: [
                           Text(
-                            FuelService.getNameKu(fuelType),
+                            tr(FuelService.getNameKu(fuelType)),
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -519,9 +520,9 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                                     .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text(
-                                'نوێترین',
-                                style: TextStyle(
+                              child: Text(
+                                tr('نوێترین'),
+                                style: const TextStyle(
                                   fontSize: 9,
                                   color: Color(0xFF10B981),
                                   fontWeight: FontWeight.bold,
@@ -534,7 +535,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                       if (createdAt != null) ...[
                         const SizedBox(height: 4),
                         Text(
-                          _formatFullDate(createdAt),
+                          tr(_formatFullDate(createdAt)),
                           style: TextStyle(
                             fontSize: 10,
                             color: isDark ? Colors.white54 : Colors.grey,
@@ -568,9 +569,9 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'د.ع',
-                      style: TextStyle(
+                    Text(
+                      tr('د.ع'),
+                      style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                         color: Colors.grey,
@@ -602,7 +603,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                   Icon(changeIcon, color: changeColor, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    'گۆڕانکاری:',
+                    tr('گۆڕانکاری:'),
                     style: TextStyle(
                       fontSize: 11,
                       color: changeColor,
@@ -663,7 +664,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  updatedBy,
+                  tr(updatedBy),
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? Colors.white54 : Colors.grey,
@@ -710,7 +711,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -737,7 +738,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'هیچ گۆڕانکارییەک نییە لەم ماوەیەدا',
+            tr('هیچ گۆڕانکارییەک نییە لەم ماوەیەدا'),
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white54 : Colors.grey,
@@ -762,7 +763,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ مێژوویەک نییە',
+            tr('هیچ مێژوویەک نییە'),
             style: TextStyle(
               color: isDark ? Colors.white54 : Colors.grey,
               fontSize: 15,

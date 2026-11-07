@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/tr.dart';
 
 /// 📱 خزمەتگوزاری پرۆ بۆ ناردنی سکاڵا بۆ واتسئاپ
 /// ✅ نامەی فۆرماتکراو + لۆکەیشن + وێنە + ڤۆیس
@@ -26,7 +27,7 @@ class WhatsAppComplaintService {
       // ١. دەرهێنانی ژمارەی مۆبایل
       final phone = _extractPhone(complaint);
       if (phone == null || phone.isEmpty) {
-        _showSnack(context, '⚠️ ژمارەی مۆبایلی سکاڵاکە نەدۆزرایەوە', Colors.orange);
+        _showSnack(context, tr('⚠️ ژمارەی مۆبایلی سکاڵاکە نەدۆزرایەوە'), Colors.orange);
         return false;
       }
 
@@ -46,7 +47,7 @@ class WhatsAppComplaintService {
 
       // ٤. داگرتنی وێنە و ڤۆیسەکان
       if (!context.mounted) return false;
-      _showSnack(context, '⏳ ئامادەکردنی فایلەکان...', Colors.blue);
+      _showSnack(context, tr('⏳ ئامادەکردنی فایلەکان...'), Colors.blue);
       final mediaFiles = await _downloadMedia(complaint);
 
       // ٥. ناردن
@@ -59,7 +60,7 @@ class WhatsAppComplaintService {
       );
     } catch (e) {
       debugPrint('❌ WhatsApp send error: $e');
-      if (context.mounted) _showSnack(context, 'هەڵە: $e', Colors.red);
+      if (context.mounted) _showSnack(context, trf('هەڵە: {0}', [e]), Colors.red);
       return false;
     }
   }
@@ -299,7 +300,7 @@ class WhatsAppComplaintService {
       final result = await Share.shareXFiles(
         files,
         text: message,
-        subject: 'سکاڵای ڕێبەری کەلار',
+        subject: tr('سکاڵای ڕێبەری کەلار'),
         sharePositionOrigin: _getSharePosition(context),
       );
 
@@ -341,12 +342,12 @@ class WhatsAppComplaintService {
       }
 
       if (context.mounted) {
-        _showSnack(context, '⚠️ واتسئاپ دامەزراو نییە', Colors.orange);
+        _showSnack(context, tr('⚠️ واتسئاپ دامەزراو نییە'), Colors.orange);
       }
       return false;
     } catch (e) {
       debugPrint('❌ WhatsApp open error: $e');
-      if (context.mounted) _showSnack(context, 'هەڵە: $e', Colors.red);
+      if (context.mounted) _showSnack(context, trf('هەڵە: {0}', [e]), Colors.red);
       return false;
     }
   }
@@ -371,7 +372,7 @@ class WhatsAppComplaintService {
     final message = buildMessage(complaint);
     await Clipboard.setData(ClipboardData(text: message));
     if (!context.mounted) return;
-    _showSnack(context, '✅ نامە کۆپی کرا', Colors.green);
+    _showSnack(context, tr('✅ نامە کۆپی کرا'), Colors.green);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -403,7 +404,7 @@ class WhatsAppComplaintService {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          msg,
+          tr(msg),
           style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 13,
@@ -446,7 +447,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
         (complaint['longitude']?.toString() ?? '').isNotEmpty;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.9,
@@ -507,7 +508,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'ناردن بۆ واتسئاپ',
+                          tr('ناردن بۆ واتسئاپ'),
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w900,
@@ -518,7 +519,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'پێداچوونەوە بکە پێش ناردن',
+                          tr('پێداچوونەوە بکە پێش ناردن'),
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark
@@ -541,7 +542,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                 children: [
                   _buildInfoCard(
                     icon: Icons.phone_rounded,
-                    label: 'ژمارە',
+                    label: tr('ژمارە'),
                     value: phone,
                     color: const Color(0xFF25D366),
                     isDark: isDark,
@@ -549,7 +550,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                   const SizedBox(width: 8),
                   _buildInfoCard(
                     icon: Icons.attach_file_rounded,
-                    label: 'فایل',
+                    label: tr('فایل'),
                     value: '${imageCount + (hasVoice ? 1 : 0)}',
                     color: const Color(0xFF8B5CF6),
                     isDark: isDark,
@@ -557,7 +558,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                   const SizedBox(width: 8),
                   _buildInfoCard(
                     icon: Icons.location_on_rounded,
-                    label: 'شوێن',
+                    label: tr('شوێن'),
                     value: hasLocation ? 'بەردەست' : 'نەماوە',
                     color: hasLocation
                         ? const Color(0xFF1E88E5)
@@ -579,19 +580,19 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                   if (imageCount > 0)
                     _buildFileChip(
                       icon: Icons.image_rounded,
-                      label: '$imageCount وێنە',
+                      label: trf('{0} وێنە', [imageCount]),
                       color: const Color(0xFF1E88E5),
                     ),
                   if (hasVoice)
                     _buildFileChip(
                       icon: Icons.mic_rounded,
-                      label: 'دەنگ',
+                      label: tr('دەنگ'),
                       color: const Color(0xFFE91E63),
                     ),
                   if (hasLocation)
                     _buildFileChip(
                       icon: Icons.map_rounded,
-                      label: 'لینکی نەخشە',
+                      label: tr('لینکی نەخشە'),
                       color: const Color(0xFFF59E0B),
                     ),
                 ],
@@ -627,7 +628,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      message,
+                      tr(message),
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.6,
@@ -655,9 +656,9 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: () => Navigator.pop(context, false),
                       icon: const Icon(Icons.close_rounded, size: 18),
-                      label: const Text(
-                        'پاشگەزبوونەوە',
-                        style: TextStyle(fontWeight: FontWeight.w900),
+                      label: Text(
+                        tr('پاشگەزبوونەوە'),
+                        style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 54),
@@ -680,9 +681,9 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                         size: 20,
                         color: Colors.white,
                       ),
-                      label: const Text(
-                        'ناردن بۆ واتسئاپ',
-                        style: TextStyle(
+                      label: Text(
+                        tr('ناردن بۆ واتسئاپ'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
                           color: Colors.white,
@@ -731,7 +732,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
             Icon(icon, color: color, size: 18),
             const SizedBox(height: 6),
             Text(
-              label,
+              tr(label),
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
@@ -740,7 +741,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              value,
+              tr(value),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -773,7 +774,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 5),
           Text(
-            label,
+            tr(label),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w900,

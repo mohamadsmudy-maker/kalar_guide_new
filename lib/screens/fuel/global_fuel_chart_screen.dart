@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/fuel_service.dart';
 import '../../services/fuel_pdf_service.dart';
 import '../../widgets/multi_fuel_chart_widget.dart';
+import '../../l10n/tr.dart';
 
 /// 📈 شاشەی Chart ی هەموو جۆرەکانی سووتەمەنی
 class GlobalFuelChartScreen extends StatefulWidget {
@@ -56,14 +57,14 @@ class _GlobalFuelChartScreenState extends State<GlobalFuelChartScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
-          title: const Text(
-            'چارت ی گشتی سووتەمەنی 📈',
-            style: TextStyle(
+          title: Text(
+            tr('چارت ی گشتی سووتەمەنی 📈'),
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 17,
               color: Colors.white,
@@ -85,7 +86,7 @@ class _GlobalFuelChartScreenState extends State<GlobalFuelChartScreen> {
                 ),
               )
                   : const Icon(Icons.picture_as_pdf_rounded),
-              tooltip: 'ڕاپۆرتی PDF',
+              tooltip: tr('ڕاپۆرتی PDF'),
               onPressed: _generatingPdf || _allHistory.isEmpty
                   ? null
                   : _generatePdf,
@@ -113,7 +114,7 @@ class _GlobalFuelChartScreenState extends State<GlobalFuelChartScreen> {
                 isDark: isDark,
               ),
               const SizedBox(height: 20),
-              _buildSectionTitle('📊 ئاماری گشتی', isDark),
+              _buildSectionTitle(tr('📊 ئاماری گشتی'), isDark),
               const SizedBox(height: 12),
               _buildGlobalStats(isDark),
               const SizedBox(height: 30),
@@ -139,7 +140,7 @@ class _GlobalFuelChartScreenState extends State<GlobalFuelChartScreen> {
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -197,7 +198,7 @@ class _GlobalFuelChartScreenState extends State<GlobalFuelChartScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  name,
+                  tr(name),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
@@ -217,7 +218,7 @@ class _GlobalFuelChartScreenState extends State<GlobalFuelChartScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '$count گۆڕانکاری',
+                  trf('{0} گۆڕانکاری', [count]),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -244,7 +245,7 @@ class _GlobalFuelChartScreenState extends State<GlobalFuelChartScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ داتایەک نییە',
+            tr('هیچ داتایەک نییە'),
             style: TextStyle(
               color: isDark ? Colors.white54 : Colors.grey,
               fontSize: 15,

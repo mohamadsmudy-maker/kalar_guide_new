@@ -33,7 +33,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
           children: [
             Icon(icon, color: color, size: 32),
             const SizedBox(height: 8),
-            Text(label,
+            Text(tr(label),
                 style: TextStyle(
                     fontWeight: FontWeight.bold, color: color, fontSize: 13)),
           ],
@@ -63,9 +63,9 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
     return AppBar(
       backgroundColor: AppColors.primary,
       elevation: 0,
-      title: const Text(
-        'ناردنی سکاڵای هاوڵاتی',
-        style: TextStyle(
+      title: Text(
+        tr('ناردنی سکاڵای هاوڵاتی'),
+        style: const TextStyle(
             fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
       ),
       centerTitle: true,
@@ -73,10 +73,10 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
       actions: [
         IconButton(
           icon: const Icon(Icons.save_rounded),
-          tooltip: 'پاشەکەوتکردنی ڕەشنووس',
+          tooltip: tr('پاشەکەوتکردنی ڕەشنووس'),
           onPressed: () async {
             await _saveDraft();
-            _showSnackBar('💾 ڕەشنووس پاشەکەوت کرا', Colors.green);
+            _showSnackBar(tr('💾 ڕەشنووس پاشەکەوت کرا'), Colors.green);
           },
         ),
       ],
@@ -131,7 +131,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                             : Colors.grey.shade400,
                       ),
                       const SizedBox(width: 4),
-                      Text(labels[i],
+                      Text(tr(labels[i]),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -143,7 +143,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                   ),
                 );
               }),
-              Text('${_ku(_doneCount)} لە ٣',
+              Text(trf('{0} لە ٣', [_ku(_doneCount)]),
                   style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
@@ -176,7 +176,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
             ],
           ),
           child: Center(
-            child: Text(step,
+            child: Text(tr(step),
                 style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -185,7 +185,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(title,
+          child: Text(tr(title),
               style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
@@ -219,7 +219,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                t?.name ?? 'جۆری کێشە هەڵبژێرە...',
+                tr(t?.name ?? 'جۆری کێشە هەڵبژێرە...'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -227,7 +227,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                 ),
               ),
             ),
-            Text(t != null ? 'گۆڕین' : '',
+            Text(tr(t != null ? 'گۆڕین' : ''),
                 style: TextStyle(
                     fontSize: 11, fontWeight: FontWeight.bold, color: color)),
             Icon(Icons.keyboard_arrow_down_rounded, color: color),
@@ -249,8 +249,8 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
         children: [
           Icon(Icons.touch_app_rounded, size: 50, color: Colors.grey.shade400),
           const SizedBox(height: 12),
-          const Text('تکایە سەرەتا جۆری کێشە هەڵبژێرە',
-              style: TextStyle(
+          Text(tr('تکایە سەرەتا جۆری کێشە هەڵبژێرە'),
+              style: const TextStyle(
                   color: Colors.grey,
                   fontWeight: FontWeight.bold,
                   fontSize: 13),
@@ -308,13 +308,13 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
+                Text(tr(label),
                     style: TextStyle(
                         color: on ? Colors.white70 : Colors.grey.shade600,
                         fontSize: 10,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
-                Text(value,
+                Text(tr(value),
                     style: TextStyle(
                         fontWeight: FontWeight.w900,
                         color: on ? Colors.white : Colors.grey.shade700,
@@ -331,7 +331,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
   Widget _buildAuthorityCard() {
     return _infoCard(
       icon: Icons.verified_rounded,
-      label: 'لایەنی پەیوەندیدار',
+      label: tr('لایەنی پەیوەندیدار'),
       value: _type?.authority ?? '',
       gradient: [Colors.green.shade400, Colors.green.shade600],
     );
@@ -346,17 +346,17 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.blue.shade200, width: 1.5),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            SizedBox(
+            const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: Colors.blue),
             ),
-            SizedBox(width: 12),
-            Text('دۆزینەوەی گەڕەک...',
-                style: TextStyle(
+            const SizedBox(width: 12),
+            Text(tr('دۆزینەوەی گەڕەک...'),
+                style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.blue,
                     fontSize: 13)),
@@ -368,7 +368,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
     final has = _neighborhoodName != null && _neighborhoodName!.isNotEmpty;
     return _infoCard(
       icon: Icons.location_city_rounded,
-      label: 'گەڕەک',
+      label: tr('گەڕەک'),
       value: has ? _neighborhoodName! : 'گەڕەک نەدۆزرایەوە',
       gradient: has ? [Colors.blue.shade400, Colors.blue.shade600] : null,
       trailing: has
@@ -378,7 +378,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
           ? IconButton(
         icon: const Icon(Icons.refresh_rounded),
         onPressed: _detectNeighborhood,
-        tooltip: 'دووبارە بدۆزەرەوە',
+        tooltip: tr('دووبارە بدۆزەرەوە'),
       )
           : null),
     );
@@ -462,7 +462,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                     child: IconButton(
                       icon: const Icon(Icons.my_location_rounded,
                           color: AppColors.primary),
-                      tooltip: 'نوێکردنەوەی شوێن',
+                      tooltip: tr('نوێکردنەوەی شوێن'),
                       onPressed:
                       _locationBusy ? null : _getAutomaticLocation,
                     ),
@@ -491,9 +491,9 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _hasLocation && _accuracy != null
+                  tr(_hasLocation && _accuracy != null
                       ? '$_locationStatusText  (±${_ku(_accuracy!.round())} م)'
-                      : _locationStatusText,
+                      : _locationStatusText),
                   style: TextStyle(
                       fontSize: 11,
                       color: okColor.shade800,
@@ -508,10 +508,10 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                   ),
                   onPressed: _openLocationFix,
                   child: Text(
-                    _locIssue == _LocIssue.serviceOff ||
+                    tr(_locIssue == _LocIssue.serviceOff ||
                         _locIssue == _LocIssue.deniedForever
                         ? 'ڕێکخستن'
-                        : 'دووبارە',
+                        : 'دووبارە'),
                     style: const TextStyle(
                         fontSize: 11, fontWeight: FontWeight.w900),
                   ),
@@ -531,13 +531,13 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.green.shade200),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
-          SizedBox(width: 8),
+          const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
+          const SizedBox(width: 8),
           Expanded(
-            child: Text('دەنگەکە تۆمارکرا و ئامادەیە بۆ ناردن',
-                style: TextStyle(
+            child: Text(tr('دەنگەکە تۆمارکرا و ئامادەیە بۆ ناردن'),
+                style: const TextStyle(
                     fontSize: 12,
                     color: Colors.green,
                     fontWeight: FontWeight.bold)),
@@ -561,7 +561,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
       textInputAction: TextInputAction.newline,
       style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
-        hintText: 'ڕووداوەکە لێرە زیاتر باس بکەرەوە...',
+        hintText: tr('ڕووداوەکە لێرە زیاتر باس بکەرەوە...'),
         hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
         filled: true,
         fillColor: Colors.white,
@@ -602,7 +602,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                       color: AppColors.primary, strokeWidth: 2.5),
                 ),
                 const SizedBox(width: 12),
-                Text(_submitStage,
+                Text(tr(_submitStage),
                     style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.primary,
@@ -636,8 +636,8 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
             elevation: _isReady ? 4 : 0,
           ),
           icon: const Icon(Icons.send_rounded, size: 22),
-          label: const Text('ناردنی سکاڵا',
-              style: TextStyle(
+          label: Text(tr('ناردنی سکاڵا'),
+              style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   color: Colors.white)),
@@ -657,7 +657,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
         ),
         onPressed: _isSubmitting ? null : _confirmCancel,
         icon: Icon(Icons.close_rounded, color: Colors.red.shade700, size: 20),
-        label: Text('پەشیمانبوونەوە',
+        label: Text(tr('پەشیمانبوونەوە'),
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../widgets/common/optimized_network_image.dart';
 import 'submit_complaint.dart';
+import '../../l10n/tr.dart';
 
 /// 📢 دیالۆگی ڕێنمایی سکاڵا (Single Slide Version)
 class ComplaintInstructionDialog {
@@ -52,7 +53,7 @@ class ComplaintInstructionDialog {
       barrierDismissible: false,
       barrierColor: Colors.black.withValues(alpha: 0.85),
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: _ComplaintInstructionContent(slide: slideToShow),
       ),
     );
@@ -222,7 +223,7 @@ class _ComplaintInstructionContentState
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                "تکایە چاوەڕوان بە... $_countdown",
+                                trf("تکایە چاوەڕوان بە... {0}", [_countdown]),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
@@ -310,9 +311,9 @@ class _ComplaintInstructionContentState
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          _enableButton
+                          tr(_enableButton
                               ? "کرتە بکە بۆ ناردنی سکاڵا ✅"
-                              : "چاوەڕوانی چالاکبوون...",
+                              : "چاوەڕوانی چالاکبوون..."),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 11,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/currency_service.dart';
 import '../currency/currency_history_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 💰 نوێکردنەوەی نرخی نوسینگەی دراو + مێژوو
 class AdminCurrencyPricesScreen extends StatefulWidget {
@@ -69,7 +70,7 @@ class _AdminCurrencyPricesScreenState
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -94,15 +95,15 @@ class _AdminCurrencyPricesScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'نوێکردنەوەی نرخ',
-                      style: TextStyle(
+                    Text(
+                      tr('نوێکردنەوەی نرخ'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,
                       ),
                     ),
                     Text(
-                      CurrencyService.getNameKu(currencyType),
+                      tr(CurrencyService.getNameKu(currencyType)),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -134,7 +135,7 @@ class _AdminCurrencyPricesScreenState
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'نرخی ئێستا — کڕین: ${currentBuy.toStringAsFixed(0)} • فرۆشتن: ${currentSell.toStringAsFixed(0)}',
+                          trf('نرخی ئێستا — کڕین: {0} • فرۆشتن: {1}', [currentBuy.toStringAsFixed(0), currentSell.toStringAsFixed(0)]),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
@@ -151,7 +152,7 @@ class _AdminCurrencyPricesScreenState
                   controller: buyCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'نرخی کڕین (د.ع)',
+                    labelText: tr('نرخی کڕین (د.ع)'),
                     prefixIcon: const Icon(
                       Icons.shopping_cart_rounded,
                       color: Color(0xFF1E88E5),
@@ -175,7 +176,7 @@ class _AdminCurrencyPricesScreenState
                   controller: sellCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'نرخی فرۆشتن (د.ع)',
+                    labelText: tr('نرخی فرۆشتن (د.ع)'),
                     prefixIcon: const Icon(
                       Icons.sell_rounded,
                       color: Color(0xFF10B981),
@@ -199,8 +200,8 @@ class _AdminCurrencyPricesScreenState
                   controller: notesCtrl,
                   maxLines: 2,
                   decoration: InputDecoration(
-                    labelText: 'تێبینی (ئارەزوومەندانە)',
-                    hintText: 'بۆ نموونە: بەهۆی گۆڕانی بازاڕ',
+                    labelText: tr('تێبینی (ئارەزوومەندانە)'),
+                    hintText: tr('بۆ نموونە: بەهۆی گۆڕانی بازاڕ'),
                     prefixIcon: const Icon(
                       Icons.note_rounded,
                       color: Color(0xFF10B981),
@@ -223,7 +224,7 @@ class _AdminCurrencyPricesScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('پاشگەزبوونەوە'),
+              child: Text(tr('پاشگەزبوونەوە')),
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -239,8 +240,8 @@ class _AdminCurrencyPricesScreenState
 
                 if (newBuy < 0 || newSell < 0) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                      content: Text('تکایە نرخێکی دروست بنووسە'),
+                    SnackBar(
+                      content: Text(tr('تکایە نرخێکی دروست بنووسە')),
                       backgroundColor: Colors.orange,
                     ),
                   );
@@ -249,8 +250,8 @@ class _AdminCurrencyPricesScreenState
 
                 if (newBuy == 0 && newSell == 0) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                      content: Text('تکایە لانیکەم یەک نرخ بنووسە'),
+                    SnackBar(
+                      content: Text(tr('تکایە لانیکەم یەک نرخ بنووسە')),
                       backgroundColor: Colors.orange,
                     ),
                   );
@@ -274,9 +275,9 @@ class _AdminCurrencyPricesScreenState
                 }
               },
               icon: const Icon(Icons.check_rounded, size: 18),
-              label: const Text(
-                'پاشەکەوتکردن',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              label: Text(
+                tr('پاشەکەوتکردن'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -299,8 +300,8 @@ class _AdminCurrencyPricesScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ نرخ نوێکرایەوە'),
+          SnackBar(
+            content: Text(tr('✅ نرخ نوێکرایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -317,13 +318,13 @@ class _AdminCurrencyPricesScreenState
     const currencyTypes = CurrencyService.currencyTypes;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
-            name,
+            tr(name),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
@@ -337,7 +338,7 @@ class _AdminCurrencyPricesScreenState
           actions: [
             IconButton(
               icon: const Icon(Icons.history_rounded),
-              tooltip: 'مێژووی هەموو نرخەکان',
+              tooltip: tr('مێژووی هەموو نرخەکان'),
               onPressed: () => _openHistory(null),
             ),
           ],
@@ -351,7 +352,7 @@ class _AdminCurrencyPricesScreenState
           children: [
             _buildStationHeader(name, address),
             const SizedBox(height: 20),
-            _buildSectionTitle('جۆرەکانی دراو'),
+            _buildSectionTitle(tr('جۆرەکانی دراو')),
             const SizedBox(height: 12),
             ...currencyTypes.map(
                   (type) => _buildPriceCard(type, isDark),
@@ -414,7 +415,7 @@ class _AdminCurrencyPricesScreenState
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  name,
+                  tr(name),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -435,7 +436,7 @@ class _AdminCurrencyPricesScreenState
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          address,
+                          tr(address),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 11,
@@ -470,7 +471,7 @@ class _AdminCurrencyPricesScreenState
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -550,7 +551,7 @@ class _AdminCurrencyPricesScreenState
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        nameKu,
+                        tr(nameKu),
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
@@ -560,17 +561,17 @@ class _AdminCurrencyPricesScreenState
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Row(
+                      Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.edit_rounded,
                             size: 11,
                             color: Colors.grey,
                           ),
-                          SizedBox(width: 3),
+                          const SizedBox(width: 3),
                           Text(
-                            'کلیک بکە بۆ دەستکاری',
-                            style: TextStyle(
+                            tr('کلیک بکە بۆ دەستکاری'),
+                            style: const TextStyle(
                               fontSize: 10,
                               color: Colors.grey,
                             ),
@@ -596,7 +597,7 @@ class _AdminCurrencyPricesScreenState
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          'کڕین: ${buyPrice.toStringAsFixed(0)}',
+                          trf('کڕین: {0}', [buyPrice.toStringAsFixed(0)]),
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -623,7 +624,7 @@ class _AdminCurrencyPricesScreenState
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          'فرۆشتن: ${sellPrice.toStringAsFixed(0)}',
+                          trf('فرۆشتن: {0}', [sellPrice.toStringAsFixed(0)]),
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
@@ -672,7 +673,7 @@ class _AdminCurrencyPricesScreenState
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'بینینی مێژووی گۆڕانکاری',
+                      tr('بینینی مێژووی گۆڕانکاری'),
                       style: TextStyle(
                         fontSize: 11,
                         color: color,

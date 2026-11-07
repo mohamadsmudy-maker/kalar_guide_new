@@ -2,6 +2,7 @@
 import 'package:adhan/adhan.dart';
 
 import '../../data/kalar_prayer_times.dart';
+import '../../l10n/tr.dart';
 
 /// سەرچاوەی کاتەکانی ڕۆژێک
 enum PrayerSource {
@@ -169,7 +170,7 @@ class KalarPrayerTimes {
     final h24 = int.tryParse(p[0]);
     final m = p[1].split(' ').first;
     if (h24 == null) return hm;
-    final suffix = h24 < 12 ? 'پ.ن' : 'د.ن';
+    final suffix = h24 < 12 ? tr('پ.ن') : tr('د.ن'); // AM / PM
     final h = h24 % 12 == 0 ? 12 : h24 % 12;
     final text = '$h:$m';
     return '${kurdishDigits ? toKurdishDigits(text) : text} $suffix';

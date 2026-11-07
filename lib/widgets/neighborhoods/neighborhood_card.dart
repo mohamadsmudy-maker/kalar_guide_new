@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../config/settings_provider.dart';
 import '../../models/neighborhood.dart';
+import '../../l10n/tr.dart';
 
 /// 🏘️ کارتی گەڕەک — Ultra Pro (Style ی بەشەکان)
 class NeighborhoodCard extends StatelessWidget {
@@ -129,7 +130,7 @@ class NeighborhoodCard extends StatelessWidget {
                 children: [
                   // ناوی گەڕەک
                   Text(
-                    neighborhood.nameKu,
+                    tr(neighborhood.nameKu),
                     style: TextStyle(
                       fontFamily: 'Rabar',
                       fontSize: 16,
@@ -151,7 +152,7 @@ class NeighborhoodCard extends StatelessWidget {
                       Flexible(
                         child: _buildMiniStat(
                           icon: Icons.storefront_rounded,
-                          value: '${neighborhood.totalStores} شوێن',
+                          value: trf('{0} شوێن', [neighborhood.totalStores]),
                           color: color,
                           isDark: isDark,
                         ),
@@ -163,7 +164,7 @@ class NeighborhoodCard extends StatelessWidget {
                         Flexible(
                           child: _buildMiniStat(
                             icon: Icons.landscape_rounded,
-                            value: '$areaStr کم²', // ✅ ئێستا 2 ژمارەی دەییە
+                            value: trf('{0} کم²', [areaStr]), // ✅ ئێستا 2 ژمارەی دەییە
                             color: const Color(0xFFF59E0B),
                             isDark: isDark,
                           ),
@@ -231,7 +232,7 @@ class NeighborhoodCard extends StatelessWidget {
         const SizedBox(width: 3),
         Expanded(
           child: Text(
-            value,
+            tr(value),
             style: TextStyle(
               fontFamily: 'Rabar',
               fontSize: 11,
@@ -281,7 +282,7 @@ class NeighborhoodCard extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                neighborhood.nameKu,
+                tr(neighborhood.nameKu),
                 style: TextStyle(
                   fontFamily: 'Rabar',
                   fontSize: 13,

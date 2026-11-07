@@ -18,9 +18,10 @@ extension _AboutScreenStateUi on _AboutScreenState {
           onTap: () {
             HapticFeedback.lightImpact();
             _openWhatsApp(
-              text: 'سڵاو، کێشەیەکم هەیە لە ئەپی ڕێبەری کەلار:\n\n'
-                  '...\n\n'
-                  '— وەشان: v$_appVersion ($_buildNumber)',
+              text: trf(
+                'سڵاو، کێشەیەکم هەیە لە ئەپی ڕێبەری کەلار:\n\n...\n\n— وەشان: v{0} ({1})',
+                [_appVersion, _buildNumber],
+              ),
             );
           },
           child: Container(
@@ -46,7 +47,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'ناردنی ڕاپۆرتی کێشە',
+                        tr('ناردنی ڕاپۆرتی کێشە'),
                         style: textTheme.titleSmall?.copyWith(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
@@ -55,7 +56,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'ڕاستەوخۆ لە واتسئاپ، وەشانی ئەپەکەش دەنێردرێت',
+                        tr('ڕاستەوخۆ لە واتسئاپ، وەشانی ئەپەکەش دەنێردرێت'),
                         style: textTheme.labelSmall?.copyWith(
                           fontSize: 11,
                           color: isDark ? Colors.white54 : AppColors.textSecondary,
@@ -178,9 +179,9 @@ extension _AboutScreenStateUi on _AboutScreenState {
                       const SizedBox(height: 14),
                       FadeTransition(
                         opacity: _headerAnimation,
-                        child: const Text(
-                          _AboutScreenState._developerName,
-                          style: TextStyle(
+                        child: Text(
+                          tr(_AboutScreenState._developerName),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -204,9 +205,9 @@ extension _AboutScreenStateUi on _AboutScreenState {
                               color: Colors.white.withValues(alpha: 0.3),
                             ),
                           ),
-                          child: const Text(
-                            _AboutScreenState._developerTitle,
-                            style: TextStyle(
+                          child: Text(
+                            tr(_AboutScreenState._developerTitle),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -243,7 +244,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: textTheme.titleMedium?.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -297,7 +298,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'سڵاو! من $_AboutScreenState._developerNameم',
+                    trf('سڵاو! من {0}م', [_AboutScreenState._developerName]),
                     style: textTheme.titleSmall?.copyWith(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
@@ -309,11 +310,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
             ),
             const SizedBox(height: 14),
             Text(
-              'ئەندازیاری شارستانی و گەشەپێدەری ئەپی "ڕێبەری کەلار". '
-                  'ئەم ئەپەم بە مەبەستی خزمەتکردنی خەڵکی شاری کەلار '
-                  'دروستکردووە، بەبێ چاوەڕوانی هیچ داهاتێک. '
-                  'هیوادارم ئەم ئەپە ببێتە هۆکاری ئاسانکاری بۆ '
-                  'هاوڵاتییانی خۆشەویستمان.',
+              tr('ئەندازیاری شارستانی و گەشەپێدەری ئەپی "ڕێبەری کەلار". ئەم ئەپەم بە مەبەستی خزمەتکردنی خەڵکی شاری کەلار دروستکردووە، بەبێ چاوەڕوانی هیچ داهاتێک. هیوادارم ئەم ئەپە ببێتە هۆکاری ئاسانکاری بۆ هاوڵاتییانی خۆشەویستمان.'),
               style: textTheme.bodyMedium?.copyWith(
                 fontSize: 13,
                 height: 1.7,
@@ -327,7 +324,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   isDark: isDark,
                   icon: Icons.apps_rounded,
                   value: '١٠+',
-                  label: 'تایبەتمەندی',
+                  label: tr('تایبەتمەندی'),
                   color: AppColors.primary,
                   textTheme: textTheme,
                 ),
@@ -335,7 +332,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   isDark: isDark,
                   icon: Icons.people_rounded,
                   value: _neighborhoodsText,
-                  label: 'گەڕەک',
+                  label: tr('گەڕەک'),
                   color: AppColors.green,
                   textTheme: textTheme,
                 ),
@@ -343,7 +340,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   isDark: isDark,
                   icon: Icons.storefront_rounded,
                   value: _storesText,
-                  label: 'شوێن',
+                  label: tr('شوێن'),
                   color: AppColors.orange,
                   textTheme: textTheme,
                 ),
@@ -377,7 +374,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
             Icon(icon, color: color, size: 18),
             const SizedBox(height: 4),
             Text(
-              value,
+              tr(value),
               style: textTheme.titleMedium?.copyWith(
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
@@ -387,7 +384,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
             ),
             const SizedBox(height: 2),
             Text(
-              label,
+              tr(label),
               style: textTheme.labelSmall?.copyWith(
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
@@ -469,7 +466,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        title,
+                        tr(title),
                         style: textTheme.labelSmall?.copyWith(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -480,7 +477,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        value,
+                        tr(value),
                         style: textTheme.titleMedium?.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
@@ -496,7 +493,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: value));
                     HapticFeedback.mediumImpact();
-                    _showSnack('✅ کۆپی کرا', AppColors.green);
+                    _showSnack(tr('✅ کۆپی کرا'), AppColors.green);
                   },
                   child: Container(
                     padding: const EdgeInsets.all(8),
@@ -570,7 +567,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   Icon(s.icon, color: s.color, size: 22),
                   const SizedBox(height: 6),
                   Text(
-                    s.label,
+                    tr(s.label),
                     style: textTheme.labelSmall?.copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -640,7 +637,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
             ),
             const SizedBox(height: 12),
             Text(
-              'سکان بکە بۆ داگرتنی ئەپ',
+              tr('سکان بکە بۆ داگرتنی ئەپ'),
               style: textTheme.labelMedium?.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
@@ -653,7 +650,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                 Expanded(
                   child: _buildShareButton(
                     icon: Icons.share_rounded,
-                    label: 'هاوبەشکردن',
+                    label: tr('هاوبەشکردن'),
                     color: AppColors.primary,
                     onTap: _shareApp,
                   ),
@@ -662,14 +659,14 @@ extension _AboutScreenStateUi on _AboutScreenState {
                 Expanded(
                   child: _buildShareButton(
                     icon: Icons.link_rounded,
-                    label: 'کۆپیکردنی لینک',
+                    label: tr('کۆپیکردنی لینک'),
                     color: AppColors.purple,
                     onTap: () {
                       Clipboard.setData(
                         const ClipboardData(text: _AboutScreenState._appUrl),
                       );
                       HapticFeedback.mediumImpact();
-                      _showSnack('✅ لینک کۆپی کرا', AppColors.green);
+                      _showSnack(tr('✅ لینک کۆپی کرا'), AppColors.green);
                     },
                   ),
                 ),
@@ -713,7 +710,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
             Icon(icon, color: Colors.white, size: 16),
             const SizedBox(width: 6),
             Text(
-              label,
+              tr(label),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
@@ -778,7 +775,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'ئەپەکە بەدڵتە؟',
+                      tr('ئەپەکە بەدڵتە؟'),
                       style: textTheme.titleMedium?.copyWith(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
@@ -786,7 +783,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'تکایە ٥ ئەستێرەمان پێبدە ⭐',
+                      tr('تکایە ٥ ئەستێرەمان پێبدە ⭐'),
                       style: textTheme.bodySmall?.copyWith(fontSize: 11),
                     ),
                   ],
@@ -851,18 +848,18 @@ extension _AboutScreenStateUi on _AboutScreenState {
               },
             ),
             const SizedBox(height: 14),
-            const Text(
-              'سوپاس بۆ هەموو ئەوانەی',
-              style: TextStyle(
+            Text(
+              tr('سوپاس بۆ هەموو ئەوانەی'),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'یارمەتییان دا لەم کارە خزمەتگوزارییەدا',
-              style: TextStyle(
+            Text(
+              tr('یارمەتییان دا لەم کارە خزمەتگوزارییەدا'),
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -875,9 +872,9 @@ extension _AboutScreenStateUi on _AboutScreenState {
               color: Colors.white.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 14),
-            const Text(
-              '💚 بە خۆشەویستی دروستکراوە بۆ خەڵکی کەلار',
-              style: TextStyle(
+            Text(
+              tr('💚 بە خۆشەویستی دروستکراوە بۆ خەڵکی کەلار'),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
@@ -928,7 +925,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'وەشانی ئەپ',
+                    tr('وەشانی ئەپ'),
                     style: textTheme.labelSmall?.copyWith(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -972,7 +969,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'دامەزراوە',
+                    tr('دامەزراوە'),
                     style: textTheme.labelSmall?.copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,

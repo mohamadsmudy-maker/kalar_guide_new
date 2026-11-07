@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../screens/currency/currency_strings.dart';
 import '../services/currency_service.dart';
+import '../l10n/tr.dart';
 
 /// 🔄 گۆڕینەوەی خێرای دراو بە باشترین نرخی بازاڕ
 ///   «دەکڕم»  → هەرزانترین نرخی فرۆشتنی نوسینگەکان بەکاردێت
@@ -140,7 +141,7 @@ class _CurrencyConverterCardState extends State<CurrencyConverterCard> {
               labelText: '${t('amount')} (${CurrencyService.getUnitName(type, widget.lang)})',
               prefixIcon: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text(CurrencyService.getSymbol(type),
+                child: Text(tr(CurrencyService.getSymbol(type)),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color)),
               ),
               filled: true,
@@ -171,7 +172,7 @@ class _CurrencyConverterCardState extends State<CurrencyConverterCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _iBuy ? t('you_pay') : t('you_get'),
+                    tr(_iBuy ? t('you_pay') : t('you_get')),
                     style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
@@ -215,7 +216,7 @@ class _CurrencyConverterCardState extends State<CurrencyConverterCard> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              label,
+              tr(label),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,

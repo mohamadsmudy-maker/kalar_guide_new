@@ -12,6 +12,7 @@ import '../../widgets/cards/store_card.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'full_map_screen.dart';
 import 'store_details_dialog.dart';
+import '../../l10n/tr.dart';
 
 /// 🏪 شاشەی شوێنەکان — FULL ULTRA PRO MAX
 class StoresScreen extends StatefulWidget {
@@ -383,7 +384,7 @@ class _StoresScreenState extends State<StoresScreen>
               _viewMode = _viewMode == 'grid' ? 'list' : 'grid';
             });
           },
-          tooltip: _viewMode == 'grid' ? 'لیست' : 'گرید',
+          tooltip: _viewMode == 'grid' ? tr('لیست') : tr('گرید'),
         ),
         const SizedBox(width: 8),
       ],
@@ -436,7 +437,7 @@ class _StoresScreenState extends State<StoresScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         AutoTranslate(
-                          text: 'شوێنەکان',
+                          text: tr('شوێنەکان'),
                           lang: lang,
                           style: TextStyle(
                             fontSize: 20,
@@ -448,8 +449,8 @@ class _StoresScreenState extends State<StoresScreen>
                         const SizedBox(height: 2),
                         AutoTranslate(
                           text: _allStores.isEmpty
-                              ? 'خەریکی هێنان...'
-                              : '${_allStores.length} شوێن لە شاری کەلار',
+                              ? tr('خەریکی هێنان...')
+                              : trf('{0} شوێن لە شاری کەلار', [_allStores.length]),
                           lang: lang,
                           style: TextStyle(
                             fontSize: 11,
@@ -517,7 +518,7 @@ class _StoresScreenState extends State<StoresScreen>
                       ),
                       decoration: InputDecoration(
                         hintText: lang == 'ar'
-                            ? 'ابحث عن الأماكن...'
+                            ? tr('ابحث عن الأماكن...')
                             : (lang == 'en' ? 'Search places...' : 'گەڕان بەدوای شوێنەکان...'),
                         hintStyle: TextStyle(
                           fontSize: 12,
@@ -600,7 +601,7 @@ class _StoresScreenState extends State<StoresScreen>
                     const Icon(Icons.filter_list_rounded, size: 18, color: AppColors.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'فلتەرکردن و ڕیزکردن',
+                      tr('فلتەرکردن و ڕیزکردن'),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
@@ -636,7 +637,7 @@ class _StoresScreenState extends State<StoresScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                '${_filteredStores.length} شوێن',
+                trf('{0} شوێن', [_filteredStores.length]),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -651,14 +652,14 @@ class _StoresScreenState extends State<StoresScreen>
                   color: Colors.green.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.my_location_rounded, color: Colors.green, size: 10),
-                    SizedBox(width: 4),
+                    const Icon(Icons.my_location_rounded, color: Colors.green, size: 10),
+                    const SizedBox(width: 4),
                     Text(
-                      'نزیک',
-                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.green),
+                      tr('نزیک'),
+                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.green),
                     ),
                   ],
                 ),
@@ -813,7 +814,7 @@ class _StoresScreenState extends State<StoresScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      name,
+                      tr(name),
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
@@ -829,7 +830,7 @@ class _StoresScreenState extends State<StoresScreen>
                           const Icon(Icons.near_me_rounded, size: 10, color: Colors.green),
                           const SizedBox(width: 3),
                           Text(
-                            '${distance.toStringAsFixed(1)} کم',
+                            trf('{0} کم', [distance.toStringAsFixed(1)]),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Colors.green,
@@ -914,7 +915,7 @@ class _StoresScreenState extends State<StoresScreen>
           },
           icon: const Icon(Icons.expand_more_rounded, color: AppColors.primary),
           label: Text(
-            'بینینی زیاتر (${_filteredStores.length - _displayCount} تر)',
+            trf('بینینی زیاتر ({0} تر)', [_filteredStores.length - _displayCount]),
             style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900),
           ),
         ),
@@ -953,7 +954,7 @@ class _StoresScreenState extends State<StoresScreen>
             ),
             const SizedBox(height: 20),
             AutoTranslate(
-              text: _allStores.isEmpty ? 'هیچ شوێنێک نییە' : 'هیچ شوێنێک نەدۆزرایەوە',
+              text: _allStores.isEmpty ? tr('هیچ شوێنێک نییە') : tr('هیچ شوێنێک نەدۆزرایەوە'),
               lang: lang,
               style: TextStyle(
                 fontSize: 16,
@@ -964,7 +965,7 @@ class _StoresScreenState extends State<StoresScreen>
             ),
             const SizedBox(height: 8),
             AutoTranslate(
-              text: _allStores.isEmpty ? 'داتابەیسەکە بەتاڵە — تکایە داتا زیاد بکە' : 'گەڕانەکەت هیچ ئەنجامێکی نەبوو',
+              text: _allStores.isEmpty ? tr('داتابەیسەکە بەتاڵە — تکایە داتا زیاد بکە') : tr('گەڕانەکەت هیچ ئەنجامێکی نەبوو'),
               lang: lang,
               style: TextStyle(
                 fontSize: 12,
@@ -977,7 +978,7 @@ class _StoresScreenState extends State<StoresScreen>
             ElevatedButton.icon(
               onPressed: () => _fetchStores(forceRefresh: true),
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('دووبارە هەوڵ بدە', style: TextStyle(fontWeight: FontWeight.w900)),
+              label: Text(tr('دووبارە هەوڵ بدە'), style: const TextStyle(fontWeight: FontWeight.w900)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -1003,7 +1004,7 @@ class _StoresScreenState extends State<StoresScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Container(
           padding: const EdgeInsets.all(20),
           height: MediaQuery.of(context).size.height * 0.7,
@@ -1021,11 +1022,11 @@ class _StoresScreenState extends State<StoresScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('فلتەرکردن', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+              Text(tr('فلتەرکردن'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
               const SizedBox(height: 20),
 
               // فلتەری حکومی / ناحکومی
-              const Text('جۆری شوێن', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              Text(tr('جۆری شوێن'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -1048,7 +1049,7 @@ class _StoresScreenState extends State<StoresScreen>
               const SizedBox(height: 20),
 
               // فلتەری جۆرەکان
-              const Text('جۆرەکان', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              Text(tr('جۆرەکان'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
               const SizedBox(height: 10),
               Expanded(
                 child: SingleChildScrollView(
@@ -1083,7 +1084,7 @@ class _StoresScreenState extends State<StoresScreen>
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('تەواو', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
+                  child: Text(tr('تەواو'), style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
                 ),
               ),
             ],
@@ -1107,7 +1108,7 @@ class _StoresScreenState extends State<StoresScreen>
           ),
         ),
         child: Text(
-          label,
+          tr(label),
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,

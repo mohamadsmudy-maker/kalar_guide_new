@@ -31,6 +31,7 @@ import 'admin_banners.dart';
 import 'admin_videos.dart';
 // ✅ گەلەری ئەدمین
 import 'admin_gallery.dart';
+import '../../l10n/tr.dart';
 
 part 'admin_dashboard_ui.dart';
 
@@ -411,7 +412,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ? null
           : (failed == results.length
           ? 'نەتوانرا ئامارەکان بهێنرێن. پەیوەندی ئینتەرنێتەکەت بپشکنە.'
-          : 'بەشێک لە ئامارەکان نەهێنران (${_ku(failed)} لە ${_ku(results.length)}).');
+          : trf('بەشێک لە ئامارەکان نەهێنران ({0} لە {1}).', [_ku(failed), _ku(results.length)]));
     });
   }
 
@@ -514,8 +515,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           id: 'complaints',
           icon: Icons.assignment_rounded,
           color: const Color(0xFFEF4444),
-          title: 'بەڕێوەبردنی سکاڵاکان',
-          subtitle: 'بینین و جێبەجێکردنی سکاڵاکان',
+          title: tr('بەڕێوەبردنی سکاڵاکان'),
+          subtitle: tr('بینین و جێبەجێکردنی سکاڵاکان'),
           badge: _pendingComplaints,
           important: _pendingComplaints > 0,
           screen: () => const AdminComplaintsProScreen(),
@@ -524,16 +525,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           id: 'complaints_map',
           icon: Icons.map_rounded,
           color: const Color(0xFFE91E63),
-          title: 'نەخشەی گشتی سکاڵاکان',
-          subtitle: 'بینینی گشت سکاڵاکان لەسەر نەخشە',
+          title: tr('نەخشەی گشتی سکاڵاکان'),
+          subtitle: tr('بینینی گشت سکاڵاکان لەسەر نەخشە'),
           screen: () => const AllComplaintsMapScreen(),
         ),
         _DashItem(
           id: 'complaint_instructions',
           icon: Icons.campaign_rounded,
           color: const Color(0xFFF97316),
-          title: 'ڕێنماییەکانی سکاڵا',
-          subtitle: 'دەستکاری و گۆڕینی پۆپئاپی سکاڵا',
+          title: tr('ڕێنماییەکانی سکاڵا'),
+          subtitle: tr('دەستکاری و گۆڕینی پۆپئاپی سکاڵا'),
           screen: () => const AdminComplaintInstructionsListScreen(),
         ),
       ]),
@@ -542,8 +543,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           id: 'stores',
           icon: Icons.storefront_rounded,
           color: const Color(0xFF3B82F6),
-          title: 'بەڕێوەبردنی شوێنەکان',
-          subtitle: 'سەرجەم شوێنە تۆمارکراوەکان',
+          title: tr('بەڕێوەبردنی شوێنەکان'),
+          subtitle: tr('سەرجەم شوێنە تۆمارکراوەکان'),
           badge: _totalStores,
           screen: () => const AdminStoresScreen(),
         ),
@@ -551,8 +552,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           id: 'departments',
           icon: Icons.business_rounded,
           color: const Color(0xFF10B981),
-          title: 'بەڕێوەبردنی فەرمانگەکان',
-          subtitle: 'زیادکردن و دەستکاری مامەڵەکانی فەرمانگەکان',
+          title: tr('بەڕێوەبردنی فەرمانگەکان'),
+          subtitle: tr('زیادکردن و دەستکاری مامەڵەکانی فەرمانگەکان'),
           badge: _totalDepartments,
           screen: () => const AdminDepartmentsScreen(),
         ),
@@ -560,56 +561,56 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           id: 'categories',
           icon: Icons.category_rounded,
           color: const Color(0xFF8B5CF6),
-          title: 'بەشە سەرەکی و ژێربەشەکان',
-          subtitle: 'زیادکردن و دەستکاری بەشەکان',
+          title: tr('بەشە سەرەکی و ژێربەشەکان'),
+          subtitle: tr('زیادکردن و دەستکاری بەشەکان'),
           screen: () => const AdminCategoriesManagementScreen(),
         ),
         _DashItem(
           id: 'neighborhoods',
           icon: Icons.location_city_rounded,
           color: const Color(0xFF06B6D4),
-          title: 'بەڕێوەبردنی گەڕەکەکان',
-          subtitle: 'زیادکردن و دەستکاری گەڕەکانی کەلار',
+          title: tr('بەڕێوەبردنی گەڕەکەکان'),
+          subtitle: tr('زیادکردن و دەستکاری گەڕەکانی کەلار'),
           screen: () => const AdminNeighborhoodsScreen(),
         ),
         _DashItem(
           id: 'news',
           icon: Icons.newspaper_rounded,
           color: const Color(0xFF6366F1),
-          title: 'بەڕێوەبردنی هەواڵ',
-          subtitle: 'زیادکردن و دەستکاری هەواڵەکان',
+          title: tr('بەڕێوەبردنی هەواڵ'),
+          subtitle: tr('زیادکردن و دەستکاری هەواڵەکان'),
           screen: () => const AdminNewsScreen(),
         ),
         _DashItem(
           id: 'gallery',
           icon: Icons.photo_library_rounded,
           color: const Color(0xFFF59E0B),
-          title: 'بەڕێوەبردنی گەلەری',
-          subtitle: 'زیادکردن و دەستکاریکردنی وێنەکان',
+          title: tr('بەڕێوەبردنی گەلەری'),
+          subtitle: tr('زیادکردن و دەستکاریکردنی وێنەکان'),
           screen: () => const AdminGallery(),
         ),
         _DashItem(
           id: 'banners',
           icon: Icons.slideshow_rounded,
           color: const Color(0xFFE91E63),
-          title: 'ڕێکخستنی سلایدەکان',
-          subtitle: 'ڕێکخستن و گۆڕینی بانەرەکان',
+          title: tr('ڕێکخستنی سلایدەکان'),
+          subtitle: tr('ڕێکخستن و گۆڕینی بانەرەکان'),
           screen: () => const AdminReorderBannersScreen(),
         ),
         _DashItem(
           id: 'videos',
           icon: Icons.video_library_rounded,
           color: const Color(0xFF8B5CF6),
-          title: 'بەڕێوەبردنی ڤیدیۆکان',
-          subtitle: 'زیادکردن و دەستکاری ڤیدیۆکان',
+          title: tr('بەڕێوەبردنی ڤیدیۆکان'),
+          subtitle: tr('زیادکردن و دەستکاری ڤیدیۆکان'),
           screen: () => const AdminVideosScreen(),
         ),
         _DashItem(
           id: 'events',
           icon: Icons.event_rounded,
           color: const Color(0xFF6C5CE7),
-          title: 'ڕووداوەکان',
-          subtitle: 'زیادکردن و دەستکاری ڕووداوەکان',
+          title: tr('ڕووداوەکان'),
+          subtitle: tr('زیادکردن و دەستکاری ڕووداوەکان'),
           screen: () => const AdminEventsScreen(),
         ),
       ]),
@@ -618,40 +619,40 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           id: 'emergency',
           icon: Icons.emergency_rounded,
           color: const Color(0xFFDC2626),
-          title: 'بەڕێوەبردنی فریاکەوتن',
-          subtitle: 'ژمارەکانی فریاکەوتن',
+          title: tr('بەڕێوەبردنی فریاکەوتن'),
+          subtitle: tr('ژمارەکانی فریاکەوتن'),
           screen: () => const AdminEmergencyServicesScreen(),
         ),
         _DashItem(
           id: 'fuel',
           icon: Icons.local_gas_station_rounded,
           color: const Color(0xFFFFD700),
-          title: 'بەڕێوەبردنی سووتەمەنی',
-          subtitle: 'نوێکردنەوەی نرخی بەنزین و گاز',
+          title: tr('بەڕێوەبردنی سووتەمەنی'),
+          subtitle: tr('نوێکردنەوەی نرخی بەنزین و گاز'),
           screen: () => const AdminFuelStationsScreen(),
         ),
         _DashItem(
           id: 'currency',
           icon: Icons.attach_money_rounded,
           color: const Color(0xFF10B981),
-          title: 'بەڕێوەبردنی دراوەکان',
-          subtitle: 'نوێکردنەوەی نرخی دۆلار و زێڕ',
+          title: tr('بەڕێوەبردنی دراوەکان'),
+          subtitle: tr('نوێکردنەوەی نرخی دۆلار و زێڕ'),
           screen: () => const AdminCurrencyStationsScreen(),
         ),
         _DashItem(
           id: 'weather',
           icon: Icons.cloud_rounded,
           color: const Color(0xFF3B82F6),
-          title: 'بەڕێوەبردنی کەشوهەوا',
-          subtitle: 'نوێکردنەوەی پلەی گەرما و دۆخ',
+          title: tr('بەڕێوەبردنی کەشوهەوا'),
+          subtitle: tr('نوێکردنەوەی پلەی گەرما و دۆخ'),
           screen: () => const AdminWeatherScreen(),
         ),
         _DashItem(
           id: 'prayer_times',
           icon: Icons.mosque_rounded,
           color: const Color(0xFF10B981),
-          title: 'کاتەکانی نوێژ',
-          subtitle: 'دەستکاری یان پەیستکردنی خشتەی ئامۆژگاری',
+          title: tr('کاتەکانی نوێژ'),
+          subtitle: tr('دەستکاری یان پەیستکردنی خشتەی ئامۆژگاری'),
           adminOnly: true,
           screen: () => const AdminPrayerTimesScreen(),
         ),
@@ -661,16 +662,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           id: 'notifications',
           icon: Icons.notifications_active_rounded,
           color: const Color(0xFFF59E0B),
-          title: 'ناردنی ئاگاداری',
-          subtitle: 'ناردنی ئاگاداری بۆ بەکارهێنەران',
+          title: tr('ناردنی ئاگاداری'),
+          subtitle: tr('ناردنی ئاگاداری بۆ بەکارهێنەران'),
           screen: () => const AdminNotificationsScreen(),
         ),
         _DashItem(
           id: 'vendor_requests',
           icon: Icons.assignment_ind_rounded,
           color: const Color(0xFF8B5CF6),
-          title: 'داوکاری ئەدمینەکان',
-          subtitle: 'پەسەندکردنی ئەدمینە نوێکان',
+          title: tr('داوکاری ئەدمینەکان'),
+          subtitle: tr('پەسەندکردنی ئەدمینە نوێکان'),
           badge: _pendingRequests,
           important: _pendingRequests > 0,
           adminOnly: true,
@@ -680,8 +681,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           id: 'database',
           icon: Icons.storage_rounded,
           color: const Color(0xFF3B82F6),
-          title: 'خشتەکانی داتابەیس',
-          subtitle: 'بینینی گشت خشتەکانی داتابەیس',
+          title: tr('خشتەکانی داتابەیس'),
+          subtitle: tr('بینینی گشت خشتەکانی داتابەیس'),
           adminOnly: true,
           screen: () => const AdminDatabaseViewerScreen(),
         ),
@@ -726,7 +727,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     final searching = _searchQuery.isNotEmpty;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: p.bg,
         body: RefreshIndicator(
@@ -770,7 +771,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       const SizedBox(height: 12),
                       _buildAttentionBanner(p, isAdmin),
                       const SizedBox(height: 20),
-                      _buildSectionHeader('📊 ئامارە سەرەکییەکان', p,
+                      _buildSectionHeader(tr('📊 ئامارە سەرەکییەکان'), p,
                           itemIndex: 2),
                       const SizedBox(height: 12),
                       _buildStatsGrid(p, isAdmin),
@@ -834,7 +835,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 fontWeight: FontWeight.w600,
               ),
               decoration: InputDecoration(
-                hintText: 'گەڕان لە پانێڵ...',
+                hintText: tr('گەڕان لە پانێڵ...'),
                 hintStyle: TextStyle(
                   fontSize: 12,
                   color: p.isDark ? Colors.white38 : Colors.grey,
@@ -845,7 +846,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           ),
           if (_searchQuery.isNotEmpty)
             IconButton(
-              tooltip: 'سڕینەوەی گەڕان',
+              tooltip: tr('سڕینەوەی گەڕان'),
               icon: Icon(Icons.close_rounded, size: 18, color: p.textSub),
               onPressed: () {
                 _searchCtrl.clear();
@@ -867,7 +868,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           Icon(Icons.search_off_rounded, size: 52, color: p.textSub),
           const SizedBox(height: 10),
           Text(
-            'هیچ ئەنجامێک نەدۆزرایەوە',
+            tr('هیچ ئەنجامێک نەدۆزرایەوە'),
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 14,
@@ -880,7 +881,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               _searchCtrl.clear();
               setState(() => _searchQuery = '');
             },
-            child: const Text('سڕینەوەی گەڕان'),
+            child: Text(tr('سڕینەوەی گەڕان')),
           ),
         ],
       ),
@@ -912,7 +913,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               Icon(Icons.history_rounded, size: 16, color: p.textSub),
               const SizedBox(width: 6),
               Text(
-                'دوایین بەکارهاتوو',
+                tr('دوایین بەکارهاتوو'),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -931,7 +932,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   padding:
                   const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   child: Text(
-                    'پاککردنەوە',
+                    tr('پاککردنەوە'),
                     style: TextStyle(fontSize: 11, color: p.textSub),
                   ),
                 ),
@@ -972,7 +973,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 150),
                             child: Text(
-                              item.title,
+                              tr(item.title),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -1023,7 +1024,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             size: 18,
           ),
           label: Text(
-            allOpen ? 'داخستنی هەموو بەشەکان' : 'کردنەوەی هەموو بەشەکان',
+            tr(allOpen ? 'داخستنی هەموو بەشەکان' : 'کردنەوەی هەموو بەشەکان'),
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
           ),
         ),
@@ -1081,7 +1082,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                     children: [
                       Expanded(
                         child: Text(
-                          section.title,
+                          tr(section.title),
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
@@ -1099,7 +1100,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          _ku(section.items.length),
+                          tr(_ku(section.items.length)),
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w900,

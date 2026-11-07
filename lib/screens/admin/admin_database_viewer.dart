@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 🗄️ شاشەی بەڕێوەبردنی داتابەیس (Secure Edition)
 ///
@@ -195,7 +196,7 @@ class _AdminDatabaseViewerScreenState
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: DraggableScrollableSheet(
           initialChildSize: 0.85,
           maxChildSize: 0.95,
@@ -239,9 +240,9 @@ class _AdminDatabaseViewerScreenState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              "وردەکاری تۆمار",
-                              style: TextStyle(
+                            Text(
+                              tr("وردەکاری تۆمار"),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 16,
                                 color: Color(0xFF1A1A2E),
@@ -249,7 +250,7 @@ class _AdminDatabaseViewerScreenState
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              "$tableName • ${row.length} ستوون",
+                              trf("{0} • {1} ستوون", [tableName, row.length]),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey.shade600,
@@ -300,9 +301,9 @@ class _AdminDatabaseViewerScreenState
                       ),
                       onPressed: () => Navigator.pop(ctx),
                       icon: const Icon(Icons.check_rounded),
-                      label: const Text(
-                        "باشە",
-                        style: TextStyle(
+                      label: Text(
+                        tr("باشە"),
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
@@ -377,7 +378,7 @@ class _AdminDatabaseViewerScreenState
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    key,
+                    tr(key),
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 12,
@@ -398,14 +399,14 @@ class _AdminDatabaseViewerScreenState
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    isNull
+                    tr(isNull
                         ? 'NULL'
                         : value.runtimeType
                         .toString()
                         .replaceAll('_', ' ')
                         .split(' ')
                         .last
-                        .toUpperCase(),
+                        .toUpperCase()),
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w900,
@@ -421,7 +422,7 @@ class _AdminDatabaseViewerScreenState
             child: isImage
                 ? _buildImageValue(valueStr)
                 : Text(
-              isNull ? '— بەتاڵ —' : valueStr,
+              tr(isNull ? '— بەتاڵ —' : valueStr),
               style: TextStyle(
                 fontSize: 13,
                 color: isNull ? Colors.red.shade400 : Colors.black87,
@@ -468,7 +469,7 @@ class _AdminDatabaseViewerScreenState
         ),
         const SizedBox(height: 8),
         Text(
-          imageUrl,
+          tr(imageUrl),
           style: const TextStyle(
             fontSize: 10,
             color: Colors.blue,
@@ -488,7 +489,7 @@ class _AdminDatabaseViewerScreenState
     final tableName = _getTableName();
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F6F9),
         body: CustomScrollView(
@@ -502,7 +503,7 @@ class _AdminDatabaseViewerScreenState
               actions: [
                 IconButton(
                   icon: const Icon(Icons.refresh_rounded),
-                  tooltip: "نوێکردنەوە",
+                  tooltip: tr("نوێکردنەوە"),
                   onPressed: _fetchTableData,
                 ),
               ],
@@ -542,9 +543,9 @@ class _AdminDatabaseViewerScreenState
                                   crossAxisAlignment:
                                   CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "بەڕێوەبردنی داتابەیس",
-                                      style: TextStyle(
+                                    Text(
+                                      tr("بەڕێوەبردنی داتابەیس"),
+                                      style: const TextStyle(
                                         fontWeight: FontWeight.w900,
                                         fontSize: 18,
                                         color: Colors.white,
@@ -552,7 +553,7 @@ class _AdminDatabaseViewerScreenState
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      "خشتەی: $tableName",
+                                      trf("خشتەی: {0}", [tableName]),
                                       style: const TextStyle(
                                         fontSize: 11,
                                         color: Colors.white70,
@@ -637,7 +638,7 @@ class _AdminDatabaseViewerScreenState
                     ),
                     decoration: InputDecoration(
                       hintText:
-                      "گەڕان لەناو سەرجەم ستوونەکانی ئەم خشتەیە...",
+                      tr("گەڕان لەناو سەرجەم ستوونەکانی ئەم خشتەیە..."),
                       hintStyle: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -763,7 +764,7 @@ class _AdminDatabaseViewerScreenState
             ),
             const SizedBox(height: 6),
             Text(
-              name,
+              tr(name),
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -788,7 +789,7 @@ class _AdminDatabaseViewerScreenState
         row['name_ku'] ??
         row['title_ku'] ??
         row['customer_name'] ??
-        'تۆماری #${index + 1}';
+        trf('تۆماری #{0}', [index + 1]);
 
     String mainSubtitle = row['address'] ??
         row['description'] ??
@@ -861,7 +862,7 @@ class _AdminDatabaseViewerScreenState
                     if (mainSubtitle.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
-                        mainSubtitle,
+                        tr(mainSubtitle),
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade600,
@@ -928,9 +929,9 @@ class _AdminDatabaseViewerScreenState
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "هیچ زانیارییەک نەدۆزرایەوە 📭",
-            style: TextStyle(
+          Text(
+            tr("هیچ زانیارییەک نەدۆزرایەوە 📭"),
+            style: const TextStyle(
               color: Colors.grey,
               fontWeight: FontWeight.bold,
               fontSize: 14,
@@ -939,7 +940,7 @@ class _AdminDatabaseViewerScreenState
           if (_searchQuery.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              "گەڕانەکەت هیچ ئەنجامێکی نەبوو",
+              tr("گەڕانەکەت هیچ ئەنجامێکی نەبوو"),
               style: TextStyle(
                 color: Colors.grey.shade500,
                 fontSize: 12,

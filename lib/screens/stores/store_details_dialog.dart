@@ -7,6 +7,7 @@ import '../../config/settings_provider.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'store_news_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 🏪 دیالۆگی وردەکاری شوێن — ULTRA PRO V3
 ///
@@ -70,7 +71,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
     messenger.showSnackBar(
       SnackBar(
         content: Text(
-          message,
+          tr(message),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: color,
@@ -189,7 +190,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
     final subTextColor = isDark ? Colors.white70 : Colors.black87;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(28),
@@ -462,7 +463,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                 CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "ناونیشان",
+                                    tr("ناونیشان"),
                                     style: TextStyle(
                                       fontSize: 10,
                                       color: isDark
@@ -526,7 +527,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                           size: 18),
                                       const SizedBox(width: 8),
                                       Text(
-                                        phone,
+                                        tr(phone),
                                         style: TextStyle(
                                           color: isDark
                                               ? Colors.green.shade300
@@ -613,7 +614,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                     CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "شوێنمان لەسەر نەخشە",
+                                        tr("شوێنمان لەسەر نەخشە"),
                                         style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w900,
@@ -621,7 +622,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        "کرتە بکە بۆ بینینی GPS 📍",
+                                        tr("کرتە بکە بۆ بینینی GPS 📍"),
                                         style: TextStyle(
                                             fontSize: 10,
                                             color: isDark
@@ -652,14 +653,14 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
-                                  Icon(Icons.description_outlined,
+                                  const Icon(Icons.description_outlined,
                                       size: 14, color: AppColors.primary),
-                                  SizedBox(width: 6),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    "وەسف و وردەکاری",
-                                    style: TextStyle(
+                                    tr("وەسف و وردەکاری"),
+                                    style: const TextStyle(
                                         fontSize: 11,
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.w900),
@@ -697,7 +698,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                           icon: const Icon(Icons.storefront_rounded,
                               size: 22),
                           label: AutoTranslate(
-                            text: "سەردانی $rawName",
+                            text: trf("سەردانی {0}", [rawName]),
                             lang: lang,
                             style: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w900),

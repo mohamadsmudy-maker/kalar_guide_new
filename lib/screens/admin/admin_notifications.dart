@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 🔔 شاشەی ناردنی ئاگاداری — بە Supabase Edge Function
 class AdminNotificationsScreen extends StatefulWidget {
@@ -27,8 +28,8 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   Future<void> _sendNotification() async {
     if (_titleCtrl.text.trim().isEmpty || _bodyCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تکایە ناونیشان و دەق پڕبکەرەوە ⚠"),
+        SnackBar(
+          content: Text(tr("تکایە ناونیشان و دەق پڕبکەرەوە ⚠")),
           backgroundColor: Colors.orange,
         ),
       );
@@ -63,7 +64,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "✅ ئاگاداری نێردرا بۆ $sentCount بەکارهێنەر",
+              trf("✅ ئاگاداری نێردرا بۆ {0} بەکارهێنەر", [sentCount]),
             ),
             backgroundColor: Colors.green,
           ),
@@ -76,7 +77,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("هەڵە: $e"),
+            content: Text(trf("هەڵە: {0}", [e])),
             backgroundColor: Colors.red,
           ),
         );
@@ -91,14 +92,14 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF7F5F8),
         appBar: AppBar(
-          title: const Text(
-            "ناردنی ئاگاداری 🔔",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          title: Text(
+            tr("ناردنی ئاگاداری 🔔"),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -127,7 +128,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                   decoration: InputDecoration(
-                    labelText: "ناونیشان *",
+                    labelText: tr("ناونیشان *"),
                     prefixIcon: const Icon(
                       Icons.title_rounded,
                       color: AppColors.primary,
@@ -148,7 +149,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                   decoration: InputDecoration(
-                    labelText: "دەق *",
+                    labelText: tr("دەق *"),
                     alignLabelWithHint: true,
                     prefixIcon: const Icon(
                       Icons.description_rounded,
@@ -166,7 +167,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
 
                 // 🎯 هەڵبژاردنی ئامانج
                 Text(
-                  "ئامانج",
+                  tr("ئامانج"),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -212,9 +213,9 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     ),
                     onPressed: _sendNotification,
                     icon: const Icon(Icons.send_rounded),
-                    label: const Text(
-                      "ناردن ✅",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    label: Text(
+                      tr("ناردن ✅"),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -258,7 +259,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             ),
             const SizedBox(width: 6),
             Text(
-              label,
+              tr(label),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,

@@ -8,6 +8,7 @@ import '../../models/review.dart';
 import '../../services/auth_service.dart';
 import '../../services/review_service.dart';
 import '../../widgets/reviews/rating_stars.dart';
+import '../../l10n/tr.dart';
 
 /// ✍️ شاشەی نووسین / دەستکاریکردنی کۆمێنت
 class AddReviewScreen extends StatefulWidget {
@@ -64,13 +65,13 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     // ✅ پشکنینی چوونەژوورەوە
     final user = AuthSessionManager.currentUser;
     if (user == null) {
-      _showSnack('تکایە سەرەتا بچۆ ژوورەوە ⚠', Colors.orange);
+      _showSnack(tr('تکایە سەرەتا بچۆ ژوورەوە ⚠'), Colors.orange);
       return;
     }
 
     // ✅ پشکنینی Rating
     if (_rating < 1 || _rating > 5) {
-      _showSnack('تکایە ئەستێرەیەک هەڵبژێرە ⭐', Colors.orange);
+      _showSnack(tr('تکایە ئەستێرەیەک هەڵبژێرە ⭐'), Colors.orange);
       return;
     }
 
@@ -101,9 +102,9 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                     color: Colors.white, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  widget.existingReview != null
+                  tr(widget.existingReview != null
                       ? '✅ کۆمێنتەکەت نوێکرایەوە'
-                      : '✅ سوپاس بۆ هەڵسەنگاندنەکەت!',
+                      : '✅ سوپاس بۆ هەڵسەنگاندنەکەت!'),
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -124,7 +125,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     } catch (e) {
       debugPrint('❌ submit review error: $e');
       if (mounted) {
-        _showSnack('هەڵە: $e', Colors.red);
+        _showSnack(trf('هەڵە: {0}', [e]), Colors.red);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -136,7 +137,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          msg,
+          tr(msg),
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -168,7 +169,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
-            isEditing ? 'دەستکاری کۆمێنت' : 'نووسینی کۆمێنت',
+            tr(isEditing ? 'دەستکاری کۆمێنت' : 'نووسینی کۆمێنت'),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 17,
@@ -183,7 +184,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           actions: [
             if (isEditing)
               IconButton(
-                tooltip: 'سڕینەوە',
+                tooltip: tr('سڕینەوە'),
                 icon: const Icon(Icons.delete_outline_rounded),
                 onPressed: _loading ? null : _confirmDelete,
               ),
@@ -287,7 +288,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'تۆ هەڵسەنگاندن دەکەیت بۆ:',
+                  tr('تۆ هەڵسەنگاندن دەکەیت بۆ:'),
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? Colors.white54 : Colors.grey.shade600,
@@ -296,7 +297,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  widget.storeName,
+                  tr(widget.storeName),
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 15,
@@ -335,7 +336,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
       child: Column(
         children: [
           Text(
-            'چەند ئەستێرە دەدەیت؟',
+            tr('چەند ئەستێرە دەدەیت؟'),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -370,7 +371,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
               ),
             ),
             child: Text(
-              _getRatingLabel(_rating),
+              tr(_getRatingLabel(_rating)),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
@@ -399,7 +400,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
             ),
             const SizedBox(width: 6),
             Text(
-              'کۆمێنت',
+              tr('کۆمێنت'),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
@@ -408,7 +409,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
             ),
             const SizedBox(width: 6),
             Text(
-              '(ئارەزوومەندانە)',
+              tr('(ئارەزوومەندانە)'),
               style: TextStyle(
                 fontSize: 10,
                 color: isDark ? Colors.white38 : Colors.grey,
@@ -443,8 +444,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           ),
           decoration: InputDecoration(
             hintText:
-            'ئەزموونی خۆت لەگەڵ ئەم شوێنە باس بکە...\n'
-                'چی باش بوو؟ چی خراپ بوو؟',
+            tr('ئەزموونی خۆت لەگەڵ ئەم شوێنە باس بکە...\nچی باش بوو؟ چی خراپ بوو؟'),
             hintStyle: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white30 : Colors.grey.shade400,
@@ -503,9 +503,9 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           size: 22,
         ),
         label: Text(
-          _loading
+          tr(_loading
               ? 'خەریکی ناردن...'
-              : (isEditing ? 'نوێکردنەوە' : 'ناردنی کۆمێنت'),
+              : (isEditing ? 'نوێکردنەوە' : 'ناردنی کۆمێنت')),
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -556,11 +556,10 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text(
-              'کۆمێنتی ڕاستەقینە و بەسوود یارمەتی بەکارهێنەرانی تر دەدات '
-                  'بۆ هەڵبژاردنی باشترین شوێن.',
-              style: TextStyle(
+              tr('کۆمێنتی ڕاستەقینە و بەسوود یارمەتی بەکارهێنەرانی تر دەدات بۆ هەڵبژاردنی باشترین شوێن.'),
+              style: const TextStyle(
                 fontSize: 11,
                 color: Color(0xFFB8860B),
                 height: 1.5,
@@ -580,29 +579,28 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red),
-              SizedBox(width: 8),
+              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const SizedBox(width: 8),
               Text(
-                'سڕینەوەی کۆمێنت',
-                style: TextStyle(fontWeight: FontWeight.w900),
+                tr('سڕینەوەی کۆمێنت'),
+                style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ],
           ),
-          content: const Text(
-            'ئایا دڵنیایت لە سڕینەوەی کۆمێنتەکەت؟\n'
-                'ئەم کارە ناگەڕێتەوە.',
+          content: Text(
+            tr('ئایا دڵنیایت لە سڕینەوەی کۆمێنتەکەت؟\nئەم کارە ناگەڕێتەوە.'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -614,9 +612,9 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
               ),
               onPressed: () => Navigator.pop(ctx, true),
               icon: const Icon(Icons.delete_rounded, size: 18),
-              label: const Text(
-                'بەڵێ، بیسڕەوە',
-                style: TextStyle(fontWeight: FontWeight.w900),
+              label: Text(
+                tr('بەڵێ، بیسڕەوە'),
+                style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
           ],
@@ -637,9 +635,9 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
         HapticFeedback.heavyImpact();
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ کۆمێنت سڕایەوە'),
-            backgroundColor: Color(0xFF10B981),
+          SnackBar(
+            content: Text(tr('✅ کۆمێنت سڕایەوە')),
+            backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
           ),
         );

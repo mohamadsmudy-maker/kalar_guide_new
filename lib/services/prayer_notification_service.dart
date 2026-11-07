@@ -5,6 +5,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'prayer/prayer_reminders.dart';
+import '../l10n/tr.dart';
 
 class PrayerNotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
@@ -192,7 +193,7 @@ class PrayerNotificationService {
         ongoing: false,
         autoCancel: true,
         styleInformation: BigTextStyleInformation(
-          'کاتی ${prayerName}ـە. تکایە بۆ نوێژ ئامادە بە. 🕌',
+          trf('کاتی {0}ـە. تکایە بۆ نوێژ ئامادە بە. 🕌', [prayerName]),
         ),
       );
 
@@ -210,8 +211,8 @@ class PrayerNotificationService {
 
       await _notifications.zonedSchedule(
         id,
-        '🕌 کاتی $prayerName',
-        'کاتی ${prayerName}ـە. تکایە بۆ نوێژ ئامادە بە.',
+        trf('🕌 کاتی {0}', [prayerName]),
+        trf('کاتی {0}ـە. تکایە بۆ نوێژ ئامادە بە.', [prayerName]),
         tzScheduled,
         details,
         androidScheduleMode: scheduleMode,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 🎬 شاشەی بەڕێوەبردنی ڤیدیۆکان
 class AdminVideosScreen extends StatefulWidget {
@@ -50,17 +51,17 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text("سڕینەوەی ڤیدیۆ"),
-          content: const Text("ئایا دڵنیایت لە سڕینەوەی ئەم ڤیدیۆیە؟"),
+          title: Text(tr("سڕینەوەی ڤیدیۆ")),
+          content: Text(tr("ئایا دڵنیایت لە سڕینەوەی ئەم ڤیدیۆیە؟")),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text("نەخێر"),
+              child: Text(tr("نەخێر")),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -68,7 +69,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("سڕینەوە"),
+              child: Text(tr("سڕینەوە")),
             ),
           ],
         ),
@@ -89,8 +90,8 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("ڤیدیۆکە سڕایەوە 🗑️"),
+          SnackBar(
+            content: Text(tr("ڤیدیۆکە سڕایەوە 🗑️")),
             backgroundColor: Colors.green,
           ),
         );
@@ -99,7 +100,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
       debugPrint('❌ Delete video error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -122,13 +123,13 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F5F8),
         appBar: AppBar(
-          title: const Text(
-            "بەڕێوەبردنی ڤیدیۆکان 🎬",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          title: Text(
+            tr("بەڕێوەبردنی ڤیدیۆکان 🎬"),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -139,10 +140,10 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
           child: CircularProgressIndicator(color: AppColors.primary),
         )
             : _videosList.isEmpty
-            ? const Center(
+            ? Center(
           child: Text(
-            "هیچ ڤیدیۆیەکی تۆمارکراو نییە 📭",
-            style: TextStyle(color: Colors.grey),
+            tr("هیچ ڤیدیۆیەکی تۆمارکراو نییە 📭"),
+            style: const TextStyle(color: Colors.grey),
           ),
         )
             : ListView.builder(
@@ -176,14 +177,14 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
                   ),
                 ),
                 title: Text(
-                  vid['title'] ?? '',
+                  tr(vid['title'] ?? ''),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
                 subtitle: Text(
-                  vid['description'] ?? '',
+                  tr(vid['description'] ?? ''),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -270,8 +271,8 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
   Future<void> _save() async {
     if (_titleCtrl.text.trim().isEmpty || _urlCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تکایە ناونیشان و لینکی ڤیدیۆ پڕبکەرەوە ⚠"),
+        SnackBar(
+          content: Text(tr("تکایە ناونیشان و لینکی ڤیدیۆ پڕبکەرەوە ⚠")),
           backgroundColor: Colors.orange,
         ),
       );
@@ -299,8 +300,8 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
       if (mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("پاشەکەوتکرا ✅"),
+          SnackBar(
+            content: Text(tr("پاشەکەوتکرا ✅")),
             backgroundColor: Colors.green,
           ),
         );
@@ -309,7 +310,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
       debugPrint('❌ Save video error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -321,12 +322,12 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
   Widget build(BuildContext context) {
     final isEditing = widget.videoToEdit != null;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F5F8),
         appBar: AppBar(
           title: Text(
-            isEditing ? "دەستکاریکردنی ڤیدیۆ ✏️" : "زیادکردنی ڤیدیۆ 🎬",
+            tr(isEditing ? "دەستکاریکردنی ڤیدیۆ ✏️" : "زیادکردنی ڤیدیۆ 🎬"),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           backgroundColor: AppColors.primary,
@@ -347,7 +348,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
                 TextField(
                   controller: _titleCtrl,
                   decoration: InputDecoration(
-                    labelText: "ناونیشانی ڤیدیۆ *",
+                    labelText: tr("ناونیشانی ڤیدیۆ *"),
                     prefixIcon: const Icon(
                       Icons.title_rounded,
                       color: AppColors.primary,
@@ -361,7 +362,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
                 TextField(
                   controller: _urlCtrl,
                   decoration: InputDecoration(
-                    labelText: "لینکی ڤیدیۆ (YouTube) *",
+                    labelText: tr("لینکی ڤیدیۆ (YouTube) *"),
                     prefixIcon: const Icon(
                       Icons.link_rounded,
                       color: AppColors.primary,
@@ -376,7 +377,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
                   controller: _descCtrl,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    labelText: "وەسفی ڤیدیۆ",
+                    labelText: tr("وەسفی ڤیدیۆ"),
                     alignLabelWithHint: true,
                     prefixIcon: const Icon(
                       Icons.description_rounded,
@@ -403,7 +404,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
                     ),
                     onPressed: _save,
                     child: Text(
-                      isEditing ? "نوێکردنەوە ✅" : "بڵاوکردنەوە ✅",
+                      tr(isEditing ? "نوێکردنەوە ✅" : "بڵاوکردنەوە ✅"),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../config/app_colors.dart';
 import '../../models/emergency_service.dart';
 import '../../services/emergency_repository.dart';
+import '../../l10n/tr.dart';
 
 /// 🚑 پانێڵی بەڕێوەبردنی فریاکەوتن — ULTRA PRO
 class AdminEmergencyServicesScreen extends StatefulWidget {
@@ -75,7 +76,7 @@ class _AdminEmergencyServicesScreenState
         _loadData();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(service == null ? '✅ زیادکرا' : '✅ نوێکرایەوە'),
+            content: Text(tr(service == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -84,7 +85,7 @@ class _AdminEmergencyServicesScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(trf('هەڵە: {0}', [e])),
             backgroundColor: Colors.red,
           ),
         );
@@ -96,23 +97,23 @@ class _AdminEmergencyServicesScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red),
-              SizedBox(width: 8),
-              Text('سڕینەوە', style: TextStyle(fontWeight: FontWeight.w900)),
+              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const SizedBox(width: 8),
+              Text(tr('سڕینەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
             ],
           ),
-          content: Text('ئایا دڵنیایت لە سڕینەوەی "${service.nameKu}"؟'),
+          content: Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [service.nameKu])),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -124,7 +125,7 @@ class _AdminEmergencyServicesScreenState
               ),
               onPressed: () => Navigator.pop(ctx, true),
               icon: const Icon(Icons.delete_rounded, size: 18),
-              label: const Text('بەڵێ، بیسڕەوە'),
+              label: Text(tr('بەڵێ، بیسڕەوە')),
             ),
           ],
         ),
@@ -139,8 +140,8 @@ class _AdminEmergencyServicesScreenState
       _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ سڕایەوە'),
+          SnackBar(
+            content: Text(tr('✅ سڕایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -149,7 +150,7 @@ class _AdminEmergencyServicesScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(trf('هەڵە: {0}', [e])),
             backgroundColor: Colors.red,
           ),
         );
@@ -162,7 +163,7 @@ class _AdminEmergencyServicesScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
@@ -171,9 +172,9 @@ class _AdminEmergencyServicesScreenState
           backgroundColor: const Color(0xFFDC2626),
           foregroundColor: Colors.white,
           centerTitle: true,
-          title: const Text(
-            'بەڕێوەبردنی فریاکەوتن',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+          title: Text(
+            tr('بەڕێوەبردنی فریاکەوتن'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           ),
           actions: [
             IconButton(
@@ -223,9 +224,9 @@ class _AdminEmergencyServicesScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'کۆی ژمارەکان',
-                          style: TextStyle(
+                        Text(
+                          tr('کۆی ژمارەکان'),
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -271,7 +272,7 @@ class _AdminEmergencyServicesScreenState
                     fontWeight: FontWeight.w600,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'گەڕان...',
+                    hintText: tr('گەڕان...'),
                     hintStyle: TextStyle(
                       fontSize: 13,
                       color: isDark ? Colors.white38 : Colors.grey,
@@ -321,9 +322,9 @@ class _AdminEmergencyServicesScreenState
           backgroundColor: const Color(0xFFDC2626),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            'زیادکردنی نوێ',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          label: Text(
+            tr('زیادکردنی نوێ'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         ),
       ),
@@ -368,7 +369,7 @@ class _AdminEmergencyServicesScreenState
           ),
         ),
         title: Text(
-          service.nameKu,
+          tr(service.nameKu),
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 14,
@@ -382,7 +383,7 @@ class _AdminEmergencyServicesScreenState
               Icon(Icons.phone_rounded, size: 12, color: color),
               const SizedBox(width: 4),
               Text(
-                service.phone,
+                tr(service.phone),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -400,7 +401,7 @@ class _AdminEmergencyServicesScreenState
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  service.category,
+                  tr(service.category),
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
@@ -455,7 +456,7 @@ class _AdminEmergencyServicesScreenState
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ ژمارەیەک نییە',
+            tr('هیچ ژمارەیەک نییە'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w900,
@@ -464,7 +465,7 @@ class _AdminEmergencyServicesScreenState
           ),
           const SizedBox(height: 6),
           Text(
-            'دوگمەی خوارەوە بەکاربهێنە بۆ زیادکردن',
+            tr('دوگمەی خوارەوە بەکاربهێنە بۆ زیادکردن'),
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white54 : Colors.grey,
@@ -605,8 +606,8 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
     if (_nameKuCtrl.text.trim().isEmpty ||
         _phoneCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ناو و ژمارە پێویستن'),
+        SnackBar(
+          content: Text(tr('ناو و ژمارە پێویستن')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -653,7 +654,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
     final isEditing = widget.service != null;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.92,
@@ -701,7 +702,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      isEditing ? 'دەستکاریکردن' : 'زیادکردنی نوێ',
+                      tr(isEditing ? 'دەستکاریکردن' : 'زیادکردنی نوێ'),
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
@@ -728,7 +729,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ═══ Category ═══
-                    _buildSectionTitle('کاتێگۆری', isDark),
+                    _buildSectionTitle(tr('کاتێگۆری'), isDark),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -770,7 +771,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                               ),
                             ),
                             child: Text(
-                              cat['label']!,
+                              tr(cat['label']!),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w900,
@@ -788,17 +789,17 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                     const SizedBox(height: 16),
 
                     // ═══ Fields ═══
-                    _buildField('ناوی کوردی *', _nameKuCtrl, isDark),
+                    _buildField(tr('ناوی کوردی *'), _nameKuCtrl, isDark),
                     const SizedBox(height: 10),
-                    _buildField('ناوی عەرەبی', _nameArCtrl, isDark),
+                    _buildField(tr('ناوی عەرەبی'), _nameArCtrl, isDark),
                     const SizedBox(height: 10),
-                    _buildField('ناوی ئینگلیزی', _nameEnCtrl, isDark),
+                    _buildField(tr('ناوی ئینگلیزی'), _nameEnCtrl, isDark),
                     const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
                           child: _buildField(
-                            'ژمارەی سەرەکی *',
+                            tr('ژمارەی سەرەکی *'),
                             _phoneCtrl,
                             isDark,
                             keyboard: TextInputType.phone,
@@ -807,7 +808,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: _buildField(
-                            'ژمارەی یەدەگ',
+                            tr('ژمارەی یەدەگ'),
                             _phoneAltCtrl,
                             isDark,
                             keyboard: TextInputType.phone,
@@ -816,16 +817,16 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    _buildField('ناونیشان', _addressCtrl, isDark),
+                    _buildField(tr('ناونیشان'), _addressCtrl, isDark),
                     const SizedBox(height: 10),
                     _buildField(
-                      'ناوی فەرمانگە',
+                      tr('ناوی فەرمانگە'),
                       _authorityCtrl,
                       isDark,
                     ),
                     const SizedBox(height: 10),
                     _buildField(
-                      'تێبینی',
+                      tr('تێبینی'),
                       _notesCtrl,
                       isDark,
                       maxLines: 2,
@@ -833,7 +834,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                     const SizedBox(height: 20),
 
                     // ═══ Icon ═══
-                    _buildSectionTitle('ئایکۆن', isDark),
+                    _buildSectionTitle(tr('ئایکۆن'), isDark),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -888,7 +889,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                     const SizedBox(height: 20),
 
                     // ═══ Color ═══
-                    _buildSectionTitle('ڕەنگ', isDark),
+                    _buildSectionTitle(tr('ڕەنگ'), isDark),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 10,
@@ -1008,7 +1009,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                     size: 22,
                   ),
                   label: Text(
-                    isEditing ? 'نوێکردنەوە' : 'زیادکردن',
+                    tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 15,
@@ -1038,7 +1039,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w900,
@@ -1133,7 +1134,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  title,
+                  tr(title),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
@@ -1143,7 +1144,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    subtitle,
+                    tr(subtitle),
                     style: TextStyle(
                       fontSize: 10,
                       color: isDark ? Colors.white54 : Colors.grey,

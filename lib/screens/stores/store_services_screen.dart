@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/store_service.dart';
 import '../../services/store_service_service.dart';
 import 'service_details_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 📋 شاشەی لیستی مامەڵەکانی شوێن
 class StoreServicesScreen extends StatefulWidget {
@@ -44,13 +45,13 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
-            'مامەڵەکانی ${widget.storeName}',
+            trf('مامەڵەکانی {0}', [widget.storeName]),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 15,
@@ -161,7 +162,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    service.titleKu,
+                    tr(service.titleKu),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -175,7 +176,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
                       service.description!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      service.description!,
+                      tr(service.description!),
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark ? Colors.white54 : Colors.grey.shade600,
@@ -192,7 +193,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
                       if (service.fees.isNotEmpty)
                         _buildSmallBadge(
                           Icons.attach_money_rounded,
-                          '${service.fees.length} تێچوو',
+                          trf('{0} تێچوو', [service.fees.length]),
                           const Color(0xFF10B981),
                         ),
                       const SizedBox(width: 6),
@@ -200,7 +201,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
                       if (service.requirements.isNotEmpty)
                         _buildSmallBadge(
                           Icons.checklist_rounded,
-                          '${service.requirements.length} پێداویستی',
+                          trf('{0} پێداویستی', [service.requirements.length]),
                           const Color(0xFF8B5CF6),
                         ),
                     ],
@@ -234,7 +235,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
           Icon(icon, size: 11, color: color),
           const SizedBox(width: 3),
           Text(
-            label,
+            tr(label),
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w900,
@@ -286,7 +287,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ مامەڵەیەک نییە',
+            tr('هیچ مامەڵەیەک نییە'),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -295,7 +296,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'هێشتا مامەڵە بۆ ئەم شوێنە زیاد نەکراوە',
+            tr('هێشتا مامەڵە بۆ ئەم شوێنە زیاد نەکراوە'),
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white54 : Colors.grey.shade600,

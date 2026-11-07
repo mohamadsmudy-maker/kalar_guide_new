@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../services/fuel_service.dart';
+import '../../l10n/tr.dart';
 
 /// 📊 شاشەی بەراوردکردنی ٢ جۆر — ULTRA PRO
 class FuelComparisonScreen extends StatefulWidget {
@@ -100,7 +101,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
@@ -174,24 +175,24 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.end,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'بەراوردکردنی نرخ',
-                          style: TextStyle(
+                          tr('بەراوردکردنی نرخ'),
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          'دوو جۆری سووتەمەنی بەراورد بکە',
-                          style: TextStyle(
+                          tr('دوو جۆری سووتەمەنی بەراورد بکە'),
+                          style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFFFFD700),
                           ),
@@ -214,7 +215,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
         Expanded(
           child: _buildSelector(
             isDark: isDark,
-            label: 'جۆری یەکەم',
+            label: tr('جۆری یەکەم'),
             value: _selectedType1,
             color: const Color(0xFF3B82F6),
             onChanged: (v) {
@@ -240,7 +241,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
         Expanded(
           child: _buildSelector(
             isDark: isDark,
-            label: 'جۆری دووەم',
+            label: tr('جۆری دووەم'),
             value: _selectedType2,
             color: const Color(0xFFEF4444),
             onChanged: (v) {
@@ -276,7 +277,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
           Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 4),
             child: Text(
-              label,
+              tr(label),
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -303,7 +304,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
               items: widget.fuelTypes.map((type) {
                 return DropdownMenuItem<String>(
                   value: type['key'],
-                  child: Text(type['name'] ?? ''),
+                  child: Text(tr(type['name'] ?? '')),
                 );
               }).toList(),
               onChanged: onChanged,
@@ -428,11 +429,11 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  diff > 0
-                      ? '$name2 هەرزانترە'
+                  tr(diff > 0
+                      ? trf('{0} هەرزانترە', [name2])
                       : diff < 0
-                      ? '$name1 هەرزانترە'
-                      : 'هەردووکیان وەک یەکن',
+                      ? trf('{0} هەرزانترە', [name1])
+                      : 'هەردووکیان وەک یەکن'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -445,7 +446,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'جیاوازی: ${diff.abs().toStringAsFixed(0)} د.ع (${percent.abs().toStringAsFixed(1)}%)',
+                  trf('جیاوازی: {0} د.ع ({1}%)', [diff.abs().toStringAsFixed(0), percent.abs().toStringAsFixed(1)]),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white70 : Colors.grey.shade700,
@@ -500,18 +501,18 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                 color: const Color(0xFF10B981),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.emoji_events_rounded,
                     color: Colors.white,
                     size: 10,
                   ),
-                  SizedBox(width: 3),
+                  const SizedBox(width: 3),
                   Text(
-                    'هەرزانتر',
-                    style: TextStyle(
+                    tr('هەرزانتر'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
@@ -537,7 +538,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            name,
+            tr(name),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w900,
@@ -556,7 +557,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
             ),
           ),
           Text(
-            'د.ع / لیتر',
+            tr('د.ع / لیتر'),
             style: TextStyle(
               fontSize: 9,
               color: color.withValues(alpha: 0.7),
@@ -573,7 +574,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              station,
+              tr(station),
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -585,7 +586,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
             ),
             if (address.isNotEmpty)
               Text(
-                address,
+                tr(address),
                 style: TextStyle(
                   fontSize: 9,
                   color: isDark ? Colors.white38 : Colors.grey,
@@ -635,17 +636,17 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.bar_chart_rounded,
                 color: Color(0xFFFFD700),
                 size: 18,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
-                'بەراوردکردنی گرافیکی',
-                style: TextStyle(
+                tr('بەراوردکردنی گرافیکی'),
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFFFFD700),
@@ -695,7 +696,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            value == 0 ? name1 : name2,
+                            tr(value == 0 ? name1 : name2),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w900,

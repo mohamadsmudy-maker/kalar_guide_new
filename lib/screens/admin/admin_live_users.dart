@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../config/app_colors.dart';
 import '../../services/presence_service.dart';
+import '../../l10n/tr.dart';
 
 /// 👥 شاشەی بەکارهێنەرانی چالاک — Live Ultra Pro
 class AdminLiveUsersScreen extends StatefulWidget {
@@ -52,13 +53,13 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A0A0F),
         foregroundColor: Colors.white,
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.people_alt_rounded, color: Colors.green),
-            SizedBox(width: 8),
+            const Icon(Icons.people_alt_rounded, color: Colors.green),
+            const SizedBox(width: 8),
             Text(
-              'بەکارهێنەرانی چالاک',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+              tr('بەکارهێنەرانی چالاک'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
           ],
         ),
@@ -145,9 +146,9 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Text(
-                          'ئێستا چالاک',
-                          style: TextStyle(
+                        Text(
+                          tr('ئێستا چالاک'),
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -166,9 +167,9 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'بەکارهێنەر',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    Text(
+                      tr('بەکارهێنەر'),
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
@@ -208,13 +209,13 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
-              SizedBox(width: 8),
+              const Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
               Text(
-                'ئاماری تەواو',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                tr('ئاماری تەواو'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
               ),
             ],
           ),
@@ -241,7 +242,7 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              item.label,
+              tr(item.label),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -289,9 +290,9 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
                   const Icon(Icons.list_rounded,
                       color: AppColors.primary, size: 20),
                   const SizedBox(width: 8),
-                  const Text(
-                    'لیستی بەکارهێنەران',
-                    style: TextStyle(
+                  Text(
+                    tr('لیستی بەکارهێنەران'),
+                    style: const TextStyle(
                         fontWeight: FontWeight.w900, fontSize: 15),
                   ),
                   const Spacer(),
@@ -315,12 +316,12 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
               ),
               const SizedBox(height: 12),
               if (users.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(30),
+                Padding(
+                  padding: const EdgeInsets.all(30),
                   child: Center(
                     child: Text(
-                      'هیچ بەکارهێنەرێکی چالاک نییە',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                      tr('هیچ بەکارهێنەرێکی چالاک نییە'),
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
                     ),
                   ),
                 )
@@ -355,18 +356,18 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  tr(name),
                   style: const TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text(_platformIcon(platform),
+                    Text(tr(_platformIcon(platform)),
                         style: const TextStyle(fontSize: 10)),
                     const SizedBox(width: 4),
                     Text(
-                      language.toUpperCase(),
+                      tr(language.toUpperCase()),
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade600,
@@ -379,7 +380,7 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
             ),
           ),
           Text(
-            timeAgo,
+            tr(timeAgo),
             style: TextStyle(
               fontSize: 11,
               color: Colors.green.shade700,
@@ -408,9 +409,9 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
     if (date == null) return '';
     final diff = DateTime.now().toUtc().difference(date);
     if (diff.inSeconds < 30) return 'ئێستا';
-    if (diff.inMinutes < 1) return '${diff.inSeconds} چرکە';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} خولەک';
-    return '${diff.inHours} کاتژمێر';
+    if (diff.inMinutes < 1) return trf('{0} چرکە', [diff.inSeconds]);
+    if (diff.inMinutes < 60) return trf('{0} خولەک', [diff.inMinutes]);
+    return trf('{0} کاتژمێر', [diff.inHours]);
   }
 }
 

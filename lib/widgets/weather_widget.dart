@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../config/settings_provider.dart';
 import '../services/weather_service.dart';
+import '../l10n/tr.dart';
 
 part 'weather_widget_ui.dart';
 
@@ -538,14 +539,14 @@ class _WeatherWidgetState extends State<WeatherWidget>
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Text(cond.emoji, style: const TextStyle(fontSize: 44)),
+                  Text(tr(cond.emoji), style: const TextStyle(fontSize: 44)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _dayName(day, now),
+                          tr(_dayName(day, now)),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,

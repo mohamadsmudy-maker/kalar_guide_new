@@ -13,7 +13,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              text,
+              tr(text),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
@@ -87,7 +87,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  c.official ? _t('official') : _t('live'),
+                  tr(c.official ? _t('official') : _t('live')),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 9,
@@ -109,7 +109,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                   color: Colors.white.withValues(alpha: 0.7), size: 11),
               const SizedBox(width: 3),
               Text(
-                _hm(c.updatedAt),
+                tr(_hm(c.updatedAt)),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 10,
@@ -137,7 +137,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _n(c.temp),
+                          tr(_n(c.temp)),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 64,
@@ -159,7 +159,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                       ],
                     ),
                     Text(
-                      cond.text,
+                      tr(cond.text),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -188,7 +188,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                       ),
                     ),
                     child: Center(
-                      child: Text(cond.emoji,
+                      child: Text(tr(cond.emoji),
                           style: const TextStyle(fontSize: 50)),
                     ),
                   ),
@@ -272,7 +272,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
           Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 14),
           const SizedBox(width: 6),
           Text(
-            text,
+            tr(text),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 12,
@@ -291,7 +291,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
         Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 20),
         const SizedBox(height: 6),
         Text(
-          value,
+          tr(value),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
@@ -302,7 +302,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
         ),
         const SizedBox(height: 2),
         Text(
-          label,
+          tr(label),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
@@ -366,7 +366,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  isNow ? _t('now') : _hm(h.time),
+                  tr(isNow ? _t('now') : _hm(h.time)),
                   maxLines: 1,
                   style: TextStyle(
                     fontSize: 11,
@@ -375,7 +375,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                     height: 1.2,
                   ),
                 ),
-                Text(cond.emoji,
+                Text(tr(cond.emoji),
                     style: const TextStyle(fontSize: 24, height: 1.2)),
                 Text(
                   '${_n(h.temp)}°',
@@ -387,7 +387,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                   ),
                 ),
                 Text(
-                  (rain != null && rain >= 20) ? '💧${_n(rain)}%' : ' ',
+                  tr((rain != null && rain >= 20) ? '💧${_n(rain)}%' : ' '),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -426,12 +426,12 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 4),
-          Text(value,
+          Text(tr(value),
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
                   color: _text(isDark))),
-          Text(label,
+          Text(tr(label),
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -648,7 +648,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  label,
+                  tr(label),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -659,7 +659,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  value,
+                  tr(value),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -670,7 +670,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                 ),
                 // هەمیشە هەیە تا هەموو خانەکان هەمان بەرزییان هەبێت
                 Text(
-                  sub ?? ' ',
+                  tr(sub ?? ' '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -697,14 +697,14 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
     Widget stat(String label, double? v) => Column(
       children: [
         Text(
-          v == null ? '--' : _n(v.round()),
+          tr(v == null ? '--' : _n(v.round())),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
             color: _text(isDark),
           ),
         ),
-        Text(label,
+        Text(tr(label),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -735,7 +735,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                 ),
                 child: Center(
                   child: Text(
-                    _n(a.aqi),
+                    tr(_n(a.aqi)),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
@@ -750,7 +750,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      lvl.text,
+                      tr(lvl.text),
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
@@ -852,7 +852,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                 SizedBox(
                   width: 84,
                   child: Text(
-                    _dayName(day, now),
+                    tr(_dayName(day, now)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -867,7 +867,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                 // ٢. ئایکۆن + ئەگەری باران
                 SizedBox(
                   width: 30,
-                  child: Text(cond.emoji, style: const TextStyle(fontSize: 22)),
+                  child: Text(tr(cond.emoji), style: const TextStyle(fontSize: 22)),
                 ),
                 SizedBox(
                   width: 38,

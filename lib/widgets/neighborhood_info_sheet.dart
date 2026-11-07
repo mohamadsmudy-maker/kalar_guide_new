@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../config/settings_provider.dart';
 import '../models/neighborhood.dart';
 import '../screens/neighborhoods/neighborhood_details_screen.dart';
+import '../l10n/tr.dart';
 
 /// 🏘️ کارتی زانیاری گەڕەک لەسەر نەخشە — v2
 ///
@@ -162,7 +163,7 @@ class NeighborhoodInfoSheet extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            name,
+                            tr(name),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -360,7 +361,7 @@ class _StatChip extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              value,
+              tr(value),
               maxLines: 1,
               style: TextStyle(
                 fontSize: 14,
@@ -371,7 +372,7 @@ class _StatChip extends StatelessWidget {
           ),
           const SizedBox(height: 1),
           Text(
-            label,
+            tr(label),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(

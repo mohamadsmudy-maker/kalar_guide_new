@@ -12,6 +12,7 @@ import '../../services/currency_service.dart';
 import '../admin/admin_currency_prices.dart';
 import 'currency_station_details_screen.dart';
 import 'currency_strings.dart';
+import '../../l10n/tr.dart';
 
 /// 💱 نوسینگەکانی یەک دراو — ULTRA PRO MAX
 ///   ڕیزکردن (بۆ کڕین / بۆ فرۆشتن / نوێترین) • گەڕان • جیاوازی لە باشترین نرخ
@@ -214,7 +215,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
               children: [
                 Icon(icon, size: 14, color: active ? Colors.white : Colors.white60),
                 const SizedBox(width: 4),
-                Text(label,
+                Text(tr(label),
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: active ? Colors.white : Colors.white70)),
               ],
             ),
@@ -285,11 +286,11 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(tr(label), style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(value, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900)),
+              child: Text(tr(value), style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -373,7 +374,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                           Row(
                             children: [
                               Flexible(
-                                child: Text(name,
+                                child: Text(tr(name),
                                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis),
@@ -403,7 +404,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                                 Icon(Icons.location_on_rounded, size: 12, color: sub),
                                 const SizedBox(width: 3),
                                 Expanded(
-                                  child: Text(address,
+                                  child: Text(tr(address),
                                       style: TextStyle(fontSize: 11, color: sub),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis),
@@ -419,7 +420,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                                     size: 12, color: stale ? Colors.orange : sub),
                                 const SizedBox(width: 3),
                                 Text(
-                                  CurrencyStrings.timeAgo(updatedAt, lang),
+                                  tr(CurrencyStrings.timeAgo(updatedAt, lang)),
                                   style: TextStyle(fontSize: 10, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600),
                                 ),
                               ],
@@ -479,12 +480,12 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
       ),
       child: Row(
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: c, fontWeight: FontWeight.w800)),
+          Text(tr(label), style: TextStyle(fontSize: 11, color: c, fontWeight: FontWeight.w800)),
           const Spacer(),
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(CurrencyService.formatPrice(value, lang),
+              child: Text(tr(CurrencyService.formatPrice(value, lang)),
                   style: TextStyle(fontSize: 16, color: c, fontWeight: FontWeight.w900)),
             ),
           ),
@@ -510,7 +511,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
             Icon(icon, color: color, size: 14),
             const SizedBox(width: 4),
             Flexible(
-              child: Text(label,
+              child: Text(tr(label),
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
@@ -540,7 +541,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
         children: [
           Icon(Icons.currency_exchange_outlined, size: 72, color: isDark ? Colors.white24 : Colors.grey.shade300),
           const SizedBox(height: 14),
-          Text(text,
+          Text(tr(text),
               textAlign: TextAlign.center,
               style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontSize: 14, fontWeight: FontWeight.bold)),
         ],

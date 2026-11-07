@@ -11,6 +11,7 @@ import '../../widgets/gallery/gallery_error_state.dart';
 import '../../widgets/gallery/gallery_image_card.dart';
 import '../../widgets/gallery/gallery_shimmer_grid.dart';
 import '../../widgets/full_screen_image_viewer.dart';
+import '../../l10n/tr.dart';
 
 /// 🖼️ گەلەری بەکارهێنەر — ULTRA PRO MAX V4
 class GalleryScreen extends StatefulWidget {
@@ -91,12 +92,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
     final bg = isDark ? AppColors.darkBackground : AppColors.background;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bg,
         appBar: AppBar(
-          title: const Text('گەلەری کەلار',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          title: Text(tr('گەلەری کەلار'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           centerTitle: true,
           elevation: 0,
           backgroundColor: isDark ? AppColors.darkCard : AppColors.primary,

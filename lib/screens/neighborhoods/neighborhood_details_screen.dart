@@ -8,6 +8,7 @@ import '../../config/settings_provider.dart';
 import '../../models/neighborhood.dart';
 import '../../utils/app_logger.dart';
 import '../stores/store_details_dialog.dart';
+import '../../l10n/tr.dart';
 
 /// 🏘️ شاشەی وردەکاری گەڕەک — ULTRA PRO MAX V2
 class NeighborhoodDetailsScreen extends StatefulWidget {
@@ -267,7 +268,7 @@ class _NeighborhoodDetailsScreenState
   // ═══════════════════════════════════════════════════════════
   Widget _buildTitle(Neighborhood n, bool isDark) {
     return Text(
-      n.nameKu,
+      tr(n.nameKu),
       style: TextStyle(
         fontSize: 26,
         fontWeight: FontWeight.w900,
@@ -279,7 +280,7 @@ class _NeighborhoodDetailsScreenState
 
   Widget _buildDescription(String description, bool isDark) {
     return Text(
-      description,
+      tr(description),
       style: TextStyle(
         fontSize: 13,
         height: 1.7,
@@ -348,7 +349,7 @@ class _NeighborhoodDetailsScreenState
             ),
             const SizedBox(width: 10),
             Text(
-              'شوێن لەسەر نەخشە',
+              tr('شوێن لەسەر نەخشە'),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
@@ -422,7 +423,7 @@ class _NeighborhoodDetailsScreenState
             ),
             const SizedBox(width: 10),
             Text(
-              'شوێنەکانی ئەم گەڕەک',
+              tr('شوێنەکانی ئەم گەڕەک'),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
@@ -499,7 +500,7 @@ class _NeighborhoodDetailsScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    name,
+                    tr(name),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -522,7 +523,7 @@ class _NeighborhoodDetailsScreenState
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
-                            address,
+                            tr(address),
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark
@@ -572,7 +573,7 @@ class _NeighborhoodDetailsScreenState
             ),
             const SizedBox(height: 12),
             Text(
-              'هیچ شوێنێک لەم گەڕەک نییە',
+              tr('هیچ شوێنێک لەم گەڕەک نییە'),
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? Colors.white70 : AppColors.textSecondary,
@@ -581,7 +582,7 @@ class _NeighborhoodDetailsScreenState
             ),
             const SizedBox(height: 6),
             Text(
-              'گەڕەک: $name',
+              trf('گەڕەک: {0}', [name]),
               style: TextStyle(
                 fontSize: 11,
                 color: isDark ? Colors.white38 : AppColors.textTertiary,
@@ -606,7 +607,7 @@ class _NeighborhoodDetailsScreenState
             ),
             const SizedBox(height: 12),
             Text(
-              'هەڵە لە هێنانی شوێنەکان',
+              tr('هەڵە لە هێنانی شوێنەکان'),
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? Colors.white70 : AppColors.textSecondary,
@@ -615,9 +616,9 @@ class _NeighborhoodDetailsScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              error.length > 100
+              tr(error.length > 100
                   ? '${error.substring(0, 100)}...'
-                  : error,
+                  : error),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
@@ -628,7 +629,7 @@ class _NeighborhoodDetailsScreenState
             ElevatedButton.icon(
               onPressed: _loadStores,
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('دووبارە هەوڵ بدە'),
+              label: Text(tr('دووبارە هەوڵ بدە')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
                 foregroundColor: Colors.white,
@@ -659,7 +660,7 @@ class _NeighborhoodDetailsScreenState
           Icon(icon, color: color, size: 18),
           const SizedBox(height: 4),
           Text(
-            value,
+            tr(value),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -669,7 +670,7 @@ class _NeighborhoodDetailsScreenState
           ),
           const SizedBox(height: 2),
           Text(
-            label,
+            tr(label),
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w600,

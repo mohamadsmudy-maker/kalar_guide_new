@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/event.dart';
 import '../../services/auth_service.dart';
 import '../../services/event_service.dart';
+import '../../l10n/tr.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final AppEvent event;
@@ -48,8 +49,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     final user = AuthSessionManager.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تکایە سەرەتا بچۆ ژوورەوە ⚠'),
+        SnackBar(
+          content: Text(tr('تکایە سەرەتا بچۆ ژوورەوە ⚠')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -77,7 +78,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     final color = _color;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
@@ -140,7 +141,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            _getCategoryLabel(e.category),
+                            tr(_getCategoryLabel(e.category)),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -159,18 +160,18 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                               color: const Color(0xFFFFC107),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.star_rounded,
                                   color: Colors.white,
                                   size: 12,
                                 ),
-                                SizedBox(width: 3),
+                                const SizedBox(width: 3),
                                 Text(
-                                  'تایبەت',
-                                  style: TextStyle(
+                                  tr('تایبەت'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w900,
@@ -187,7 +188,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     // 📌 ناونیشان
                     // ═══════════════════════════════════════
                     Text(
-                      e.titleKu,
+                      tr(e.titleKu),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
@@ -262,7 +263,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     if (e.descriptionKu != null &&
                         e.descriptionKu!.isNotEmpty) ...[
                       Text(
-                        'وەسف',
+                        tr('وەسف'),
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
@@ -280,7 +281,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          e.descriptionKu!,
+                          tr(e.descriptionKu!),
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.7,
@@ -389,18 +390,18 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                           ),
                         ],
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.call_rounded,
                             color: Colors.white,
                             size: 20,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'پەیوەندی',
-                            style: TextStyle(
+                            tr('پەیوەندی'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -467,7 +468,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                label,
+                tr(label),
                 style: TextStyle(
                   fontSize: 10,
                   color: isDark ? Colors.white54 : Colors.grey,
@@ -476,7 +477,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                value,
+                tr(value),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/app_logger.dart';
 import 'auth_service.dart';
+import '../l10n/tr.dart';
 
 /// 🔔 خزمەتگوزاری ئاگادارکردنەوە
 class NotificationService {
@@ -58,10 +59,10 @@ class NotificationService {
       );
 
       // ٣. دروستکردنی Channel بۆ Android
-      const androidChannel = AndroidNotificationChannel(
+      final androidChannel = AndroidNotificationChannel(
         'high_importance_channel',
         'ئاگادارکردنەوەی گرنگ',
-        description: 'ئەم کەناڵە بۆ ئاگادارکردنەوەی گرنگ بەکاردێت',
+        description: tr('ئەم کەناڵە بۆ ئاگادارکردنەوەی گرنگ بەکاردێت'),
         importance: Importance.high,
         playSound: true,
       );

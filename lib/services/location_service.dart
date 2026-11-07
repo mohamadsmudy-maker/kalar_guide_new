@@ -1,5 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../l10n/tr.dart';
 
 /// 📍 خزمەتگوزاری شوێن و دووری
 class LocationService {
@@ -49,9 +50,9 @@ class LocationService {
   /// فۆرماتکردنی دووری بۆ دەقی خوونەوە
   static String formatDistance(double distanceKm) {
     if (distanceKm < 1.0) {
-      return '${(distanceKm * 1000).toStringAsFixed(0)} مەتر';
+      return trf('{0} مەتر', [(distanceKm * 1000).toStringAsFixed(0)]);
     } else {
-      return '${distanceKm.toStringAsFixed(1)} کم';
+      return trf('{0} کم', [distanceKm.toStringAsFixed(1)]);
     }
   }
 }

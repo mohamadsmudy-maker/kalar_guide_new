@@ -12,6 +12,7 @@ import '../../models/emergency_categories.dart';
 import '../../models/emergency_service.dart';
 import '../../services/emergency_repository.dart';
 import '../../services/location_service.dart';
+import '../../l10n/tr.dart';
 
 part 'emergency_main_screen_ui.dart';
 
@@ -265,7 +266,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg),
+          content: Text(tr(msg)),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -303,8 +304,8 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
-          content: Text('زانیاری کۆپی کرا — ئێستا هاوبەشی بکە'),
+        SnackBar(
+          content: Text(tr('زانیاری کۆپی کرا — ئێستا هاوبەشی بکە')),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -390,7 +391,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
             fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
-            hintText: 'گەڕان بەدوای ژمارە...',
+            hintText: tr('گەڕان بەدوای ژمارە...'),
             hintStyle: TextStyle(
               fontSize: 13,
               color: isDark ? Colors.white38 : Colors.grey,
@@ -562,7 +563,7 @@ class _EmergencyCard extends ConsumerWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  service.getName('ku'),
+                                  tr(service.getName('ku')),
                                   style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 15,
@@ -584,9 +585,9 @@ class _EmergencyCard extends ConsumerWidget {
                                     color: const Color(0xFFDC2626),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Text(
-                                    'گرنگ',
-                                    style: TextStyle(
+                                  child: Text(
+                                    tr('گرنگ'),
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 8,
                                       fontWeight: FontWeight.w900,
@@ -603,7 +604,7 @@ class _EmergencyCard extends ConsumerWidget {
                               Directionality(
                                 textDirection: TextDirection.ltr,
                                 child: Text(
-                                  service.phone,
+                                  tr(service.phone),
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
@@ -630,7 +631,7 @@ class _EmergencyCard extends ConsumerWidget {
                                 const SizedBox(width: 3),
                                 Expanded(
                                   child: Text(
-                                    service.authorityName!,
+                                    tr(service.authorityName!),
                                     style: TextStyle(
                                       fontSize: 10,
                                       color: isDark
@@ -649,7 +650,7 @@ class _EmergencyCard extends ConsumerWidget {
                                     size: 10, color: Colors.green),
                                 const SizedBox(width: 3),
                                 Text(
-                                  '${distance!.toStringAsFixed(1)} کم',
+                                  trf('{0} کم', [distance!.toStringAsFixed(1)]),
                                   style: const TextStyle(
                                     fontSize: 10,
                                     color: Colors.green,
@@ -703,7 +704,7 @@ class _EmergencyCard extends ConsumerWidget {
                       icon: isFavorite
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
-                      label: isFavorite ? 'دڵخواز' : 'زیادکردن',
+                      label: isFavorite ? tr('دڵخواز') : tr('زیادکردن'),
                       color: isFavorite ? Colors.pink : Colors.grey,
                       onTap: () {
                         if (service.id == null) {
@@ -718,14 +719,14 @@ class _EmergencyCard extends ConsumerWidget {
                     ),
                     _actionBtn(
                       icon: Icons.share_rounded,
-                      label: 'هاوبەشکردن',
+                      label: tr('هاوبەشکردن'),
                       color: Colors.blue,
                       onTap: onShare,
                     ),
                     if (service.hasLocation)
                       _actionBtn(
                         icon: Icons.directions_rounded,
-                        label: 'ئاراستە',
+                        label: tr('ئاراستە'),
                         color: Colors.green,
                         onTap: onDirections,
                       ),
@@ -776,7 +777,7 @@ class _EmergencyCard extends ConsumerWidget {
           Icon(Icons.access_time_filled_rounded, size: 9, color: color),
           const SizedBox(width: 3),
           Text(
-            text,
+            tr(text),
             style: TextStyle(
               fontSize: 8,
               color: color,
@@ -806,7 +807,7 @@ class _EmergencyCard extends ConsumerWidget {
               Icon(icon, size: 14, color: color),
               const SizedBox(width: 4),
               Text(
-                label,
+                tr(label),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -837,7 +838,7 @@ class _EmergencyCard extends ConsumerWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.call_rounded),
-              title: const Text('پەیوەندی'),
+              title: Text(tr('پەیوەندی')),
               onTap: () {
                 Navigator.pop(ctx);
                 onCall();
@@ -845,7 +846,7 @@ class _EmergencyCard extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.copy_rounded),
-              title: const Text('کۆپیکردنی ژمارە'),
+              title: Text(tr('کۆپیکردنی ژمارە')),
               onTap: () {
                 Navigator.pop(ctx);
                 onCopied(service.phone);
@@ -854,7 +855,7 @@ class _EmergencyCard extends ConsumerWidget {
             if (service.hasLocation)
               ListTile(
                 leading: const Icon(Icons.directions_rounded),
-                title: const Text('ئاراستە'),
+                title: Text(tr('ئاراستە')),
                 onTap: () {
                   Navigator.pop(ctx);
                   onDirections();
@@ -862,7 +863,7 @@ class _EmergencyCard extends ConsumerWidget {
               ),
             ListTile(
               leading: const Icon(Icons.share_rounded),
-              title: const Text('هاوبەشکردن'),
+              title: Text(tr('هاوبەشکردن')),
               onTap: () {
                 Navigator.pop(ctx);
                 onShare();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/event.dart';
+import '../../l10n/tr.dart';
 
 class EventCard extends StatelessWidget {
   final AppEvent event;
@@ -100,18 +101,18 @@ class EventCard extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.star_rounded,
                                 color: Colors.white,
                                 size: 12,
                               ),
-                              SizedBox(width: 3),
+                              const SizedBox(width: 3),
                               Text(
-                                'تایبەت',
-                                style: TextStyle(
+                                tr('تایبەت'),
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w900,
@@ -143,7 +144,7 @@ class EventCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          _getCategoryLabel(event.category),
+                          tr(_getCategoryLabel(event.category)),
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
@@ -162,9 +163,9 @@ class EventCard extends StatelessWidget {
                             color: const Color(0xFFEF4444),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            '🔥 ئەمڕۆ',
-                            style: TextStyle(
+                          child: Text(
+                            tr('🔥 ئەمڕۆ'),
+                            style: const TextStyle(
                               fontSize: 10,
                               color: Colors.white,
                               fontWeight: FontWeight.w900,
@@ -173,7 +174,7 @@ class EventCard extends StatelessWidget {
                         )
                       else
                         Text(
-                          _getDaysLabel(event.daysUntil),
+                          tr(_getDaysLabel(event.daysUntil)),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
@@ -184,7 +185,7 @@ class EventCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    event.titleKu,
+                    tr(event.titleKu),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
@@ -231,7 +232,7 @@ class EventCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            event.locationName!,
+                            tr(event.locationName!),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -289,8 +290,8 @@ class EventCard extends StatelessWidget {
   String _getDaysLabel(int days) {
     if (days == 0) return 'ئەمڕۆ';
     if (days == 1) return 'سبەی';
-    if (days < 7) return 'دوای $days ڕۆژ';
-    if (days < 30) return 'دوای ${(days / 7).floor()} هەفتە';
-    return 'دوای ${(days / 30).floor()} مانگ';
+    if (days < 7) return trf('دوای {0} ڕۆژ', [days]);
+    if (days < 30) return trf('دوای {0} هەفتە', [(days / 7).floor()]);
+    return trf('دوای {0} مانگ', [(days / 30).floor()]);
   }
 }

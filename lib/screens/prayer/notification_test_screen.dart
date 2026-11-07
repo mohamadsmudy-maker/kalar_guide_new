@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/prayer_notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../../l10n/tr.dart';
 /// 🧪 شاشەی تاقیکردنەوەی Notifications
 class NotificationTestScreen extends StatefulWidget {
   const NotificationTestScreen({super.key});
@@ -57,7 +58,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
     } catch (e) {
       debugPrint('❌ Action error: $e');
       if (!mounted) return;
-      _showSnack('⚠️ هەڵە: $e', const Color(0xFFEF4444));
+      _showSnack(trf('⚠️ هەڵە: {0}', [e]), const Color(0xFFEF4444));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -65,26 +66,26 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
 
   void _showSnack(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color),
+      SnackBar(content: Text(tr(msg)), backgroundColor: color),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFF0F1421),
         appBar: AppBar(
           backgroundColor: const Color(0xFF1A1B2E),
           foregroundColor: Colors.white,
-          title: const Text(
-            '🧪 تاقیکردنەوەی Notifications',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          title: Text(
+            tr('🧪 تاقیکردنەوەی Notifications'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
           actions: [
             IconButton(
-              tooltip: 'نوێکردنەوەی لیست',
+              tooltip: tr('نوێکردنەوەی لیست'),
               onPressed: _busy ? null : _loadPending,
               icon: const Icon(Icons.refresh_rounded),
             ),
@@ -103,8 +104,8 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
             // ⭐ Notification ی ئێستا
             _buildTestButton(
               icon: Icons.notifications_active_rounded,
-              title: 'Notification ی ئێستا',
-              subtitle: '٢ چرکە دواتر دەردەکەوێت',
+              title: tr('Notification ی ئێستا'),
+              subtitle: tr('٢ چرکە دواتر دەردەکەوێت'),
               color: const Color(0xFF3B82F6),
               onTap: () => _runBusy(() async {
                 await PrayerNotificationService
@@ -114,7 +115,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                 HapticFeedback.mediumImpact();
                 if (!mounted) return;
                 _showSnack(
-                  '⏱️ چاوەڕوان بە ٢ چرکە...',
+                  tr('⏱️ چاوەڕوان بە ٢ چرکە...'),
                   const Color(0xFF3B82F6),
                 );
                 await _loadPending();
@@ -126,8 +127,8 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
             // ⭐ Notification ی داهاتوو
             _buildTestButton(
               icon: Icons.schedule_rounded,
-              title: 'Notification ی داهاتوو',
-              subtitle: '١٥ چرکە دواتر دەردەکەوێت',
+              title: tr('Notification ی داهاتوو'),
+              subtitle: tr('١٥ چرکە دواتر دەردەکەوێت'),
               color: const Color(0xFFFFD700),
               onTap: () => _runBusy(() async {
                 await PrayerNotificationService
@@ -137,7 +138,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                 HapticFeedback.mediumImpact();
                 if (!mounted) return;
                 _showSnack(
-                  '⏱️ چاوەڕوان بە ١٥ چرکە...',
+                  tr('⏱️ چاوەڕوان بە ١٥ چرکە...'),
                   const Color(0xFFFFD700),
                 );
                 await _loadPending();
@@ -149,8 +150,8 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
             // ⭐ Schedule ی ٥ نوێژ
             _buildTestButton(
               icon: Icons.schedule_send_rounded,
-              title: 'Schedule ی ٥ نوێژ',
-              subtitle: 'بۆ تاقیکردنەوە — هەر ٣٠ چرکە',
+              title: tr('Schedule ی ٥ نوێژ'),
+              subtitle: tr('بۆ تاقیکردنەوە — هەر ٣٠ چرکە'),
               color: const Color(0xFF10B981),
               onTap: () => _runBusy(() async {
                 final now = DateTime.now();
@@ -169,7 +170,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                   time.hour.toString().padLeft(2, '0');
                   final minute =
                   time.minute.toString().padLeft(2, '0');
-                  testTimes[names[i]] = '$hour:$minute';
+                  testTimes[tr(names[i])] = '$hour:$minute';
                 }
 
                 await PrayerNotificationService.scheduleAllPrayers(
@@ -179,7 +180,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
 
                 if (!mounted) return;
                 _showSnack(
-                  '✅ ٥ Notification scheduled',
+                  tr('✅ ٥ Notification scheduled'),
                   const Color(0xFF10B981),
                 );
                 await _loadPending();
@@ -200,7 +201,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                   await _loadPending();
                   if (!mounted) return;
                   _showSnack(
-                    '🗑️ هەموو Notifications سڕایەوە',
+                    tr('🗑️ هەموو Notifications سڕایەوە'),
                     const Color(0xFFEF4444),
                   );
                 }),
@@ -218,9 +219,9 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.delete_sweep_rounded),
-                label: const Text(
-                  'سڕینەوەی هەموو Notifications',
-                  style: TextStyle(fontWeight: FontWeight.w900),
+                label: Text(
+                  tr('سڕینەوەی هەموو Notifications'),
+                  style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
               ),
             ),
@@ -229,7 +230,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
 
             if (_pending.isNotEmpty) ...[
               Text(
-                '📋 Notifications ی چاوەڕوان (${_pending.length})',
+                trf('📋 Notifications ی چاوەڕوان ({0})', [_pending.length]),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -239,12 +240,12 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
               const SizedBox(height: 12),
               ..._pending.map(_buildPendingItem),
             ] else ...[
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Text(
-                    'هیچ Notification ی چاوەڕوان نییە',
-                    style: TextStyle(
+                    tr('هیچ Notification ی چاوەڕوان نییە'),
+                    style: const TextStyle(
                       color: Colors.white54,
                       fontSize: 12,
                     ),
@@ -306,9 +307,9 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _permissionsGranted
+                  tr(_permissionsGranted
                       ? '✅ مۆڵەت دراوە'
-                      : '❌ مۆڵەت نەدراوە',
+                      : '❌ مۆڵەت نەدراوە'),
                   style: TextStyle(
                     color: _permissionsGranted
                         ? const Color(0xFF10B981)
@@ -319,9 +320,9 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _permissionsGranted
+                  tr(_permissionsGranted
                       ? 'Notifications کار دەکەن'
-                      : 'تکایە مۆڵەت بدە',
+                      : 'تکایە مۆڵەت بدە'),
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 11,
@@ -382,7 +383,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        tr(title),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -391,7 +392,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        subtitle,
+                        tr(subtitle),
                         style: const TextStyle(
                           color: Colors.white54,
                           fontSize: 11,
@@ -444,7 +445,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  p.title ?? 'بێ ناونیشان',
+                  tr(p.title ?? 'بێ ناونیشان'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -453,7 +454,7 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  p.body ?? '',
+                  tr(p.body ?? ''),
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 10,

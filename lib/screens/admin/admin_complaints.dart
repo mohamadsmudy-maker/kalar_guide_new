@@ -14,6 +14,7 @@ import '../../services/whatsapp_complaint_service.dart';
 import 'all_complaints_map.dart';
 import 'complaint_details_pro_sheet.dart';
 import 'complaint_filter_sheet.dart';
+import '../../l10n/tr.dart';
 
 part 'admin_complaints_ui.dart';
 
@@ -250,7 +251,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
         _loadFailed = _complaints.isEmpty;
       });
       if (_complaints.isNotEmpty) {
-        _snack('نوێکردنەوە سەرنەکەوت — ئینتەرنێت بپشکنە', Colors.orange);
+        _snack(tr('نوێکردنەوە سەرنەکەوت — ئینتەرنێت بپشکنە'), Colors.orange);
       }
     }
   }
@@ -284,7 +285,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     String imagesText = '';
     if (images.isNotEmpty) {
       for (int i = 0; i < images.length; i++) {
-        imagesText += '🖼️ وێنەی ${i + 1}: ${images[i]}\n';
+        imagesText += trf('🖼️ وێنەی {0}: {1}\n', [i + 1, images[i]]);
       }
     } else {
       imagesText = 'هیچ وێنەیەک نییە\n';
@@ -318,7 +319,7 @@ $imagesText
         throw 'Could not launch WhatsApp';
       }
     } catch (e) {
-      _snack('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.', Colors.red);
+      _snack(tr('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.'), Colors.red);
     }
   }
 
@@ -547,16 +548,16 @@ $imagesText
     if (date == null) return '';
     final diff = DateTime.now().difference(date);
     if (diff.inMinutes < 1) return 'ئێستا';
-    if (diff.inMinutes < 60) return '${_ku(diff.inMinutes)} خولەک لەمەوبەر';
-    if (diff.inHours < 24) return '${_ku(diff.inHours)} کاتژمێر لەمەوبەر';
-    if (diff.inDays < 7) return '${_ku(diff.inDays)} ڕۆژ لەمەوبەر';
+    if (diff.inMinutes < 60) return trf('{0} خولەک لەمەوبەر', [_ku(diff.inMinutes)]);
+    if (diff.inHours < 24) return trf('{0} کاتژمێر لەمەوبەر', [_ku(diff.inHours)]);
+    if (diff.inDays < 7) return trf('{0} ڕۆژ لەمەوبەر', [_ku(diff.inDays)]);
     if (diff.inDays < 30) {
-      return '${_ku((diff.inDays / 7).floor())} هەفتە لەمەوبەر';
+      return trf('{0} هەفتە لەمەوبەر', [_ku((diff.inDays / 7).floor())]);
     }
     if (diff.inDays < 365) {
-      return '${_ku((diff.inDays / 30).floor())} مانگ لەمەوبەر';
+      return trf('{0} مانگ لەمەوبەر', [_ku((diff.inDays / 30).floor())]);
     }
-    return '${_ku((diff.inDays / 365).floor())} ساڵ لەمەوبەر';
+    return trf('{0} ساڵ لەمەوبەر', [_ku((diff.inDays / 365).floor())]);
   }
 
   void _snack(String msg, Color color, {SnackBarAction? action}) {
@@ -566,7 +567,7 @@ $imagesText
       ..showSnackBar(
         SnackBar(
           content:
-          Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: color,
           behavior: SnackBarBehavior.floating,
           shape:
@@ -621,7 +622,7 @@ $imagesText
         if (!didPop && _selectMode) _exitSelectMode();
       },
       child: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Scaffold(
           backgroundColor: _bg(isDark),
           body: body,
@@ -654,14 +655,14 @@ $imagesText
       )
           : null,
       title: _selectMode
-          ? Text('${_ku(_selectedIds.length)} هەڵبژێردراو',
+          ? Text(trf('{0} هەڵبژێردراو', [_ku(_selectedIds.length)]),
           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))
           : null,
       actions: [
         if (!_selectMode) ...[
           IconButton(
             icon: const Icon(Icons.map_rounded),
-            tooltip: 'نەخشە',
+            tooltip: tr('نەخشە'),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const AllComplaintsMapScreen()),
@@ -676,7 +677,7 @@ $imagesText
                   strokeWidth: 2, color: Colors.white),
             )
                 : const Icon(Icons.picture_as_pdf_rounded),
-            tooltip: 'ڕاپۆرتی PDF',
+            tooltip: tr('ڕاپۆرتی PDF'),
             onPressed: _generatingPdf ? null : _generatePdf,
           ),
           PopupMenuButton<String>(
@@ -704,7 +705,7 @@ $imagesText
           ),
         ] else
           IconButton(
-            tooltip: allSelected ? 'لابردنی هەڵبژاردن' : 'هەموو',
+            tooltip: allSelected ? tr('لابردنی هەڵبژاردن') : tr('هەموو'),
             icon: Icon(allSelected
                 ? Icons.deselect_rounded
                 : Icons.select_all_rounded),
@@ -756,8 +757,8 @@ $imagesText
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('بەڕێوەبردنی سکاڵاکان',
-                            style: TextStyle(
+                        Text(tr('بەڕێوەبردنی سکاڵاکان'),
+                            style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 20,
                                 color: Colors.white)),
@@ -777,8 +778,8 @@ $imagesText
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Text('ڕاستەوخۆ • گەڕەک • WHATSAPP',
-                              style: TextStyle(
+                          Text(tr('ڕاستەوخۆ • گەڕەک • WHATSAPP'),
+                              style: const TextStyle(
                                   fontSize: 10,
                                   color: Color(0xFF4CAF50),
                                   fontWeight: FontWeight.w900,
@@ -802,7 +803,7 @@ $imagesText
       child: Row(children: [
         Icon(icon, size: 18, color: AppColors.primary),
         const SizedBox(width: 10),
-        Text(label,
+        Text(tr(label),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
       ]),
     );
@@ -816,7 +817,7 @@ $imagesText
         children: [
           Icon(icon, size: 16),
           const SizedBox(width: 6),
-          Text(label),
+          Text(tr(label)),
           const SizedBox(width: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -824,7 +825,7 @@ $imagesText
               color: AppColors.primary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(_ku(count),
+            child: Text(tr(_ku(count)),
                 style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -868,7 +869,7 @@ $imagesText
               },
               style: TextStyle(color: isDark ? Colors.white : Colors.black87),
               decoration: InputDecoration(
-                hintText: 'گەڕان بەدوای ناونیشان، گەڕەک، لایەن...',
+                hintText: tr('گەڕان بەدوای ناونیشان، گەڕەک، لایەن...'),
                 hintStyle: TextStyle(
                     fontSize: 12, color: isDark ? Colors.white54 : Colors.grey),
                 prefixIcon: const Icon(Icons.search_rounded,
@@ -902,7 +903,7 @@ $imagesText
                 const Icon(Icons.filter_alt_rounded,
                     size: 12, color: AppColors.primary),
                 const SizedBox(width: 4),
-                Text('${_ku(_currentList.length)} ئەنجام',
+                Text(trf('{0} ئەنجام', [_ku(_currentList.length)]),
                     style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
@@ -920,12 +921,12 @@ $imagesText
                     color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Row(children: [
-                    Icon(Icons.filter_alt_off_rounded,
+                  child: Row(children: [
+                    const Icon(Icons.filter_alt_off_rounded,
                         size: 12, color: Colors.red),
-                    SizedBox(width: 4),
-                    Text('سڕینەوەی فلتەر',
-                        style: TextStyle(
+                    const SizedBox(width: 4),
+                    Text(tr('سڕینەوەی فلتەر'),
+                        style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
                             color: Colors.red)),
@@ -1109,7 +1110,7 @@ $imagesText
                 ),
               ],
               const Spacer(),
-              Text(_timeAgo(c['created_at']?.toString()),
+              Text(tr(_timeAgo(c['created_at']?.toString())),
                   style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -1170,7 +1171,7 @@ $imagesText
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title,
+                      Text(tr(title),
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 14,
@@ -1211,7 +1212,7 @@ $imagesText
                   Expanded(
                     child: _buildAction(
                       icon: Icons.check_circle_rounded,
-                      label: 'پەسەند',
+                      label: tr('پەسەند'),
                       color: const Color(0xFF2ECC71),
                       onTap: () => _quickUpdate(c, 'in_progress'),
                     ),
@@ -1220,7 +1221,7 @@ $imagesText
                   Expanded(
                     child: _buildAction(
                       icon: Icons.cancel_rounded,
-                      label: 'ڕەتکردنەوە',
+                      label: tr('ڕەتکردنەوە'),
                       color: const Color(0xFFE74C3C),
                       onTap: () => _quickUpdate(c, 'rejected'),
                     ),
@@ -1230,7 +1231,7 @@ $imagesText
                   Expanded(
                     child: _buildAction(
                       icon: Icons.check_circle_rounded,
-                      label: 'تەواوکردن',
+                      label: tr('تەواوکردن'),
                       color: const Color(0xFF3498DB),
                       onTap: () => _quickUpdate(c, 'completed'),
                     ),
@@ -1343,17 +1344,17 @@ $imagesText
         c['status'] = old;
         _recompute();
       });
-      _snack('گۆڕینی دۆخ سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+      _snack(tr('گۆڕینی دۆخ سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
       return;
     }
 
     if (!mounted) return;
     HapticFeedback.mediumImpact();
     _snack(
-      '✅ گۆڕدرا بۆ: ${_statusText(newStatus)}',
+      trf('✅ گۆڕدرا بۆ: {0}', [_statusText(newStatus)]),
       _color(newStatus),
       action: SnackBarAction(
-        label: 'گەڕاندنەوە',
+        label: tr('گەڕاندنەوە'),
         textColor: Colors.white,
         onPressed: () => _revertStatus(c, old),
       ),
@@ -1380,7 +1381,7 @@ $imagesText
       });
     } catch (e) {
       debugPrint('❌ revert error: $e');
-      _snack('گەڕاندنەوە سەرنەکەوت', Colors.red);
+      _snack(tr('گەڕاندنەوە سەرنەکەوت'), Colors.red);
     }
   }
 
@@ -1398,7 +1399,7 @@ $imagesText
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          title: Text(label,
+          title: Text(tr(label),
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
           onTap: () => Navigator.pop(context, key),
         );
@@ -1410,7 +1411,7 @@ $imagesText
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1427,7 +1428,7 @@ $imagesText
               Padding(
                 padding: const EdgeInsets.all(14),
                 child: Text(
-                    'کار لەسەر ${_ku(_selectedIds.length)} سکاڵا',
+                    trf('کار لەسەر {0} سکاڵا', [_ku(_selectedIds.length)]),
                     style: const TextStyle(
                         fontWeight: FontWeight.w900, fontSize: 16)),
               ),
@@ -1468,7 +1469,7 @@ $imagesText
           .update({'status': status}).inFilter('id', ids);
     } catch (e) {
       debugPrint('❌ bulk status error: $e');
-      _snack('گۆڕین سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+      _snack(tr('گۆڕین سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
       return;
     }
 
@@ -1483,10 +1484,10 @@ $imagesText
     });
     HapticFeedback.mediumImpact();
     _snack(
-      '✅ ${_ku(ids.length)} سکاڵا گۆڕدرا بۆ: ${_statusText(status)}',
+      trf('✅ {0} سکاڵا گۆڕدرا بۆ: {1}', [_ku(ids.length), _statusText(status)]),
       _color(status),
       action: SnackBarAction(
-        label: 'گەڕاندنەوە',
+        label: tr('گەڕاندنەوە'),
         textColor: Colors.white,
         onPressed: () async {
           try {
@@ -1500,7 +1501,7 @@ $imagesText
             }
             await _fetchComplaints(showLoader: false);
           } catch (_) {
-            _snack('گەڕاندنەوە سەرنەکەوت', Colors.red);
+            _snack(tr('گەڕاندنەوە سەرنەکەوت'), Colors.red);
           }
         },
       ),
@@ -1514,26 +1515,26 @@ $imagesText
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(children: [
             const Icon(Icons.warning_amber_rounded, color: Colors.red),
             const SizedBox(width: 8),
-            Expanded(child: Text(title)),
+            Expanded(child: Text(tr(title))),
           ]),
-          content: Text(body),
+          content: Text(tr(body)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red, foregroundColor: Colors.white),
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(yes),
+              child: Text(tr(yes)),
             ),
           ],
         ),
@@ -1570,10 +1571,10 @@ $imagesText
         _recompute();
       });
       HapticFeedback.mediumImpact();
-      _snack('✅ سکاڵا سڕایەوە', Colors.green);
+      _snack(tr('✅ سکاڵا سڕایەوە'), Colors.green);
     } catch (e) {
       debugPrint('❌ delete error: $e');
-      _snack('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+      _snack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
@@ -1582,7 +1583,7 @@ $imagesText
   Future<void> _bulkDelete() async {
     if (_selectedIds.isEmpty || _isDeleting) return;
     final n = _selectedIds.length;
-    if (!await _confirm('سڕینەوەی ${_ku(n)} سکاڵا',
+    if (!await _confirm(trf('سڕینەوەی {0} سکاڵا', [_ku(n)]),
         'ئایا دڵنیایت لە سڕینەوەی هەموو ئەم سکاڵایانە؟ ناگەڕێنەوە.', 'بەڵێ')) {
       return;
     }
@@ -1615,10 +1616,10 @@ $imagesText
         _recompute();
       });
       HapticFeedback.heavyImpact();
-      _snack('✅ ${_ku(ids.length)} سکاڵا سڕانەوە', Colors.green);
+      _snack(trf('✅ {0} سکاڵا سڕانەوە', [_ku(ids.length)]), Colors.green);
     } catch (e) {
       debugPrint('❌ bulk delete error: $e');
-      _snack('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە', Colors.red);
+      _snack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
@@ -1631,7 +1632,7 @@ $imagesText
     if (_generatingPdf) return;
     final list = _currentList;
     if (list.isEmpty) {
-      _snack('هیچ سکاڵایەک نییە', Colors.orange);
+      _snack(tr('هیچ سکاڵایەک نییە'), Colors.orange);
       return;
     }
 
@@ -1645,7 +1646,7 @@ $imagesText
       );
     } catch (e) {
       debugPrint('❌ pdf error: $e');
-      _snack('دروستکردنی PDF سەرنەکەوت', Colors.red);
+      _snack(tr('دروستکردنی PDF سەرنەکەوت'), Colors.red);
     } finally {
       if (mounted) setState(() => _generatingPdf = false);
     }

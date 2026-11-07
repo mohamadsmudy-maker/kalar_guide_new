@@ -78,7 +78,7 @@ class _DepartmentServicesAdminScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-            Text(service == null ? '✅ زیادکرا' : '✅ نوێکرایەوە'),
+            Text(tr(service == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -86,7 +86,7 @@ class _DepartmentServicesAdminScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('هەڵە: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
         );
       }
     }
@@ -96,16 +96,16 @@ class _DepartmentServicesAdminScreenState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red),
-              SizedBox(width: 8),
-              Text('سڕینەوەی مامەڵە'),
+              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const SizedBox(width: 8),
+              Text(tr('سڕینەوەی مامەڵە')),
             ],
           ),
           content: Text(
@@ -114,7 +114,7 @@ class _DepartmentServicesAdminScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -122,7 +122,7 @@ class _DepartmentServicesAdminScreenState
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('سڕینەوە'),
+              child: Text(tr('سڕینەوە')),
             ),
           ],
         ),
@@ -149,13 +149,13 @@ class _DepartmentServicesAdminScreenState
     final name = widget.department['name_ku']?.toString() ?? 'فەرمانگە';
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
         appBar: AppBar(
           title: Text(
-            'مامەڵەکانی $name',
+            trf('مامەڵەکانی {0}', [name]),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 15,
@@ -185,9 +185,9 @@ class _DepartmentServicesAdminScreenState
           backgroundColor: const Color(0xFF10B981),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            'زیادکردنی مامەڵە',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          label: Text(
+            tr('زیادکردنی مامەڵە'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         ),
       ),
@@ -219,7 +219,7 @@ class _DepartmentServicesAdminScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  tr(title),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
@@ -241,7 +241,7 @@ class _DepartmentServicesAdminScreenState
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          '$reqCount پێداویستی',
+                          trf('{0} پێداویستی', [reqCount]),
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
@@ -263,7 +263,7 @@ class _DepartmentServicesAdminScreenState
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          '$feeCount تێچوو',
+                          trf('{0} تێچوو', [feeCount]),
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
@@ -316,7 +316,7 @@ class _DepartmentServicesAdminScreenState
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ مامەڵەیەک نییە',
+            tr('هیچ مامەڵەیەک نییە'),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -390,8 +390,8 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
   void _save() {
     if (_titleCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ناونیشان پێویستە'),
+        SnackBar(
+          content: Text(tr('ناونیشان پێویستە')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -443,7 +443,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
     final isEditing = widget.service != null;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.92,
@@ -488,9 +488,9 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      isEditing
+                      tr(isEditing
                           ? 'دەستکاریکردنی مامەڵە'
-                          : 'زیادکردنی مامەڵە',
+                          : 'زیادکردنی مامەڵە'),
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
@@ -514,34 +514,34 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildField('ناونیشان *', _titleCtrl, isDark),
+                    _buildField(tr('ناونیشان *'), _titleCtrl, isDark),
                     const SizedBox(height: 10),
-                    _buildField('وەسف', _descCtrl, isDark, maxLines: 2),
+                    _buildField(tr('وەسف'), _descCtrl, isDark, maxLines: 2),
                     const SizedBox(height: 10),
                     _buildField(
-                      'ماوە (بۆ نموونە: ٣٠-٦٠ خولەک)',
+                      tr('ماوە (بۆ نموونە: ٣٠-٦٠ خولەک)'),
                       _durationCtrl,
                       isDark,
                     ),
                     const SizedBox(height: 10),
-                    _buildField('شوێن', _locationCtrl, isDark),
+                    _buildField(tr('شوێن'), _locationCtrl, isDark),
                     const SizedBox(height: 10),
                     _buildField(
-                      'پێداویستییەکان (هەر دێرێک = یەک پێداویستی)',
+                      tr('پێداویستییەکان (هەر دێرێک = یەک پێداویستی)'),
                       _requirementsCtrl,
                       isDark,
                       maxLines: 6,
                     ),
                     const SizedBox(height: 10),
                     _buildField(
-                      'تێچووەکان (هەر دێرێک = یەک تێچوو)',
+                      tr('تێچووەکان (هەر دێرێک = یەک تێچوو)'),
                       _feesCtrl,
                       isDark,
                       maxLines: 5,
                     ),
                     const SizedBox(height: 10),
                     _buildField(
-                      'تێبینی',
+                      tr('تێبینی'),
                       _notesCtrl,
                       isDark,
                       maxLines: 2,
@@ -588,7 +588,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
                         : Icons.add_circle_rounded,
                   ),
                   label: Text(
-                    isEditing ? 'نوێکردنەوە' : 'زیادکردن',
+                    tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 15,

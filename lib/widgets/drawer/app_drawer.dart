@@ -14,6 +14,7 @@ import '../../screens/emergency/emergency_main_screen.dart';
 import '../../screens/events/events_screen.dart';
 import '../../screens/neighborhoods/neighborhoods_map_screen.dart';
 import '../../screens/auth/auth_screen.dart';
+import '../../l10n/tr.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -87,13 +88,13 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         children: [
                           // 🚨 خزمەتگوزارییەکان (تەنها ئەوانەی لە پرۆفایل نین)
-                          _buildSection('🚨 فریاکەوتن و ڕووداوەکان', isDark, 0),
+                          _buildSection(tr('🚨 فریاکەوتن و ڕووداوەکان'), isDark, 0),
                           _buildItem(
                             context,
                             icon: Icons.emergency_rounded,
                             color: const Color(0xFFEF4444),
-                            title: 'فریاکەوتن',
-                            subtitle: 'ژمارە گرنگەکان',
+                            title: tr('فریاکەوتن'),
+                            subtitle: tr('ژمارە گرنگەکان'),
                             isDark: isDark,
                             onTap: () => _push(context, const EmergencyScreen()),
                             itemIndex: 1,
@@ -102,8 +103,8 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                             context,
                             icon: Icons.event_rounded,
                             color: const Color(0xFF8B5CF6),
-                            title: 'ڕووداوەکان',
-                            subtitle: 'ڕووداوەکانی کەلار',
+                            title: tr('ڕووداوەکان'),
+                            subtitle: tr('ڕووداوەکانی کەلار'),
                             isDark: isDark,
                             onTap: () => _push(context, const EventsScreen()),
                             itemIndex: 2,
@@ -112,13 +113,13 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                           const SizedBox(height: 8),
 
                           // 🗺️ ڕێبەر (تەنها نەخشە)
-                          _buildSection('🗺️ ڕێبەر', isDark, 3),
+                          _buildSection(tr('🗺️ ڕێبەر'), isDark, 3),
                           _buildItem(
                             context,
                             icon: Icons.map_rounded,
                             color: const Color(0xFF10B981),
-                            title: 'نەخشەی گەڕەکان',
-                            subtitle: 'بینینی نەخشەی تەواوی کەلار',
+                            title: tr('نەخشەی گەڕەکان'),
+                            subtitle: tr('بینینی نەخشەی تەواوی کەلار'),
                             isDark: isDark,
                             onTap: () => _push(context, const NeighborhoodsMapScreen()),
                             itemIndex: 4,
@@ -127,7 +128,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                           const SizedBox(height: 8),
 
                           // ⚙️ ڕێکخستنەکان (تەنها ڕووکاز و زمان)
-                          _buildSection('⚙️ ڕێکخستن', isDark, 5),
+                          _buildSection(tr('⚙️ ڕێکخستن'), isDark, 5),
                           _buildThemeSwitch(context, themeProvider, isDark, itemIndex: 6),
                           _buildLanguageSwitcher(context, settings, isDark, itemIndex: 7),
 
@@ -212,7 +213,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
           ),
           const SizedBox(height: 12),
           Text(
-            isLogged ? (userProfile?['name']?.toString() ?? 'بەکارهێنەر') : 'میوانی خۆشەویست',
+            tr(isLogged ? (userProfile?['name']?.toString() ?? 'بەکارهێنەر') : 'میوانی خۆشەویست'),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -232,10 +233,10 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(_getRoleEmoji(userProfile?['role']?.toString()), style: const TextStyle(fontSize: 14)),
+                  Text(tr(_getRoleEmoji(userProfile?['role']?.toString())), style: const TextStyle(fontSize: 14)),
                   const SizedBox(width: 6),
                   Text(
-                    _getRoleName(userProfile?['role']?.toString()),
+                    tr(_getRoleName(userProfile?['role']?.toString())),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -246,9 +247,9 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
               ),
             )
           else
-            const Text(
-              'بەخێربێیت بۆ ڕێبەری کەلار',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+            Text(
+              tr('بەخێربێیت بۆ ڕێبەری کەلار'),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
         ],
       ),
@@ -268,7 +269,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 6),
               child: Text(
-                title,
+                tr(title),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -343,7 +344,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          title,
+                          tr(title),
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 14,
@@ -352,7 +353,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          subtitle,
+                          tr(subtitle),
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark ? Colors.white54 : Colors.grey.shade500,
@@ -427,7 +428,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'ڕووکاز',
+                      tr('ڕووکاز'),
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
@@ -436,7 +437,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      effectiveIsDark ? 'شێوازی تاریک' : 'شێوازی ڕووناک',
+                      tr(effectiveIsDark ? 'شێوازی تاریک' : 'شێوازی ڕووناک'),
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark ? Colors.white54 : Colors.grey.shade500,
@@ -510,7 +511,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'زمان',
+                      tr('زمان'),
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
@@ -519,7 +520,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      languages.firstWhere((l) => l['id'] == settings.languageId, orElse: () => languages[0])['name']!,
+                      tr(languages.firstWhere((l) => l['id'] == settings.languageId, orElse: () => languages[0])['name']!),
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark ? Colors.white54 : Colors.grey.shade500,
@@ -549,7 +550,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                             width: 1.5,
                           ),
                         ),
-                        child: Text(lang['flag']!, style: const TextStyle(fontSize: 18)),
+                        child: Text(tr(lang['flag']!), style: const TextStyle(fontSize: 18)),
                       ),
                     ),
                   );
@@ -596,10 +597,10 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
               },
             ),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
-                'ئێستا بەکارهێنەر ئۆنلاینە',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
+                tr('ئێستا بەکارهێنەر ئۆنلاینە'),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
               ),
             ),
             Text(
@@ -637,12 +638,12 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
               ),
             ],
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.login_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 10),
-              Text('چوونەژوورەوە', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+              const Icon(Icons.login_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Text(tr('چوونەژوورەوە'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
             ],
           ),
         ),
@@ -662,12 +663,12 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1.5),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.logout_rounded, color: Colors.red, size: 20),
-              SizedBox(width: 10),
-              Text('چوونەدەرەوە لە هەژمار', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 15)),
+              const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
+              const SizedBox(width: 10),
+              Text(tr('چوونەدەرەوە لە هەژمار'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 15)),
             ],
           ),
         ),
@@ -687,13 +688,13 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                 Icon(Icons.verified_rounded, size: 12, color: isDark ? Colors.white38 : Colors.grey[400]),
                 const SizedBox(width: 4),
                 Text(
-                  'ڕێبەری کەلار',
+                  tr('ڕێبەری کەلار'),
                   style: TextStyle(fontSize: 10, color: isDark ? Colors.white38 : Colors.grey[500], fontWeight: FontWeight.w600),
                 ),
               ],
             ),
             const SizedBox(height: 4),
-            Text('وەشان ١.٠.٠', style: TextStyle(fontSize: 9, color: isDark ? Colors.white24 : Colors.grey[400])),
+            Text(tr('وەشان ١.٠.٠'), style: TextStyle(fontSize: 9, color: isDark ? Colors.white24 : Colors.grey[400])),
           ],
         ),
       ),
@@ -704,19 +705,19 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.logout_rounded, color: Colors.red),
-              SizedBox(width: 10),
-              Text('چوونەدەرەوە', style: TextStyle(fontWeight: FontWeight.w900)),
+              const Icon(Icons.logout_rounded, color: Colors.red),
+              const SizedBox(width: 10),
+              Text(tr('چوونەدەرەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
             ],
           ),
-          content: const Text('ئایا دڵنیایت لە چوونەدەرەوە لە ئەکاونتەکەت؟'),
+          content: Text(tr('ئایا دڵنیایت لە چوونەدەرەوە لە ئەکاونتەکەت؟')),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('نەخێر')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('نەخێر'))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
@@ -724,7 +725,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('بەڵێ', style: TextStyle(fontWeight: FontWeight.w900)),
+              child: Text(tr('بەڵێ'), style: const TextStyle(fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -738,9 +739,9 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✅ بە سەرکەوتوویی چوویتە دەرەوە', style: TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: Color(0xFF10B981),
+      SnackBar(
+        content: Text(tr('✅ بە سەرکەوتوویی چوویتە دەرەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
       ),
     );

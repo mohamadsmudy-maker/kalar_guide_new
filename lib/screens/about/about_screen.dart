@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:kalar_guide_new/config/app_colors.dart';
+import '../../l10n/tr.dart';
 import 'package:kalar_guide_new/config/theme.dart'; // بۆ AppThemeColors
 
 part 'about_screen_ui.dart';
@@ -55,35 +56,35 @@ class _AboutScreenState extends State<AboutScreen>
   // ═══════════════════════════════════════════════════════════
   // 🎯 Services Data (const — بۆ ئەدای باشتر)
   // ═══════════════════════════════════════════════════════════
-  static const List<_ServiceItem> _services = [
+  static final List<_ServiceItem> _services = [
     _ServiceItem(
       icon: Icons.business_rounded,
-      label: 'دیزاینی بینا',
+      label: tr('دیزاینی بینا'),
       color: AppColors.primary,
     ),
     _ServiceItem(
       icon: Icons.architecture_rounded,
-      label: 'نەخشەکێشان',
+      label: tr('نەخشەکێشان'),
       color: AppColors.purple,
     ),
     _ServiceItem(
       icon: Icons.engineering_rounded,
-      label: 'سەرپەرشتی پڕۆژە',
+      label: tr('سەرپەرشتی پڕۆژە'),
       color: AppColors.green,
     ),
     _ServiceItem(
       icon: Icons.calculate_rounded,
-      label: 'حسابکردنی بڕیار',
+      label: tr('حسابکردنی بڕیار'),
       color: AppColors.orange,
     ),
     _ServiceItem(
       icon: Icons.phone_android_rounded,
-      label: 'گەشەپێدانی ئەپ',
+      label: tr('گەشەپێدانی ئەپ'),
       color: AppColors.pink, // ⚠️ دڵنیابە لەوەی ئەم ڕەنگە لە AppColors دا هەیە، ئەگەنا بیکە بە Colors.pink
     ),
     _ServiceItem(
       icon: Icons.palette_rounded,
-      label: 'دیزاینی گرافیک',
+      label: tr('دیزاینی گرافیک'),
       color: AppColors.teal,
     ),
   ];
@@ -214,7 +215,7 @@ class _AboutScreenState extends State<AboutScreen>
     final successColor = ext?.success ?? AppColors.green;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
       backgroundColor: bgColor,
       body: CustomScrollView(
@@ -226,17 +227,17 @@ class _AboutScreenState extends State<AboutScreen>
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _buildSectionTitle('📝 دەربارەی من', isDark, textTheme),
+                  _buildSectionTitle(tr('📝 دەربارەی من'), isDark, textTheme),
                   const SizedBox(height: 12),
                   _buildBioCard(isDark, 0, textTheme),
                   const SizedBox(height: 20),
-                  _buildSectionTitle('📞 پەیوەندی', isDark, textTheme),
+                  _buildSectionTitle(tr('📞 پەیوەندی'), isDark, textTheme),
                   const SizedBox(height: 12),
                   _buildContactCard(
                     isDark: isDark,
                     icon: Icons.phone_rounded,
                     iconColor: successColor,
-                    title: 'ژمارەی مۆبایل',
+                    title: tr('ژمارەی مۆبایل'),
                     value: _phone,
                     onTap: () => _call(_phone),
                     itemIndex: 1,
@@ -247,22 +248,22 @@ class _AboutScreenState extends State<AboutScreen>
                     isDark: isDark,
                     icon: Icons.chat_bubble_rounded,
                     iconColor: const Color(0xFF25D366),
-                    title: 'واتسئاپ',
+                    title: tr('واتسئاپ'),
                     value: _phone,
                     onTap: () => _openWhatsApp(),
                     itemIndex: 2,
                     textTheme: textTheme,
                   ),
                   const SizedBox(height: 20),
-                  _buildSectionTitle('🎯 خزمەتگوزارییەکان', isDark, textTheme),
+                  _buildSectionTitle(tr('🎯 خزمەتگوزارییەکان'), isDark, textTheme),
                   const SizedBox(height: 12),
                   _buildServicesCard(isDark, 3, textTheme),
                   const SizedBox(height: 20),
-                  _buildSectionTitle('🌐 هاوبەشکردن', isDark, textTheme),
+                  _buildSectionTitle(tr('🌐 هاوبەشکردن'), isDark, textTheme),
                   const SizedBox(height: 12),
                   _buildShareCard(isDark, 4, textTheme),
                   const SizedBox(height: 20),
-                  _buildSectionTitle('⭐ هەڵسەنگاندن', isDark, textTheme),
+                  _buildSectionTitle(tr('⭐ هەڵسەنگاندن'), isDark, textTheme),
                   const SizedBox(height: 12),
                   _buildRateCard(5, textTheme),
                   const SizedBox(height: 24),
@@ -292,7 +293,7 @@ class _AboutScreenState extends State<AboutScreen>
       ..showSnackBar(
         SnackBar(
           content: Text(
-            msg,
+            tr(msg),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           backgroundColor: color,
@@ -311,11 +312,11 @@ class _AboutScreenState extends State<AboutScreen>
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        _showSnack('⚠️ نەتوانرا پەیوەندی بکرێت', AppColors.red);
+        _showSnack(tr('⚠️ نەتوانرا پەیوەندی بکرێت'), AppColors.red);
       }
     } catch (e) {
       debugPrint('❌ Call error: $e');
-      _showSnack('⚠️ هەڵە لە پەیوەندیدا', AppColors.red);
+      _showSnack(tr('⚠️ هەڵە لە پەیوەندیدا'), AppColors.red);
     }
   }
 
@@ -332,27 +333,25 @@ class _AboutScreenState extends State<AboutScreen>
         ok = await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
       } catch (_) {}
       if (!ok) ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok) _showSnack('⚠️ واتسئاپ دەستنەکەوێت', AppColors.red);
+      if (!ok) _showSnack(tr('⚠️ واتسئاپ دەستنەکەوێت'), AppColors.red);
     } catch (e) {
       debugPrint('❌ WhatsApp error: $e');
-      _showSnack('⚠️ هەڵە لە واتسئاپدا', AppColors.red);
+      _showSnack(tr('⚠️ هەڵە لە واتسئاپدا'), AppColors.red);
     }
   }
 
   Future<void> _shareApp() async {
     try {
       await Share.share(
-        '🏙️ ئەپی ڕێبەری کەلار — ڕێبەری فەرمی شاری کەلار\n\n'
-            '✅ $_neighborhoodsText گەڕەک\n'
-            '✅ $_storesText شوێن\n'
-            '✅ سکاڵا و ڕووداو\n'
-            '✅ دراو و سووتەمەنی\n\n'
-            'داگرتن: $_appUrl',
-        subject: 'ڕێبەری کەلار — ئەپی فەرمی شاری کەلار',
+        trf(
+          '🏙️ ئەپی ڕێبەری کەلار — ڕێبەری فەرمی شاری کەلار\n\n✅ {0} گەڕەک\n✅ {1} شوێن\n✅ سکاڵا و ڕووداو\n✅ دراو و سووتەمەنی\n\nداگرتن: {2}',
+          [_neighborhoodsText, _storesText, _appUrl],
+        ),
+        subject: tr('ڕێبەری کەلار — ئەپی فەرمی شاری کەلار'),
       );
     } catch (e) {
       debugPrint('❌ Share error: $e');
-      _showSnack('⚠️ نەتوانرا هاوبەش بکرێت', AppColors.red);
+      _showSnack(tr('⚠️ نەتوانرا هاوبەش بکرێت'), AppColors.red);
     }
   }
 
@@ -365,10 +364,10 @@ class _AboutScreenState extends State<AboutScreen>
         ok = await launchUrl(market, mode: LaunchMode.externalApplication);
       } catch (_) {}
       if (!ok) ok = await launchUrl(Uri.parse(_playStoreUrl), mode: LaunchMode.externalApplication);
-      if (!ok) _showSnack('⚠️ نەتوانرا Play Store بکرێتەوە', AppColors.red);
+      if (!ok) _showSnack(tr('⚠️ نەتوانرا Play Store بکرێتەوە'), AppColors.red);
     } catch (e) {
       debugPrint('❌ Rate error: $e');
-      _showSnack('⚠️ هەڵە لە کردنەوەی Play Store', AppColors.red);
+      _showSnack(tr('⚠️ هەڵە لە کردنەوەی Play Store'), AppColors.red);
     }
   }
 }
