@@ -4,7 +4,7 @@
 // بە سنوورەکانیانەوە دەخاتە ناو Supabase.
 //
 // جێبەجێکردن:
-//   dart run tool/upload_boundaries.dart
+//   SUPABASE_URL=... SUPABASE_ANON_KEY=... dart run tool/upload_boundaries.dart
 
 import 'dart:convert';
 import 'dart:io';
@@ -15,8 +15,12 @@ void main() async {
   // ═══════════════════════════════════════════════════════════
   // 🔑 ڕێکخستن
   // ═══════════════════════════════════════════════════════════
-  const supabaseUrl = 'https://krqrhrqtmcpwpcsxkaql.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtycXJocnF0bWNwd3Bjc3hrYXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NDg4MzIsImV4cCI6MjEwNDUyNDgzMn0.2jFpZfH3x9POPboN841XM8pu6uqErX6Viq5Luvgbldo';
+  final supabaseUrl = Platform.environment['SUPABASE_URL'] ?? '';
+  final supabaseKey = Platform.environment['SUPABASE_ANON_KEY'] ?? '';
+  if (supabaseUrl.isEmpty || supabaseKey.isEmpty) {
+    print('❌ SUPABASE_URL و SUPABASE_ANON_KEY دابنێ وەک environment variable');
+    exit(1);
+  }
 
   const geoJsonFile = 'assets/data/kelar_boundaries.geojson';
 

@@ -47,7 +47,7 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
           .from('app_users')
           .select('*')
           .eq('is_approved', false)
-          .eq('role', 'vendor')
+          .inFilter('role', ['vendor', 'vendor_pending'])
           .order('created_at', ascending: false);
 
       // ٢. هێنانی ئەو ئەدمنانەی پەسەند کراون

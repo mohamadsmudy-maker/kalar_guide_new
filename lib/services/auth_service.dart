@@ -77,8 +77,9 @@ class AuthSessionManager {
         return null;
       }
 
+      // 🔐 ڕۆڵ لە سێرڤەرەوە دێت (app_sessions)، نەک لەو ژمارەیەی لە مۆبایل هەڵگیراوە
       final res = await Supabase.instance.client
-          .rpc('get_user_for_login', params: {'phone_param': phone})
+          .rpc('app_current_user')
           .timeout(_supabaseTimeout);
 
       if (res is List && res.isNotEmpty) {
@@ -92,8 +93,8 @@ class AuthSessionManager {
         AppLogger.i('✅ fetchUserProfile: $_userName ($_userRole) - Store: $_storeId');
         return userData;
       } else {
-        _userRole = 'customer';
-        userNotifier.value = null;
+        // session ی سێرڤەر نییە (یان بەسەرچووە) → دەبێت دووبارە بچێتە ژوورەوە
+        await _clearLocalSession();
         return null;
       }
     } catch (e, st) {
@@ -146,6 +147,7 @@ class AuthSessionManager {
   static Future<void> clearSession() async {
     try {
       try { await NotificationService.clearToken(); } catch (e) {}
+      try { await Supabase.instance.client.rpc('app_logout').timeout(_supabaseTimeout); } catch (e) {}
       await _clearLocalSession();
       try { await Supabase.instance.client.auth.signOut().timeout(_supabaseTimeout); } catch (e) {}
     } catch (e, st) {

@@ -152,9 +152,7 @@ class NotificationService {
       }
 
       await Supabase.instance.client
-          .from('app_users')
-          .update({'fcm_token': token})
-          .eq('id', userId);
+          .rpc('app_set_fcm_token', params: {'p_token': token});
 
       AppLogger.i('✅ FCM Token پاشەکەوتکرا');
     } catch (e) {
@@ -237,9 +235,7 @@ class NotificationService {
       }
 
       await Supabase.instance.client
-          .from('app_users')
-          .update({'fcm_token': null})
-          .eq('id', userId);
+          .rpc('app_set_fcm_token', params: {'p_token': null});
 
       try {
         await _messaging.deleteToken();

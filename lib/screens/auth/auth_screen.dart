@@ -280,6 +280,10 @@ class _AuthScreenState extends State<AuthScreen> {
     required String phone,
     required String pass,
   }) async {
+    // 🔐 app_login ئەم session ـە بە بەکارهێنەرەکەوە دەبەستێتەوە لەسەر سێرڤەر
+    if (Supabase.instance.client.auth.currentSession == null) {
+      await Supabase.instance.client.auth.signInAnonymously();
+    }
     final res = await Supabase.instance.client.rpc('app_login', params: {
       'p_phone': phone,
       'p_password': pass,

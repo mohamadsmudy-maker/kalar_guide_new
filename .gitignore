@@ -109,3 +109,6 @@ errors.txt
 *.zip
 *.apk
 project-tree.txt
+
+# Supabase CLI local state
+supabase/.temp/
