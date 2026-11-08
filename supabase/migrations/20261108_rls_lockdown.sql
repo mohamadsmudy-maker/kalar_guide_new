@@ -30,6 +30,46 @@
 
 
 -- ───────────────────────────────────────────────────────────────────
+-- 0) Older versions of these functions with a different return type
+--    cannot be replaced by CREATE OR REPLACE, so drop them first.
+--    (Only when the return type differs; nothing else is touched.)
+-- ───────────────────────────────────────────────────────────────────
+do $$
+declare
+  want record;
+  f record;
+begin
+  for want in
+    select * from (values
+      ('app_role',              '',          'text'),
+      ('app_store_id',          '',          'text'),
+      ('app_user_id',           '',          'text'),
+      ('app_phone',             '',          'text'),
+      ('app_is_admin',          '',          'boolean'),
+      ('app_owns',              'text, text','boolean'),
+      ('app_owns_department',   'text',      'boolean'),
+      ('app_current_user',      '',          'TABLE(id text, name text, phone text, role text, is_approved boolean, store_id text)'),
+      ('app_logout',            '',          'void'),
+      ('app_set_fcm_token',     'text',      'void'),
+      ('increment_event_views', 'text',      'void')
+    ) as t(name, args, result)
+  loop
+    for f in
+      select p.oid::regprocedure as sig, pg_get_function_result(p.oid) as result
+        from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.proname = want.name
+         and pg_get_function_identity_arguments(p.oid) = want.args
+    loop
+      if f.result <> want.result then
+        raise notice 'dropping old % (returned %)', f.sig, f.result;
+        execute format('drop function %s', f.sig);
+      end if;
+    end loop;
+  end loop;
+end $$;
+
+
+-- ───────────────────────────────────────────────────────────────────
 -- 1) Server-side session table
 -- ───────────────────────────────────────────────────────────────────
 create table if not exists public.app_sessions (

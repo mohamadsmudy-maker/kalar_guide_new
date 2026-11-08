@@ -38,3 +38,8 @@ create policy old_allow_all on banners for all using (true) with check (true);
 alter table banners enable row level security;
 grant all on all tables in schema public to anon, authenticated;
 grant all on all sequences in schema public to anon, authenticated;
+
+-- An older app_current_user with another return type already exists in the
+-- real project; the migration must replace it.
+create function app_current_user() returns json language sql as $$ select '{}'::json $$;
+create function app_is_admin() returns integer language sql as $$ select 0 $$;
