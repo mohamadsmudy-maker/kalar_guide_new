@@ -33,6 +33,7 @@ import 'package:kalar_guide_new/screens/stores/stores_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:kalar_guide_new/services/translation_service.dart';
 
 final _kurdish = RegExp(r'[ەێۆڕڵ]');
 
@@ -50,6 +51,9 @@ List<String> _visibleKurdish(WidgetTester tester) {
 
 void main() {
   setUpAll(() async {
+    // وەرگێڕانی داتای داتابەیس (Gemini) لێرە تاقی ناکرێتەوە
+    TranslationService.fetchOverride = (_, __) async => null;
+    TranslationService.fetchSharedPage = (_, __, ___) async => const [];
     SharedPreferences.setMockInitialValues({});
     await Supabase.initialize(
       url: 'https://example.supabase.co',

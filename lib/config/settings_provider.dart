@@ -1,5 +1,8 @@
 // lib/config/settings_provider.dart
+import 'dart:async';
+
 import '../l10n/tr.dart';
+import '../services/translation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -142,6 +145,7 @@ class SettingsProvider extends ChangeNotifier {
       _fontScale = prefs.getDouble('font_scale') ?? 1.0;
       _languageId = prefs.getString('language_id') ?? 'ku';
       AppLang.setCode(_languageId);
+      unawaited(TranslationService.syncShared(_languageId));
 
       final font = availableFonts.firstWhere(
             (f) => f.id == _fontId,
@@ -298,6 +302,7 @@ class SettingsProvider extends ChangeNotifier {
 
     _languageId = languageId;
     AppLang.setCode(languageId);
+    unawaited(TranslationService.syncShared(languageId));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('language_id', languageId);
 

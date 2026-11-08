@@ -49,10 +49,12 @@ class TranslationService {
       return SynchronousFuture(cached);
     }
 
-    return _inFlight[key] ??= _fetch(trimmed, targetLanguage).then((result) {
+    return _inFlight[key] ??= (fetchOverride ?? _fetch)(trimmed, targetLanguage).then((result) {
       if (result != null) _put(key, result);
       return result ?? text;
-    }).whenComplete(() => _inFlight.remove(key));
+    }).whenComplete(() {
+      _inFlight.remove(key);
+    });
   }
 
   /// چەند دەقێک بە هاوکات وەردەگێڕێت (بۆ لیستەکان).
@@ -74,6 +76,77 @@ class TranslationService {
 
   static void clearCache() {
     _cache.clear();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🌍 کاشی هاوبەش (Supabase: translations)
+  // هەر دەقێک تەنها یەکجار بە Gemini وەردەگێڕدرێت و لێرە هەڵدەگیرێت؛
+  // ئەپەکە بە یەک داواکاری تەنها ڕیزە نوێکان دادەگرێت.
+  // ═══════════════════════════════════════════════════════════
+  static const String _syncKeyPrefix = 'translation_sync_v1_';
+  static const int _syncPageSize = 1000;
+  static final Map<String, Future<int>> _syncing = {};
+
+  /// وەرگێڕانە هاوبەشەکانی [lang] دادەگرێت (تەنها ئەوانەی دوای دوایین
+  /// جار گۆڕاون). ژمارەی ڕیزە وەرگیراوەکان دەگەڕێنێتەوە.
+  static Future<int> syncShared(String lang) {
+    if (!_supportedTargets.contains(lang)) return SynchronousFuture(0);
+    return _syncing[lang] ??= _syncShared(lang).whenComplete(() {
+      _syncing.remove(lang);
+    });
+  }
+
+  /// تەنها بۆ تاقیکردنەوە: لە جیاتی Edge Function
+  @visibleForTesting
+  static Future<String?> Function(String text, String lang)? fetchOverride;
+
+  /// تەنها بۆ تاقیکردنەوە: لە جیاتی Supabase
+  @visibleForTesting
+  static Future<List<Map<String, dynamic>>> Function(String lang, String? since, int limit)?
+      fetchSharedPage;
+
+  static Future<List<Map<String, dynamic>>> _fetchSharedPage(
+      String lang, String? since, int limit) async {
+    var q = Supabase.instance.client
+        .from('translations')
+        .select('source, translation, updated_at')
+        .eq('lang', lang);
+    if (since != null) q = q.gt('updated_at', since);
+    final rows = await q.order('updated_at', ascending: true).limit(limit);
+    return List<Map<String, dynamic>>.from(rows as List);
+  }
+
+  static Future<int> _syncShared(String lang) async {
+    var received = 0;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = '$_syncKeyPrefix$lang';
+      var since = prefs.getString(key);
+      for (var page = 0; page < 20; page++) {
+        final list = await (fetchSharedPage ?? _fetchSharedPage)(lang, since, _syncPageSize)
+            .timeout(_timeout);
+        for (final r in list) {
+          final src = '${r['source'] ?? ''}'.trim();
+          final tr = '${r['translation'] ?? ''}'.trim();
+          if (src.isEmpty || tr.isEmpty) continue;
+          final k = '$lang\u0000$src';
+          _cache[k] = tr;
+          _disk[k] = tr; // ڕاستکردنەوەی ئەدمین وەرگێڕانی کۆن دەگۆڕێت
+        }
+        received += list.length;
+        if (list.isNotEmpty) since = '${list.last['updated_at']}';
+        if (list.length < _syncPageSize) break;
+      }
+      while (_cache.length > _maxCacheEntries) {
+        _cache.remove(_cache.keys.first);
+      }
+      if (since != null) await prefs.setString(key, since);
+      if (received > 0) _saveDisk();
+    } catch (e) {
+      // خشتەکە هێشتا دروست نەکراوە یان ئینتەرنێت نییە — هیچ کێشە نییە
+      debugPrint('⚠️ translation sync ($lang): $e');
+    }
+    return received;
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -128,7 +201,7 @@ class TranslationService {
   // 💾 کاشی هەمیشەیی — دوای داخستنی ئەپیش دەمێنێت (کەمتر داواکاری بۆ Gemini)
   // ═══════════════════════════════════════════════════════════
   static const String _diskKey = 'translation_cache_v1';
-  static const int _maxDiskEntries = 3000;
+  static const int _maxDiskEntries = 8000;
   static final Map<String, String> _disk = {};
   static Timer? _saveTimer;
 
