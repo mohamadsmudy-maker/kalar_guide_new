@@ -165,6 +165,84 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     }
   }
 
+  /// هەموو ناوی شوێن، بەش و هەواڵەکان یەکجار وەردەگێڕێت (بە کۆمەڵ، بە
+  /// پشوو لە نێوان داواکارییەکاندا بۆ سنووری Gemini ـی بەخۆڕایی). دواتر
+  /// هیچ بەکارهێنەرێک چاوەڕێی Gemini ناکات.
+  Future<void> _translateAll() async {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: AppLang.direction,
+        child: AlertDialog(
+          title: Text(tr('وەرگێڕانی هەموو شوێنەکان')),
+          content: Text(tr(
+              'ناوی هەموو شوێن، ناونیشان، بەش و هەواڵەکان بۆ ئینگلیزی و عەرەبی وەردەگێڕدرێن. چەند خولەکێک دەخایەنێت؛ تا تەواو دەبێت ئەم شاشەیە دامەخە.')),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('پاشگەزبوونەوە'))),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('دەستپێکردن'))),
+          ],
+        ),
+      ),
+    );
+    if (go != true || !mounted) return;
+
+    final texts = <String>{};
+    Future<void> collect(String table, List<String> cols) async {
+      try {
+        final rows = await _db.from(table).select(cols.join(', ')).limit(5000);
+        for (final r in rows) {
+          for (final c in cols) {
+            final v = '${r[c] ?? ''}'.trim();
+            if (v.isNotEmpty && v != 'null') texts.add(v);
+          }
+        }
+      } catch (_) {}
+    }
+
+    await collect('dukan', ['name', 'address', 'category', 'sub_category']);
+    await collect('main_categories', ['name']);
+    await collect('sub_categories', ['name']);
+    await collect('news', ['title']);
+    texts.removeWhere((t) => AppLang.lookup('en', t) != null); // پێشتر لە ناو ئەپدا وەرگێڕدراون
+    if (!mounted) return;
+
+    final progress = ValueNotifier<String>('');
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Directionality(
+        textDirection: AppLang.direction,
+        child: AlertDialog(
+          content: Row(children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 18),
+            Expanded(
+              child: ValueListenableBuilder<String>(
+                valueListenable: progress,
+                builder: (_, v, __) => Text(v),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+
+    var done = 0;
+    for (final lang in ['en', 'ar']) {
+      done += await TranslationService.translateAllNow(
+        texts.toList(),
+        lang,
+        onProgress: (d, t) => progress.value =
+            '${lang == 'en' ? 'English' : 'العربية'}: $d / $t',
+      );
+    }
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    progress.dispose();
+    _snack(trf('{0} وەرگێڕانی نوێ پاشەکەوت کرا', [done]));
+    _load();
+  }
+
   Future<void> _delete(Map<String, dynamic> row) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -212,6 +290,11 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           actions: [
+            IconButton(
+              tooltip: tr('وەرگێڕانی هەموو شوێنەکان'),
+              onPressed: _translateAll,
+              icon: const Icon(Icons.g_translate_rounded),
+            ),
             IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
           ],
         ),

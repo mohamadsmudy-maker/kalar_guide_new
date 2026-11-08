@@ -1757,4 +1757,8 @@ const Map<String, String> stringsEn = {
   'پارک': 'Park',
   'تەواوکردن و زیادکردن': 'Complete and add',
   'فایلی 20261115_places_sources.sql هێشتا لە Supabase جێبەجێ نەکراوە': 'File 20261115_places_sources.sql has not been run in Supabase yet',
+  '{0} وەرگێڕانی نوێ پاشەکەوت کرا': '{0} new translations saved',
+  'دەستپێکردن': 'Start',
+  'ناوی هەموو شوێن، ناونیشان، بەش و هەواڵەکان بۆ ئینگلیزی و عەرەبی وەردەگێڕدرێن. چەند خولەکێک دەخایەنێت؛ تا تەواو دەبێت ئەم شاشەیە دامەخە.': 'All place names, addresses, categories and news will be translated to English and Arabic. It takes a few minutes; keep this screen open until it finishes.',
+  'وەرگێڕانی هەموو شوێنەکان': 'Translate all places',
 };
