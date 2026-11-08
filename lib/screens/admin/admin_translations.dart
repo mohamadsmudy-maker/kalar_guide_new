@@ -8,7 +8,7 @@ import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
 import '../../services/translation_service.dart';
 
-/// 🌍 وەرگێڕانە هاوبەشەکان (خشتەی translations)
+/// 🌍 وەرگێڕانە هاوبەشەکان (خشتەی text_translations)
 ///
 /// Gemini ناوی شوێن، هەواڵ و بەشەکان یەکجار وەردەگێڕێت و لێرە هەڵیان
 /// دەگرێت. ئەدمین دەتوانێت وەرگێڕانێکی هەڵە ڕاست بکاتەوە (edited = true،
@@ -53,7 +53,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     try {
       final q = _search.text.trim().replaceAll(RegExp(r'[%,()]'), ' ');
       var query = _db
-          .from('translations')
+          .from('text_translations')
           .select('source, source_hash, translation, edited, updated_at')
           .eq('lang', _lang);
       if (q.isNotEmpty) {
@@ -144,7 +144,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
 
     try {
       final res = await _db
-          .from('translations')
+          .from('text_translations')
           .update({
             'translation': saved,
             'edited': true,
@@ -187,7 +187,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     if (ok != true) return;
     try {
       await _db
-          .from('translations')
+          .from('text_translations')
           .delete()
           .eq('lang', _lang)
           .eq('source_hash', '${row['source_hash']}');
@@ -266,7 +266,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            tr('خشتەی translations نەدۆزرایەوە. فایلی 20261112_translations_cache.sql لە Supabase جێبەجێ بکە.'),
+            tr('خشتەی text_translations نەدۆزرایەوە. فایلی 20261112_translations_cache.sql لە Supabase جێبەجێ بکە.'),
             textAlign: TextAlign.center,
           ),
         ),

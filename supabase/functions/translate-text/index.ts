@@ -53,7 +53,7 @@ async function callGemini(apiKey: string, apiVersion: string, prompt: string): P
   return last ?? new Response('no model', { status: 502 });
 }
 
-// ── کاشی هاوبەش (خشتەی translations) ─────────────────────────
+// ── کاشی هاوبەش (خشتەی text_translations) ─────────────────────────
 // هەر دەقێک تەنها یەکجار بە Gemini وەردەگێڕدرێت؛ دواتر لێرەوە دێت.
 // SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY خۆکارانە لە Edge Functions دا هەن.
 const SB_URL = Deno.env.get('SUPABASE_URL');

@@ -181,17 +181,17 @@ select translation_put('en', 'کەلار', 'Kalar');            -- as the Edge F
 select translation_put('en', 'کەلار', 'Other');            -- never overwrites
 select t.check(translation_get('en', 'کەلار') = 'Kalar', 'stored translation is kept');
 set role authenticated;
-select t.check((select source_hash = md5('کەلار') from translations), 'hash generated');
+select t.check((select source_hash = md5('کەلار') from text_translations), 'hash generated');
 select t.check(t.rows($$select translation_put('ar', 'x', 'y')$$) = -1, 'app users cannot call translation_put');
-select t.check(t.rows($$update translations set translation = 'Kalar city', edited = true where source = 'کەلار'$$) = 1,
+select t.check(t.rows($$update text_translations set translation = 'Kalar city', edited = true where source = 'کەلار'$$) = 1,
                'admin corrects a translation');
-select t.check(t.rows($$insert into translations(lang, source, translation) values ('xx', 'a', 'b')$$) = -2,
+select t.check(t.rows($$insert into text_translations(lang, source, translation) values ('xx', 'a', 'b')$$) = -2,
                'unknown language rejected');
 select t.as_user('00000000-0000-0000-0000-0000000000ee');   -- guest
-select t.check((select translation from translations where lang = 'en' and source = 'کەلار') = 'Kalar city',
+select t.check((select translation from text_translations where lang = 'en' and source = 'کەلار') = 'Kalar city',
                'guest reads shared translations');
-select t.check(t.rows($$update translations set translation = 'x'$$) = 0, 'guest cannot change translations');
-select t.check(t.rows($$insert into translations(lang, source, translation) values ('ar', 'x', 'y')$$) = -1,
+select t.check(t.rows($$update text_translations set translation = 'x'$$) = 0, 'guest cannot change translations');
+select t.check(t.rows($$insert into text_translations(lang, source, translation) values ('ar', 'x', 'y')$$) = -1,
                'guest cannot add translations');
 select t.as_user('00000000-0000-0000-0000-00000000000d');
 

@@ -79,7 +79,7 @@ class TranslationService {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🌍 کاشی هاوبەش (Supabase: translations)
+  // 🌍 کاشی هاوبەش (Supabase: text_translations)
   // هەر دەقێک تەنها یەکجار بە Gemini وەردەگێڕدرێت و لێرە هەڵدەگیرێت؛
   // ئەپەکە بە یەک داواکاری تەنها ڕیزە نوێکان دادەگرێت.
   // ═══════════════════════════════════════════════════════════
@@ -108,7 +108,7 @@ class TranslationService {
   static Future<List<Map<String, dynamic>>> _fetchSharedPage(
       String lang, String? since, int limit) async {
     var q = Supabase.instance.client
-        .from('translations')
+        .from('text_translations')
         .select('source, translation, updated_at')
         .eq('lang', lang);
     if (since != null) q = q.gt('updated_at', since);

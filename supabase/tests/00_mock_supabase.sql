@@ -49,3 +49,6 @@ create function app_is_admin() returns integer language sql as $$ select 0 $$;
 -- a pre-existing version with other parameter names (as on the live project)
 create function public.app_update_currency_price(p_station_id bigint, p_currency text, p_buy numeric, p_sell numeric, p_notes text)
 returns boolean language sql as $$ select true $$;
+
+-- an unrelated older "translations" table (as on the live project)
+create table translations(id bigserial primary key, key text, value text);
