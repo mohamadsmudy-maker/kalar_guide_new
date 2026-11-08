@@ -8,6 +8,7 @@ import '../../services/event_service.dart';
 import '../../widgets/common/auto_translate.dart';
 import '../../widgets/events/event_card.dart';
 import 'event_details_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 📅 شاشەی ڕووداوەکان — ULTRA PRO
 class EventsScreen extends StatefulWidget {
@@ -203,7 +204,7 @@ class _EventsScreenState extends State<EventsScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         AutoTranslate(
-                          text: 'ڕووداوەکان 📅',
+                          text: tr('ڕووداوەکان 📅'),
                           lang: lang,
                           style: const TextStyle(
                             color: Colors.white,
@@ -214,7 +215,7 @@ class _EventsScreenState extends State<EventsScreen>
                         ),
                         const SizedBox(height: 4),
                         AutoTranslate(
-                          text: '${_allEvents.length} ڕووداوی داهاتوو',
+                          text: trf('{0} ڕووداوی داهاتوو', [_allEvents.length]),
                           lang: lang,
                           style: const TextStyle(
                             color: Colors.white70,
@@ -279,10 +280,10 @@ class _EventsScreenState extends State<EventsScreen>
                 ),
                 child: Center(
                   child: Text(
-                    _getCategoryLabel(
+                    tr(_getCategoryLabel(
                       Map<String, String>.from(cat),
                       lang,
-                    ),
+                    )),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
@@ -319,7 +320,7 @@ class _EventsScreenState extends State<EventsScreen>
           ),
           const SizedBox(height: 16),
           AutoTranslate(
-            text: 'هیچ ڕووداوێکی داهاتوو نییە',
+            text: tr('هیچ ڕووداوێکی داهاتوو نییە'),
             lang: lang,
             style: TextStyle(
               fontSize: 15,

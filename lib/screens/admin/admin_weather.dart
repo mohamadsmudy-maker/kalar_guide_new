@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 🌤️ شاشەی بەڕێوەبردنی کەشوهەوا
 class AdminWeatherScreen extends StatefulWidget {
@@ -81,8 +82,8 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("کەشوهەوا نوێکرایەوە ✅"),
+          SnackBar(
+            content: Text(tr("کەشوهەوا نوێکرایەوە ✅")),
             backgroundColor: Colors.green,
           ),
         );
@@ -91,7 +92,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -117,13 +118,13 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F5F8),
         appBar: AppBar(
-          title: const Text(
-            "بەڕێوەبردنی کەشوهەوا 🌤️",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          title: Text(
+            tr("بەڕێوەبردنی کەشوهەوا 🌤️"),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -159,8 +160,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'ئەم داتایە بۆ ئەپی بەکارهێنەر پیشان دەدرێت. '
-                              'ئەگەر بەتاڵ بێت، ئەپ خۆی لە Live دەهێنێت.',
+                          tr('ئەم داتایە بۆ ئەپی بەکارهێنەر پیشان دەدرێت. ئەگەر بەتاڵ بێت، ئەپ خۆی لە Live دەهێنێت.'),
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.blue.shade900,
@@ -176,7 +176,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
                   controller: _tempCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: "پلەی گەرما (°C)",
+                    labelText: tr("پلەی گەرما (°C)"),
                     prefixIcon: const Icon(
                       Icons.thermostat,
                       color: AppColors.primary,
@@ -190,7 +190,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
                 TextField(
                   controller: _conditionCtrl,
                   decoration: InputDecoration(
-                    labelText: "دۆخ (ساماڵ، هەور، باران...)",
+                    labelText: tr("دۆخ (ساماڵ، هەور، باران...)"),
                     prefixIcon: const Icon(
                       Icons.cloud,
                       color: AppColors.primary,
@@ -205,7 +205,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
                   controller: _humidityCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: "شێدارى (%)",
+                    labelText: tr("شێدارى (%)"),
                     prefixIcon: const Icon(
                       Icons.water_drop,
                       color: AppColors.primary,
@@ -220,7 +220,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
                   controller: _windCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: "خێرایی با (کم/س)",
+                    labelText: tr("خێرایی با (کم/س)"),
                     prefixIcon: const Icon(
                       Icons.air,
                       color: AppColors.primary,
@@ -247,9 +247,9 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
                       ),
                     ),
                     onPressed: _save,
-                    child: const Text(
-                      "پاشەکەوتکردن ✅",
-                      style: TextStyle(
+                    child: Text(
+                      tr("پاشەکەوتکردن ✅"),
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),

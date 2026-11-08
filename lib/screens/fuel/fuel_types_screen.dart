@@ -17,6 +17,7 @@ import 'fuel_stations_by_type_screen.dart';
 import 'fuel_stations_map_screen.dart';
 import 'fuel_strings.dart';
 import 'global_fuel_chart_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 🛢️ شاشەی سەرەکی سووتەمەنی — ULTRA PRO MAX
 ///   • نرخی ڕاستەوخۆ (Realtime) • هەرزانترین/گرانترین/تێکڕا • حیسابکەری تێچوون
@@ -106,7 +107,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
   Future<void> _generatePdf(String lang) async {
     if (_snapshot?.history.isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(FuelStrings.of(lang, 'no_history')), backgroundColor: Colors.orange),
+        SnackBar(content: Text(tr(FuelStrings.of(lang, 'no_history'))), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -260,7 +261,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 400),
                             child: Text(
-                              fmt(m?.minPrice),
+                              tr(fmt(m?.minPrice)),
                               key: ValueKey(m?.minPrice),
                               style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, height: 1),
                             ),
@@ -320,11 +321,11 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(tr(label), style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
+              child: Text(tr(value), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -361,7 +362,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
                     child: Icon(icon, color: c, size: 20),
                   ),
                   const SizedBox(height: 6),
-                  Text(label,
+                  Text(tr(label),
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF1E293B))),
                 ],
               ),
@@ -404,7 +405,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: active ? _amber : (isDark ? Colors.white12 : Colors.grey.shade300)),
             ),
-            child: Text(label,
+            child: Text(tr(label),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -463,7 +464,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
           Container(width: 4, height: 20, decoration: BoxDecoration(color: _amber, borderRadius: BorderRadius.circular(4))),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(title,
+            child: Text(tr(title),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
           ),
           if (trailing != null) trailing,
@@ -483,7 +484,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
         children: [
           Icon(icon, size: 48, color: Colors.grey.shade400),
           const SizedBox(height: 10),
-          Text(text, style: TextStyle(color: isDark ? Colors.white60 : Colors.grey, fontWeight: FontWeight.bold)),
+          Text(tr(text), style: TextStyle(color: isDark ? Colors.white60 : Colors.grey, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -547,21 +548,21 @@ class _FuelCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(15),
                         ),
                         alignment: Alignment.center,
-                        child: Text(type['emoji']!, style: const TextStyle(fontSize: 24)),
+                        child: Text(tr(type['emoji']!), style: const TextStyle(fontSize: 24)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(type['name']!,
+                            Text(tr(type['name']!),
                                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor)),
                             const SizedBox(height: 4),
                             Text(
-                              hasData
+                              tr(hasData
                                   ? '${CurrencyService.localizeDigits('${m!.stationCount}', lang)} ${t('stations')}'
                                       '${m.lastUpdated != null ? ' • ${CurrencyStrings.timeAgo(m.lastUpdated, lang)}' : ''}'
-                                  : t('no_prices'),
+                                  : t('no_prices')),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 11, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600),
@@ -639,14 +640,14 @@ class _PriceBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
+          Text(tr(label), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color)),
           const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+            child: Text(tr(value), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
           ),
           if (station != null && station!.isNotEmpty)
-            Text(station!,
+            Text(tr(station!),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey.shade600)),
@@ -676,7 +677,7 @@ class _ChangeChip extends StatelessWidget {
         children: [
           Icon(up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 12, color: onDark ? Colors.white : color),
           const SizedBox(width: 2),
-          Text(CurrencyService.formatPrice(change.abs(), lang),
+          Text(tr(CurrencyService.formatPrice(change.abs(), lang)),
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: onDark ? Colors.white : color)),
         ],
       ),
@@ -708,7 +709,7 @@ class _LiveBadge extends StatelessWidget {
             decoration: BoxDecoration(color: flash ? Colors.white : const Color(0xFFF59E0B), shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+          Text(tr(label), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
         ],
       ),
     );

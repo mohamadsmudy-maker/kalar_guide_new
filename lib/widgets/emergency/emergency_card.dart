@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/emergency_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🚑 کارتی خزمەتگوزاری فریاکەوتن
 class EmergencyCard extends StatelessWidget {
@@ -111,7 +112,7 @@ class EmergencyCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    service.nameKu,
+                    tr(service.nameKu),
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 14,
@@ -122,7 +123,7 @@ class EmergencyCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    service.phone,
+                    tr(service.phone),
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
@@ -141,7 +142,7 @@ class EmergencyCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          '٢٤ سەعات',
+                          tr('٢٤ سەعات'),
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,

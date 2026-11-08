@@ -44,7 +44,7 @@ class FuelPdfService {
       }).toList();
 
       if (filtered.isEmpty) {
-        _showMessage(context, 'هیچ داتایەک نییە بۆ ئەم ماوەیە');
+        if (context.mounted) _showMessage(context, 'هیچ داتایەک نییە بۆ ئەم ماوەیە');
         return;
       }
 
@@ -141,7 +141,7 @@ class FuelPdfService {
       );
     } catch (e) {
       debugPrint('❌ هەڵە لە دروستکردنی PDF: $e');
-      _showMessage(context, 'هەڵە لە دروستکردنی PDF: $e');
+      if (context.mounted) _showMessage(context, 'هەڵە لە دروستکردنی PDF: $e');
     }
   }
 

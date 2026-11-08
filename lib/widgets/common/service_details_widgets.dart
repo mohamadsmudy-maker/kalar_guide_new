@@ -1,6 +1,7 @@
 // 📁 widgets/common/service_details_widgets.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/tr.dart';
 
 /// 🎨 ویدجێتەکانی هاوبەش بۆ وردەکاری مامەڵە (v2)
 ///
@@ -50,7 +51,7 @@ class ServiceDetailWidgets {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            title,
+            tr(title),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -69,7 +70,7 @@ class ServiceDetailWidgets {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              badge,
+              tr(badge),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -103,7 +104,7 @@ class ServiceDetailWidgets {
             ),
             child: Center(
               child: Text(
-                _digits('$index', lang),
+                tr(_digits('$index', lang)),
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -117,7 +118,7 @@ class ServiceDetailWidgets {
             child: Padding(
               padding: const EdgeInsets.only(top: 3),
               child: Text(
-                text,
+                tr(text),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -156,7 +157,7 @@ class ServiceDetailWidgets {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              text,
+              tr(text),
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,
@@ -206,7 +207,7 @@ class ServiceDetailWidgets {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  label,
+                  tr(label),
                   style: TextStyle(
                     fontSize: 10,
                     color: isDark ? Colors.white54 : Colors.grey,
@@ -215,7 +216,7 @@ class ServiceDetailWidgets {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  value,
+                  tr(value),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
@@ -253,7 +254,7 @@ class ServiceDetailWidgets {
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
                   SnackBar(
-                    content: Text(copiedMessage),
+                    content: Text(tr(copiedMessage)),
                     duration: const Duration(seconds: 1),
                     behavior: SnackBarBehavior.floating,
                   ),

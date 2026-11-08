@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:hijri/hijri_calendar.dart';
+
+import '../../services/prayer/kalar_prayer_times.dart';
+import '../../services/prayer/prayer_reminders.dart';
+import 'prayer_month_share.dart';
+import '../../l10n/tr.dart';
 
 /// 📅 بینینی هەفتانە و مانگانەی کاتەکانی نوێژ — ULTRA PRO
 class PrayerWeeklyView extends StatefulWidget {
@@ -28,6 +32,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
   List<Map<String, dynamic>> _monthData = [];
   int _selectedMonth = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
+  bool _kurdishDigits = false;
 
   static const List<String> _months = [
     'کانوونی دووەم',
@@ -49,6 +54,9 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadData();
+    PrayerReminderSettings.load().then((s) {
+      if (mounted) setState(() => _kurdishDigits = s.kurdishDigits);
+    });
   }
 
   @override
@@ -57,53 +65,61 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
     super.dispose();
   }
 
+  /// هەمان سەرچاوەی شاشەی سەرەکی (خشتەی فەرمی یان هەژماری ڕێکخراو)،
+  /// بۆیە پێویستی بە ئینتەرنێت نییە و هەردوو شاشە هەمان کات پیشان دەدەن.
   Future<void> _loadData() async {
-    setState(() => _loading = true);
+    final days = DateUtils.getDaysInMonth(_selectedYear, _selectedMonth);
+    final allDays = <Map<String, dynamic>>[
+      for (var d = 1; d <= days; d++) _dayData(DateTime(_selectedYear, _selectedMonth, d)),
+    ];
 
-    try {
-      final url = Uri.parse(
-        'https://api.aladhan.com/v1/calendar'
-            '?latitude=${widget.lat}&longitude=${widget.lng}'
-            '&method=3&school=0'
-            '&month=$_selectedMonth&year=$_selectedYear',
-      );
+    final today = DateTime.now();
+    final weekStart = DateTime(today.year, today.month, today.day - (today.weekday - 1));
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final week = <Map<String, dynamic>>[
+      for (var d = weekStart; !d.isAfter(weekEnd); d = DateTime(d.year, d.month, d.day + 1))
+        _dayData(d),
+    ];
 
-      final res = await http.get(url);
+    if (!mounted) return;
+    setState(() {
+      _weekData = week;
+      _monthData = allDays;
+      _loading = false;
+    });
+  }
 
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body);
-        final allDays = (json['data'] as List)
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
+  static const List<String> _hijriMonthsAr = [
+    'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة',
+    'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة',
+  ];
 
-        // ⭐ هەفتەی داهاتوو — ٧ ڕۆژ
-        final today = DateTime.now();
-        final weekStart = today.subtract(Duration(days: today.weekday - 1));
-        final weekEnd = weekStart.add(const Duration(days: 6));
-
-        final week = allDays.where((day) {
-          final date = _parseDate(day['date']['gregorian']['date']);
-          return !date.isBefore(weekStart) && !date.isAfter(weekEnd);
-        }).toList();
-
-        if (mounted) {
-          setState(() {
-            _weekData = week;
-            _monthData = allDays;
-            _loading = false;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ Load error: $e');
-      if (mounted) setState(() => _loading = false);
-    }
+  Map<String, dynamic> _dayData(DateTime date) {
+    final t = KalarPrayerTimes.forDay(date, lat: widget.lat, lng: widget.lng).times;
+    final hijri = HijriCalendar.fromDate(date);
+    return {
+      'date': {
+        'gregorian': {'date': KalarPrayerTimes.dateKey(date)},
+        'hijri': {
+          'day': '${hijri.hDay}',
+          'month': {'ar': _hijriMonthsAr[hijri.hMonth - 1]},
+        },
+      },
+      'timings': {
+        'Fajr': t['fajr'],
+        'Sunrise': t['sunrise'],
+        'Dhuhr': t['dhuhr'],
+        'Asr': t['asr'],
+        'Maghrib': t['maghrib'],
+        'Isha': t['isha'],
+      },
+    };
   }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFF0F1421),
         body: NestedScrollView(
@@ -111,6 +127,25 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
             SliverAppBar(
               expandedHeight: 140,
               pinned: true,
+              actions: [
+                IconButton(
+                  tooltip: tr('هاوبەشکردنی خشتەی مانگ'),
+                  icon: const Icon(Icons.ios_share_rounded, color: Color(0xFFFFD700)),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PrayerMonthSharePage(
+                        year: _selectedYear,
+                        month: _selectedMonth,
+                        monthName: tr(_months[_selectedMonth - 1]),
+                        lat: widget.lat,
+                        lng: widget.lng,
+                        kurdishDigits: _kurdishDigits,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               backgroundColor: const Color(0xFF1A1B2E),
               foregroundColor: Colors.white,
               flexibleSpace: FlexibleSpaceBar(
@@ -147,9 +182,9 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
                               mainAxisAlignment: MainAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text(
-                                  'بینینی هەفتانە و مانگانە',
-                                  style: TextStyle(
+                                Text(
+                                  tr('بینینی هەفتانە و مانگانە'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
@@ -157,7 +192,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${widget.locationName} • ${_months[_selectedMonth - 1]} $_selectedYear',
+                                  '${tr(widget.locationName)} • ${tr(_months[_selectedMonth - 1])} $_selectedYear',
                                   style: const TextStyle(
                                     color: Color(0xFFFFD700),
                                     fontSize: 12,
@@ -200,16 +235,16 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
                         fontSize: 12,
                         height: 1.0,
                       ),
-                      tabs: const [
+                      tabs: [
                         Tab(
                           height: 36,
                           child: Center(
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.view_week_rounded, size: 14),
-                                SizedBox(width: 4),
-                                Text('حەوت ڕۆژ'),
+                                const Icon(Icons.view_week_rounded, size: 14),
+                                const SizedBox(width: 4),
+                                Text(tr('حەوت ڕۆژ')),
                               ],
                             ),
                           ),
@@ -220,9 +255,9 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.calendar_view_month_rounded, size: 14),
-                                SizedBox(width: 4),
-                                Text('مانگانە'),
+                                const Icon(Icons.calendar_view_month_rounded, size: 14),
+                                const SizedBox(width: 4),
+                                Text(tr('مانگانە')),
                               ],
                             ),
                           ),
@@ -253,7 +288,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
 
   Widget _buildWeekView() {
     if (_weekData.isEmpty) {
-      return _buildEmpty('هیچ داتایەک نییە بۆ ئەم هەفتەیە');
+      return _buildEmpty(tr('هیچ داتایەک نییە بۆ ئەم هەفتەیە'));
     }
 
     final today = DateTime.now();
@@ -275,7 +310,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
 
   Widget _buildMonthView() {
     if (_monthData.isEmpty) {
-      return _buildEmpty('هیچ داتایەک نییە بۆ ئەم مانگە');
+      return _buildEmpty(tr('هیچ داتایەک نییە بۆ ئەم مانگە'));
     }
 
     final today = DateTime.now();
@@ -322,7 +357,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
                   ),
                   child: Center(
                     child: Text(
-                      '${_months[_selectedMonth - 1]} $_selectedYear',
+                      '${tr(_months[_selectedMonth - 1])} $_selectedYear',
                       style: const TextStyle(
                         color: Color(0xFFFFD700),
                         fontSize: 14,
@@ -430,7 +465,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  dayName,
+                  tr(dayName),
                   style: TextStyle(
                     color: isToday
                         ? const Color(0xFF0F1421)
@@ -442,7 +477,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
               ),
               const SizedBox(width: 8),
               Text(
-                gregorian['date'],
+                tr(gregorian['date']),
                 style: TextStyle(
                   color: isToday ? const Color(0xFFFFD700) : Colors.white70,
                   fontSize: 12,
@@ -460,9 +495,9 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
                     color: const Color(0xFF10B981),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
-                    '🔥 ئەمڕۆ',
-                    style: TextStyle(
+                  child: Text(
+                    tr('🔥 ئەمڕۆ'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 9,
                       fontWeight: FontWeight.w900,
@@ -486,15 +521,15 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildTimeChip('بەیانی', timings['Fajr'],
+              _buildTimeChip(tr('بەیانی'), timings['Fajr'],
                   Icons.nights_stay_rounded, const Color(0xFF5E5CE6)),
-              _buildTimeChip('نیوەڕۆ', timings['Dhuhr'],
+              _buildTimeChip(tr('نیوەڕۆ'), timings['Dhuhr'],
                   Icons.wb_sunny_rounded, const Color(0xFFFF8F00)),
-              _buildTimeChip('عەسر', timings['Asr'],
+              _buildTimeChip(tr('عەسر'), timings['Asr'],
                   Icons.wb_sunny_outlined, const Color(0xFF29B6F6)),
-              _buildTimeChip('مەغریب', timings['Maghrib'],
+              _buildTimeChip(tr('مەغریب'), timings['Maghrib'],
                   Icons.wb_twilight_rounded, const Color(0xFFEF5350)),
-              _buildTimeChip('عیشا', timings['Isha'],
+              _buildTimeChip(tr('عیشا'), timings['Isha'],
                   Icons.nightlight_round, const Color(0xFF7986CB)),
             ],
           ),
@@ -519,7 +554,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
-            name,
+            tr(name),
             style: TextStyle(
               color: color,
               fontSize: 10,
@@ -528,7 +563,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
           ),
           const SizedBox(width: 6),
           Text(
-            time.split(' ').first,
+            tr(KalarPrayerTimes.format12(time, kurdishDigits: _kurdishDigits)),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 11,
@@ -552,7 +587,7 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
           ),
           const SizedBox(height: 16),
           Text(
-            message,
+            tr(message),
             style: const TextStyle(
               color: Colors.white54,
               fontSize: 14,
@@ -587,6 +622,6 @@ class _PrayerWeeklyViewState extends State<PrayerWeeklyView>
       'شەممە',
       'یەکشەممە',
     ];
-    return days[(weekday - 1) % 7];
+    return tr(days[(weekday - 1) % 7]);
   }
 }

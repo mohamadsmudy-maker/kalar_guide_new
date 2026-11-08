@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n/tr.dart';
 
 /// 💎 ناڤیگەیشنی ژێرەوە — FULL PRO EDITION v2
 ///
@@ -185,7 +186,7 @@ class _NavTile extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          item.badge > 99 ? '99+' : '${item.badge}',
+                          tr(item.badge > 99 ? '99+' : '${item.badge}'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 9,
@@ -211,7 +212,7 @@ class _NavTile extends StatelessWidget {
                 letterSpacing: 0.1,
               ),
               child: Text(
-                item.label,
+                tr(item.label),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

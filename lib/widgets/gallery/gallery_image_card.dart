@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/app_colors.dart';
 import '../../models/gallery/gallery_image.dart';
 import '../../utils/gallery_helpers.dart';
+import '../../l10n/tr.dart';
 
 class GalleryImageCard extends StatelessWidget {
   final GalleryImage image;
@@ -28,7 +29,7 @@ class GalleryImageCard extends StatelessWidget {
     return Semantics(
       button: true,
       label:
-      '${image.title}، ${cat.label}، بینین: ${toLocalDigits(image.views.toString())}',
+      trf('{0}، {1}، بینین: {2}', [image.title, cat.label, toLocalDigits(image.views.toString())]),
       child: GestureDetector(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -89,7 +90,7 @@ class GalleryImageCard extends StatelessWidget {
                         Icon(cat.icon, color: Colors.white, size: 12),
                         const SizedBox(width: 4),
                         Text(
-                          cat.label,
+                          tr(cat.label),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10,
@@ -154,7 +155,7 @@ class GalleryImageCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      image.title,
+                      tr(image.title),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,

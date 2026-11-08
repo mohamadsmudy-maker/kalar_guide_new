@@ -3,6 +3,7 @@ import '../../config/app_colors.dart';
 import '../../services/review_service.dart';
 import '../../widgets/reviews/rating_stars.dart';
 import '../stores/store_details_dialog.dart';
+import '../../l10n/tr.dart';
 
 /// ⭐ بەشی باشترین شوێنەکان لە Home
 class TopRatedSection extends StatefulWidget {
@@ -75,7 +76,7 @@ class _TopRatedSectionState extends State<TopRatedSection> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'باشترین شوێنەکان ⭐',
+                    tr('باشترین شوێنەکان ⭐'),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -213,7 +214,7 @@ class _TopRatedSectionState extends State<TopRatedSection> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    name,
+                    tr(name),
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 12,

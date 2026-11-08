@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
+import '../../l10n/tr.dart';
 
 /// ⏳ ویجێتی چاوەڕوانی — v2
 ///
@@ -46,7 +47,7 @@ class LoadingWidget extends StatelessWidget {
             if (message != null) ...[
               const SizedBox(height: 16),
               Text(
-                message!,
+                tr(message!),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -101,7 +102,7 @@ class AppErrorWidget extends StatelessWidget {
             Icon(icon, size: 60, color: Colors.redAccent),
             const SizedBox(height: 16),
             Text(
-              message,
+              tr(message),
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? Colors.white60 : Colors.grey,
@@ -117,7 +118,7 @@ class AppErrorWidget extends StatelessWidget {
                   onRetry!();
                 },
                 icon: const Icon(Icons.refresh_rounded),
-                label: Text(retryLabel ?? _retry[lang] ?? _retry['en']!),
+                label: Text(tr(retryLabel ?? _retry[lang] ?? _retry['en']!)),
               ),
             ],
           ],
@@ -161,7 +162,7 @@ class EmptyWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              message,
+              tr(message),
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? Colors.white60 : Colors.grey,
@@ -172,7 +173,7 @@ class EmptyWidget extends StatelessWidget {
             if (subtitle != null) ...[
               const SizedBox(height: 6),
               Text(
-                subtitle!,
+                tr(subtitle!),
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark ? Colors.white38 : Colors.grey.shade500,

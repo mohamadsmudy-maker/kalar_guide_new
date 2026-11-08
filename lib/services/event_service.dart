@@ -207,19 +207,8 @@ class EventService {
   // ═══════════════════════════════════════════════════════════
   static Future<void> incrementViews(String eventId) async {
     try {
-      final event = await _client
-          .from('events')
-          .select('views')
-          .eq('id', eventId)
-          .maybeSingle();
-
-      if (event != null) {
-        final count = (event['views'] as int? ?? 0) + 1;
-        await _client
-            .from('events')
-            .update({'views': count})
-            .eq('id', eventId);
-      }
+      await _client
+          .rpc('increment_event_views', params: {'p_event_id': eventId});
     } catch (e) {
       debugPrint('❌ incrementViews error: $e');
     }

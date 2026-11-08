@@ -15,6 +15,7 @@ import '../../widgets/gallery/gallery_error_state.dart';
 import '../../widgets/gallery/gallery_image_card.dart';
 import '../../widgets/gallery/gallery_shimmer_grid.dart';
 import '../../widgets/gallery/gallery_upload_sheet.dart';
+import '../../l10n/tr.dart';
 
 class AdminGallery extends StatefulWidget {
   const AdminGallery({super.key});
@@ -87,7 +88,7 @@ class _AdminGalleryState extends State<AdminGallery> {
         imageQuality: 85,
       );
     } catch (e) {
-      _snack('نەتوانرا وێنە هەڵبژێردرێت', error: true);
+      _snack(tr('نەتوانرا وێنە هەڵبژێردرێت'), error: true);
       return;
     }
     if (picked == null) return;
@@ -115,10 +116,10 @@ class _AdminGalleryState extends State<AdminGallery> {
         title: result.title,
         categoryId: result.categoryId,
       );
-      _snack('وێنە زیادکرا');
+      _snack(tr('وێنە زیادکرا'));
       await _load();
     } catch (e) {
-      _snack('هەڵە لە ئەپلۆدکردن', error: true);
+      _snack(tr('هەڵە لە ئەپلۆدکردن'), error: true);
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -155,22 +156,22 @@ class _AdminGalleryState extends State<AdminGallery> {
     final title = await showDialog<String>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
-          title: const Text('دەستکاری ناونیشان'),
+          title: Text(tr('دەستکاری ناونیشان')),
           content: TextField(
             controller: c,
             autofocus: true,
             maxLength: 120,
-            decoration: const InputDecoration(hintText: 'ناونیشان'),
+            decoration: InputDecoration(hintText: tr('ناونیشان')),
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('پاشگەزبوونەوە')),
+                child: Text(tr('پاشگەزبوونەوە'))),
             ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, c.text.trim()),
-                child: const Text('پاشەکەوتکردن')),
+                child: Text(tr('پاشەکەوتکردن'))),
           ],
         ),
       ),
@@ -181,7 +182,7 @@ class _AdminGalleryState extends State<AdminGallery> {
       await _service.updateTitle(img.id, title);
       await _load();
     } catch (_) {
-      _snack('هەڵە لە دەستکاریکردن', error: true);
+      _snack(tr('هەڵە لە دەستکاریکردن'), error: true);
     }
   }
 
@@ -189,14 +190,14 @@ class _AdminGalleryState extends State<AdminGallery> {
     final selected = await showModalBottomSheet<String>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: GalleryCategoryRegistry.all
                 .map((c) => ListTile(
               leading: Icon(c.icon, color: c.color),
-              title: Text(c.label),
+              title: Text(tr(c.label)),
               trailing: img.categoryId == c.id
                   ? const Icon(Icons.check_rounded)
                   : null,
@@ -212,7 +213,7 @@ class _AdminGalleryState extends State<AdminGallery> {
       await _service.updateCategory(img.id, selected);
       await _load();
     } catch (_) {
-      _snack('هەڵە لە گۆڕین', error: true);
+      _snack(tr('هەڵە لە گۆڕین'), error: true);
     }
   }
 
@@ -220,20 +221,20 @@ class _AdminGalleryState extends State<AdminGallery> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
-          title: const Text('سڕینەوە'),
-          content: Text('ئایا دڵنیایت لە سڕینەوەی "${img.title}"؟'),
+          title: Text(tr('سڕینەوە')),
+          content: Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [img.title])),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('نەخێر')),
+                child: Text(tr('نەخێر'))),
             ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.red,
                     foregroundColor: Colors.white),
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('بەڵێ')),
+                child: Text(tr('بەڵێ'))),
           ],
         ),
       ),
@@ -242,9 +243,9 @@ class _AdminGalleryState extends State<AdminGallery> {
     try {
       await _service.delete(img);
       setState(() => _all.removeWhere((e) => e.id == img.id));
-      _snack('سڕایەوە');
+      _snack(tr('سڕایەوە'));
     } catch (_) {
-      _snack('هەڵە لە سڕینەوە', error: true);
+      _snack(tr('هەڵە لە سڕینەوە'), error: true);
     }
   }
 
@@ -253,7 +254,7 @@ class _AdminGalleryState extends State<AdminGallery> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(m, style: const TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(tr(m), style: const TextStyle(fontWeight: FontWeight.w700)),
         backgroundColor: error ? AppColors.red : AppColors.green,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -268,12 +269,12 @@ class _AdminGalleryState extends State<AdminGallery> {
     final items = _filtered;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bg,
         appBar: AppBar(
-          title: const Text('بەڕێوەبردنی گەلەری',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          title: Text(tr('بەڕێوەبردنی گەلەری'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           centerTitle: true,
           backgroundColor: isDark ? AppColors.darkCard : AppColors.primary,
           foregroundColor: Colors.white,
@@ -286,7 +287,7 @@ class _AdminGalleryState extends State<AdminGallery> {
                 controller: _search,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'گەڕان بەپێی ناونیشان...',
+                  hintText: tr('گەڕان بەپێی ناونیشان...'),
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _search.text.isNotEmpty
                       ? IconButton(
@@ -328,7 +329,7 @@ class _AdminGalleryState extends State<AdminGallery> {
           icon: const Icon(Icons.add_photo_alternate_rounded,
               color: Colors.white),
           label: Text(
-            _uploading ? 'چاوەڕوان بە...' : 'وێنەی نوێ',
+            tr(_uploading ? 'چاوەڕوان بە...' : 'وێنەی نوێ'),
             style: const TextStyle(
                 color: Colors.white, fontWeight: FontWeight.w900),
           ),
@@ -350,19 +351,20 @@ class _AdminGalleryState extends State<AdminGallery> {
       return GalleryEmptyState(
         isDark: isDark,
         message: _search.text.isNotEmpty
-            ? 'هیچ ئەنجامێک نەدۆزرایەوە'
-            : 'گەلەری بەتاڵە',
+            ? tr('هیچ ئەنجامێک نەدۆزرایەوە')
+            : tr('گەلەری بەتاڵە'),
       );
     }
     return RefreshIndicator(
       onRefresh: _load,
       color: AppColors.primary,
       child: GridView.builder(
+        // ignore: deprecated_member_use — scrollCacheExtent needs a newer Flutter
+        cacheExtent: 800,
         padding: const EdgeInsets.all(12).copyWith(bottom: 100),
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),
-        cacheExtent: 800,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,

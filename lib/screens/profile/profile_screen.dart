@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +14,7 @@ import '../about/about_screen.dart';
 import '../admin/admin_dashboard.dart';
 import '../admin/admin_gallery.dart';
 import '../gallery/gallery_screen.dart';
+import '../../l10n/tr.dart';
 
 class _QuickAction {
   final IconData icon;
@@ -195,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w900)),
+          content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.w900)),
           backgroundColor: color,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -217,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
     final showSkeleton = isLogged && _profileLoading && _profile == null;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         body: RefreshIndicator(
@@ -247,19 +247,19 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         const SizedBox(height: 24),
                       ],
 
-                      _buildSectionTitle('⚡ کارە خێراکان', isDark),
+                      _buildSectionTitle(tr('⚡ کارە خێراکان'), isDark),
                       const SizedBox(height: 12),
                       _buildQuickActions(isDark),
                       const SizedBox(height: 24),
 
-                      _buildSectionTitle('📋 ڕێبەر', isDark),
+                      _buildSectionTitle(tr('📋 ڕێبەر'), isDark),
                       const SizedBox(height: 12),
                       _buildMenuItem(
                         isDark: isDark,
                         icon: Icons.favorite_rounded,
                         color: Colors.pink,
-                        title: 'دڵخوازەکانم',
-                        subtitle: 'شوێن و هەواڵەکان',
+                        title: tr('دڵخوازەکانم'),
+                        subtitle: tr('شوێن و هەواڵەکان'),
                         badge: _favoritesCount > 0 ? _favoritesCount : null,
                         onTap: () => _push(const FavoritesScreen()),
                         itemIndex: 2,
@@ -268,8 +268,8 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         isDark: isDark,
                         icon: Icons.video_library_rounded,
                         color: Colors.indigo,
-                        title: 'ڤیدیۆ و ڕێنماییەکان',
-                        subtitle: 'بینینی ڤیدیۆکان',
+                        title: tr('ڤیدیۆ و ڕێنماییەکان'),
+                        subtitle: tr('بینینی ڤیدیۆکان'),
                         badge: _videosCount > 0 ? _videosCount : null,
                         onTap: () => _push(const UserVideosScreen()),
                         itemIndex: 3,
@@ -278,22 +278,22 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         isDark: isDark,
                         icon: Icons.photo_library_rounded,
                         color: Colors.amber,
-                        title: 'گەلەری کەلار',
-                        subtitle: 'بینینی وێنەکان',
+                        title: tr('گەلەری کەلار'),
+                        subtitle: tr('بینینی وێنەکان'),
                         onTap: () => _push(const GalleryScreen()),
                         itemIndex: 4,
                       ),
 
                       if (isLogged && (isAdmin || isVendor)) ...[
                         const SizedBox(height: 24),
-                        _buildSectionTitle('🛡️ بەڕێوەبردن', isDark),
+                        _buildSectionTitle(tr('🛡️ بەڕێوەبردن'), isDark),
                         const SizedBox(height: 12),
                         _buildMenuItem(
                           isDark: isDark,
                           icon: Icons.admin_panel_settings_rounded,
                           color: const Color(0xFF3B82F6),
-                          title: isAdmin ? 'پانێڵی ئەدمین' : 'پانێڵی بەڕێوەبردن',
-                          subtitle: isAdmin ? 'دەستڕاگەیشتنی تەواو' : 'دەستکاری شوێنەکان',
+                          title: isAdmin ? tr('پانێڵی ئەدمین') : tr('پانێڵی بەڕێوەبردن'),
+                          subtitle: isAdmin ? tr('دەستڕاگەیشتنی تەواو') : tr('دەستکاری شوێنەکان'),
                           isImportant: true,
                           onTap: () => _push(const AdminDashboardScreen()),
                           itemIndex: 5,
@@ -303,22 +303,22 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                             isDark: isDark,
                             icon: Icons.photo_camera_back_rounded,
                             color: const Color(0xFF8B5CF6),
-                            title: 'بەڕێوەبردنی گەلەری',
-                            subtitle: 'زیادکردن و سڕینەوەی وێنە',
+                            title: tr('بەڕێوەبردنی گەلەری'),
+                            subtitle: tr('زیادکردن و سڕینەوەی وێنە'),
                             onTap: () => _push(const AdminGallery()),
                             itemIndex: 6,
                           ),
                       ],
 
                       const SizedBox(height: 24),
-                      _buildSectionTitle('⚙️ ڕێکخستن', isDark),
+                      _buildSectionTitle(tr('⚙️ ڕێکخستن'), isDark),
                       const SizedBox(height: 12),
                       _buildMenuItem(
                         isDark: isDark,
                         icon: Icons.settings_rounded,
                         color: Colors.blueGrey,
-                        title: 'ڕێکخستنەکان',
-                        subtitle: 'زمان، فۆنت، ڕەنگ',
+                        title: tr('ڕێکخستنەکان'),
+                        subtitle: tr('زمان، فۆنت، ڕەنگ'),
                         onTap: () => _push(const SettingsScreen()),
                         itemIndex: 7,
                       ),
@@ -326,8 +326,8 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         isDark: isDark,
                         icon: Icons.share_rounded,
                         color: const Color(0xFF06B6D4),
-                        title: 'هاوبەشکردنی ئەپ',
-                        subtitle: 'بۆ هاوڕێکانت',
+                        title: tr('هاوبەشکردنی ئەپ'),
+                        subtitle: tr('بۆ هاوڕێکانت'),
                         onTap: _shareApp,
                         itemIndex: 8,
                       ),
@@ -335,8 +335,8 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         isDark: isDark,
                         icon: Icons.info_rounded,
                         color: const Color(0xFF10B981),
-                        title: 'دەربارەی ئەپ و پشتگیری',
-                        subtitle: 'زانیاری زیاتر و پەیوەندی',
+                        title: tr('دەربارەی ئەپ و پشتگیری'),
+                        subtitle: tr('زانیاری زیاتر و پەیوەندی'),
                         onTap: () => _push(const AboutScreen()),
                         itemIndex: 9,
                       ),
@@ -372,7 +372,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
           )
               : const Icon(Icons.refresh_rounded),
           onPressed: _refreshing ? null : _manualRefresh,
-          tooltip: 'نوێکردنەوە',
+          tooltip: tr('نوێکردنەوە'),
         ),
         const SizedBox(width: 8),
       ],
@@ -389,9 +389,9 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               child: const Icon(Icons.person_rounded, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'پرۆفایل',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.3),
+            Text(
+              tr('پرۆفایل'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.3),
             ),
           ],
         ),
@@ -416,13 +416,13 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'نەتوانرا زانیارییەکانی پرۆفایل نوێ بکرێنەوە',
+                tr('نەتوانرا زانیارییەکانی پرۆفایل نوێ بکرێنەوە'),
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _text(isDark)),
               ),
             ),
             TextButton(
               onPressed: _refreshing ? null : _manualRefresh,
-              child: const Text('دووبارە', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+              child: Text(tr('دووبارە'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
             ),
           ],
         ),
@@ -521,7 +521,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                   backgroundColor: _surface(isDark),
                   child: isLogged && name.trim().isNotEmpty
                       ? Text(
-                    String.fromCharCode(name.trim().runes.first),
+                    tr(String.fromCharCode(name.trim().runes.first)),
                     style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900, color: AppColors.primary),
                   )
                       : const Icon(Icons.person_outline_rounded, size: 56, color: AppColors.primary),
@@ -530,7 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
             ),
             const SizedBox(height: 16),
             Text(
-              isLogged ? name : 'میوانی خۆشەویست',
+              tr(isLogged ? name : 'میوانی خۆشەویست'),
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: _text(isDark), letterSpacing: 0.3),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -542,13 +542,13 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                 children: [
                   Semantics(
                     button: true,
-                    label: 'ژمارەی تەلەفۆن $phone، بۆ کۆپیکردن دابگرە',
+                    label: trf('ژمارەی تەلەفۆن {0}، بۆ کۆپیکردن دابگرە', [phone]),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(10),
                       onTap: () {
                         HapticFeedback.selectionClick();
                         Clipboard.setData(ClipboardData(text: phone));
-                        _snack('📋 ژمارە کۆپی کرا', const Color(0xFF10B981));
+                        _snack(tr('📋 ژمارە کۆپی کرا'), const Color(0xFF10B981));
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -562,7 +562,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                             const Icon(Icons.phone_rounded, color: AppColors.primary, size: 13),
                             const SizedBox(width: 6),
                             Text(
-                              phone,
+                              tr(phone),
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 13,
@@ -587,7 +587,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               )
             else if (!isLogged)
               Text(
-                'بچۆ ژوورەوە بۆ بینینی پرۆفایلەکەت',
+                tr('بچۆ ژوورەوە بۆ بینینی پرۆفایلەکەت'),
                 style: TextStyle(fontSize: 12, color: _sub(isDark)),
               ),
             if (isLogged) ...[
@@ -608,10 +608,10 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_getRoleEmoji(role), style: const TextStyle(fontSize: 14)),
+                    Text(tr(_getRoleEmoji(role)), style: const TextStyle(fontSize: 14)),
                     const SizedBox(width: 6),
                     Text(
-                      _getRoleName(role),
+                      tr(_getRoleName(role)),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -645,7 +645,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               isDark: isDark,
               icon: Icons.favorite_rounded,
               value: _favoritesCount,
-              label: 'دڵخواز',
+              label: tr('دڵخواز'),
               color: const Color(0xFFE91E63),
               onTap: () => _push(const FavoritesScreen()),
             ),
@@ -654,7 +654,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               isDark: isDark,
               icon: Icons.video_library_rounded,
               value: _videosCount,
-              label: 'ڤیدیۆ',
+              label: tr('ڤیدیۆ'),
               color: const Color(0xFF6366F1),
               onTap: () => _push(const UserVideosScreen()),
             ),
@@ -663,7 +663,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               isDark: isDark,
               icon: Icons.assignment_rounded,
               value: _complaintsCount,
-              label: 'سکاڵاکانم',
+              label: tr('سکاڵاکانم'),
               color: const Color(0xFFF59E0B),
             ),
           ],
@@ -713,13 +713,13 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                   duration: _reduceMotion ? Duration.zero : const Duration(milliseconds: 600),
                   curve: Curves.easeOutCubic,
                   builder: (context, v, _) => Text(
-                    _ku(v.round()),
+                    tr(_ku(v.round())),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color, height: 1.0),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  label,
+                  tr(label),
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _sub(isDark)),
                 ),
               ],
@@ -785,7 +785,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      a.label,
+                      tr(a.label),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -820,7 +820,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: _text(isDark)),
         ),
       ],
@@ -890,7 +890,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                             children: [
                               Flexible(
                                 child: Text(
-                                  title,
+                                  tr(title),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -906,7 +906,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                   decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
                                   child: Text(
-                                    _ku(badge),
+                                    tr(_ku(badge)),
                                     style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
                                   ),
                                 ),
@@ -915,7 +915,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            subtitle,
+                            tr(subtitle),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 11, color: _sub(isDark)),
@@ -957,7 +957,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
             shadowColor: AppColors.primary.withValues(alpha: 0.4),
           ),
           icon: const Icon(Icons.login_rounded, size: 22),
-          label: const Text('چوونەژوورەوە', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          label: Text(tr('چوونەژوورەوە'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         ),
       ),
     );
@@ -984,7 +984,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
           icon: _loggingOut
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
               : const Icon(Icons.logout_rounded, size: 22),
-          label: const Text('چوونەدەرەوە لە هەژمار', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          label: Text(tr('چوونەدەرەوە لە هەژمار'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         ),
       ),
     );
@@ -996,21 +996,21 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.logout_rounded, color: Colors.red),
-              SizedBox(width: 10),
-              Text('چوونەدەرەوە', style: TextStyle(fontWeight: FontWeight.w900)),
+              const Icon(Icons.logout_rounded, color: Colors.red),
+              const SizedBox(width: 10),
+              Text(tr('چوونەدەرەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
             ],
           ),
-          content: const Text('ئایا دڵنیایت لە چوونەدەرەوە لە ئەکاونتەکەت؟'),
+          content: Text(tr('ئایا دڵنیایت لە چوونەدەرەوە لە ئەکاونتەکەت؟')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1019,7 +1019,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('بەڵێ', style: TextStyle(fontWeight: FontWeight.w900)),
+              child: Text(tr('بەڵێ'), style: const TextStyle(fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -1038,11 +1038,11 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
         _favoritesCount = 0;
         _complaintsCount = 0;
       });
-      _snack('✅ بە سەرکەوتوویی چوویتە دەرەوە', const Color(0xFF10B981));
+      _snack(tr('✅ بە سەرکەوتوویی چوویتە دەرەوە'), const Color(0xFF10B981));
       await _loadAll();
     } catch (e) {
       debugPrint('❌ Logout error: $e');
-      _snack('⚠️ چوونەدەرەوە سەرنەکەوت، دووبارە هەوڵبدەوە', const Color(0xFFEF4444));
+      _snack(tr('⚠️ چوونەدەرەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFEF4444));
     } finally {
       if (mounted) setState(() => _loggingOut = false);
     }
@@ -1051,17 +1051,12 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
   Future<void> _shareApp() async {
     try {
       await Share.share(
-        '🏙️ ئەپی ڕێبەری کەلار — ڕێبەری فەرمی شاری کەلار\n\n'
-            '✅ ٥٩ گەڕەک\n'
-            '✅ ١٠٠+ شوێن\n'
-            '✅ سکاڵا و ڕووداو\n'
-            '✅ دراو و سووتەمەنی\n\n'
-            'داگرتن: https://kalar-guide.com/app',
-        subject: 'ڕێبەری کەلار — ئەپی فەرمی شاری کەلار',
+        tr('🏙️ ئەپی ڕێبەری کەلار — ڕێبەری فەرمی شاری کەلار\n\n✅ ٥٩ گەڕەک\n✅ ١٠٠+ شوێن\n✅ سکاڵا و ڕووداو\n✅ دراو و سووتەمەنی\n\nداگرتن: https://kalar-guide.com/app'),
+        subject: tr('ڕێبەری کەلار — ئەپی فەرمی شاری کەلار'),
       );
     } catch (e) {
       debugPrint('❌ Share error: $e');
-      _snack('⚠️ نەتوانرا هاوبەش بکرێت', const Color(0xFFEF4444));
+      _snack(tr('⚠️ نەتوانرا هاوبەش بکرێت'), const Color(0xFFEF4444));
     }
   }
 

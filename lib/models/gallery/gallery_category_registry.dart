@@ -1,58 +1,59 @@
 import 'package:flutter/material.dart';
 import 'gallery_category.dart';
+import '../../l10n/tr.dart';
 
 /// 📚 ڕیجستری هەموو جۆرەکانی گەلەری
 class GalleryCategoryRegistry {
   GalleryCategoryRegistry._();
 
-  static const List<GalleryCategory> all = [
+  static final List<GalleryCategory> all = [
     GalleryCategory(
       id: 'nature',
-      label: 'سروشت',
+      label: tr('سروشت'),
       icon: Icons.forest_rounded,
-      color: Color(0xFF2E7D32),
+      color: const Color(0xFF2E7D32),
     ),
     GalleryCategory(
       id: 'history',
-      label: 'مێژوو',
+      label: tr('مێژوو'),
       icon: Icons.account_balance_rounded,
-      color: Color(0xFF6D4C41),
+      color: const Color(0xFF6D4C41),
     ),
     GalleryCategory(
       id: 'city',
-      label: 'شار',
+      label: tr('شار'),
       icon: Icons.location_city_rounded,
-      color: Color(0xFF1565C0),
+      color: const Color(0xFF1565C0),
     ),
     GalleryCategory(
       id: 'events',
-      label: 'بۆنەکان',
+      label: tr('بۆنەکان'),
       icon: Icons.celebration_rounded,
-      color: Color(0xFFE65100),
+      color: const Color(0xFFE65100),
     ),
     GalleryCategory(
       id: 'sports',
-      label: 'وەرزش',
+      label: tr('وەرزش'),
       icon: Icons.sports_soccer_rounded,
-      color: Color(0xFF00838F),
+      color: const Color(0xFF00838F),
     ),
     GalleryCategory(
       id: 'culture',
-      label: 'کەلتوور',
+      label: tr('کەلتوور'),
       icon: Icons.theater_comedy_rounded,
-      color: Color(0xFF6A1B9A),
+      color: const Color(0xFF6A1B9A),
     ),
     GalleryCategory(
       id: 'food',
-      label: 'خواردن',
+      label: tr('خواردن'),
       icon: Icons.restaurant_rounded,
-      color: Color(0xFFD84315),
+      color: const Color(0xFFD84315),
     ),
     GalleryCategory(
       id: 'general',
-      label: 'گشتی',
+      label: tr('گشتی'),
       icon: Icons.photo_library_rounded,
-      color: Color(0xFF455A64),
+      color: const Color(0xFF455A64),
     ),
   ];
 

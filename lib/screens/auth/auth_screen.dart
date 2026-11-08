@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/app_colors.dart';
 import '../../services/auth_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🔐 شاشەی چوونەژوورەوە / تۆمارکردن — ULTRA PRO MAX V2
 class AuthScreen extends StatefulWidget {
@@ -78,13 +79,13 @@ class _AuthScreenState extends State<AuthScreen> {
   /// — کۆدی ڕاستەقینە هەرگیز ناگاتە مۆبایل.
   Future<void> _verifyStoreCode() async {
     if (_selectedStore == null) {
-      _showSnackBar('تکایە سەرەتا شوێنێک هەڵبژێرە', AppColors.orange);
+      _showSnackBar(tr('تکایە سەرەتا شوێنێک هەڵبژێرە'), AppColors.orange);
       return;
     }
 
     final enteredCode = _storeCodeCtrl.text.trim();
     if (enteredCode.isEmpty) {
-      _showSnackBar('تکایە کۆدەکە بنووسە', AppColors.orange);
+      _showSnackBar(tr('تکایە کۆدەکە بنووسە'), AppColors.orange);
       return;
     }
     if (_verifyingCode) return;
@@ -102,14 +103,14 @@ class _AuthScreenState extends State<AuthScreen> {
       final isValid = ok == true;
       setState(() => _storeCodeVerified = isValid);
       _showSnackBar(
-        isValid ? 'کۆد ڕاستە ✅' : 'کۆد هەڵەیە ❌',
+        isValid ? tr('کۆد ڕاستە ✅') : tr('کۆد هەڵەیە ❌'),
         isValid ? AppColors.green : AppColors.red,
       );
     } catch (e) {
       debugPrint('❌ verify_vendor_code: $e');
       if (mounted) {
         setState(() => _storeCodeVerified = false);
-        _showSnackBar('پشکنینی کۆد سەرنەکەوت، دووبارە هەوڵ بدەرەوە', AppColors.red);
+        _showSnackBar(tr('پشکنینی کۆد سەرنەکەوت، دووبارە هەوڵ بدەرەوە'), AppColors.red);
       }
     } finally {
       if (mounted) setState(() => _verifyingCode = false);
@@ -126,7 +127,7 @@ class _AuthScreenState extends State<AuthScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            msg,
+            tr(msg),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           backgroundColor: color,
@@ -149,36 +150,36 @@ class _AuthScreenState extends State<AuthScreen> {
 
     // ✅ Pshknin
     if (phone.isEmpty || pass.isEmpty) {
-      _showSnackBar('مۆبایل و پاسۆرد پێویستە ⚠', AppColors.orange);
+      _showSnackBar(tr('مۆبایل و پاسۆرد پێویستە ⚠'), AppColors.orange);
       return;
     }
     // تەنها لە تۆمارکردندا درێژی پشکنین دەکرێت، بۆ ئەوەی بەکارهێنەرە کۆنەکان
     // (کە پاسۆردی ٦-٧ پیتییان هەیە) هێشتا بتوانن بچنە ژوورەوە.
     if (_isSignUp && pass.length < _minPasswordLength) {
       _showSnackBar(
-        'پاسۆرد دەبێت لانیکەم $_minPasswordLength پیت بێت ⚠',
+        trf('پاسۆرد دەبێت لانیکەم {0} پیت بێت ⚠', [_minPasswordLength]),
         AppColors.orange,
       );
       return;
     }
     if (phone.length < 10) {
-      _showSnackBar('ژمارەی مۆبایل دروست نییە ⚠', AppColors.orange);
+      _showSnackBar(tr('ژمارەی مۆبایل دروست نییە ⚠'), AppColors.orange);
       return;
     }
 
     if (_isSignUp) {
       if (_selectedRole == 'admin') {
         if (_selectedStore == null) {
-          _showSnackBar('تکایە شوێنەکەت هەڵبژێرە 🏪', AppColors.orange);
+          _showSnackBar(tr('تکایە شوێنەکەت هەڵبژێرە 🏪'), AppColors.orange);
           return;
         }
         if (!_storeCodeVerified) {
-          _showSnackBar('تکایە کۆدی شوێن پشتڕاست بکەرەوە 🔑', AppColors.orange);
+          _showSnackBar(tr('تکایە کۆدی شوێن پشتڕاست بکەرەوە 🔑'), AppColors.orange);
           return;
         }
       } else {
         if (name.isEmpty) {
-          _showSnackBar('ناوی تەواو پێویستە', AppColors.orange);
+          _showSnackBar(tr('ناوی تەواو پێویستە'), AppColors.orange);
           return;
         }
       }
@@ -196,7 +197,7 @@ class _AuthScreenState extends State<AuthScreen> {
       debugPrint('❌ هەڵە: $e');
       // هەڵەی ناوخۆیی (ناوی خشتە، SQL…) نیشانی بەکارهێنەر نادرێت
       if (mounted) {
-        _showSnackBar('هەڵەیەک ڕوویدا، تکایە دووبارە هەوڵ بدەرەوە', AppColors.red);
+        _showSnackBar(tr('هەڵەیەک ڕوویدا، تکایە دووبارە هەوڵ بدەرەوە'), AppColors.red);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -225,12 +226,12 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
 
       if (res == 'phone_exists') {
-        _showSnackBar('ئەم ژمارەیە پێشتر تۆمار کراوە ⚠', AppColors.orange);
+        _showSnackBar(tr('ئەم ژمارەیە پێشتر تۆمار کراوە ⚠'), AppColors.orange);
         return;
       }
       if (res != 'ok') {
         setState(() => _storeCodeVerified = false);
-        _showSnackBar('کۆدی شوێن هەڵەیە ❌', AppColors.red);
+        _showSnackBar(tr('کۆدی شوێن هەڵەیە ❌'), AppColors.red);
         return;
       }
 
@@ -259,11 +260,11 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!mounted) return;
 
     if (res == 'phone_exists') {
-      _showSnackBar('ئەم ژمارەیە پێشتر تۆمار کراوە ⚠', AppColors.orange);
+      _showSnackBar(tr('ئەم ژمارەیە پێشتر تۆمار کراوە ⚠'), AppColors.orange);
       return;
     }
     if (res != 'ok') {
-      _showSnackBar('تۆمارکردن سەرنەکەوت', AppColors.red);
+      _showSnackBar(tr('تۆمارکردن سەرنەکەوت'), AppColors.red);
       return;
     }
 
@@ -280,6 +281,10 @@ class _AuthScreenState extends State<AuthScreen> {
     required String phone,
     required String pass,
   }) async {
+    // 🔐 app_login ئەم session ـە بە بەکارهێنەرەکەوە دەبەستێتەوە لەسەر سێرڤەر
+    if (Supabase.instance.client.auth.currentSession == null) {
+      await Supabase.instance.client.auth.signInAnonymously();
+    }
     final res = await Supabase.instance.client.rpc('app_login', params: {
       'p_phone': phone,
       'p_password': pass,
@@ -288,7 +293,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     final rows = res is List ? res : const [];
     if (rows.isEmpty) {
-      _showSnackBar('مۆبایل یان پاسۆرد هەڵەیە ❌', AppColors.red);
+      _showSnackBar(tr('مۆبایل یان پاسۆرد هەڵەیە ❌'), AppColors.red);
       return;
     }
     final userRes = Map<String, dynamic>.from(rows.first as Map);
@@ -320,31 +325,31 @@ class _AuthScreenState extends State<AuthScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.hourglass_top_rounded, color: AppColors.orange),
-              SizedBox(width: 8),
+              const Icon(Icons.hourglass_top_rounded, color: AppColors.orange),
+              const SizedBox(width: 8),
               Text(
-                'چاوەڕوان بە ⏳',
-                style: TextStyle(fontWeight: FontWeight.w900),
+                tr('چاوەڕوان بە ⏳'),
+                style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ],
           ),
-          content: const Text(
-            'هێشتا داواکاریت لەلایەن ئەدمینەوە پەسەند نەکراوە.\n\nتکایە چاوەڕوان بە تا پەسەند دەکرێیت.',
-            style: TextStyle(height: 1.6),
+          content: Text(
+            tr('هێشتا داواکاریت لەلایەن ئەدمینەوە پەسەند نەکراوە.\n\nتکایە چاوەڕوان بە تا پەسەند دەکرێیت.'),
+            style: const TextStyle(height: 1.6),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'باشە',
-                style: TextStyle(fontWeight: FontWeight.w900),
+              child: Text(
+                tr('باشە'),
+                style: const TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
           ],
@@ -362,12 +367,12 @@ class _AuthScreenState extends State<AuthScreen> {
     final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bgColor,
         appBar: AppBar(
           title: Text(
-            _isSignUp ? 'دروستکردنی ئەکاونت' : 'چوونەژوورەوە',
+            tr(_isSignUp ? 'دروستکردنی ئەکاونت' : 'چوونەژوورەوە'),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
@@ -399,7 +404,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   // 📱 Phone
                   _buildTextField(
                     controller: _phoneCtrl,
-                    label: 'ژمارەی مۆبایل *',
+                    label: tr('ژمارەی مۆبایل *'),
                     hint: '0770xxxxxxx',
                     icon: Icons.phone_iphone_rounded,
                     keyboardType: TextInputType.phone,
@@ -421,7 +426,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   else if (_isSignUp && _selectedRole == 'customer') ...[
                     _buildTextField(
                       controller: _nameCtrl,
-                      label: 'ناوی تەواو',
+                      label: tr('ناوی تەواو'),
                       icon: Icons.person_outline_rounded,
                       isDark: isDark,
                     ),
@@ -485,26 +490,26 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Widget _buildRoleDropdown(bool isDark) {
     return DropdownButtonFormField<String>(
-      value: _selectedRole,
+      initialValue: _selectedRole,
       dropdownColor: isDark ? AppColors.darkCard : AppColors.surface,
       decoration: _inputDecoration(
-        label: 'جۆری ئەکاونت',
+        label: tr('جۆری ئەکاونت'),
         icon: Icons.person_pin_outlined,
         isDark: isDark,
       ),
-      items: const [
+      items: [
         DropdownMenuItem(
           value: 'customer',
           child: Text(
-            '👤 هاوڵاتی (بەکارهێنەر)',
-            style: TextStyle(fontWeight: FontWeight.w700),
+            tr('👤 هاوڵاتی (بەکارهێنەر)'),
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
         DropdownMenuItem(
           value: 'admin',
           child: Text(
-            '🏪 ئەدمین (خاوەن شوێن)',
-            style: TextStyle(fontWeight: FontWeight.w700),
+            tr('🏪 ئەدمین (خاوەن شوێن)'),
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
       ],
@@ -534,11 +539,11 @@ class _AuthScreenState extends State<AuthScreen> {
       isExpanded: true,
       dropdownColor: isDark ? AppColors.darkCard : AppColors.surface,
       decoration: _inputDecoration(
-        label: 'شوێنەکەت هەڵبژێرە *',
+        label: tr('شوێنەکەت هەڵبژێرە *'),
         icon: Icons.storefront_rounded,
         isDark: isDark,
       ),
-      value: _selectedStore,
+      initialValue: _selectedStore,
       items: _allStores.map((store) {
         return DropdownMenuItem<Map<String, dynamic>>(
           value: store,
@@ -568,7 +573,7 @@ class _AuthScreenState extends State<AuthScreen> {
       onChanged: (_) => setState(() => _storeCodeVerified = false),
       style: TextStyle(color: isDark ? Colors.white : AppColors.textPrimary),
       decoration: InputDecoration(
-        labelText: 'کۆدی نهێنی شوێن *',
+        labelText: tr('کۆدی نهێنی شوێن *'),
         labelStyle: TextStyle(
           color: isDark ? Colors.white70 : AppColors.textSecondary,
         ),
@@ -608,7 +613,7 @@ class _AuthScreenState extends State<AuthScreen> {
           size: 18,
         ),
         label: Text(
-          _storeCodeVerified ? 'کۆد ڕاستە ✅' : 'پشتڕاستکردنەوەی کۆد',
+          tr(_storeCodeVerified ? 'کۆد ڕاستە ✅' : 'پشتڕاستکردنەوەی کۆد'),
           style: TextStyle(
             color: _storeCodeVerified ? AppColors.green : AppColors.primary,
             fontWeight: FontWeight.w900,
@@ -657,7 +662,7 @@ class _AuthScreenState extends State<AuthScreen> {
       obscureText: _obscurePass,
       style: TextStyle(color: isDark ? Colors.white : AppColors.textPrimary),
       decoration: InputDecoration(
-        labelText: 'پاسۆرد * (لانیکەم ٦ پیت)',
+        labelText: tr('پاسۆرد * (لانیکەم ٦ پیت)'),
         labelStyle: TextStyle(
           color: isDark ? Colors.white70 : AppColors.textSecondary,
         ),
@@ -709,7 +714,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         )
             : Text(
-          _isSignUp ? 'دروستکردنی ئەکاونت' : 'چوونەژوورەوە',
+          tr(_isSignUp ? 'دروستکردنی ئەکاونت' : 'چوونەژوورەوە'),
           style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 15,
@@ -726,9 +731,9 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() => _isSignUp = !_isSignUp);
       },
       child: Text(
-        _isSignUp
+        tr(_isSignUp
             ? 'ئەکاونتت هەیە؟ بچۆ ژوورەوە'
-            : 'ئەکاونتت نییە؟ دروستبکە',
+            : 'ئەکاونتت نییە؟ دروستبکە'),
         style: const TextStyle(
           color: AppColors.primary,
           fontWeight: FontWeight.w900,

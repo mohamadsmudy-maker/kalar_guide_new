@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 🎯 ئەنجامی فلتەر
 class FilterResult {
@@ -100,7 +101,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Container(
         height: MediaQuery.sizeOf(context).height * 0.85,
         decoration: BoxDecoration(
@@ -114,11 +115,11 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
             // Header
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
                   colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
                 ),
-                borderRadius: const BorderRadius.vertical(
+                borderRadius: BorderRadius.vertical(
                   top: Radius.circular(28),
                 ),
               ),
@@ -137,10 +138,10 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'فلتەرکردن و ڕیزبەندکردن',
-                      style: TextStyle(
+                      tr('فلتەرکردن و ڕیزبەندکردن'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,
                         color: Colors.white,
@@ -160,7 +161,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   // ═══ ڕیزبەندکردن ═══
-                  _buildSection('ڕیزبەندکردن', Icons.sort_rounded),
+                  _buildSection(tr('ڕیزبەندکردن'), Icons.sort_rounded),
                   const SizedBox(height: 8),
                   _buildSortOption(
                     'گرنگترین',
@@ -184,7 +185,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                   const SizedBox(height: 20),
 
                   // ═══ بەروار ═══
-                  _buildSection('ماوەی بەروار', Icons.date_range_rounded),
+                  _buildSection(tr('ماوەی بەروار'), Icons.date_range_rounded),
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: _pickDate,
@@ -206,7 +207,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              '${_formatDate(_fromDate)} بۆ ${_formatDate(_toDate)}',
+                              trf('{0} بۆ {1}', [_formatDate(_fromDate), _formatDate(_toDate)]),
                               style: const TextStyle(
                                 color: Color(0xFF0F1421),
                                 fontSize: 13,
@@ -227,7 +228,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                   const SizedBox(height: 20),
 
                   // ═══ دۆخ ═══
-                  _buildSection('دۆخ', Icons.checklist_rounded),
+                  _buildSection(tr('دۆخ'), Icons.checklist_rounded),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -243,7 +244,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                   const SizedBox(height: 20),
 
                   // ═══ لایەنی پەیوەندیدار ═══
-                  _buildSection('لایەنی پەیوەندیدار', Icons.account_balance_rounded),
+                  _buildSection(tr('لایەنی پەیوەندیدار'), Icons.account_balance_rounded),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
@@ -254,16 +255,16 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                       child: DropdownButton<String>(
                         value: _authority,
                         isExpanded: true,
-                        hint: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12),
-                          child: Text('هەموو لایەنەکان', style: TextStyle(fontSize: 13)),
+                        hint: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(tr('هەموو لایەنەکان'), style: const TextStyle(fontSize: 13)),
                         ),
                         items: [
-                          const DropdownMenuItem(
+                          DropdownMenuItem(
                             value: null,
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Text('هەموو لایەنەکان', style: TextStyle(fontSize: 13)),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(tr('هەموو لایەنەکان'), style: const TextStyle(fontSize: 13)),
                             ),
                           ),
                           ..._authorities.map(
@@ -271,7 +272,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                               value: a,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                                child: Text(a, style: const TextStyle(fontSize: 13)),
+                                child: Text(tr(a), style: const TextStyle(fontSize: 13)),
                               ),
                             ),
                           ),
@@ -284,23 +285,23 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                   const SizedBox(height: 20),
 
                   // ═══ فلتەرە زیادەکان ═══
-                  _buildSection('فلتەرە زیادەکان', Icons.filter_alt_rounded),
+                  _buildSection(tr('فلتەرە زیادەکان'), Icons.filter_alt_rounded),
                   const SizedBox(height: 8),
                   SwitchListTile(
                     value: _onlyWithVoice,
                     onChanged: (v) => setState(() => _onlyWithVoice = v),
-                    title: const Text(
-                      'تەنها دەنگ هەیە',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    title: Text(
+                      tr('تەنها دەنگ هەیە'),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                     secondary: const Icon(Icons.mic_rounded, color: Color(0xFF1E88E5)),
                   ),
                   SwitchListTile(
                     value: _onlyWithImages,
                     onChanged: (v) => setState(() => _onlyWithImages = v),
-                    title: const Text(
-                      'تەنها وێنە هەیە',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    title: Text(
+                      tr('تەنها وێنە هەیە'),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                     secondary: const Icon(Icons.image_rounded, color: Color(0xFFE91E63)),
                   ),
@@ -338,7 +339,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                           });
                         },
                         icon: const Icon(Icons.refresh_rounded, size: 18),
-                        label: const Text('پاککردنەوە'),
+                        label: Text(tr('پاککردنەوە')),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(0, 50),
                           shape: RoundedRectangleBorder(
@@ -364,9 +365,9 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                           Navigator.pop(context);
                         },
                         icon: const Icon(Icons.check_rounded, size: 20),
-                        label: const Text(
-                          'جێبەجێکردن',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                        label: Text(
+                          tr('جێبەجێکردن'),
+                          style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -394,7 +395,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
         Icon(icon, size: 16, color: AppColors.primary),
         const SizedBox(width: 6),
         Text(
-          title,
+          tr(title),
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w900,
@@ -443,7 +444,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    label,
+                    tr(label),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
@@ -453,7 +454,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                     ),
                   ),
                   Text(
-                    subtitle,
+                    tr(subtitle),
                     style: TextStyle(
                       fontSize: 10,
                       color: isDark ? Colors.white54 : Colors.grey.shade600,
@@ -501,7 +502,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
           ),
         ),
         child: Text(
-          label,
+          tr(label),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w900,

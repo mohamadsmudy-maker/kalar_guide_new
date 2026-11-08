@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../config/settings_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/currency_service.dart';
 import 'admin_currency_prices.dart';
+import '../../l10n/tr.dart';
 
 /// 🏢 لیستی نوسینگەکانی دراو (لە `dukan`)
 class AdminCurrencyStationsScreen extends StatefulWidget {
@@ -78,15 +77,15 @@ class _AdminCurrencyStationsScreenState
     final isVendor = role == 'vendor';
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
-            isVendor
+            tr(isVendor
                 ? 'نوسینگەکەم'
-                : 'نوسینگەکانی دراو (${_stations.length})',
+                : trf('نوسینگەکانی دراو ({0})', [_stations.length])),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 17,
@@ -133,7 +132,7 @@ class _AdminCurrencyStationsScreenState
                       color: isDark ? Colors.white : Colors.black87,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'گەڕان بەدوای نوسینگەکان...',
+                      hintText: tr('گەڕان بەدوای نوسینگەکان...'),
                       hintStyle: TextStyle(
                         fontSize: 13,
                         color: isDark ? Colors.white54 : Colors.grey,
@@ -236,7 +235,7 @@ class _AdminCurrencyStationsScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    name,
+                    tr(name),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
@@ -257,7 +256,7 @@ class _AdminCurrencyStationsScreenState
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
-                            address,
+                            tr(address),
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark
@@ -274,7 +273,7 @@ class _AdminCurrencyStationsScreenState
                   if (usdSell > 0) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'دۆلار: ${usdSell.toStringAsFixed(0)} د.ع',
+                      trf('دۆلار: {0} د.ع', [usdSell.toStringAsFixed(0)]),
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF10B981),
@@ -334,7 +333,7 @@ class _AdminCurrencyStationsScreenState
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ نوسینگەیەک نەدۆزرایەوە',
+            tr('هیچ نوسینگەیەک نەدۆزرایەوە'),
             style: TextStyle(
               color: isDark ? Colors.white54 : Colors.grey,
               fontSize: 15,

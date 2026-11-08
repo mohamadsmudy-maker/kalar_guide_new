@@ -339,7 +339,7 @@ class AppTheme {
           foregroundColor: primaryColor,
         ),
       ),
-      extensions: <ThemeExtension<dynamic>>[
+      extensions: const <ThemeExtension<dynamic>>[
         AppThemeColors(
           primary: primaryColor,
           secondary: secondaryColor,

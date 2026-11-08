@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../services/presence_service.dart';
 import '../screens/admin/admin_live_users.dart';
+import '../l10n/tr.dart';
 
 /// 🔴 Live Users Badge — لە AppBar — ULTRA PRO MAX V2
 class LiveUsersBadge extends StatefulWidget {
@@ -180,7 +181,7 @@ class _LiveUsersBadgeState extends State<LiveUsersBadge>
               ),
             ),
             child: Text(
-              _compact(_count),
+              tr(_compact(_count)),
               key: ValueKey(_count),
               style: const TextStyle(
                 color: Colors.white,
@@ -198,7 +199,7 @@ class _LiveUsersBadgeState extends State<LiveUsersBadge>
     return Semantics(
       key: const ValueKey('badge'),
       button: canOpen,
-      label: '${_ku(_count)} بەکارهێنەر ئێستا لە خەتە',
+      label: trf('{0} بەکارهێنەر ئێستا لە خەتە', [_ku(_count)]),
       child: ExcludeSemantics(
         child: canOpen
         // 44px-tall tap area (the badge itself is only ~28px)

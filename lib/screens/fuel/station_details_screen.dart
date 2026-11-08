@@ -10,6 +10,7 @@ import '../admin/admin_fuel_prices.dart';
 import '../currency/currency_strings.dart';
 import 'fuel_history_screen.dart';
 import 'fuel_strings.dart';
+import '../../l10n/tr.dart';
 
 /// 🏢 وردەکاری بەنزینخانە — ULTRA PRO MAX
 class StationDetailsScreen extends StatefulWidget {
@@ -102,7 +103,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
         appBar: AppBar(
-          title: Text(_station?['name']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          title: Text(tr(_station?['name']?.toString() ?? ''), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           backgroundColor: const Color(0xFF0F172A),
           foregroundColor: Colors.white,
           elevation: 0,
@@ -204,7 +205,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                     : _stationIcon(),
               ),
               const SizedBox(width: 14),
-              Expanded(child: Text(name, style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900))),
+              Expanded(child: Text(tr(name), style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900))),
             ],
           ),
           if (address.isNotEmpty) ...[
@@ -213,7 +214,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
               children: [
                 const Icon(Icons.location_on_rounded, color: Colors.white70, size: 16),
                 const SizedBox(width: 6),
-                Expanded(child: Text(address, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
+                Expanded(child: Text(tr(address), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
               ],
             ),
           ],
@@ -270,7 +271,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
               Icon(icon, color: Colors.white, size: 16),
               const SizedBox(width: 6),
               Flexible(
-                child: Text(label,
+                child: Text(tr(label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
@@ -288,7 +289,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
         Container(width: 4, height: 18, decoration: BoxDecoration(color: const Color(0xFFF59E0B), borderRadius: BorderRadius.circular(4))),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(title,
+          child: Text(tr(title),
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
         ),
         if (trailing != null) trailing,
@@ -318,17 +319,17 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
             height: 46,
             decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
             alignment: Alignment.center,
-            child: Text(FuelService.getEmoji(type), style: const TextStyle(fontSize: 22)),
+            child: Text(tr(FuelService.getEmoji(type)), style: const TextStyle(fontSize: 22)),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(FuelService.getNameByLang(type, lang),
+                Text(tr(FuelService.getNameByLang(type, lang)),
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
                 if (updated != null)
-                  Text(CurrencyStrings.timeAgo(updated, lang),
+                  Text(tr(CurrencyStrings.timeAgo(updated, lang)),
                       style: TextStyle(fontSize: 10, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600)),
               ],
             ),
@@ -350,7 +351,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(CurrencyService.formatPrice(price, lang), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+              Text(tr(CurrencyService.formatPrice(price, lang)), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
               Text('${FuelStrings.of(lang, 'iqd')} / ${FuelService.getUnitName(type, lang)}',
                   style: TextStyle(fontSize: 9, color: sub, fontWeight: FontWeight.bold)),
             ],
@@ -379,7 +380,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-            child: Text(FuelService.getNameByLang(type, lang),
+            child: Text(tr(FuelService.getNameByLang(type, lang)),
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: color)),
           ),
           const SizedBox(width: 10),
@@ -388,18 +389,18 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  oldPrice != null && oldPrice > 0
+                  tr(oldPrice != null && oldPrice > 0
                       ? '${CurrencyService.formatPrice(oldPrice, lang)} ← ${CurrencyService.formatPrice(newPrice, lang)}'
-                      : CurrencyService.formatPrice(newPrice, lang),
+                      : CurrencyService.formatPrice(newPrice, lang)),
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF1E293B)),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  [
+                  tr([
                     if (at != null)
                       CurrencyService.localizeDigits('${at.year}/${two(at.month)}/${two(at.day)}  ${two(at.hour)}:${two(at.minute)}', lang),
                     if (by.isNotEmpty) by,
-                  ].join(' • '),
+                  ].join(' • ')),
                   style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
                 ),
               ],
@@ -411,7 +412,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
               children: [
                 Icon(change > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
                     size: 14, color: change > 0 ? Colors.red : Colors.green),
-                Text(CurrencyService.formatPrice(change.abs(), lang),
+                Text(tr(CurrencyService.formatPrice(change.abs(), lang)),
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: change > 0 ? Colors.red : Colors.green)),
               ],
             ),
@@ -428,7 +429,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
         children: [
           Icon(icon, size: 44, color: Colors.grey.shade400),
           const SizedBox(height: 10),
-          Text(text, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          Text(tr(text), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
         ],
       ),
     );

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_logger.dart';
+import '../l10n/tr.dart';
 
 /// ⚠️ بەڕێوەبردنی هەڵەکان
 class ErrorHandler {
@@ -57,7 +58,7 @@ class ErrorHandler {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          getUserMessage(error),
+          tr(getUserMessage(error)),
           style: const TextStyle(fontFamily: 'Rabar'),
         ),
         backgroundColor: Colors.red.shade600,

@@ -6,6 +6,7 @@ import '../../services/fuel_service.dart';
 import '../../services/fuel_pdf_service.dart';
 import '../../widgets/multi_fuel_chart_widget.dart';
 import 'admin_fuel_prices.dart';
+import '../../l10n/tr.dart';
 
 /// 🏢 شاشەی بەڕێوەبردنی بەنزینخانەکان — FULL PRO (Admin)
 class AdminFuelStationsScreen extends StatefulWidget {
@@ -111,13 +112,13 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
     final role = AuthSessionManager.userRole;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
-            role == 'vendor' ? 'بەنزینخانەکەم' : 'بەڕێوەبردنی سووتەمەنی',
+            tr(role == 'vendor' ? 'بەنزینخانەکەم' : 'بەڕێوەبردنی سووتەمەنی'),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
@@ -141,7 +142,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                 ),
               )
                   : const Icon(Icons.picture_as_pdf_rounded),
-              tooltip: 'ڕاپۆرتی PDF',
+              tooltip: tr('ڕاپۆرتی PDF'),
               onPressed: _generatingPdf ? null : _generatePdf,
             ),
             IconButton(
@@ -221,7 +222,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'هیچ بەنزینخانەیەک نەدۆزرایەوە',
+                          tr('هیچ بەنزینخانەیەک نەدۆزرایەوە'),
                           style: TextStyle(
                             color:
                             isDark ? Colors.white54 : Colors.grey,
@@ -273,7 +274,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
         onChanged: (v) => setState(() => _searchQuery = v.trim()),
         style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         decoration: InputDecoration(
-          hintText: 'گەڕان بەدوای بەنزینخانەکان...',
+          hintText: tr('گەڕان بەدوای بەنزینخانەکان...'),
           hintStyle: TextStyle(
             fontSize: 13,
             color: isDark ? Colors.white54 : Colors.grey,
@@ -353,7 +354,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
               ),
               child: Center(
                 child: Text(
-                  type['label'] as String,
+                  tr(type['label'] as String),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -391,7 +392,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
               ),
               const SizedBox(width: 6),
               Text(
-                '${_filteredStations.length} بەنزینخانە',
+                trf('{0} بەنزینخانە', [_filteredStations.length]),
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -429,7 +430,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'لابردنی فلتەر',
+                    tr('لابردنی فلتەر'),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -544,7 +545,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    name,
+                    tr(name),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
@@ -567,7 +568,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            address,
+                            tr(address),
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark

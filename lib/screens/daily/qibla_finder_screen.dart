@@ -8,6 +8,7 @@ import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 🕋 شاشەی قیبلە دۆزەرەوە — ULTRA PRO MAX V4
 ///
@@ -334,7 +335,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   // ═══════════════════════════════════════════════════════════
   static double _calculateQiblaAngle(double lat, double lng) {
     final latRad = lat * math.pi / 180;
-    final kaabaLatRad = _kaabaLat * math.pi / 180;
+    const kaabaLatRad = _kaabaLat * math.pi / 180;
     final dLng = (_kaabaLng - lng) * math.pi / 180;
 
     final y = math.sin(dLng);
@@ -349,7 +350,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: AppColors.darkBackground,
         extendBodyBehindAppBar: true,
@@ -358,9 +359,9 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           elevation: 0,
           scrolledUnderElevation: 0,
           systemOverlayStyle: SystemUiOverlayStyle.light,
-          title: const Text(
-            'قیبلە دۆزەرەوە',
-            style: TextStyle(
+          title: Text(
+            tr('قیبلە دۆزەرەوە'),
+            style: const TextStyle(
               fontWeight: FontWeight.w900,
               color: Colors.white,
               fontSize: 18,
@@ -372,7 +373,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
         body: Stack(
           children: [
             // 🌌 Background
-            Positioned.fill(
+            const Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -516,7 +517,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
             const SizedBox(width: 10),
             Flexible(
               child: Text(
-                _statusText(),
+                tr(_statusText()),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
@@ -557,7 +558,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '$reason — ئاراستە بەپێی کەلار هەژمارکراوە',
+              trf('{0} — ئاراستە بەپێی کەلار هەژمارکراوە', [reason]),
               style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w700),
             ),
           ),
@@ -567,7 +568,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
               foregroundColor: AppColors.orange,
               visualDensity: VisualDensity.compact,
             ),
-            child: Text(action, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
+            child: Text(tr(action), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
           ),
         ],
       ),
@@ -615,7 +616,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [AppColors.darkCard, AppColors.darkSurface],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -740,7 +741,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
-            _facing ? 'دروست ✅' : 'قیبلە',
+            tr(_facing ? 'دروست ✅' : 'قیبلە'),
             style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
           ),
         ),
@@ -756,7 +757,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [AppColors.darkCard, AppColors.darkSurface],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
@@ -772,7 +773,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                 width: 4,
                 height: 16,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [AppColors.orange, AppColors.yellow],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -781,10 +782,10 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                 ),
               ),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'زانیاری ورد',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
+                  tr('زانیاری ورد'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
                 ),
               ),
               Container(
@@ -800,7 +801,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
                     Icon(_confidenceIcon(), size: 11, color: confColor),
                     const SizedBox(width: 3),
                     Text(
-                      '${_toLocalDigits((_confidence * 100).toStringAsFixed(0))}٪',
+                      trf('{0}٪', [_toLocalDigits((_confidence * 100).toStringAsFixed(0))]),
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: confColor),
                     ),
                   ],
@@ -831,7 +832,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
             _infoRow(
               Icons.location_on_rounded,
               'دووری بۆ کەعبە',
-              '${_toLocalDigits(_groupThousands(_distanceKm!.round()))} کم',
+              trf('{0} کم', [_toLocalDigits(_groupThousands(_distanceKm!.round()))]),
               AppColors.green,
             ),
           if (_lat != null && _lng != null)
@@ -883,7 +884,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              label,
+              tr(label),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600),
@@ -898,7 +899,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
               border: Border.all(color: color.withValues(alpha: 0.2)),
             ),
             child: Text(
-              value,
+              tr(value),
               textDirection: ltr ? TextDirection.ltr : null,
               style: TextStyle(
                 color: color,
@@ -952,7 +953,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              tip,
+              tr(tip),
               style: const TextStyle(color: Colors.white60, fontSize: 11, height: 1.4),
             ),
           ),

@@ -5,6 +5,7 @@ import '../../config/app_colors.dart';
 import '../../config/constants.dart';
 import '../../services/location_service.dart';
 import '../../services/places_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🗺️ شاشەی هەڵبژاردنی شوێن لەسەر نەخشە (Secure Edition)
 ///
@@ -111,7 +112,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       _selectedPOI = {
         'name': 'شوێنی هەڵبژێردراو',
         'address':
-        'کۆئۆردینەت: ${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}',
+        trf('کۆئۆردینەت: {0}, {1}', [lat.toStringAsFixed(6), lng.toStringAsFixed(6)]),
         'phone': '',
         'lat': lat,
         'lng': lng,
@@ -256,10 +257,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
           gmaps.CameraUpdate.newLatLngZoom(currentPos, 17),
         );
       } else {
-        _showError('نەتوانرا شوێنی ئێستا بدۆزرێتەوە');
+        _showError(tr('نەتوانرا شوێنی ئێستا بدۆزرێتەوە'));
       }
     } catch (e) {
-      _showError('هەڵە: $e');
+      _showError(trf('هەڵە: {0}', [e]));
     }
   }
 
@@ -270,7 +271,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(fontSize: 12)),
+        content: Text(tr(message), style: const TextStyle(fontSize: 12)),
         backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
@@ -287,7 +288,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         body: Stack(
           children: [
@@ -421,7 +422,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                       if (val.length >= 2) _searchLocation(val);
                     },
                     decoration: InputDecoration(
-                      hintText: "گەڕان (بە ئینگلیزی: bakery، cafe)",
+                      hintText: tr("گەڕان (بە ئینگلیزی: bakery، cafe)"),
                       hintStyle: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -511,7 +512,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               ),
             ),
             title: Text(
-              result['name']?.toString() ?? '',
+              tr(result['name']?.toString() ?? ''),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
@@ -520,7 +521,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
-              result['address']?.toString() ?? '',
+              tr(result['address']?.toString() ?? ''),
               style: const TextStyle(fontSize: 11, color: Colors.grey),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -545,10 +546,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 18,
             height: 18,
             child: CircularProgressIndicator(
@@ -556,10 +557,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               color: AppColors.primary,
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Text(
-            'خەریکی گەڕان...',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            tr('خەریکی گەڕان...'),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -580,13 +581,13 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
           ),
         ],
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.search_off_rounded, color: Colors.grey, size: 32),
-          SizedBox(height: 6),
+          const Icon(Icons.search_off_rounded, color: Colors.grey, size: 32),
+          const SizedBox(height: 6),
           Text(
-            'هیچ شوێنێک نەدۆزرایەوە',
-            style: TextStyle(
+            tr('هیچ شوێنێک نەدۆزرایەوە'),
+            style: const TextStyle(
               fontSize: 12,
               color: Colors.grey,
               fontWeight: FontWeight.bold,
@@ -625,15 +626,15 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   Widget _buildLoadingOverlay() {
     return Container(
       color: Colors.black.withValues(alpha: 0.5),
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(height: 12),
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(height: 12),
             Text(
-              'خەریکی هێنانی زانیاری...',
-              style: TextStyle(
+              tr('خەریکی هێنانی زانیاری...'),
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -688,7 +689,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _selectedPOI!['name']?.toString() ?? '',
+                        tr(_selectedPOI!['name']?.toString() ?? ''),
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 15,
@@ -752,9 +753,9 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                   Icons.check_circle_rounded,
                   size: 20,
                 ),
-                label: const Text(
-                  "هەڵبژاردنی ئەم شوێنە",
-                  style: TextStyle(
+                label: Text(
+                  tr("هەڵبژاردنی ئەم شوێنە"),
+                  style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/fuel_service.dart';
+import '../l10n/tr.dart';
 
 /// 📈 Chart ی گۆڕانکاری هەموو جۆرەکانی سووتەمەنی — FULL PRO
 class MultiFuelChartWidget extends StatefulWidget {
@@ -256,10 +257,10 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
           _resetZoom();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تەنها ٥ جۆر دەتوانرێت هەڵبژێردرێن'),
+            SnackBar(
+              content: Text(tr('تەنها ٥ جۆر دەتوانرێت هەڵبژێردرێن')),
               backgroundColor: Colors.orange,
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
@@ -359,23 +360,23 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
           ),
         ),
         const SizedBox(width: 10),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'گۆڕانکاری هەموو جۆرەکان',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+                tr('گۆڕانکاری هەموو جۆرەکان'),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Row(
                 children: [
-                  Icon(Icons.pinch_rounded, size: 10, color: Colors.grey),
-                  SizedBox(width: 3),
+                  const Icon(Icons.pinch_rounded, size: 10, color: Colors.grey),
+                  const SizedBox(width: 3),
                   Text(
-                    'Zoom بە دوو پەنجە',
-                    style: TextStyle(fontSize: 9, color: Colors.grey),
+                    tr('Zoom بە دوو پەنجە'),
+                    style: const TextStyle(fontSize: 9, color: Colors.grey),
                   ),
                 ],
               ),
@@ -446,7 +447,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
               ),
               child: Center(
                 child: Text(
-                  range['label']!,
+                  tr(range['label']!),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w900,
@@ -505,7 +506,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
               ),
             ),
             child: Text(
-              _names[type] ?? type,
+              tr(_names[type] ?? type),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -548,7 +549,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
           ),
           const SizedBox(width: 8),
           Text(
-            _isZoomed ? 'Zoom کراوە' : 'دۆخی ئاسایی',
+            tr(_isZoomed ? 'Zoom کراوە' : 'دۆخی ئاسایی'),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -739,7 +740,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
                       ),
                       children: [
                         TextSpan(
-                          text: '${spot.y.toStringAsFixed(0)} د.ع',
+                          text: trf('{0} د.ع', [spot.y.toStringAsFixed(0)]),
                           style: TextStyle(
                             color: widget.isDark
                                 ? Colors.white
@@ -851,7 +852,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      name,
+                      tr(name),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
@@ -862,7 +863,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _rangeFilter == 'week'
+                      tr(_rangeFilter == 'week'
                           ? '١ هەفتە'
                           : _rangeFilter == 'month'
                           ? '١ مانگ'
@@ -870,7 +871,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
                           ? '٣ مانگ'
                           : _rangeFilter == '6months'
                           ? '٦ مانگ'
-                          : '١ ساڵ',
+                          : '١ ساڵ'),
                       style: TextStyle(
                         fontSize: 9,
                         color: widget.isDark
@@ -886,7 +887,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${lastPrice.toStringAsFixed(0)} د.ع',
+                    trf('{0} د.ع', [lastPrice.toStringAsFixed(0)]),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -924,7 +925,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
                     ),
                   ] else
                     Text(
-                      'بێ گۆڕانکاری',
+                      tr('بێ گۆڕانکاری'),
                       style: TextStyle(
                         fontSize: 9,
                         color:
@@ -964,7 +965,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
           ),
           const SizedBox(height: 12),
           Text(
-            'هیچ داتایەک نییە لەم ماوەیەدا',
+            tr('هیچ داتایەک نییە لەم ماوەیەدا'),
             style: TextStyle(
               fontSize: 13,
               color: widget.isDark ? Colors.white54 : Colors.grey,
@@ -973,7 +974,7 @@ class _MultiFuelChartWidgetState extends State<MultiFuelChartWidget> {
           ),
           const SizedBox(height: 8),
           Text(
-            'ماوەیەکی تر هەڵبژێرە',
+            tr('ماوەیەکی تر هەڵبژێرە'),
             style: TextStyle(
               fontSize: 11,
               color: widget.isDark ? Colors.white38 : Colors.grey.shade500,

@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:kalar_guide_new/config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 📋 شاشەی ڕێنمایی مامەڵە فەرمانگەکان — ULTRA PRO MAX V5
 ///   • گەڕان • کارتی کردنەوە/داخستن • لیستی پێداویستی بە ✓
@@ -25,48 +26,48 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
   // 📚 Data
   //   kind: doc = بەڵگەنامە (لیستی ✓) | info = زانیاری
   // ═══════════════════════════════════════════════════════════
-  static const List<_InstructionData> _instructions = [
+  static final List<_InstructionData> _instructions = [
     _InstructionData(
       icon: Icons.directions_car_rounded,
-      title: 'مۆڵەتی شۆفێری',
+      title: tr('مۆڵەتی شۆفێری'),
       color: AppColors.primary,
       office: 'بەڕێوەبەرایەتی هاتوچۆ',
       items: [
-        _Item.doc('ناسنامەی نیشتمانی', 'کارتی نیشتمانی (ڕەسەن)'),
-        _Item.doc('کارتی زانیاری', 'کارتی زانیاری (ڕەسەن)'),
-        _Item.doc('پاسپۆرت', 'پاسپۆرت (ڕەسەن)'),
-        _Item.doc('پشکنینی پزیشکی', 'لە فەرمانگەکە دەکرێت'),
-        _Item.doc('کۆدی سەردانیکردن', 'لە ماڵپەڕی هاتوچۆ وەربگرە'),
-        _Item.info('⏱️ ماوە', '٣٠-٦٠ خولەک'),
-        _Item.info('💰 نرخ', '٩١,٠٠٠ دینار'),
+        const _Item.doc('ناسنامەی نیشتمانی', 'کارتی نیشتمانی (ڕەسەن)'),
+        const _Item.doc('کارتی زانیاری', 'کارتی زانیاری (ڕەسەن)'),
+        const _Item.doc('پاسپۆرت', 'پاسپۆرت (ڕەسەن)'),
+        const _Item.doc('پشکنینی پزیشکی', 'لە فەرمانگەکە دەکرێت'),
+        const _Item.doc('کۆدی سەردانیکردن', 'لە ماڵپەڕی هاتوچۆ وەربگرە'),
+        const _Item.info('⏱️ ماوە', '٣٠-٦٠ خولەک'),
+        const _Item.info('💰 نرخ', '٩١,٠٠٠ دینار'),
       ],
     ),
     _InstructionData(
       icon: Icons.home_work_rounded,
-      title: 'مۆڵەتی بیناکردن',
+      title: tr('مۆڵەتی بیناکردن'),
       color: AppColors.green,
       office: 'بەڕێوەبەرایەتی شارەوانی',
       items: [
-        _Item.doc('وێنەی تۆمار', 'لە ٣ مانگ کۆنتر نەبێت'),
-        _Item.doc('چەسپاندنی سنوور', 'لە ٣ مانگ کۆنتر نەبێت'),
-        _Item.doc('ناسنامەی باری شارستانی', 'ڕەسەن'),
-        _Item.doc('بریکارنامە', 'ئەگەر بریکار هەبێت'),
-        _Item.info('💰 نرخ', 'لە ٢٠٠,٠٠٠ دینارەوە'),
-        _Item.info('📝 تێبینی', 'نرخ بەپێی قەبارە دەگۆڕێت'),
+        const _Item.doc('وێنەی تۆمار', 'لە ٣ مانگ کۆنتر نەبێت'),
+        const _Item.doc('چەسپاندنی سنوور', 'لە ٣ مانگ کۆنتر نەبێت'),
+        const _Item.doc('ناسنامەی باری شارستانی', 'ڕەسەن'),
+        const _Item.doc('بریکارنامە', 'ئەگەر بریکار هەبێت'),
+        const _Item.info('💰 نرخ', 'لە ٢٠٠,٠٠٠ دینارەوە'),
+        const _Item.info('📝 تێبینی', 'نرخ بەپێی قەبارە دەگۆڕێت'),
       ],
     ),
     _InstructionData(
       icon: Icons.card_membership_rounded,
-      title: 'پاسپۆرت',
+      title: tr('پاسپۆرت'),
       color: AppColors.purple,
       office: 'بەڕێوەبەرایەتی پاسپۆرت',
       items: [
-        _Item.doc('کارتی نیشتمانی', 'ڕەسەن'),
-        _Item.doc('کارتی زانیاری', 'ڕەسەن'),
-        _Item.doc('پاسپۆرتە کۆنەکە', 'ئەگەر هەبێت'),
-        _Item.info('⏱️ ماوە', '٣٠-٦٠ خولەک'),
-        _Item.info('💰 نرخ', '٩١,٠٠٠ دینار'),
-        _Item.info('💳 پارەدان', 'تەنها بە کارتی بانکی'),
+        const _Item.doc('کارتی نیشتمانی', 'ڕەسەن'),
+        const _Item.doc('کارتی زانیاری', 'ڕەسەن'),
+        const _Item.doc('پاسپۆرتە کۆنەکە', 'ئەگەر هەبێت'),
+        const _Item.info('⏱️ ماوە', '٣٠-٦٠ خولەک'),
+        const _Item.info('💰 نرخ', '٩١,٠٠٠ دینار'),
+        const _Item.info('💳 پارەدان', 'تەنها بە کارتی بانکی'),
       ],
     ),
   ];
@@ -78,17 +79,17 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
     'پشکنینی پزیشکی تەنها بۆ ٣ مانگ کار دەکات',
   ];
 
-  static const List<_ContactLink> _contacts = [
+  static final List<_ContactLink> _contacts = [
     _ContactLink(
       icon: Icons.language_rounded,
-      label: 'ماڵپەڕی خزمەتگوزاری',
+      label: tr('ماڵپەڕی خزمەتگوزاری'),
       displayValue: 'service.gov.krd',
       url: 'https://service.gov.krd',
       color: AppColors.primary,
     ),
     _ContactLink(
       icon: Icons.directions_car_rounded,
-      label: 'ماڵپەڕی هاتوچۆ',
+      label: tr('ماڵپەڕی هاتوچۆ'),
       displayValue: 'sultraffic.com',
       url: 'https://www.sultraffic.com',
       color: AppColors.green,
@@ -137,7 +138,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.w700)),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 1),
       ));
@@ -146,10 +147,10 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
   Future<void> _launchUrl(String url) async {
     try {
       final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      if (!ok && mounted) _snack('⚠️ نەتوانرا ماڵپەڕەکە بکرێتەوە');
+      if (!ok && mounted) _snack(tr('⚠️ نەتوانرا ماڵپەڕەکە بکرێتەوە'));
     } catch (e) {
       debugPrint('❌ $e');
-      if (mounted) _snack('⚠️ نەتوانرا ماڵپەڕەکە بکرێتەوە');
+      if (mounted) _snack(tr('⚠️ نەتوانرا ماڵپەڕەکە بکرێتەوە'));
     }
   }
 
@@ -164,13 +165,13 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
     final visible = _visible;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bgColor,
         appBar: AppBar(
-          title: const Text(
-            'ڕێنمایی مامەڵە فەرمانگەکان',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white),
+          title: Text(
+            tr('ڕێنمایی مامەڵە فەرمانگەکان'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white),
           ),
           backgroundColor: AppColors.darkBackground,
           foregroundColor: Colors.white,
@@ -192,7 +193,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                   children: [
                     Icon(Icons.search_off_rounded, size: 56, color: isDark ? Colors.white24 : Colors.grey.shade300),
                     const SizedBox(height: 10),
-                    Text('هیچ ئەنجامێک نەدۆزرایەوە',
+                    Text(tr('هیچ ئەنجامێک نەدۆزرایەوە'),
                         style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -205,7 +206,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
             const SizedBox(height: 6),
             _buildNotesCard(textTheme),
             const SizedBox(height: 20),
-            _buildSectionTitle('📞 پەیوەندی', isDark, textTheme),
+            _buildSectionTitle(tr('📞 پەیوەندی'), isDark, textTheme),
             const SizedBox(height: 12),
             for (int i = 0; i < _contacts.length; i++) ...[
               _buildContactRow(_contacts[i], isDark, textTheme),
@@ -231,7 +232,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'دوایین پشکنینی زانیارییەکان: $_lastReviewed',
+              trf('دوایین پشکنینی زانیارییەکان: {0}', [_lastReviewed]),
               style: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800, color: AppColors.primary),
             ),
           ),
@@ -244,7 +245,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
     return TextField(
       onChanged: (v) => setState(() => _query = v),
       decoration: InputDecoration(
-        hintText: 'گەڕان... (پاسپۆرت، شۆفێری، نرخ)',
+        hintText: tr('گەڕان... (پاسپۆرت، شۆفێری، نرخ)'),
         prefixIcon: const Icon(Icons.search_rounded),
         filled: true,
         fillColor: isDark ? AppColors.darkCard : AppColors.surface,
@@ -305,10 +306,10 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(data.title,
+                          Text(tr(data.title),
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
                           const SizedBox(height: 2),
-                          Text('📍 ${data.office}',
+                          Text('📍 ${tr(data.office)}',
                               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white70)),
                         ],
                       ),
@@ -357,7 +358,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                         child: _smallBtn(Icons.copy_rounded, 'کۆپی لیست', data.color, () {
                           Clipboard.setData(ClipboardData(text: _asText(data)));
                           HapticFeedback.mediumImpact();
-                          _snack('✅ کۆپی کرا');
+                          _snack(tr('✅ کۆپی کرا'));
                         }),
                       ),
                       const SizedBox(width: 8),
@@ -411,7 +412,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.label,
+                    tr(item.label),
                     style: textTheme.bodyMedium?.copyWith(
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
@@ -420,7 +421,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                     ),
                   ),
                   Text(
-                    item.value,
+                    tr(item.value),
                     style: textTheme.bodySmall?.copyWith(
                       fontSize: 11,
                       color: isDark ? Colors.white60 : AppColors.textSecondary,
@@ -448,7 +449,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
           Expanded(
             flex: 2,
             child: Text(
-              item.label,
+              tr(item.label),
               style: textTheme.bodySmall?.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -459,7 +460,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
           Expanded(
             flex: 3,
             child: Text(
-              item.value,
+              tr(item.value),
               // ✅ پێشتر TextAlign.left بوو، لە RTL دا دەبێت end بێت
               textAlign: TextAlign.end,
               style: textTheme.bodySmall?.copyWith(
@@ -488,7 +489,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
             children: [
               Icon(icon, size: 15, color: color),
               const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: color)),
+              Text(tr(label), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: color)),
             ],
           ),
         ),
@@ -524,7 +525,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
               ),
               const SizedBox(width: 10),
               Text(
-                'تێبینی گرنگ',
+                tr('تێبینی گرنگ'),
                 style: textTheme.titleSmall?.copyWith(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.orange),
               ),
             ],
@@ -543,7 +544,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _notes[i],
+                      tr(_notes[i]),
                       style: textTheme.bodySmall?.copyWith(
                         fontSize: 12,
                         color: AppColors.orange,
@@ -573,7 +574,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: textTheme.titleMedium?.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -613,7 +614,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      contact.label,
+                      tr(contact.label),
                       style: textTheme.labelSmall?.copyWith(
                         fontSize: 11,
                         color: isDark ? Colors.white54 : Colors.grey,
@@ -622,7 +623,7 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      contact.displayValue,
+                      tr(contact.displayValue),
                       textDirection: TextDirection.ltr,
                       style: textTheme.titleSmall?.copyWith(
                         fontSize: 13,
@@ -634,11 +635,11 @@ class _InstructionsScreenState extends State<InstructionsScreen> {
                 ),
               ),
               IconButton(
-                tooltip: 'کۆپی',
+                tooltip: tr('کۆپی'),
                 icon: Icon(Icons.copy_rounded, size: 16, color: isDark ? Colors.white54 : Colors.grey),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: contact.url));
-                  _snack('✅ لینک کۆپی کرا');
+                  _snack(tr('✅ لینک کۆپی کرا'));
                 },
               ),
               Icon(Icons.open_in_new_rounded, size: 16, color: contact.color),

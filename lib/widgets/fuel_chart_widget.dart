@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/fuel_service.dart';
 import '../screens/fuel/fuel_chart_screen.dart';
+import '../l10n/tr.dart';
 
 class _Pt {
   final DateTime t;
@@ -142,7 +143,7 @@ class FuelChartWidget extends StatelessWidget {
     final updated = _ku('${last.day}/${last.month}/${last.year}');
 
     final summary =
-        'نرخی سووتەمەنی ${_fmt(lastPrice)} دینار، لە ${_fmt(minPrice)} هەتا ${_fmt(maxPrice)}';
+        trf('نرخی سووتەمەنی {0} دینار، لە {1} هەتا {2}', [_fmt(lastPrice), _fmt(minPrice), _fmt(maxPrice)]);
 
     // Big system fonts must not overflow the fixed-size chart card
     return MediaQuery.withClampedTextScaling(
@@ -150,7 +151,7 @@ class FuelChartWidget extends StatelessWidget {
       maxScaleFactor: 1.3,
       child: Semantics(
         button: true,
-        label: '$summary. بۆ بینینی تەواو بیکەرەوە',
+        label: trf('{0}. بۆ بینینی تەواو بیکەرەوە', [summary]),
         child: ExcludeSemantics(
           child: Material(
             color: Colors.transparent,
@@ -227,7 +228,7 @@ class FuelChartWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'گۆڕانکاری نرخ',
+                  tr('گۆڕانکاری نرخ'),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
@@ -238,7 +239,7 @@ class FuelChartWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'دوایین نوێکردنەوە: $updated',
+                  trf('دوایین نوێکردنەوە: {0}', [updated]),
                   style: TextStyle(
                     fontSize: 10,
                     color: isDark ? Colors.white54 : Colors.grey,
@@ -254,7 +255,7 @@ class FuelChartWidget extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _fmt(lastPrice),
+                tr(_fmt(lastPrice)),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -262,7 +263,7 @@ class FuelChartWidget extends StatelessWidget {
                 ),
               ),
               Text(
-                'د.ع',
+                tr('د.ع'),
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
@@ -311,7 +312,7 @@ class FuelChartWidget extends StatelessWidget {
             Icon(icon, size: 14, color: color),
             const SizedBox(width: 4),
             Text(
-              text,
+              tr(text),
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -423,7 +424,7 @@ class FuelChartWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          label,
+          tr(label),
           style: TextStyle(
             fontSize: 8,
             color: isDark ? Colors.white54 : Colors.grey,
@@ -434,7 +435,7 @@ class FuelChartWidget extends StatelessWidget {
         ),
         const SizedBox(height: 1),
         Text(
-          _fmt(value),
+          tr(_fmt(value)),
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w900,
@@ -469,7 +470,7 @@ class FuelChartWidget extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'پێویست بە لانیکەم ٢ گۆڕانکاری هەیە',
+            tr('پێویست بە لانیکەم ٢ گۆڕانکاری هەیە'),
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white54 : Colors.grey,

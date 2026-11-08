@@ -7,6 +7,7 @@ import '../../services/auth_service.dart';
 import '../../services/image_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
+import '../../l10n/tr.dart';
 
 class AdminNewsScreen extends StatefulWidget {
   const AdminNewsScreen({super.key});
@@ -81,17 +82,17 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("سڕینەوەی هەواڵ"),
-          content: const Text("ئایا دڵنیایت لە سڕینەوەی ئەم هەواڵە؟"),
+          title: Text(tr("سڕینەوەی هەواڵ")),
+          content: Text(tr("ئایا دڵنیایت لە سڕینەوەی ئەم هەواڵە؟")),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("نەخێر")),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr("نەخێر"))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("سڕینەوە"),
+              child: Text(tr("سڕینەوە")),
             ),
           ],
         ),
@@ -103,17 +104,21 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
 
     try {
       await Supabase.instance.client.from('news').delete().eq('id', news['id']);
-      try { await StorageService.deleteNewsFiles(news: news); } catch (e) {}
+      try {
+        await StorageService.deleteNewsFiles(news: news);
+      } catch (e) {
+        debugPrint('⚠️ deleteNewsFiles: $e'); // هەواڵەکە سڕایەوە، تەنها فایلەکان نەسڕانەوە
+      }
       await _fetchNews();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ هەواڵەکە سڕایەوە"), backgroundColor: Colors.green),
+          SnackBar(content: Text(tr("✅ هەواڵەکە سڕایەوە")), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -142,12 +147,12 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
     }).toList();
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F0F14) : const Color(0xFFF7F5F8),
         appBar: AppBar(
           title: Text(
-            isVendor ? "هەواڵەکانم 📰" : "بەڕێوەبردنی هەواڵەکان 📰",
+            tr(isVendor ? "هەواڵەکانم 📰" : "بەڕێوەبردنی هەواڵەکان 📰"),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           backgroundColor: AppColors.primary,
@@ -168,7 +173,7 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
                   onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
-                    hintText: "گەڕان...",
+                    hintText: tr("گەڕان..."),
                     hintStyle: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey),
                     prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
                     border: InputBorder.none,
@@ -227,13 +232,13 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
               : Container(width: 60, height: 60, color: Colors.grey.shade100, child: const Icon(Icons.article_rounded, color: Colors.grey)),
         ),
         title: Text(
-          news['title'] ?? '',
+          tr(news['title'] ?? ''),
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white : Colors.black87),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          news['description'] ?? '',
+          tr(news['description'] ?? ''),
           style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.grey),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -267,7 +272,7 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            isVendor ? "هیچ هەواڵێکت نییە 📭" : "هیچ هەواڵێک نەدۆزرایەوە 📭",
+            tr(isVendor ? "هیچ هەواڵێکت نییە 📭" : "هیچ هەواڵێک نەدۆزرایەوە 📭"),
             style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontWeight: FontWeight.bold, fontSize: 14),
           ),
         ],
@@ -388,7 +393,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
   Future<void> _save() async {
     if (_titleCtrl.text.trim().isEmpty || _selectedStoreId == null || _selectedNewsType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("تکایە هەموو خانەکان پڕ بکەرەوە ⚠"), backgroundColor: Colors.orange),
+        SnackBar(content: Text(tr("تکایە هەموو خانەکان پڕ بکەرەوە ⚠")), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -429,13 +434,13 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isEditing ? "✅ دەستکاری کرا" : "✅ بڵاوکرایەوە"), backgroundColor: Colors.green),
+          SnackBar(content: Text(tr(isEditing ? "✅ دەستکاری کرا" : "✅ بڵاوکرایەوە")), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -448,11 +453,11 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F0F14) : const Color(0xFFF7F5F8),
         appBar: AppBar(
-          title: Text(isEditing ? "دەستکاریکردنی هەواڵ ✏️" : "بڵاوکردنەوەی هەواڵی نوێ 📢"),
+          title: Text(tr(isEditing ? "دەستکاریکردنی هەواڵ ✏️" : "بڵاوکردنەوەی هەواڵی نوێ 📢")),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
         ),
@@ -472,12 +477,12 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                     border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.5),
                   ),
                   child: _newsImages.isEmpty
-                      ? const Column(
+                      ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_a_photo_rounded, size: 36, color: AppColors.primary),
-                      SizedBox(height: 6),
-                      Text("وێنەکان (تا 4 وێنە) 📸", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      const Icon(Icons.add_a_photo_rounded, size: 36, color: AppColors.primary),
+                      const SizedBox(height: 6),
+                      Text(tr("وێنەکان (تا 4 وێنە) 📸"), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                     ],
                   )
                       : ListView.builder(
@@ -529,7 +534,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                         return DropdownMenuItem<String>(
                           value: store['id'].toString(),
                           child: Text(
-                            store['name'] ?? 'بێ ناو',
+                            tr(store['name'] ?? 'بێ ناو'),
                             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                           ),
                         );
@@ -543,16 +548,16 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _selectedNewsType,
+                initialValue: _selectedNewsType,
                 decoration: InputDecoration(
-                  labelText: "جۆری هەواڵ *",
+                  labelText: tr("جۆری هەواڵ *"),
                   filled: true,
                   fillColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 items: ['هەواڵ', 'ئاگاداری', 'هۆشداری', 'ڕووداو', 'خزمەتگوزاری'].map((type) => DropdownMenuItem(
                   value: type,
-                  child: Text(type),
+                  child: Text(tr(type)),
                 )).toList(),
                 onChanged: (val) => setState(() => _selectedNewsType = val),
               ),
@@ -561,7 +566,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
               TextField(
                 controller: _titleCtrl,
                 decoration: InputDecoration(
-                  labelText: "ناونیشانی هەواڵ *",
+                  labelText: tr("ناونیشانی هەواڵ *"),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   filled: true,
                   fillColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
@@ -573,7 +578,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                 controller: _descCtrl,
                 maxLines: 5,
                 decoration: InputDecoration(
-                  labelText: "وەسف *",
+                  labelText: tr("وەسف *"),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   filled: true,
                   fillColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
@@ -594,7 +599,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                   ),
                   onPressed: _save,
                   child: Text(
-                    isEditing ? "پاشەکەوتکردن ✅" : "بڵاوکردنەوە ✅",
+                    tr(isEditing ? "پاشەکەوتکردن ✅" : "بڵاوکردنەوە ✅"),
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),

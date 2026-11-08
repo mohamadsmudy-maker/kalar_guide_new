@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../services/image_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
+import '../../l10n/tr.dart';
 
 /// 🗂️ شاشەی بەڕێوەبردنی بەشە سەرەکییەکان (Ultra Pro Max)
 class AdminCategoriesManagementScreen extends StatefulWidget {
@@ -53,7 +54,7 @@ class _AdminCategoriesManagementScreenState
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar("هەڵە لە هێنانی داتا: $e", isError: true);
+        _showSnackBar(trf("هەڵە لە هێنانی داتا: {0}", [e]), isError: true);
       }
     }
   }
@@ -69,7 +70,7 @@ class _AdminCategoriesManagementScreenState
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: isError ? Colors.red : Colors.green,
         behavior: SnackBarBehavior.floating,
       ),
@@ -80,7 +81,7 @@ class _AdminCategoriesManagementScreenState
     bool confirm = await showDialog(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Row(
@@ -91,14 +92,14 @@ class _AdminCategoriesManagementScreenState
                 child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
               ),
               const SizedBox(width: 10),
-              const Text("سڕینەوەی بەش", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              Text(tr("سڕینەوەی بەش"), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("ئایا دڵنیایت لە سڕینەوەی:", style: TextStyle(color: Colors.black54, fontSize: 13)),
+              Text(tr("ئایا دڵنیایت لە سڕینەوەی:"), style: const TextStyle(color: Colors.black54, fontSize: 13)),
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
@@ -108,16 +109,16 @@ class _AdminCategoriesManagementScreenState
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.red.shade200),
                 ),
-                child: Text(catName, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.red, fontSize: 14)),
+                child: Text(tr(catName), style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.red, fontSize: 14)),
               ),
               const SizedBox(height: 10),
-              Text("تێبینی: بە سڕینەوەی ئەم بەشە، هەموو ژێربەشەکانیشی دەسڕێنەوە.", style: TextStyle(fontSize: 11, color: Colors.red.shade700)),
+              Text(tr("تێبینی: بە سڕینەوەی ئەم بەشە، هەموو ژێربەشەکانیشی دەسڕێنەوە."), style: TextStyle(fontSize: 11, color: Colors.red.shade700)),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text("نەخێر", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              child: Text(tr("نەخێر"), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -127,7 +128,7 @@ class _AdminCategoriesManagementScreenState
               ),
               onPressed: () => Navigator.pop(ctx, true),
               icon: const Icon(Icons.delete_rounded, size: 18),
-              label: const Text("سڕینەوە", style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(tr("سڕینەوە"), style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -140,9 +141,9 @@ class _AdminCategoriesManagementScreenState
     try {
       await Supabase.instance.client.from('main_categories').delete().eq('id', catId);
       _fetchData();
-      _showSnackBar("بەشەکە بە سەرکەوتوویی سڕایەوە 🗑");
+      _showSnackBar(tr("بەشەکە بە سەرکەوتوویی سڕایەوە 🗑"));
     } catch (e) {
-      _showSnackBar("هەڵە: $e", isError: true);
+      _showSnackBar(trf("هەڵە: {0}", [e]), isError: true);
     }
   }
 
@@ -155,7 +156,7 @@ class _AdminCategoriesManagementScreenState
     }).toList();
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF4F6F9),
         body: CustomScrollView(
@@ -193,10 +194,10 @@ class _AdminCategoriesManagementScreenState
                                 child: const Icon(Icons.category_rounded, color: AppColors.primary, size: 24),
                               ),
                               const SizedBox(width: 12),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
-                                  "بەشە سەرەکی و لاوەکییەکان",
-                                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white),
+                                  tr("بەشە سەرەکی و لاوەکییەکان"),
+                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.white),
                                 ),
                               ),
                             ],
@@ -236,7 +237,7 @@ class _AdminCategoriesManagementScreenState
                     onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
                     style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                     decoration: InputDecoration(
-                      hintText: "گەڕان بەدوای بەشەکان...",
+                      hintText: tr("گەڕان بەدوای بەشەکان..."),
                       hintStyle: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey),
                       prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
                       suffixIcon: _searchQuery.isNotEmpty
@@ -291,7 +292,7 @@ class _AdminCategoriesManagementScreenState
             ).then((_) => _fetchData());
           },
           icon: const Icon(Icons.add_rounded, size: 24),
-          label: const Text("زیادکردنی بەش", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+          label: Text(tr("زیادکردنی بەش"), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
         ),
       ),
     );
@@ -309,9 +310,9 @@ class _AdminCategoriesManagementScreenState
         children: [
           Icon(icon, color: color, size: 14),
           const SizedBox(width: 6),
-          Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 14)),
+          Text(tr(value), style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 14)),
           const SizedBox(width: 4),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+          Text(tr(label), style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -359,7 +360,7 @@ class _AdminCategoriesManagementScreenState
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        mainName,
+                        tr(mainName),
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
@@ -381,7 +382,7 @@ class _AdminCategoriesManagementScreenState
                             const Icon(Icons.subdirectory_arrow_right_rounded, size: 11, color: AppColors.primary),
                             const SizedBox(width: 3),
                             Text(
-                              "$subCount ژێربەش",
+                              trf("{0} ژێربەش", [subCount]),
                               style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold),
                             ),
                           ],
@@ -403,7 +404,7 @@ class _AdminCategoriesManagementScreenState
                 Expanded(
                   child: _buildActionButton(
                     icon: Icons.edit_rounded,
-                    label: "دەستکاری",
+                    label: tr("دەستکاری"),
                     color: Colors.blue,
                     onTap: () {
                       showDialog(
@@ -416,7 +417,7 @@ class _AdminCategoriesManagementScreenState
                 Expanded(
                   child: _buildActionButton(
                     icon: Icons.list_alt_rounded,
-                    label: "ژێربەشەکان",
+                    label: tr("ژێربەشەکان"),
                     color: AppColors.primary,
                     onTap: () {
                       Navigator.push(
@@ -431,7 +432,7 @@ class _AdminCategoriesManagementScreenState
                 Expanded(
                   child: _buildActionButton(
                     icon: Icons.delete_outline_rounded,
-                    label: "سڕینەوە",
+                    label: tr("سڕینەوە"),
                     color: Colors.red,
                     onTap: () => _deleteMainCategory(mainCat['id'], mainName),
                   ),
@@ -454,7 +455,7 @@ class _AdminCategoriesManagementScreenState
           children: [
             Icon(icon, color: color, size: 16),
             const SizedBox(width: 4),
-            Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+            Text(tr(label), style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -476,7 +477,7 @@ class _AdminCategoriesManagementScreenState
           ),
           const SizedBox(height: 16),
           Text(
-            "هیچ بەشێک نەدۆزرایەوە 📭",
+            tr("هیچ بەشێک نەدۆزرایەوە 📭"),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
@@ -485,7 +486,7 @@ class _AdminCategoriesManagementScreenState
           ),
           const SizedBox(height: 6),
           Text(
-            "دەتوانیت بەشێکی نوێ زیاد بکەیت",
+            tr("دەتوانیت بەشێکی نوێ زیاد بکەیت"),
             style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey.shade600),
           ),
           const SizedBox(height: 20),
@@ -503,7 +504,7 @@ class _AdminCategoriesManagementScreenState
               ).then((_) => _fetchData());
             },
             icon: const Icon(Icons.add_rounded, size: 20),
-            label: const Text("زیادکردنی بەشی نوێ", style: TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(tr("زیادکردنی بەشی نوێ"), style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -562,7 +563,7 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
@@ -591,7 +592,7 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        isEditing ? "دەستکاریکردنی بەش" : "زیادکردنی بەشی نوێ",
+                        tr(isEditing ? "دەستکاریکردنی بەش" : "زیادکردنی بەشی نوێ"),
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 16,
@@ -610,7 +611,7 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                   controller: _titleCtrl,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                   decoration: InputDecoration(
-                    labelText: "ناوی بەش *",
+                    labelText: tr("ناوی بەش *"),
                     labelStyle: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey.shade700, fontWeight: FontWeight.bold),
                     prefixIcon: const Icon(Icons.title_rounded, color: AppColors.primary),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? AppColors.darkBorder : Colors.grey.shade300)),
@@ -622,7 +623,7 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  "وێنەی بەش",
+                  tr("وێنەی بەش"),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : Colors.black87),
                 ),
                 const SizedBox(height: 8),
@@ -655,12 +656,12 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                         const Icon(Icons.add_a_photo_rounded, size: 36, color: AppColors.primary),
                         const SizedBox(height: 8),
                         Text(
-                          "کرتە بکە بۆ هەڵبژاردنی وێنە 📸",
+                          tr("کرتە بکە بۆ هەڵبژاردنی وێنە 📸"),
                           style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "ئەگەر وێنەت هەڵنەبژارد، AI خۆی بۆی دادەنێت 🤖",
+                          tr("ئەگەر وێنەت هەڵنەبژارد، AI خۆی بۆی دادەنێت 🤖"),
                           style: TextStyle(fontSize: 10, color: isDark ? Colors.white38 : Colors.blueGrey),
                         ),
                       ],
@@ -683,7 +684,7 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                     onPressed: () async {
                       if (_titleCtrl.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("تکایە ناوی بەش بنووسە ⚠"), backgroundColor: Colors.orange),
+                          SnackBar(content: Text(tr("تکایە ناوی بەش بنووسە ⚠")), backgroundColor: Colors.orange),
                         );
                         return;
                       }
@@ -708,16 +709,16 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                           });
                         }
 
-                        if (mounted) {
+                        if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("بە سەرکەوتوویی پاشەکەوت کرا ✅"), backgroundColor: Colors.green),
+                            SnackBar(content: Text(tr("بە سەرکەوتوویی پاشەکەوت کرا ✅")), backgroundColor: Colors.green),
                           );
                         }
                       } catch (e) {
-                        if (mounted) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("هەڵە ڕووی دا: $e"), backgroundColor: Colors.red),
+                            SnackBar(content: Text(trf("هەڵە ڕووی دا: {0}", [e])), backgroundColor: Colors.red),
                           );
                         }
                       } finally {
@@ -726,7 +727,7 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                     },
                     icon: const Icon(Icons.save_rounded, size: 20),
                     label: Text(
-                      isEditing ? "نوێکردنەوە ✅" : "پاشەکەوتکردن ✅",
+                      tr(isEditing ? "نوێکردنەوە ✅" : "پاشەکەوتکردن ✅"),
                       style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
                     ),
                   ),
@@ -787,7 +788,7 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar("هەڵە لە هێنانی داتا: $e", isError: true);
+        _showSnackBar(trf("هەڵە لە هێنانی داتا: {0}", [e]), isError: true);
       }
     }
   }
@@ -805,9 +806,9 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
 
       _subNameCtrl.clear();
       _fetchSubCategories();
-      _showSnackBar("ژێربەشەکە بە سەرکەوتوویی زیادکرا ✅");
+      _showSnackBar(tr("ژێربەشەکە بە سەرکەوتوویی زیادکرا ✅"));
     } catch (e) {
-      _showSnackBar("هەڵە: $e", isError: true);
+      _showSnackBar(trf("هەڵە: {0}", [e]), isError: true);
     } finally {
       if (mounted) setState(() => _isAdding = false);
     }
@@ -817,20 +818,20 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
     bool confirm = await showDialog(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("سڕینەوەی ژێربەش"),
-          content: Text("ئایا دڵنیایت لە سڕینەوەی '$subName'؟"),
+          title: Text(tr("سڕینەوەی ژێربەش")),
+          content: Text(trf("ئایا دڵنیایت لە سڕینەوەی '{0}'؟", [subName])),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text("نەخێر"),
+              child: Text(tr("نەخێر")),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("سڕینەوە"),
+              child: Text(tr("سڕینەوە")),
             ),
           ],
         ),
@@ -843,9 +844,9 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
     try {
       await Supabase.instance.client.from('sub_categories').delete().eq('id', subId);
       _fetchSubCategories();
-      _showSnackBar("بە سەرکەوتوویی سڕایەوە 🗑");
+      _showSnackBar(tr("بە سەرکەوتوویی سڕایەوە 🗑"));
     } catch (e) {
-      _showSnackBar("هەڵە: $e", isError: true);
+      _showSnackBar(trf("هەڵە: {0}", [e]), isError: true);
     }
   }
 
@@ -853,7 +854,7 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: isError ? Colors.red : Colors.green,
         behavior: SnackBarBehavior.floating,
       ),
@@ -865,12 +866,12 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
-            "ژێربەشەکانی: ${widget.mainCategoryName}",
+            trf("ژێربەشەکانی: {0}", [widget.mainCategoryName]),
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
           ),
           backgroundColor: const Color(0xFF1E1B2E),
@@ -899,7 +900,7 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
                       controller: _subNameCtrl,
                       style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                       decoration: InputDecoration(
-                        hintText: "ناوی ژێربەشی نوێ...",
+                        hintText: tr("ناوی ژێربەشی نوێ..."),
                         hintStyle: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey),
                         prefixIcon: const Icon(Icons.subdirectory_arrow_right_rounded, color: AppColors.primary, size: 20),
                         border: OutlineInputBorder(
@@ -939,7 +940,7 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                           : const Icon(Icons.add_rounded, size: 20),
-                      label: const Text("زیادکردن", style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: Text(tr("زیادکردن"), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -951,7 +952,7 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
                   : _subCategories.isEmpty
                   ? Center(
                 child: Text(
-                  "هیچ ژێربەشێک نییە 📭",
+                  tr("هیچ ژێربەشێک نییە 📭"),
                   style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontWeight: FontWeight.bold),
                 ),
               )
@@ -988,7 +989,7 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              sub['name'] ?? '',
+                              tr(sub['name'] ?? ''),
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 14,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
-import '../../models/gallery/gallery_category.dart';
 import '../../models/gallery/gallery_category_registry.dart';
+import '../../l10n/tr.dart';
 
 class GalleryCategoryChips extends StatelessWidget {
   final bool isDark;
@@ -30,7 +30,7 @@ class GalleryCategoryChips extends StatelessWidget {
         itemBuilder: (_, i) {
           if (i == 0) {
             return _chip(
-              label: 'هەموو',
+              label: tr('هەموو'),
               icon: Icons.apps_rounded,
               color: AppColors.primary,
               selected: selectedId == null,
@@ -82,7 +82,7 @@ class GalleryCategoryChips extends StatelessWidget {
                 color: selected ? Colors.white : color),
             const SizedBox(width: 6),
             Text(
-              count != null ? '$label (${count})' : label,
+              tr(count != null ? '$label (${count})' : label),
               style: TextStyle(
                 color: selected
                     ? Colors.white

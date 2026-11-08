@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Color;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../l10n/tr.dart';
 
 /// 🔔 خزمەتگوزاری ئاگادارکردنەوە بۆ نرخ
 class PriceAlertService {
@@ -93,7 +94,7 @@ class PriceAlertService {
 
         if (shouldNotify) {
           await _showNotification(
-            title: '🔔 ئاگادارکردنەوەی نرخ',
+            title: tr('🔔 ئاگادارکردنەوەی نرخ'),
             body:
             'نرخی ${alert['fuel_name']} گەیشتە ${cheapest.toStringAsFixed(0)} د.ع',
           );

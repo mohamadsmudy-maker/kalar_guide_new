@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../config/app_colors.dart';
 import '../../models/neighborhood.dart';
 import 'neighborhood_details_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 🏘️ شاشەی گەڕەکان — ULTRA PRO MAX V2
 class NeighborhoodsScreen extends StatefulWidget {
@@ -83,7 +84,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
         _isLoading = false;
         _errorMessage = 'هەڵە لە هێنانی داتا';
       });
-      _showSnack('هەڵە لە هێنانی داتا', isError: true);
+      _showSnack(tr('هەڵە لە هێنانی داتا'), isError: true);
     }
   }
 
@@ -108,7 +109,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            message,
+            tr(message),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           backgroundColor: isError ? AppColors.red : AppColors.green,
@@ -141,7 +142,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
     isDark ? AppColors.darkBackground : AppColors.background;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bgColor,
         body: RefreshIndicator(
@@ -188,9 +189,9 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
           left: 16,
           right: 16,
         ),
-        title: const Text(
-          'گەڕەکانی کەلار',
-          style: TextStyle(
+        title: Text(
+          tr('گەڕەکانی کەلار'),
+          style: const TextStyle(
             fontWeight: FontWeight.w900,
             color: Colors.white,
             fontSize: 22,
@@ -244,7 +245,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '${_neighborhoods.length} گەڕەک',
+                          trf('{0} گەڕەک', [_neighborhoods.length]),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
@@ -332,7 +333,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
         Icon(icon, color: color, size: 24),
         const SizedBox(height: 6),
         Text(
-          value,
+          tr(value),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w900,
@@ -341,7 +342,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
         ),
         const SizedBox(height: 2),
         Text(
-          label,
+          tr(label),
           style: TextStyle(
             fontSize: 11,
             color: isDark ? Colors.white54 : AppColors.textSecondary,
@@ -386,7 +387,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
               color: isDark ? Colors.white : AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              hintText: 'گەڕان بۆ گەڕەک...',
+              hintText: tr('گەڕان بۆ گەڕەک...'),
               hintStyle: TextStyle(
                 color: isDark ? Colors.white54 : Colors.grey,
               ),
@@ -446,7 +447,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _errorMessage!,
+                  tr(_errorMessage!),
                   style: TextStyle(
                     color: isDark
                         ? Colors.white70
@@ -459,7 +460,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                 ElevatedButton.icon(
                   onPressed: _fetchNeighborhoods,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('دووبارە هەوڵبدەرەوە'),
+                  label: Text(tr('دووبارە هەوڵبدەرەوە')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -491,7 +492,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'هیچ گەڕەکێک نەدۆزرایەوە',
+                tr('هیچ گەڕەکێک نەدۆزرایەوە'),
                 style: TextStyle(
                   color: isDark
                       ? Colors.white70
@@ -576,7 +577,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        name,
+                        tr(name),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
@@ -605,7 +606,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '$stores شوێن',
+                                trf('{0} شوێن', [stores]),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
@@ -625,7 +626,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '$areaStr کم²',
+                                trf('{0} کم²', [areaStr]),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark

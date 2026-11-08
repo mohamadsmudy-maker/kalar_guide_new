@@ -52,7 +52,7 @@ void main() {
     });
 
     test('getName دەبێت ناوی دروست بگەڕێنێتەوە', () {
-      final service = EmergencyService(
+      const service = EmergencyService(
         nameKu: 'پۆلیس',
         nameAr: 'شرطة',
         nameEn: 'Police',
@@ -66,7 +66,7 @@ void main() {
     });
 
     test('getName دەبێت بگەڕێتەوە بۆ nameKu ئەگەر nameAr بەتاڵ بوو', () {
-      final service = EmergencyService(
+      const service = EmergencyService(
         nameKu: 'پۆلیس',
         nameAr: null,
         nameEn: null,
@@ -79,7 +79,7 @@ void main() {
     });
 
     test('hasLocation دەبێت false بگەڕێنێتەوە بێ لۆکەیشن', () {
-      final service = EmergencyService(
+      const service = EmergencyService(
         nameKu: 'test',
         category: 'police',
         phone: '104',
@@ -89,7 +89,7 @@ void main() {
     });
 
     test('hasLocation دەبێت true بگەڕێنێتەوە لەگەڵ لۆکەیشن', () {
-      final service = EmergencyService(
+      const service = EmergencyService(
         nameKu: 'test',
         category: 'police',
         phone: '104',
@@ -101,7 +101,7 @@ void main() {
     });
 
     test('hasLocation دەبێت false بگەڕێنێتەوە ئەگەر lat/lng = 0', () {
-      final service = EmergencyService(
+      const service = EmergencyService(
         nameKu: 'test',
         category: 'police',
         phone: '104',

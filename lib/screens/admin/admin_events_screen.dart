@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/event.dart';
 import '../../services/auth_service.dart';
 import '../../services/event_service.dart';
+import '../../l10n/tr.dart';
 
 /// 📅 شاشەی بەڕێوەبردنی ڕووداوەکان
 class AdminEventsScreen extends StatefulWidget {
@@ -97,7 +98,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(trf('هەڵە: {0}', [e])),
             backgroundColor: Colors.red,
           ),
         );
@@ -112,17 +113,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text('سڕینەوە'),
-          content: Text('ئایا دڵنیایت لە سڕینەوەی "${event.titleKu}"؟'),
+          title: Text(tr('سڕینەوە')),
+          content: Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [event.titleKu])),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -130,7 +131,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('سڕینەوە'),
+              child: Text(tr('سڕینەوە')),
             ),
           ],
         ),
@@ -148,7 +149,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
@@ -188,14 +189,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                             ),
                           ),
                           const SizedBox(width: 14),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 Text(
-                                  'بەڕێوەبردنی ڕووداوەکان 📅',
-                                  style: TextStyle(
+                                  tr('بەڕێوەبردنی ڕووداوەکان 📅'),
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
@@ -234,8 +235,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                       fontSize: 12,
                     ),
                     tabs: [
-                      Tab(text: 'داهاتوو (${_upcoming.length})'),
-                      Tab(text: 'ڕابردوو (${_past.length})'),
+                      Tab(text: trf('داهاتوو ({0})', [_upcoming.length])),
+                      Tab(text: trf('ڕابردوو ({0})', [_past.length])),
                     ],
                   ),
                 ),
@@ -261,9 +262,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
           backgroundColor: const Color(0xFF6C5CE7),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            'ڕووداوی نوێ',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          label: Text(
+            tr('ڕووداوی نوێ'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         ),
       ),
@@ -288,9 +289,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
             ),
             const SizedBox(height: 12),
             Text(
-              isUpcoming
+              tr(isUpcoming
                   ? 'هیچ ڕووداوێکی داهاتوو نییە'
-                  : 'هیچ ڕووداوی ڕابردوو نییە',
+                  : 'هیچ ڕووداوی ڕابردوو نییە'),
               style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
@@ -371,7 +372,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        _getCategoryLabel(event.category),
+                        tr(_getCategoryLabel(event.category)),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
@@ -390,18 +391,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                           color: const Color(0xFFFFC107),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.star_rounded,
                               color: Colors.white,
                               size: 10,
                             ),
-                            SizedBox(width: 2),
+                            const SizedBox(width: 2),
                             Text(
-                              'تایبەت',
-                              style: TextStyle(
+                              tr('تایبەت'),
+                              style: const TextStyle(
                                 fontSize: 9,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -435,7 +436,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                   ],
                 ),
                 Text(
-                  event.titleKu,
+                  tr(event.titleKu),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
@@ -454,7 +455,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      event.getFormattedDate(),
+                      tr(event.getFormattedDate()),
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark ? Colors.white54 : Colors.grey,
@@ -476,7 +477,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          event.locationName!,
+                          tr(event.locationName!),
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark ? Colors.white54 : Colors.grey,
@@ -626,8 +627,8 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
   Future<void> _save() async {
     if (_titleKuCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ناونیشان پێویستە'),
+        SnackBar(
+          content: Text(tr('ناونیشان پێویستە')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -695,7 +696,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
     final isEditing = widget.event != null;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -718,7 +719,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isEditing ? 'دەستکاریکردنی ڕووداو' : 'ڕووداوی نوێ',
+                      tr(isEditing ? 'دەستکاریکردنی ڕووداو' : 'ڕووداوی نوێ'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,
@@ -734,9 +735,9 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                 const SizedBox(height: 16),
 
                 // 🏷️ کەرت
-                const Text(
-                  'کەرت',
-                  style: TextStyle(
+                Text(
+                  tr('کەرت'),
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -774,7 +775,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                           ),
                         ),
                         child: Text(
-                          c['label']!,
+                          tr(c['label']!),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
@@ -789,13 +790,13 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                _buildField('ناونیشانی کوردی *', _titleKuCtrl),
+                _buildField(tr('ناونیشانی کوردی *'), _titleKuCtrl),
                 const SizedBox(height: 10),
-                _buildField('ناونیشانی عەرەبی', _titleArCtrl),
+                _buildField(tr('ناونیشانی عەرەبی'), _titleArCtrl),
                 const SizedBox(height: 10),
-                _buildField('ناونیشانی ئینگلیزی', _titleEnCtrl),
+                _buildField(tr('ناونیشانی ئینگلیزی'), _titleEnCtrl),
                 const SizedBox(height: 10),
-                _buildField('وەسف', _descKuCtrl, maxLines: 3),
+                _buildField(tr('وەسف'), _descKuCtrl, maxLines: 3),
                 const SizedBox(height: 16),
 
                 // 📅 بەروار و کات
@@ -865,9 +866,9 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                _isAllDay
+                                tr(_isAllDay
                                     ? 'هەموو ڕۆژ'
-                                    : '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}',
+                                    : '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}'),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   color: _isAllDay
@@ -887,9 +888,9 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                 SwitchListTile(
                   value: _isAllDay,
                   onChanged: (v) => setState(() => _isAllDay = v),
-                  title: const Text(
-                    'هەموو ڕۆژ',
-                    style: TextStyle(
+                  title: Text(
+                    tr('هەموو ڕۆژ'),
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -898,25 +899,25 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                 ),
 
                 const SizedBox(height: 10),
-                _buildField('شوێن', _locationCtrl),
+                _buildField(tr('شوێن'), _locationCtrl),
                 const SizedBox(height: 10),
-                _buildField('ناونیشان', _addressCtrl),
+                _buildField(tr('ناونیشان'), _addressCtrl),
                 const SizedBox(height: 10),
-                _buildField('ڕێکخەر', _organizerCtrl),
+                _buildField(tr('ڕێکخەر'), _organizerCtrl),
                 const SizedBox(height: 10),
                 _buildField(
-                  'ژمارەی پەیوەندی',
+                  tr('ژمارەی پەیوەندی'),
                   _phoneCtrl,
                   keyboard: TextInputType.phone,
                 ),
                 const SizedBox(height: 10),
-                _buildField('لینکی وێنە (URL)', _imageUrlCtrl),
+                _buildField(tr('لینکی وێنە (URL)'), _imageUrlCtrl),
                 const SizedBox(height: 16),
 
                 // 🎨 ڕەنگ
-                const Text(
-                  'ڕەنگ',
-                  style: TextStyle(
+                Text(
+                  tr('ڕەنگ'),
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -966,9 +967,9 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                 SwitchListTile(
                   value: _isFeatured,
                   onChanged: (v) => setState(() => _isFeatured = v),
-                  title: const Text(
-                    'ڕووداوی تایبەت ⭐',
-                    style: TextStyle(
+                  title: Text(
+                    tr('ڕووداوی تایبەت ⭐'),
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1004,7 +1005,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                       ),
                     )
                         : Text(
-                      isEditing ? 'نوێکردنەوە' : 'بڵاوکردنەوە',
+                      tr(isEditing ? 'نوێکردنەوە' : 'بڵاوکردنەوە'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 15,

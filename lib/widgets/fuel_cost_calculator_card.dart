@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../screens/fuel/fuel_strings.dart';
 import '../services/currency_service.dart';
 import '../services/fuel_service.dart';
+import '../l10n/tr.dart';
 
 /// 🧮 حیسابکەری تێچووی سووتەمەنی
 ///   • بەپێی بڕ: چەند لیتر ← چەند دینار
@@ -153,7 +154,7 @@ class _FuelCostCalculatorCardState extends State<FuelCostCalculatorCard> {
             spacing: 6,
             children: presets
                 .map((p) => ActionChip(
-                      label: Text(fmt(p)),
+                      label: Text(tr(fmt(p))),
                       onPressed: () => _setInput(p),
                       visualDensity: VisualDensity.compact,
                       labelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
@@ -172,14 +173,14 @@ class _FuelCostCalculatorCardState extends State<FuelCostCalculatorCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_byAmount ? t('you_pay') : t('you_get'),
+                Text(tr(_byAmount ? t('you_pay') : t('you_get')),
                     style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
                   child: Text(
-                    _byAmount ? '${fmt(result)} ${t('iqd')}' : '${fmt(result, d: gas ? 0 : 1)} $unit',
+                    tr(_byAmount ? '${fmt(result)} ${t('iqd')}' : '${fmt(result, d: gas ? 0 : 1)} $unit'),
                     style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900),
                   ),
                 ),
@@ -222,7 +223,7 @@ class _FuelCostCalculatorCardState extends State<FuelCostCalculatorCard> {
               color: active ? color : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(label,
+            child: Text(tr(label),
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: active ? Colors.white : color)),
           ),
         );

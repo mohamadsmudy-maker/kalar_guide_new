@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../services/adhan_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🎵 شاشەی ڕێکخستنی دەنگی ئەدان (Pro Ultra Max)
 ///
@@ -112,14 +113,14 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       );
       if (!mounted) return;
       setState(() => _saving.remove(prayer));
-      _toast('✅ دەنگی $prayer پاشەکەوت کرا');
+      _toast(trf('✅ دەنگی {0} پاشەکەوت کرا', [prayer]));
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _currentSounds[prayer] = previous; // گەڕاندنەوە
         _saving.remove(prayer);
       });
-      _toast('❌ نەتوانرا پاشەکەوت بکرێت', error: true);
+      _toast(tr('❌ نەتوانرا پاشەکەوت بکرێت'), error: true);
     }
   }
 
@@ -135,19 +136,19 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       }
       if (!mounted) return;
       setState(() => _bulkBusy = false);
-      _toast('✅ دەنگەکە بۆ هەموو نوێژەکان جێبەجێ کرا');
+      _toast(tr('✅ دەنگەکە بۆ هەموو نوێژەکان جێبەجێ کرا'));
     } catch (_) {
       await _loadSounds(); // دڵنیابوونەوە لە دۆخی ڕاستەقینە
       if (!mounted) return;
       setState(() => _bulkBusy = false);
-      _toast('❌ هەندێک گۆڕانکاری پاشەکەوت نەکران', error: true);
+      _toast(tr('❌ هەندێک گۆڕانکاری پاشەکەوت نەکران'), error: true);
     }
   }
 
   Future<void> _resetAll() async {
     final ok = await _confirm(
-      title: 'گەڕاندنەوە بۆ بنەڕەت',
-      message: 'دەنگی هەموو نوێژەکان دەگەڕێتەوە بۆ دەنگی بنەڕەتی. دڵنیایت؟',
+      title: tr('گەڕاندنەوە بۆ بنەڕەت'),
+      message: tr('دەنگی هەموو نوێژەکان دەگەڕێتەوە بۆ دەنگی بنەڕەتی. دڵنیایت؟'),
     );
     if (ok != true || !mounted) return;
     await _applyToAll(_C.defaultSound);
@@ -168,7 +169,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     try {
       await Future<void>.sync(() => AdhanService.testSound(sound));
     } catch (_) {
-      if (mounted) _toast('❌ نەتوانرا دەنگەکە لێبدرێت', error: true);
+      if (mounted) _toast(tr('❌ نەتوانرا دەنگەکە لێبدرێت'), error: true);
       _clearPreview();
     }
   }
@@ -189,8 +190,8 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       ..showSnackBar(
         SnackBar(
           content: Directionality(
-            textDirection: TextDirection.rtl,
-            child: Text(text),
+            textDirection: AppLang.direction,
+            child: Text(tr(text)),
           ),
           backgroundColor: error ? _C.danger : _C.success,
           behavior: SnackBarBehavior.floating,
@@ -203,7 +204,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           backgroundColor: _C.card,
           shape: RoundedRectangleBorder(
@@ -211,7 +212,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             side: BorderSide(color: _C.gold.withValues(alpha: 0.3)),
           ),
           title: Text(
-            title,
+            tr(title),
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w900,
@@ -219,23 +220,23 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             ),
           ),
           content: Text(
-            message,
+            tr(message),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text(
-                'نەخێر',
-                style: TextStyle(color: Colors.white60),
+              child: Text(
+                tr('نەخێر'),
+                style: const TextStyle(color: Colors.white60),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(
-                'بەڵێ',
+              child: Text(
+                tr('بەڵێ'),
                 style:
-                TextStyle(color: _C.gold, fontWeight: FontWeight.w900),
+                const TextStyle(color: _C.gold, fontWeight: FontWeight.w900),
               ),
             ),
           ],
@@ -245,7 +246,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   }
 
   Future<void> _pickSoundForAll() async {
-    final sounds = AdhanService.availableSounds;
+    const sounds = AdhanService.availableSounds;
     final picked = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: _C.card,
@@ -253,7 +254,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -267,11 +268,11 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
-                  'دەنگێک هەڵبژێرە بۆ هەموو نوێژەکان',
-                  style: TextStyle(
+                  tr('دەنگێک هەڵبژێرە بۆ هەموو نوێژەکان'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
@@ -286,7 +287,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                       leading: const Icon(Icons.music_note_rounded,
                           color: _C.gold),
                       title: Text(
-                        e.value,
+                        tr(e.value),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -313,15 +314,15 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: _C.bg,
         appBar: AppBar(
           backgroundColor: _C.appBar,
           foregroundColor: Colors.white,
-          title: const Text(
-            '🎵 دەنگی ئەدان',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          title: Text(
+            tr('🎵 دەنگی ئەدان'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         ),
         body: _buildBody(),
@@ -346,9 +347,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               const Icon(Icons.error_outline_rounded,
                   color: _C.danger, size: 48),
               const SizedBox(height: 12),
-              const Text(
-                'نەتوانرا دەنگەکان بخوێندرێنەوە',
-                style: TextStyle(color: Colors.white, fontSize: 14),
+              Text(
+                tr('نەتوانرا دەنگەکان بخوێندرێنەوە'),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
@@ -358,7 +359,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   foregroundColor: Colors.black,
                 ),
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('دووبارە هەوڵبدەوە'),
+                label: Text(tr('دووبارە هەوڵبدەوە')),
               ),
             ],
           ),
@@ -413,22 +414,22 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'دەنگی جیاواز بۆ هەر نوێژێک',
-                  style: TextStyle(
+                  tr('دەنگی جیاواز بۆ هەر نوێژێک'),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'دەتوانیت بۆ هەر نوێژێک دەنگی جیاواز هەڵبژێریت',
-                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                  tr('دەتوانیت بۆ هەر نوێژێک دەنگی جیاواز هەڵبژێریت'),
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
               ],
             ),
@@ -440,7 +441,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
   Widget _buildPrayerSoundCard(_PrayerInfo info) {
     final prayer = info.name;
-    final sounds = AdhanService.availableSounds;
+    const sounds = AdhanService.availableSounds;
     var currentSound = _currentSounds[prayer] ?? _C.defaultSound;
 
     // ئەگەر دەنگی پاشەکەوتکراو لە لیستدا نەمابوو، Dropdown نەشکێت
@@ -479,7 +480,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               ),
               const SizedBox(width: 10),
               Text(
-                prayer,
+                tr(prayer),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 15,
@@ -498,7 +499,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 ),
               const Spacer(),
               IconButton(
-                tooltip: 'تاقیکردنەوەی دەنگ',
+                tooltip: tr('تاقیکردنەوەی دەنگ'),
                 icon: isPreviewing
                     ? const SizedBox(
                   width: 22,
@@ -540,7 +541,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                       (e) => DropdownMenuItem<String>(
                     value: e.key,
                     child: Text(
-                      e.value,
+                      tr(e.value),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -580,9 +581,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               ),
             ),
             icon: const Icon(Icons.library_music_rounded, size: 20),
-            label: const Text(
-              'هەمان دەنگ بۆ هەموو نوێژەکان',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+            label: Text(
+              tr('هەمان دەنگ بۆ هەموو نوێژەکان'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
             ),
           ),
         ),
@@ -613,9 +614,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               ),
             )
                 : const Icon(Icons.restore_rounded, size: 20),
-            label: const Text(
-              'گەڕاندنەوە بۆ دەنگی بنەڕەتی',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+            label: Text(
+              tr('گەڕاندنەوە بۆ دەنگی بنەڕەتی'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
             ),
           ),
         ),

@@ -4,6 +4,7 @@ import 'dart:async';
 
 import '../../services/auth_service.dart';
 import '../../utils/app_logger.dart';
+import '../../l10n/tr.dart';
 
 /// 🌊 شاشەی دەستپێک — ULTRA PRO MAX V2
 ///
@@ -163,7 +164,7 @@ class _SplashScreenState extends State<SplashScreen>
           ),
           child: SafeArea(
             child: Semantics(
-              label: 'ڕێبەری کەلار، ئەپ بار دەکرێت',
+              label: tr('ڕێبەری کەلار، ئەپ بار دەکرێت'),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -206,9 +207,9 @@ class _SplashScreenState extends State<SplashScreen>
                     const SizedBox(height: 32),
                     FadeTransition(
                       opacity: _textFade,
-                      child: const Text(
-                        'ڕێبەری کەلار',
-                        style: TextStyle(
+                      child: Text(
+                        tr('ڕێبەری کەلار'),
+                        style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -221,7 +222,7 @@ class _SplashScreenState extends State<SplashScreen>
                     FadeTransition(
                       opacity: _textFade,
                       child: Text(
-                        'ڕێبەری فەرمی شاری کەلار',
+                        tr('ڕێبەری فەرمی شاری کەلار'),
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
@@ -249,7 +250,7 @@ class _SplashScreenState extends State<SplashScreen>
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 250),
                             child: Text(
-                              _status,
+                              tr(_status),
                               key: ValueKey(_status),
                               style: TextStyle(
                                 fontSize: 12,

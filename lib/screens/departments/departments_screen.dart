@@ -7,6 +7,7 @@ import '../../config/settings_provider.dart';
 import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import 'department_services_screen.dart';
+import '../../l10n/tr.dart';
 
 /// 🏛️ لیستی فەرمانگەکان — ULTRA PRO
 class DepartmentsScreen extends StatefulWidget {
@@ -214,7 +215,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         AutoTranslate(
-                          text: 'فەرمانگەکان',
+                          text: tr('فەرمانگەکان'),
                           lang: lang,
                           style: TextStyle(
                             fontSize: 24,
@@ -228,7 +229,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
                         ),
                         const SizedBox(height: 4),
                         AutoTranslate(
-                          text: '${_departments.length} فەرمانگە بەردەستن',
+                          text: trf('{0} فەرمانگە بەردەستن', [_departments.length]),
                           lang: lang,
                           style: TextStyle(
                             fontSize: 12,
@@ -294,7 +295,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
               ),
               decoration: InputDecoration(
                 hintText: lang == 'ar'
-                    ? 'ابحث عن الدوائر...'
+                    ? tr('ابحث عن الدوائر...')
                     : (lang == 'en'
                     ? 'Search departments...'
                     : 'گەڕان بەدوای فەرمانگەکان...'),
@@ -478,7 +479,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
                                 ),
                                 const SizedBox(width: 5),
                                 AutoTranslate(
-                                  text: 'بینینی مامەڵەکان',
+                                  text: tr('بینینی مامەڵەکان'),
                                   lang: lang,
                                   style: TextStyle(
                                     fontSize: 10,
@@ -541,7 +542,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
           ),
           const SizedBox(height: 16),
           AutoTranslate(
-            text: 'هیچ فەرمانگەیەک نییە',
+            text: tr('هیچ فەرمانگەیەک نییە'),
             lang: lang,
             style: TextStyle(
               fontSize: 16,

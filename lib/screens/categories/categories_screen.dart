@@ -8,6 +8,7 @@ import '../../config/settings_provider.dart';
 import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import 'category_details.dart';
+import '../../l10n/tr.dart';
 
 /// 🗂️ شاشەی بەشە سەرەکییەکان — ULTRA PRO V2
 class CategoriesScreen extends StatefulWidget {
@@ -319,7 +320,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             AutoTranslate(
-                              text: 'بەشە سەرەکییەکان',
+                              text: tr('بەشە سەرەکییەکان'),
                               lang: lang,
                               style: TextStyle(
                                 fontSize: 24,
@@ -344,7 +345,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                                 ),
                                 const SizedBox(width: 6),
                                 AutoTranslate(
-                                  text: 'هەموو بەشەکانی شاری کەلار',
+                                  text: tr('هەموو بەشەکانی شاری کەلار'),
                                   lang: lang,
                                   style: TextStyle(
                                     fontSize: 12,
@@ -435,7 +436,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
               ),
               decoration: InputDecoration(
                 hintText: lang == 'ar'
-                    ? 'ابحث عن الأقسام...'
+                    ? tr('ابحث عن الأقسام...')
                     : (lang == 'en'
                     ? 'Search for categories...'
                     : 'گەڕان بەدوای بەشەکان...'),
@@ -617,7 +618,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                                       ),
                                       const SizedBox(width: 5),
                                       AutoTranslate(
-                                        text: 'بینینی گشت',
+                                        text: tr('بینینی گشت'),
                                         lang: lang,
                                         style: TextStyle(
                                           fontSize: 10,
@@ -827,8 +828,8 @@ class _CategoriesScreenState extends State<CategoriesScreen>
           const SizedBox(height: 20),
           AutoTranslate(
             text: _searchQuery.isEmpty
-                ? 'هیچ بەشێک نییە'
-                : 'هیچ بەشێک نەدۆزرایەوە',
+                ? tr('هیچ بەشێک نییە')
+                : tr('هیچ بەشێک نەدۆزرایەوە'),
             lang: lang,
             style: TextStyle(
               fontSize: 16,

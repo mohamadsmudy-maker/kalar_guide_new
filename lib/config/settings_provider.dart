@@ -1,4 +1,5 @@
 // lib/config/settings_provider.dart
+import '../l10n/tr.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -140,6 +141,7 @@ class SettingsProvider extends ChangeNotifier {
       _fontSizeId = prefs.getString('font_size_id') ?? 'normal';
       _fontScale = prefs.getDouble('font_scale') ?? 1.0;
       _languageId = prefs.getString('language_id') ?? 'ku';
+      AppLang.setCode(_languageId);
 
       final font = availableFonts.firstWhere(
             (f) => f.id == _fontId,
@@ -159,6 +161,9 @@ class SettingsProvider extends ChangeNotifier {
     } finally {
       _isLoaded = true;
       notifyListeners();
+      if (_languageId != 'ku') {
+        WidgetsBinding.instance.addPostFrameCallback((_) => AppLang.rebuildAll());
+      }
     }
   }
 
@@ -292,10 +297,13 @@ class SettingsProvider extends ChangeNotifier {
     if (!availableLanguages.any((l) => l.id == languageId)) return;
 
     _languageId = languageId;
+    AppLang.setCode(languageId);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('language_id', languageId);
 
     notifyListeners();
+    // شاشە کراوەکانیش (نەک تەنها MaterialApp) زمانەکەیان بگۆڕن
+    WidgetsBinding.instance.addPostFrameCallback((_) => AppLang.rebuildAll());
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -358,6 +366,7 @@ class SettingsProvider extends ChangeNotifier {
     _fontSizeId = 'normal';
     _fontScale = 1.0;
     _languageId = 'ku';
+    AppLang.setCode('ku');
     _notificationsEnabled = true;
     _newsNotifications = true;
     _complaintNotifications = true;

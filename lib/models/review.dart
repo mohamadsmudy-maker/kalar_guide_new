@@ -1,3 +1,4 @@
+import '../l10n/tr.dart';
 // lib/models/review.dart
 
 /// ⭐ مۆدێلی هەڵسەنگاندن
@@ -69,12 +70,12 @@ class Review {
     final diff = DateTime.now().difference(createdAt!);
 
     if (diff.inMinutes < 1) return 'ئێستا';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} خولەک لەمەوبەر';
-    if (diff.inHours < 24) return '${diff.inHours} کاتژمێر لەمەوبەر';
-    if (diff.inDays < 7) return '${diff.inDays} ڕۆژ لەمەوبەر';
-    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} هەفتە لەمەوبەر';
-    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} مانگ لەمەوبەر';
-    return '${(diff.inDays / 365).floor()} ساڵ لەمەوبەر';
+    if (diff.inMinutes < 60) return trf('{0} خولەک لەمەوبەر', [diff.inMinutes]);
+    if (diff.inHours < 24) return trf('{0} کاتژمێر لەمەوبەر', [diff.inHours]);
+    if (diff.inDays < 7) return trf('{0} ڕۆژ لەمەوبەر', [diff.inDays]);
+    if (diff.inDays < 30) return trf('{0} هەفتە لەمەوبەر', [(diff.inDays / 7).floor()]);
+    if (diff.inDays < 365) return trf('{0} مانگ لەمەوبەر', [(diff.inDays / 30).floor()]);
+    return trf('{0} ساڵ لەمەوبەر', [(diff.inDays / 365).floor()]);
   }
 
   Review copyWith({

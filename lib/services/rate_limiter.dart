@@ -59,7 +59,7 @@ class RateLimiter {
     try {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now().millisecondsSinceEpoch;
-      final windowMs = windowMinutes * 60 * 1000;
+      const windowMs = windowMinutes * 60 * 1000;
 
       final firstAttempt = prefs.getInt('first_attempt_$key') ?? 0;
       int attempts = prefs.getInt('attempts_$key') ?? 0;

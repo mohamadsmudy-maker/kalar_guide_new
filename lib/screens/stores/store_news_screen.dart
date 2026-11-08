@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../news/news_details.dart';
 import '../admin/admin_news.dart';
+import '../../l10n/tr.dart';
 
 class StoreNewsScreen extends StatefulWidget {
   final Map<String, dynamic> store;
@@ -92,7 +93,7 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
     }).toList();
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F5F8),
         body: _isLoading
@@ -133,7 +134,7 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  rawName,
+                                  tr(rawName),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
@@ -154,7 +155,7 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                               const SizedBox(width: 3),
                               Expanded(
                                 child: Text(
-                                  store['address'] ?? 'کەلار',
+                                  tr(store['address'] ?? 'کەلار'),
                                   style: const TextStyle(color: Colors.white70, fontSize: 11),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -190,12 +191,12 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                       child: TextField(
                         controller: _searchCtrl,
                         onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                        decoration: const InputDecoration(
-                          hintText: 'گەڕان بەدوای هەواڵەکاندا...',
-                          hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-                          prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
+                        decoration: InputDecoration(
+                          hintText: tr('گەڕان بەدوای هەواڵەکاندا...'),
+                          hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+                          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                         ),
                       ),
                     ),
@@ -203,9 +204,9 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'هەواڵ و ئاگادارییەکان 📰',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.black87),
+                        Text(
+                          tr('هەواڵ و ئاگادارییەکان 📰'),
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.black87),
                         ),
                         if (isVendorForThisStore)
                           ElevatedButton.icon(
@@ -216,9 +217,9 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             ),
                             icon: const Icon(Icons.add_rounded, size: 18),
-                            label: const Text(
-                              'زیادکردنی هەواڵ',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            label: Text(
+                              tr('زیادکردنی هەواڵ'),
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                             onPressed: () {
                               Navigator.push(
@@ -237,16 +238,16 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
               ),
             ),
             filteredNews.isEmpty
-                ? const SliverFillRemaining(
+                ? SliverFillRemaining(
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.article_outlined, size: 60, color: Colors.grey),
-                    SizedBox(height: 10),
+                    const Icon(Icons.article_outlined, size: 60, color: Colors.grey),
+                    const SizedBox(height: 10),
                     Text(
-                      'هیچ هەواڵێک بۆ ئەم شوێنە نەدۆزرایەوە 📰',
-                      style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.bold),
+                      tr('هیچ هەواڵێک بۆ ئەم شوێنە نەدۆزرایەوە 📰'),
+                      style: const TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -290,7 +291,7 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                         ),
                       ),
                       title: Text(
-                        news['title'] ?? '',
+                        tr(news['title'] ?? ''),
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -298,7 +299,7 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          news['description'] ?? '',
+                          tr(news['description'] ?? ''),
                           style: const TextStyle(fontSize: 12, color: Colors.grey),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

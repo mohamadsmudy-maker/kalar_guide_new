@@ -113,9 +113,7 @@ class NewsRepository {
   /// ✅ زیادکردنی View
   Future<void> incrementViews(String newsId, int currentViews) async {
     try {
-      await _client
-          .from('news')
-          .update({'views': currentViews + 1}).eq('id', newsId);
+      await _client.rpc('increment_views', params: {'news_id': newsId});
     } catch (e) {
       debugPrint('❌ NewsRepository.incrementViews: $e');
     }
@@ -144,10 +142,10 @@ class NewsRepository {
         });
       }
 
-      final newLikes = isLiked ? currentLikes - 1 : currentLikes + 1;
-      await _client
-          .from('news')
-          .update({'likes': newLikes}).eq('id', newsId);
+      await _client.rpc(
+        isLiked ? 'decrement_likes' : 'increment_likes',
+        params: {'news_id': newsId},
+      );
 
       return !isLiked;
     } catch (e) {

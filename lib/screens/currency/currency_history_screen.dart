@@ -5,6 +5,7 @@ import '../../widgets/currency_chart_widget.dart';
 import 'package:provider/provider.dart';
 import '../../config/settings_provider.dart';
 import '../../utils/date_picker_helper.dart';
+import '../../l10n/tr.dart';
 /// 📜 شاشەی مێژووی نرخی دراو
 class CurrencyHistoryScreen extends StatefulWidget {
   final int stationId;
@@ -86,8 +87,8 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
       if (filtered.isEmpty) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('هیچ داتایەک نییە بۆ ڕاپۆرت'),
+          SnackBar(
+            content: Text(tr('هیچ داتایەک نییە بۆ ڕاپۆرت')),
             backgroundColor: Colors.orange,
           ),
         );
@@ -108,7 +109,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('هەڵە: $e'),
+          content: Text(trf('هەڵە: {0}', [e])),
           backgroundColor: Colors.red,
         ),
       );
@@ -135,7 +136,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
     final filtered = _filteredHistory;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
@@ -144,18 +145,18 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'مێژووی نرخەکان',
-                style: TextStyle(
+              Text(
+                tr('مێژووی نرخەکان'),
+                style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 16,
                   color: Colors.white,
                 ),
               ),
               Text(
-                widget.currencyType != null
+                tr(widget.currencyType != null
                     ? '${widget.stationName} • ${CurrencyService.getNameKu(widget.currencyType!)}'
-                    : widget.stationName,
+                    : widget.stationName),
                 style: const TextStyle(fontSize: 11, color: Colors.white70),
               ),
             ],
@@ -176,7 +177,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                 ),
               )
                   : const Icon(Icons.picture_as_pdf_rounded),
-              tooltip: 'ڕاپۆرتی PDF',
+              tooltip: tr('ڕاپۆرتی PDF'),
               onPressed:
               _generatingPdf || filtered.isEmpty ? null : _generatePdf,
             ),
@@ -211,7 +212,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                 const SizedBox(height: 20),
               ],
               _buildSectionTitle(
-                '📋 لیستی گۆڕانکارییەکان',
+                tr('📋 لیستی گۆڕانکارییەکان'),
                 isDark,
               ),
               const SizedBox(height: 12),
@@ -270,9 +271,9 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'ماوەی بەروار',
-                    style: TextStyle(
+                  Text(
+                    tr('ماوەی بەروار'),
+                    style: const TextStyle(
                       color: Color(0xFF0F1421),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -280,7 +281,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${_formatDate(_fromDate)} بۆ ${_formatDate(_toDate)}',
+                    trf('{0} بۆ {1}', [_formatDate(_fromDate), _formatDate(_toDate)]),
                     style: const TextStyle(
                       color: Color(0xFF0F1421),
                       fontSize: 14,
@@ -362,7 +363,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                       Row(
                         children: [
                           Text(
-                            CurrencyService.getNameKu(currencyType),
+                            tr(CurrencyService.getNameKu(currencyType)),
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -383,9 +384,9 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                                     .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text(
-                                'نوێترین',
-                                style: TextStyle(
+                              child: Text(
+                                tr('نوێترین'),
+                                style: const TextStyle(
                                   fontSize: 9,
                                   color: Color(0xFF10B981),
                                   fontWeight: FontWeight.bold,
@@ -398,7 +399,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                       if (createdAt != null) ...[
                         const SizedBox(height: 4),
                         Text(
-                          _formatFullDate(createdAt),
+                          tr(_formatFullDate(createdAt)),
                           style: TextStyle(
                             fontSize: 10,
                             color: isDark ? Colors.white54 : Colors.grey,
@@ -455,7 +456,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    updatedBy,
+                    tr(updatedBy),
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.white54 : Colors.grey,
@@ -503,7 +504,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          tr(label),
           style: TextStyle(
             fontSize: 10,
             color: isDark ? Colors.white54 : Colors.grey,
@@ -561,7 +562,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
         ),
         const SizedBox(width: 8),
         Text(
-          title,
+          tr(title),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -588,7 +589,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            'هیچ گۆڕانکارییەک نییە لەم ماوەیەدا',
+            tr('هیچ گۆڕانکارییەک نییە لەم ماوەیەدا'),
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white54 : Colors.grey,
@@ -613,7 +614,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ مێژوویەک نییە',
+            tr('هیچ مێژوویەک نییە'),
             style: TextStyle(
               color: isDark ? Colors.white54 : Colors.grey,
               fontSize: 15,

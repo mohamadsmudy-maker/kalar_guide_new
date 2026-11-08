@@ -24,6 +24,8 @@ import 'config/settings_provider.dart';
 import 'config/theme.dart';
 import 'config/theme_provider.dart';
 import 'config/translations.dart';
+import 'l10n/tr.dart';
+import 'services/translation_service.dart';
 
 // ═══════════════════════════════════════════════════════════
 // ✅ Screens
@@ -291,6 +293,7 @@ Future<void> _initSupabase() async {
       publishableKey: _supabaseAnonKey,
     );
     _supabaseReady = true;
+    unawaited(TranslationService.loadDiskCache());
     AppLogger.i('✅ Supabase initialized');
   } catch (e) {
     _bootReason = 'Supabase init failed: $e';
@@ -376,7 +379,7 @@ class _BootErrorAppState extends State<_BootErrorApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Scaffold(
           backgroundColor: AppColors.darkBackground,
           body: Center(
@@ -398,26 +401,26 @@ class _BootErrorAppState extends State<_BootErrorApp> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    'ئەپەکە نەتوانرا دەستپێبکات',
-                    style: TextStyle(
+                  Text(
+                    tr('ئەپەکە نەتوانرا دەستپێبکات'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'ڕێکخستنی پەیوەندی بە سێرڤەرەوە نەدۆزرایەوە. تکایە ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەرەوە.',
+                  Text(
+                    tr('ڕێکخستنی پەیوەندی بە سێرڤەرەوە نەدۆزرایەوە. تکایە ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەرەوە.'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white60, fontSize: 12),
+                    style: const TextStyle(color: Colors.white60, fontSize: 12),
                   ),
                   if (!kReleaseMode && widget.reason.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Directionality(
                       textDirection: TextDirection.ltr,
                       child: Text(
-                        widget.reason,
+                        tr(widget.reason),
                         textAlign: TextAlign.center,
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
@@ -452,9 +455,9 @@ class _BootErrorAppState extends State<_BootErrorApp> {
                       ),
                     )
                         : const Icon(Icons.refresh_rounded),
-                    label: const Text(
-                      'دووبارە هەوڵبدەرەوە',
-                      style: TextStyle(fontWeight: FontWeight.w900),
+                    label: Text(
+                      tr('دووبارە هەوڵبدەرەوە'),
+                      style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
                 ],
@@ -531,7 +534,11 @@ class KalarGuideApp extends StatelessWidget {
                     .toDouble(),
               ),
             ),
-            child: child ?? const SizedBox.shrink(),
+            // ✅ ئاراستە بەپێی زمان: کوردی/عەرەبی ڕاست-بۆ-چەپ، ئینگلیزی چەپ-بۆ-ڕاست
+            child: Directionality(
+              textDirection: AppLang.direction,
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },
@@ -624,14 +631,14 @@ class KalarGuideApp extends StatelessWidget {
     return MaterialPageRoute(
       builder: (_) => Scaffold(
         appBar: AppBar(
-          title: const Text('هەڵە'),
+          title: Text(tr('هەڵە')),
           backgroundColor: AppColors.red,
           foregroundColor: Colors.white,
         ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(message, textAlign: TextAlign.center),
+            child: Text(tr(message), textAlign: TextAlign.center),
           ),
         ),
       ),
@@ -642,12 +649,12 @@ class KalarGuideApp extends StatelessWidget {
     return MaterialPageRoute(
       builder: (_) => Scaffold(
         appBar: AppBar(
-          title: const Text('⛔ دەستڕاگەیشتن ڕەتکرایەوە'),
+          title: Text(tr('⛔ دەستڕاگەیشتن ڕەتکرایەوە')),
           backgroundColor: AppColors.red,
           foregroundColor: Colors.white,
         ),
-        body: const Center(
-          child: Text('تەنها ئەدمین دەتوانێت ئەم شاشەیە ببینێت'),
+        body: Center(
+          child: Text(tr('تەنها ئەدمین دەتوانێت ئەم شاشەیە ببینێت')),
         ),
       ),
     );
@@ -734,7 +741,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
       ?..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg),
+          content: Text(tr(msg)),
           duration: _kExitConfirmWindow,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -841,7 +848,7 @@ class _AppDrawer extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: ctx,
       builder: (dCtx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -1113,9 +1120,9 @@ class _AppDrawer extends StatelessWidget {
         ),
         child: Ink(
           padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: AppColors.primaryGradient,
-            borderRadius: const BorderRadius.only(
+            borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(30),
               bottomRight: Radius.circular(30),
             ),
@@ -1127,7 +1134,7 @@ class _AppDrawer extends StatelessWidget {
                 backgroundColor: Colors.white,
                 child: initial != null
                     ? Text(
-                  initial,
+                  tr(initial),
                   style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
@@ -1147,7 +1154,7 @@ class _AppDrawer extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      name,
+                      tr(name),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -1159,7 +1166,7 @@ class _AppDrawer extends StatelessWidget {
                     if (phone.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
-                        phone,
+                        tr(phone),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -1180,7 +1187,7 @@ class _AppDrawer extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          roleLabel,
+                          tr(roleLabel),
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
@@ -1203,7 +1210,7 @@ class _AppDrawer extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
       child: Text(
-        title,
+        tr(title),
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w900,
@@ -1237,7 +1244,7 @@ class _AppDrawer extends StatelessWidget {
           child: Icon(icon, color: color, size: 20),
         ),
         title: Text(
-          title,
+          tr(title),
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 13,
@@ -1281,9 +1288,9 @@ class _AppDrawer extends StatelessWidget {
           ),
         ),
         title: Text(
-          effectiveIsDark
+          tr(effectiveIsDark
               ? _t('theme_dark', 'تاریک 🌙')
-              : _t('theme_light', 'ڕووناک ☀️'),
+              : _t('theme_light', 'ڕووناک ☀️')),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -1301,4 +1308,4 @@ class _AppDrawer extends StatelessWidget {
       ),
     );
   }
-}
+}

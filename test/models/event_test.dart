@@ -49,6 +49,16 @@ void main() {
       expect(future.daysUntil, equals(5));
     });
 
+    test('daysUntil ڕۆژی سالنامەیی دەژمێرێت نەک ٢٤ کاتژمێر', () {
+      final now = DateTime.now();
+      final tomorrowMorning = DateTime(now.year, now.month, now.day + 1, 0, 1);
+      final today = DateTime(now.year, now.month, now.day, 23, 59);
+      final yesterday = DateTime(now.year, now.month, now.day - 1, 12);
+      expect(AppEvent(titleKu: 'a', startDate: tomorrowMorning).daysUntil, 1);
+      expect(AppEvent(titleKu: 'b', startDate: today).daysUntil, 0);
+      expect(AppEvent(titleKu: 'c', startDate: yesterday).daysUntil, -1);
+    });
+
     test('hasLocation', () {
       final withLoc = AppEvent(
         titleKu: 'T',

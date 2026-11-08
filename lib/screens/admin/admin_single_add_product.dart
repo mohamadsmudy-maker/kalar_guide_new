@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../services/ai_service.dart';
 import '../../services/image_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🛍️ شاشەی زیادکردنی تاکە کاڵا
 class AdminSingleAddProductScreen extends StatefulWidget {
@@ -84,8 +85,8 @@ class _AdminSingleAddProductScreenState
   Future<void> _generateAiDescription() async {
     if (_nameCtrl.text.trim().isEmpty || _priceCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تکایە سەرەتا ناو و نرخ بنووسە ⚠"),
+        SnackBar(
+          content: Text(tr("تکایە سەرەتا ناو و نرخ بنووسە ⚠")),
           backgroundColor: Colors.orange,
         ),
       );
@@ -93,7 +94,7 @@ class _AdminSingleAddProductScreenState
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("AI سەرقاڵی نووسینی وەسفە... ✨")),
+      SnackBar(content: Text(tr("AI سەرقاڵی نووسینی وەسفە... ✨"))),
     );
 
     try {
@@ -105,7 +106,7 @@ class _AdminSingleAddProductScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
         );
       }
     }
@@ -116,8 +117,8 @@ class _AdminSingleAddProductScreenState
         _priceCtrl.text.trim().isEmpty ||
         _productImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("تکایە ناو، نرخ و وێنە پڕبکەوە ⚠"),
+        SnackBar(
+          content: Text(tr("تکایە ناو، نرخ و وێنە پڕبکەوە ⚠")),
           backgroundColor: Colors.orange,
         ),
       );
@@ -146,8 +147,8 @@ class _AdminSingleAddProductScreenState
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("کاڵاکە زیادکرا ✅"),
+          SnackBar(
+            content: Text(tr("کاڵاکە زیادکرا ✅")),
             backgroundColor: Colors.green,
           ),
         );
@@ -155,7 +156,7 @@ class _AdminSingleAddProductScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("هەڵە: $e"), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -168,7 +169,7 @@ class _AdminSingleAddProductScreenState
     if (_loadingData) {
       return Scaffold(
         appBar: AppBar(
-          title: Text("زیادکردنی کاڵا بۆ ${widget.storeName}"),
+          title: Text(trf("زیادکردنی کاڵا بۆ {0}", [widget.storeName])),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
         ),
@@ -180,12 +181,12 @@ class _AdminSingleAddProductScreenState
     _subs.where((s) => s['parent'] == _selectedMain).toList();
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F5F8),
         appBar: AppBar(
           title: Text(
-            "زیادکردنی کاڵا: ${widget.storeName}",
+            trf("زیادکردنی کاڵا: {0}", [widget.storeName]),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
           backgroundColor: AppColors.primary,
@@ -205,7 +206,7 @@ class _AdminSingleAddProductScreenState
                 TextField(
                   controller: _nameCtrl,
                   decoration: InputDecoration(
-                    labelText: "ناوی کاڵا *",
+                    labelText: tr("ناوی کاڵا *"),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -218,7 +219,7 @@ class _AdminSingleAddProductScreenState
                       child: DropdownButtonFormField<String>(
                         isExpanded: true,
                         decoration: InputDecoration(
-                          labelText: "بەشی سەرەکی",
+                          labelText: tr("بەشی سەرەکی"),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -230,7 +231,7 @@ class _AdminSingleAddProductScreenState
                             .map((m) => DropdownMenuItem(
                           value: m['name'].toString(),
                           child: Text(
-                            m['name'],
+                            tr(m['name']),
                             style: const TextStyle(fontSize: 12),
                           ),
                         ))
@@ -252,7 +253,7 @@ class _AdminSingleAddProductScreenState
                       child: DropdownButtonFormField<String>(
                         isExpanded: true,
                         decoration: InputDecoration(
-                          labelText: "بەشی لاوەکی",
+                          labelText: tr("بەشی لاوەکی"),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -266,7 +267,7 @@ class _AdminSingleAddProductScreenState
                             .map((s) => DropdownMenuItem(
                           value: s['name'].toString(),
                           child: Text(
-                            s['name'],
+                            tr(s['name']),
                             style: const TextStyle(fontSize: 12),
                           ),
                         ))
@@ -282,7 +283,7 @@ class _AdminSingleAddProductScreenState
                   controller: _priceCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: "نرخ (د.ع) *",
+                    labelText: tr("نرخ (د.ع) *"),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -293,7 +294,7 @@ class _AdminSingleAddProductScreenState
                   controller: _descCtrl,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: "وەسف",
+                    labelText: tr("وەسف"),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -307,9 +308,9 @@ class _AdminSingleAddProductScreenState
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  "وێنەی کاڵا *",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                Text(
+                  tr("وێنەی کاڵا *"),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 GestureDetector(
@@ -338,18 +339,18 @@ class _AdminSingleAddProductScreenState
                         fit: BoxFit.cover,
                       ),
                     )
-                        : const Column(
+                        : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.add_a_photo_rounded,
                           color: AppColors.primary,
                           size: 32,
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Text(
-                          "کرتە بکە بۆ دانانی وێنە",
-                          style: TextStyle(
+                          tr("کرتە بکە بۆ دانانی وێنە"),
+                          style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 12,
                           ),
@@ -373,9 +374,9 @@ class _AdminSingleAddProductScreenState
                       ),
                     ),
                     onPressed: _saveProduct,
-                    child: const Text(
-                      "پاشەکەوتکردن ✅",
-                      style: TextStyle(
+                    child: Text(
+                      tr("پاشەکەوتکردن ✅"),
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),

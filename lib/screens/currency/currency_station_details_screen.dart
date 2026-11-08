@@ -10,6 +10,7 @@ import '../../services/auth_service.dart';
 import '../../services/currency_service.dart';
 import 'currency_history_screen.dart';
 import 'currency_strings.dart';
+import '../../l10n/tr.dart';
 
 /// 🏢 وردەکاری نوسینگەی دراو — ULTRA PRO MAX
 ///   🔐 دەستکاری تەنها بۆ ئەدمین یان خاوەنی نوسینگە (پێشتر هەموو کەسێک دەیتوانی)
@@ -92,7 +93,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
         appBar: AppBar(
-          title: Text(_station?['name']?.toString() ?? '',
+          title: Text(tr(_station?['name']?.toString() ?? ''),
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           backgroundColor: const Color(0xFF0F172A),
           foregroundColor: Colors.white,
@@ -197,7 +198,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
               ),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(name, style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900)),
+                child: Text(tr(name), style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900)),
               ),
             ],
           ),
@@ -207,7 +208,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
               children: [
                 const Icon(Icons.location_on_rounded, color: Colors.white70, size: 16),
                 const SizedBox(width: 6),
-                Expanded(child: Text(address, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
+                Expanded(child: Text(tr(address), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
               ],
             ),
           ],
@@ -252,7 +253,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
             children: [
               Icon(icon, color: Colors.white, size: 16),
               const SizedBox(width: 6),
-              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
+              Text(tr(label), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
             ],
           ),
         ),
@@ -281,7 +282,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
         Container(width: 4, height: 18, decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(4))),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(title,
+          child: Text(tr(title),
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
         ),
         if (trailing != null) trailing,
@@ -320,7 +321,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
                   fit: BoxFit.scaleDown,
                   child: Padding(
                     padding: const EdgeInsets.all(5),
-                    child: Text(CurrencyService.getSymbol(type),
+                    child: Text(tr(CurrencyService.getSymbol(type)),
                         style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color)),
                   ),
                 ),
@@ -383,9 +384,9 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
       decoration: BoxDecoration(color: c.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: c, fontWeight: FontWeight.w800)),
+          Text(tr(label), style: TextStyle(fontSize: 11, color: c, fontWeight: FontWeight.w800)),
           const SizedBox(height: 2),
-          Text(CurrencyService.formatPrice(v, lang), style: TextStyle(fontSize: 18, color: c, fontWeight: FontWeight.w900)),
+          Text(tr(CurrencyService.formatPrice(v, lang)), style: TextStyle(fontSize: 18, color: c, fontWeight: FontWeight.w900)),
         ],
       ),
     );
@@ -413,7 +414,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
-            child: Text(CurrencyService.getSymbol(type), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
+            child: Text(tr(CurrencyService.getSymbol(type)), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -442,7 +443,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
               children: [
                 Icon(change > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
                     size: 14, color: change > 0 ? Colors.red : Colors.green),
-                Text(CurrencyService.formatPrice(change.abs(), lang),
+                Text(tr(CurrencyService.formatPrice(change.abs(), lang)),
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: change > 0 ? Colors.red : Colors.green)),
               ],
             ),
@@ -462,7 +463,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
         children: [
           Icon(icon, size: 44, color: Colors.grey.shade400),
           const SizedBox(height: 10),
-          Text(text, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          Text(tr(text), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -487,8 +488,8 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
           padding: const EdgeInsets.symmetric(vertical: 12),
           children: _missingTypes
               .map((k) => ListTile(
-            leading: Text(CurrencyService.getFlag(k), style: const TextStyle(fontSize: 22)),
-            title: Text(CurrencyService.getNameByLang(k, lang), style: const TextStyle(fontWeight: FontWeight.w800)),
+            leading: Text(tr(CurrencyService.getFlag(k)), style: const TextStyle(fontSize: 22)),
+            title: Text(tr(CurrencyService.getNameByLang(k, lang)), style: const TextStyle(fontWeight: FontWeight.w800)),
             onTap: () => Navigator.pop(ctx, k),
           ))
               .toList(),
@@ -501,7 +502,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
   Future<void> _showEditSheet(String type, double buy, double sell, String lang, bool isDark) async {
     if (!_canEdit) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(CurrencyStrings.of(lang, 'no_permission')), backgroundColor: Colors.orange),
+        SnackBar(content: Text(tr(CurrencyStrings.of(lang, 'no_permission'))), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -566,7 +567,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
                   if (error != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(error!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 12)),
+                      child: Text(tr(error!), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 12)),
                     ),
                   Row(
                     children: [
@@ -638,7 +639,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ok ? '✅ ${t('saved')}' : t('save_failed')),
+        content: Text(tr(ok ? '✅ ${t('saved')}' : t('save_failed'))),
         backgroundColor: ok ? Colors.green : Colors.red,
         behavior: SnackBarBehavior.floating,
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/store_service.dart';
 import '../../widgets/common/service_details_widgets.dart';
+import '../../l10n/tr.dart';
 
 /// 📋 شاشەی پێداویستی و تێچووی مامەڵەیەک — ULTRA PRO
 ///
@@ -24,7 +25,7 @@ class ServiceDetailsScreen extends StatelessWidget {
     final color = _color;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
@@ -83,7 +84,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  service.titleKu,
+                                  tr(service.titleKu),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 20,
@@ -117,7 +118,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                     if (service.description != null &&
                         service.description!.isNotEmpty) ...[
                       ServiceDetailWidgets.buildSectionTitle(
-                        title: '📄 وەسف',
+                        title: tr('📄 وەسف'),
                         isDark: isDark,
                         color: color,
                       ),
@@ -125,7 +126,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                       _buildInfoBox(
                         isDark: isDark,
                         child: Text(
-                          service.description!,
+                          tr(service.description!),
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.7,
@@ -141,7 +142,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                     // ═══ 📄 پێداویستییەکان ═══
                     if (service.requirements.isNotEmpty) ...[
                       ServiceDetailWidgets.buildSectionTitle(
-                        title: '📄 پێداویستییەکان',
+                        title: tr('📄 پێداویستییەکان'),
                         isDark: isDark,
                         color: const Color(0xFF8B5CF6),
                         badge: '${service.requirements.length}',
@@ -181,7 +182,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                     // ═══ 💰 تێچووەکان ═══
                     if (service.fees.isNotEmpty) ...[
                       ServiceDetailWidgets.buildSectionTitle(
-                        title: '💰 تێچووەکان',
+                        title: tr('💰 تێچووەکان'),
                         isDark: isDark,
                         color: const Color(0xFF10B981),
                         badge: '${service.fees.length}',
@@ -224,7 +225,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                     // ═══ ℹ️ ماوە و شوێن ═══
                     if (_hasExtraInfo) ...[
                       ServiceDetailWidgets.buildSectionTitle(
-                        title: 'ℹ️ زانیاری زیاتر',
+                        title: tr('ℹ️ زانیاری زیاتر'),
                         isDark: isDark,
                         color: const Color(0xFFF59E0B),
                       ),
@@ -232,7 +233,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                       if (_hasDuration)
                         ServiceDetailWidgets.buildInfoRow(
                           icon: Icons.schedule_rounded,
-                          label: 'ماوەی مامەڵە',
+                          label: tr('ماوەی مامەڵە'),
                           value: service.duration!,
                           color: const Color(0xFFF59E0B),
                           isDark: isDark,
@@ -242,7 +243,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                       if (_hasLocation)
                         ServiceDetailWidgets.buildInfoRow(
                           icon: Icons.location_on_rounded,
-                          label: 'شوێنی مامەڵە',
+                          label: tr('شوێنی مامەڵە'),
                           value: service.location!,
                           color: const Color(0xFFEF4444),
                           isDark: isDark,
@@ -316,7 +317,7 @@ class ServiceDetailsScreen extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              service.notes!,
+              tr(service.notes!),
               style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFFF59E0B),

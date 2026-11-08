@@ -17,6 +17,9 @@ import '../../services/location_service.dart';
 import '../../services/audio_service.dart';
 import '../../services/neighborhood_service.dart';
 import '../../widgets/voice_recorder_widget.dart';
+import '../../l10n/tr.dart';
+
+part 'submit_complaint_ui.dart';
 
 // ═══════════════════════════════════════════════════════════
 // 🗂 Complaint types (single source of truth)
@@ -392,7 +395,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -401,9 +404,9 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
               children: [
                 _sheetHandle(),
                 const SizedBox(height: 14),
-                const Text('جۆری کێشە هەڵبژێرە',
+                Text(tr('جۆری کێشە هەڵبژێرە'),
                     style:
-                    TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                 const SizedBox(height: 12),
                 Flexible(
                   child: ListView.separated(
@@ -450,12 +453,12 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(t.name,
+                                    Text(tr(t.name),
                                         style: const TextStyle(
                                             fontWeight: FontWeight.w800,
                                             fontSize: 13)),
                                     const SizedBox(height: 2),
-                                    Text(t.authority,
+                                    Text(tr(t.authority),
                                         style: TextStyle(
                                             fontSize: 11,
                                             color: Colors.grey.shade600)),
@@ -480,21 +483,12 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     );
   }
 
-  Widget _sheetHandle() => Container(
-    width: 40,
-    height: 4,
-    decoration: BoxDecoration(
-      color: Colors.grey.shade300,
-      borderRadius: BorderRadius.circular(2),
-    ),
-  );
-
   // ═══════════════════════════════════════════════════════════
   // 📸 Images
   // ═══════════════════════════════════════════════════════════
   Future<void> _handleImagePicking() async {
     if (_images.length >= _maxImages) {
-      _showSnackBar('تەنها دەتوانیت تا ${_ku(_maxImages)} وێنە زیاد بکەیت ⚠',
+      _showSnackBar(trf('تەنها دەتوانیت تا {0} وێنە زیاد بکەیت ⚠', [_ku(_maxImages)]),
           Colors.orange);
       return;
     }
@@ -513,7 +507,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -522,16 +516,16 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
               children: [
                 _sheetHandle(),
                 const SizedBox(height: 16),
-                const Text('وێنەی کێشە هەڵبژێرە',
+                Text(tr('وێنەی کێشە هەڵبژێرە'),
                     style:
-                    TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                 const SizedBox(height: 20),
                 Row(
                   children: [
                     Expanded(
                       child: _buildSourceCard(
                         icon: Icons.camera_alt_rounded,
-                        label: 'کامێرا',
+                        label: tr('کامێرا'),
                         color: AppColors.primary,
                         onTap: () {
                           Navigator.pop(ctx);
@@ -543,7 +537,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                     Expanded(
                       child: _buildSourceCard(
                         icon: Icons.photo_library_rounded,
-                        label: 'گەلەری',
+                        label: tr('گەلەری'),
                         color: Colors.purple,
                         onTap: () {
                           Navigator.pop(ctx);
@@ -556,35 +550,6 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSourceCard({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: color, fontSize: 13)),
-          ],
         ),
       ),
     );
@@ -612,7 +577,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       _saveDraft();
     } on PlatformException catch (e) {
       debugPrint('❌ Image pick error: $e');
-      _showSnackBar('ناتوانم دەستم بگات بە کامێرا یان گەلەری — مۆڵەتەکان بپشکنە',
+      _showSnackBar(tr('ناتوانم دەستم بگات بە کامێرا یان گەلەری — مۆڵەتەکان بپشکنە'),
           Colors.red);
     } catch (e) {
       debugPrint('❌ Image pick error: $e');
@@ -737,7 +702,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
           final url = await ImageCompressionService.uploadImage(img)
               .timeout(const Duration(seconds: 60));
           done++;
-          _setStage('بارکردنی وێنەکان (${_ku(done)}/${_ku(_images.length)})...',
+          _setStage(trf('بارکردنی وێنەکان ({0}/{1})...', [_ku(done), _ku(_images.length)]),
               0.05 + 0.6 * done / _images.length);
           return url;
         }),
@@ -811,7 +776,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       HapticFeedback.heavyImpact();
       if (voiceFailed) {
         _showSnackBar(
-            'سکاڵا نێردرا، بەڵام دەنگەکە نەنێردرا ⚠', Colors.orange);
+            tr('سکاڵا نێردرا، بەڵام دەنگەکە نەنێردرا ⚠'), Colors.orange);
       }
       _showSuccessDialog();
     } on PostgrestException catch (e) {
@@ -819,26 +784,26 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       if (!mounted) return;
       final m = e.message;
       if (m.contains('voice_url')) {
-        _showSnackBar('⚠️ ستوونی voice_url لە داتابەیسدا نییە. ئەدمین ئاگادار بکە.',
+        _showSnackBar(tr('⚠️ ستوونی voice_url لە داتابەیسدا نییە. ئەدمین ئاگادار بکە.'),
             Colors.red);
       } else if (m.contains('neighborhood_id')) {
         _showSnackBar(
-            '⚠️ ستوونی neighborhood_id لە داتابەیسدا نییە.', Colors.red);
+            tr('⚠️ ستوونی neighborhood_id لە داتابەیسدا نییە.'), Colors.red);
       } else if (m.contains('row-level security')) {
         _showSnackBar(
-            '⚠️ کێشەی ئاسایش — تکایە دووبارە بچۆ ژوورەوە.', Colors.red);
+            tr('⚠️ کێشەی ئاسایش — تکایە دووبارە بچۆ ژوورەوە.'), Colors.red);
       } else {
-        _showSnackBar('هەڵەی داتابەیس، تکایە دووبارە هەوڵبدەرەوە', Colors.red);
+        _showSnackBar(tr('هەڵەی داتابەیس، تکایە دووبارە هەوڵبدەرەوە'), Colors.red);
       }
     } on TimeoutException {
       _showSnackBar(
-          'پەیوەندی زۆر هێواشە — تکایە ئینتەرنێت بپشکنە و دووبارە هەوڵبدەرەوە ⏱',
+          tr('پەیوەندی زۆر هێواشە — تکایە ئینتەرنێت بپشکنە و دووبارە هەوڵبدەرەوە ⏱'),
           Colors.red);
     } on SocketException {
-      _showSnackBar('ئینتەرنێت نییە — پەیوەندییەکەت بپشکنە 📡', Colors.red);
+      _showSnackBar(tr('ئینتەرنێت نییە — پەیوەندییەکەت بپشکنە 📡'), Colors.red);
     } catch (e) {
       debugPrint('❌ Submit error: $e');
-      _showSnackBar('هەڵەیەک ڕووی دا، تکایە دووبارە هەوڵبدەرەوە', Colors.red);
+      _showSnackBar(tr('هەڵەیەک ڕووی دا، تکایە دووبارە هەوڵبدەرەوە'), Colors.red);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -855,28 +820,28 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('دەتەوێت بڕۆیت؟',
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
-          content: const Text('زانیارییەکانت وەک ڕەشنووس پاشەکەوت دەکرێن، یان دەتوانیت بیانسڕیتەوە.',
-              style: TextStyle(fontSize: 13, height: 1.5)),
+          title: Text(tr('دەتەوێت بڕۆیت؟'),
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+          content: Text(tr('زانیارییەکانت وەک ڕەشنووس پاشەکەوت دەکرێن، یان دەتوانیت بیانسڕیتەوە.'),
+              style: const TextStyle(fontSize: 13, height: 1.5)),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'stay'),
-              child: const Text('مانەوە'),
+              child: Text(tr('مانەوە')),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'discard'),
-              child: Text('سڕینەوە',
+              child: Text(tr('سڕینەوە'),
                   style: TextStyle(color: Colors.red.shade700)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, 'save'),
-              child: const Text('پاشەکەوت'),
+              child: Text(tr('پاشەکەوت')),
             ),
           ],
         ),
@@ -897,7 +862,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     showDialog<void>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Dialog(
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -909,9 +874,9 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                 _gradientIcon(Icons.location_off_rounded,
                     [Colors.red.shade400, Colors.red.shade700]),
                 const SizedBox(height: 20),
-                const Text('سنووری جوگرافی نەگونجاو',
+                Text(tr('سنووری جوگرافی نەگونجاو'),
                     style:
-                    TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -919,9 +884,9 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Text(
-                    'تکایە! ناردنی سکاڵا تەنها لە سنووری شاری کەلاردا بەردەستە.',
-                    style: TextStyle(fontSize: 13, height: 1.5),
+                  child: Text(
+                    tr('تکایە! ناردنی سکاڵا تەنها لە سنووری شاری کەلاردا بەردەستە.'),
+                    style: const TextStyle(fontSize: 13, height: 1.5),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -939,7 +904,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                           Navigator.pop(ctx);
                           _getAutomaticLocation();
                         },
-                        child: const Text('نوێکردنەوەی شوێن'),
+                        child: Text(tr('نوێکردنەوەی شوێن')),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -953,8 +918,8 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                               borderRadius: BorderRadius.circular(16)),
                         ),
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('تێدەگەم ✅',
-                            style: TextStyle(fontWeight: FontWeight.w900)),
+                        child: Text(tr('تێدەگەم ✅'),
+                            style: const TextStyle(fontWeight: FontWeight.w900)),
                       ),
                     ),
                   ],
@@ -967,23 +932,6 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     );
   }
 
-  Widget _gradientIcon(IconData icon, List<Color> colors) => Container(
-    width: 90,
-    height: 90,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: LinearGradient(colors: colors),
-      boxShadow: [
-        BoxShadow(
-          color: colors.last.withValues(alpha: 0.35),
-          blurRadius: 24,
-          spreadRadius: 3,
-        ),
-      ],
-    ),
-    child: Icon(icon, color: Colors.white, size: 50),
-  );
-
   void _showSuccessDialog() {
     showDialog<void>(
       context: context,
@@ -991,7 +939,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       builder: (ctx) => PopScope(
         canPop: false,
         child: Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: AppLang.direction,
           child: Dialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28)),
@@ -1009,14 +957,14 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('سکاڵاکەت نێردرا!',
+                  Text(tr('سکاڵاکەت نێردرا!'),
                       style:
-                      TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
+                      const TextStyle(fontWeight: FontWeight.w900, fontSize: 20)),
                   const SizedBox(height: 12),
                   Text(
-                    _neighborhoodName != null
-                        ? 'سکاڵاکەت نێردرا بۆ ${_type?.authority}\nگەڕەک: $_neighborhoodName'
-                        : 'سکاڵاکەت نێردرا بۆ ${_type?.authority}',
+                    tr(_neighborhoodName != null
+                        ? trf('سکاڵاکەت نێردرا بۆ {0}\nگەڕەک: {1}', [_type?.authority, _neighborhoodName])
+                        : trf('سکاڵاکەت نێردرا بۆ {0}', [_type?.authority])),
                     style: const TextStyle(
                         fontSize: 13, color: Colors.grey, height: 1.6),
                     textAlign: TextAlign.center,
@@ -1036,8 +984,8 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                         Navigator.pop(ctx);
                         Navigator.pop(context, true); // ⭐ caller can refresh
                       },
-                      child: const Text('باشە ✅',
-                          style: TextStyle(
+                      child: Text(tr('باشە ✅'),
+                          style: const TextStyle(
                               fontWeight: FontWeight.w900, fontSize: 15)),
                     ),
                   ),
@@ -1056,7 +1004,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message,
+          content: Text(tr(message),
               style:
               const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           backgroundColor: color,
@@ -1081,7 +1029,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         if (didPop) _saveDraft();
       },
       child: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: Scaffold(
           backgroundColor: const Color(0xFFF4F6F9),
           appBar: _buildAppBar(),
@@ -1178,102 +1126,6 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.primary,
-      elevation: 0,
-      title: const Text(
-        'ناردنی سکاڵای هاوڵاتی',
-        style: TextStyle(
-            fontWeight: FontWeight.bold, fontSize: 17, color: Colors.white),
-      ),
-      centerTitle: true,
-      iconTheme: const IconThemeData(color: Colors.white),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.save_rounded),
-          tooltip: 'پاشەکەوتکردنی ڕەشنووس',
-          onPressed: () async {
-            await _saveDraft();
-            _showSnackBar('💾 ڕەشنووس پاشەکەوت کرا', Colors.green);
-          },
-        ),
-      ],
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 📊 Progress
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildProgressSteps() {
-    final labels = ['جۆر', 'وێنە', 'شوێن'];
-    final done = [_hasType, _hasImages, _hasLocation];
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-      color: Colors.white,
-      child: Column(
-        children: [
-          Row(
-            children: List.generate(3, (i) {
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(left: i == 2 ? 0 : 6),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: done[i]
-                          ? Colors.green.shade500
-                          : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              ...List.generate(3, (i) {
-                return Expanded(
-                  child: Row(
-                    children: [
-                      Icon(
-                        done[i]
-                            ? Icons.check_circle_rounded
-                            : Icons.radio_button_unchecked_rounded,
-                        size: 14,
-                        color: done[i]
-                            ? Colors.green.shade600
-                            : Colors.grey.shade400,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(labels[i],
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: done[i]
-                                ? Colors.green.shade700
-                                : Colors.grey.shade500,
-                          )),
-                    ],
-                  ),
-                );
-              }),
-              Text('${_ku(_doneCount)} لە ٣',
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.primary)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDraftBanner() {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -1287,16 +1139,16 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         children: [
           Icon(Icons.history_edu_rounded, color: Colors.amber.shade800),
           const SizedBox(width: 10),
-          const Expanded(
-            child: Text('ڕەشنووس بارکرا — دەتوانیت درێژە بدەیت',
-                style: TextStyle(
+          Expanded(
+            child: Text(tr('ڕەشنووس بارکرا — دەتوانیت درێژە بدەیت'),
+                style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Colors.black87)),
           ),
           TextButton(
             onPressed: _resetForm,
-            child: Text('دەستپێکی نوێ',
+            child: Text(tr('دەستپێکی نوێ'),
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -1311,237 +1163,8 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🎨 Widgets
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildStepHeader(String step, String title) {
-    return Row(
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(step,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13)),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(title,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF1A1A2E))),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTypeSelector() {
-    final t = _type;
-    final color = t?.color ?? AppColors.primary;
-
-    return InkWell(
-      onTap: _showTypeSheet,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: t != null ? color.withValues(alpha: 0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: t != null ? color : AppColors.primary.withValues(alpha: 0.3),
-            width: 2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(t?.icon ?? Icons.search_rounded, color: color, size: 22),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                t?.name ?? 'جۆری کێشە هەڵبژێرە...',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: t != null ? Colors.black87 : AppColors.primary,
-                ),
-              ),
-            ),
-            Text(t != null ? 'گۆڕین' : '',
-                style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.bold, color: color)),
-            Icon(Icons.keyboard_arrow_down_rounded, color: color),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyStateInfo() {
-    return Container(
-      padding: const EdgeInsets.all(30),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.touch_app_rounded, size: 50, color: Colors.grey.shade400),
-          const SizedBox(height: 12),
-          const Text('تکایە سەرەتا جۆری کێشە هەڵبژێرە',
-              style: TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13),
-              textAlign: TextAlign.center),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required List<Color>? gradient,
-    Widget? trailing,
-  }) {
-    final g = gradient;
-    final on = g != null;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: g != null
-            ? LinearGradient(
-            colors: g,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight)
-            : null,
-        color: on ? null : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: g != null
-            ? [
-          BoxShadow(
-            color: g.last.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ]
-            : null,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: on
-                  ? Colors.white.withValues(alpha: 0.2)
-                  : Colors.grey.shade300,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon,
-                color: on ? Colors.white : Colors.grey.shade600, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: TextStyle(
-                        color: on ? Colors.white70 : Colors.grey.shade600,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 2),
-                Text(value,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: on ? Colors.white : Colors.grey.shade700,
-                        fontSize: 14)),
-              ],
-            ),
-          ),
-          if (trailing != null) trailing,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAuthorityCard() {
-    return _infoCard(
-      icon: Icons.verified_rounded,
-      label: 'لایەنی پەیوەندیدار',
-      value: _type?.authority ?? '',
-      gradient: [Colors.green.shade400, Colors.green.shade600],
-    );
-  }
-
-  Widget _buildNeighborhoodCard() {
-    if (_detectingNeighborhood) {
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.blue.shade200, width: 1.5),
-        ),
-        child: const Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.blue),
-            ),
-            SizedBox(width: 12),
-            Text('دۆزینەوەی گەڕەک...',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                    fontSize: 13)),
-          ],
-        ),
-      );
-    }
-
-    final has = _neighborhoodName != null && _neighborhoodName!.isNotEmpty;
-    return _infoCard(
-      icon: Icons.location_city_rounded,
-      label: 'گەڕەک',
-      value: has ? _neighborhoodName! : 'گەڕەک نەدۆزرایەوە',
-      gradient: has ? [Colors.blue.shade400, Colors.blue.shade600] : null,
-      trailing: has
-          ? const Icon(Icons.check_circle_rounded,
-          color: Colors.white, size: 22)
-          : (_hasLocation
-          ? IconButton(
-        icon: const Icon(Icons.refresh_rounded),
-        onPressed: _detectNeighborhood,
-        tooltip: 'دووبارە بدۆزەرەوە',
-      )
-          : null),
-    );
-  }
-
   Widget _buildImageSection(bool garbage) {
-    final blue = const Color(0xFF2196F3);
+    const blue = Color(0xFF2196F3);
 
     return GestureDetector(
       onTap: _images.isEmpty ? _handleImagePicking : null,
@@ -1583,17 +1206,17 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              garbage
+              tr(garbage
                   ? 'وێنەگرتن بە کامێرا'
-                  : 'وێنە بگرە (کامێرا یان گەلەری)',
-              style: TextStyle(
+                  : 'وێنە بگرە (کامێرا یان گەلەری)'),
+              style: const TextStyle(
                   fontWeight: FontWeight.bold, color: blue, fontSize: 13),
             ),
             const SizedBox(height: 4),
             Text(
-              garbage
+              tr(garbage
                   ? 'مەرجە وێنەی ڕاستەوخۆ بێت'
-                  : 'تا ${_ku(_maxImages)} وێنە',
+                  : trf('تا {0} وێنە', [_ku(_maxImages)])),
               style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
           ],
@@ -1657,7 +1280,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                   decoration: BoxDecoration(
                       color: Colors.blue.shade50,
                       shape: BoxShape.circle),
-                  child: Icon(Icons.add_a_photo, color: blue, size: 20),
+                  child: const Icon(Icons.add_a_photo, color: blue, size: 20),
                 ),
               ),
           ],
@@ -1666,285 +1289,4 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     );
   }
 
-  Widget _buildMapSection() {
-    final hasFix = _locIssue != _LocIssue.none ||
-        (!_hasLocation && !_locationBusy);
-    final okColor = _hasLocation ? Colors.green : Colors.orange;
-
-    return Column(
-      children: [
-        Container(
-          height: 170,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.grey.shade300, width: 1.5),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Stack(
-              children: [
-                AbsorbPointer(
-                  child: gmaps.GoogleMap(
-                    initialCameraPosition: gmaps.CameraPosition(
-                      target: _hasLocation
-                          ? gmaps.LatLng(_lat!, _lng!)
-                          : const gmaps.LatLng(34.6189, 45.3156),
-                      zoom: 16,
-                    ),
-                    zoomControlsEnabled: false,
-                    myLocationButtonEnabled: false,
-                    mapToolbarEnabled: false,
-                    scrollGesturesEnabled: false,
-                    circles: _hasLocation && (_accuracy ?? 0) > 0
-                        ? {
-                      gmaps.Circle(
-                        circleId: const gmaps.CircleId('accuracy'),
-                        center: gmaps.LatLng(_lat!, _lng!),
-                        radius: _accuracy!.clamp(5, 200).toDouble(),
-                        fillColor: Colors.blue.withValues(alpha: 0.12),
-                        strokeColor: Colors.blue.withValues(alpha: 0.4),
-                        strokeWidth: 1,
-                      ),
-                    }
-                        : {},
-                    markers: _hasLocation
-                        ? {
-                      gmaps.Marker(
-                        markerId: const gmaps.MarkerId('current_loc'),
-                        position: gmaps.LatLng(_lat!, _lng!),
-                        icon: gmaps.BitmapDescriptor
-                            .defaultMarkerWithHue(
-                            gmaps.BitmapDescriptor.hueRed),
-                      ),
-                    }
-                        : {},
-                    onMapCreated: (c) {
-                      _mapController = c;
-                      if (_hasLocation) {
-                        c.moveCamera(gmaps.CameraUpdate.newLatLngZoom(
-                            gmaps.LatLng(_lat!, _lng!), 17));
-                      }
-                    },
-                  ),
-                ),
-                if (_locationBusy)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                  ),
-                Positioned(
-                  bottom: 8,
-                  left: 8,
-                  child: Material(
-                    color: Colors.white,
-                    elevation: 3,
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      icon: Icon(Icons.my_location_rounded,
-                          color: AppColors.primary),
-                      tooltip: 'نوێکردنەوەی شوێن',
-                      onPressed:
-                      _locationBusy ? null : _getAutomaticLocation,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: okColor.shade50,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _hasLocation
-                    ? Icons.check_circle_rounded
-                    : Icons.access_time_rounded,
-                color: okColor.shade700,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _hasLocation && _accuracy != null
-                      ? '$_locationStatusText  (±${_ku(_accuracy!.round())} م)'
-                      : _locationStatusText,
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: okColor.shade800,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-              if (hasFix && !_locationBusy)
-                TextButton(
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: const Size(0, 30),
-                  ),
-                  onPressed: _openLocationFix,
-                  child: Text(
-                    _locIssue == _LocIssue.serviceOff ||
-                        _locIssue == _LocIssue.deniedForever
-                        ? 'ڕێکخستن'
-                        : 'دووبارە',
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w900),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVoiceConfirmation() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.green.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.green.shade200),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text('دەنگەکە تۆمارکرا و ئامادەیە بۆ ناردن',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDescriptionField() {
-    OutlineInputBorder border(Color c, double w) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: c, width: w),
-    );
-
-    return TextField(
-      controller: _descCtrl,
-      maxLines: 4,
-      maxLength: _maxDescLength,
-      textAlign: TextAlign.right,
-      textInputAction: TextInputAction.newline,
-      style: const TextStyle(fontSize: 14),
-      decoration: InputDecoration(
-        hintText: 'ڕووداوەکە لێرە زیاتر باس بکەرەوە...',
-        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-        filled: true,
-        fillColor: Colors.white,
-        counterStyle: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-        prefixIcon: const Padding(
-          padding: EdgeInsets.only(bottom: 60),
-          child: Icon(Icons.description_outlined, color: AppColors.primary),
-        ),
-        border: border(Colors.grey.shade300, 1.5),
-        enabledBorder: border(Colors.grey.shade300, 1.5),
-        focusedBorder: border(AppColors.primary, 2),
-        contentPadding: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
-      child: _isSubmitting
-          ? Container(
-        key: const ValueKey('busy'),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      color: AppColors.primary, strokeWidth: 2.5),
-                ),
-                const SizedBox(width: 12),
-                Text(_submitStage,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: _uploadProgress > 0 ? _uploadProgress : null,
-                minHeight: 5,
-                color: AppColors.primary,
-                backgroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      )
-          : SizedBox(
-        key: const ValueKey('send'),
-        height: 56,
-        child: ElevatedButton.icon(
-          onPressed: _submitComplaint,
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-            _isReady ? AppColors.primary : Colors.grey.shade500,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18)),
-            elevation: _isReady ? 4 : 0,
-          ),
-          icon: const Icon(Icons.send_rounded, size: 22),
-          label: const Text('ناردنی سکاڵا',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCancelButton() {
-    return SizedBox(
-      height: 50,
-      child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          side: BorderSide(color: Colors.red.shade300, width: 1.5),
-        ),
-        onPressed: _isSubmitting ? null : _confirmCancel,
-        icon: Icon(Icons.close_rounded, color: Colors.red.shade700, size: 20),
-        label: Text('پەشیمانبوونەوە',
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.red.shade700)),
-      ),
-    );
-  }
 }

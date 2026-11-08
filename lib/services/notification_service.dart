@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/app_logger.dart';
 import 'auth_service.dart';
+import '../l10n/tr.dart';
 
 /// 🔔 خزمەتگوزاری ئاگادارکردنەوە
 class NotificationService {
@@ -58,10 +59,10 @@ class NotificationService {
       );
 
       // ٣. دروستکردنی Channel بۆ Android
-      const androidChannel = AndroidNotificationChannel(
+      final androidChannel = AndroidNotificationChannel(
         'high_importance_channel',
         'ئاگادارکردنەوەی گرنگ',
-        description: 'ئەم کەناڵە بۆ ئاگادارکردنەوەی گرنگ بەکاردێت',
+        description: tr('ئەم کەناڵە بۆ ئاگادارکردنەوەی گرنگ بەکاردێت'),
         importance: Importance.high,
         playSound: true,
       );
@@ -152,9 +153,7 @@ class NotificationService {
       }
 
       await Supabase.instance.client
-          .from('app_users')
-          .update({'fcm_token': token})
-          .eq('id', userId);
+          .rpc('app_set_fcm_token', params: {'p_token': token});
 
       AppLogger.i('✅ FCM Token پاشەکەوتکرا');
     } catch (e) {
@@ -178,7 +177,7 @@ class NotificationService {
       notification.hashCode,
       notification.title,
       notification.body,
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'high_importance_channel',
           'ئاگادارکردنەوەی گرنگ',
@@ -186,12 +185,12 @@ class NotificationService {
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
-          color: const Color(0xFF1E88E5),
+          color: Color(0xFF1E88E5),
           enableLights: true,
           enableVibration: true,
           playSound: true,
         ),
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -237,9 +236,7 @@ class NotificationService {
       }
 
       await Supabase.instance.client
-          .from('app_users')
-          .update({'fcm_token': null})
-          .eq('id', userId);
+          .rpc('app_set_fcm_token', params: {'p_token': null});
 
       try {
         await _messaging.deleteToken();

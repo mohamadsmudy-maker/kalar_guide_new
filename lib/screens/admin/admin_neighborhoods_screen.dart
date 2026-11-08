@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../models/neighborhood.dart';
 import '../../services/neighborhood_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🏘️ شاشەی بەڕێوەبردنی گەڕەکەکان — ULTRA PRO
 class AdminNeighborhoodsScreen extends StatefulWidget {
@@ -60,7 +61,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              neighborhood == null ? '✅ زیادکرا' : '✅ نوێکرایەوە',
+              tr(neighborhood == null ? '✅ زیادکرا' : '✅ نوێکرایەوە'),
             ),
             backgroundColor: Colors.green,
           ),
@@ -71,7 +72,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(trf('هەڵە: {0}', [e])),
             backgroundColor: Colors.red,
           ),
         );
@@ -86,19 +87,19 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: AppLang.direction,
         child: AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text('سڕینەوەی گەڕەک'),
+          title: Text(tr('سڕینەوەی گەڕەک')),
           content: Text(
-            'ئایا دڵنیایت لە سڕینەوەی "${n.nameKu}"؟',
+            trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [n.nameKu]),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('نەخێر'),
+              child: Text(tr('نەخێر')),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -106,7 +107,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('سڕینەوە'),
+              child: Text(tr('سڕینەوە')),
             ),
           ],
         ),
@@ -122,8 +123,8 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ گەڕەک سڕایەوە'),
+          SnackBar(
+            content: Text(tr('✅ گەڕەک سڕایەوە')),
             backgroundColor: Colors.green,
           ),
         );
@@ -133,7 +134,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(trf('هەڵە: {0}', [e])),
             backgroundColor: Colors.red,
           ),
         );
@@ -149,13 +150,13 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
-            'گەڕەکەکان 🏘️ (${_neighborhoods.length})',
+            trf('گەڕەکەکان 🏘️ ({0})', [_neighborhoods.length]),
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 16,
@@ -192,9 +193,9 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
           backgroundColor: const Color(0xFF1E88E5),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            'زیادکردنی گەڕەک',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          label: Text(
+            tr('زیادکردنی گەڕەک'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
           ),
         ),
       ),
@@ -239,7 +240,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
           ),
         ),
         title: Text(
-          n.nameKu,
+          tr(n.nameKu),
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w900,
@@ -252,9 +253,9 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                n.hasBoundary
-                    ? '${n.boundaryPoints.length} خاڵی سنوور'
-                    : 'بێ سنوور',
+                tr(n.hasBoundary
+                    ? trf('{0} خاڵی سنوور', [n.boundaryPoints.length])
+                    : 'بێ سنوور'),
                 style: TextStyle(
                   fontSize: 11,
                   color: isDark ? Colors.white54 : Colors.grey.shade600,
@@ -319,7 +320,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'هیچ گەڕەکێک نییە',
+            tr('هیچ گەڕەکێک نییە'),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -422,8 +423,8 @@ class _NeighborhoodEditorDialogState
   Future<void> _save() async {
     if (_nameKuCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ناوی گەڕەک پێویستە'),
+        SnackBar(
+          content: Text(tr('ناوی گەڕەک پێویستە')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -441,8 +442,7 @@ class _NeighborhoodEditorDialogState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '⚠️ سنوور دەبێت لانیکەم ٣ خاڵ بێت '
-                  '(ئێستا: ${boundaryPoints.length})',
+              trf('⚠️ سنوور دەبێت لانیکەم ٣ خاڵ بێت (ئێستا: {0})', [boundaryPoints.length]),
             ),
             backgroundColor: Colors.orange,
           ),
@@ -478,7 +478,7 @@ class _NeighborhoodEditorDialogState
     final isEditing = widget.neighborhood != null;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -501,7 +501,7 @@ class _NeighborhoodEditorDialogState
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isEditing ? 'دەستکاریکردن' : 'زیادکردنی گەڕەک',
+                      tr(isEditing ? 'دەستکاریکردن' : 'زیادکردنی گەڕەک'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,
@@ -515,9 +515,9 @@ class _NeighborhoodEditorDialogState
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildField('ناوی کوردی *', _nameKuCtrl),
+                _buildField(tr('ناوی کوردی *'), _nameKuCtrl),
                 const SizedBox(height: 10),
-                _buildField('ناوی ئینگلیزی', _nameEnCtrl),
+                _buildField(tr('ناوی ئینگلیزی'), _nameEnCtrl),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -528,7 +528,7 @@ class _NeighborhoodEditorDialogState
                 ),
                 const SizedBox(height: 10),
                 _buildField(
-                  'سنوور (lat,lng;lat,lng;...)',
+                  tr('سنوور (lat,lng;lat,lng;...)'),
                   _boundaryCtrl,
                   maxLines: 5,
                 ),
@@ -550,9 +550,7 @@ class _NeighborhoodEditorDialogState
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'خاڵەکانی سنوور بەم شێوەیە بنووسە:\n'
-                              '34.6189,45.3156;34.6195,45.3162;...\n'
-                              '⚠️ پێویستە لانیکەم ٣ خاڵ بێت',
+                          tr('خاڵەکانی سنوور بەم شێوەیە بنووسە:\n34.6189,45.3156;34.6195,45.3162;...\n⚠️ پێویستە لانیکەم ٣ خاڵ بێت'),
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.blue.shade900,
@@ -586,7 +584,7 @@ class _NeighborhoodEditorDialogState
                       ),
                     )
                         : Text(
-                      isEditing ? 'نوێکردنەوە' : 'زیادکردن',
+                      tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 15,

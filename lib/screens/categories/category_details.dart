@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../stores/store_details_dialog.dart';
+import '../../l10n/tr.dart';
 
 /// 📂 شاشەی وردەکاری بەش — ULTRA PRO EDITION
 class CategoryDetailsScreen extends StatefulWidget {
@@ -66,7 +67,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
@@ -140,7 +141,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  widget.categoryName,
+                                  tr(widget.categoryName),
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w900,
@@ -317,7 +318,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                 fontWeight: FontWeight.w600,
               ),
               decoration: InputDecoration(
-                hintText: 'گەڕان بەدوای شوێن...',
+                hintText: tr('گەڕان بەدوای شوێن...'),
                 hintStyle: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.white38 : Colors.grey,
@@ -372,7 +373,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         ),
         const SizedBox(width: 10),
         Text(
-          'ژێربەشەکان',
+          tr('ژێربەشەکان'),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -490,7 +491,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             ),
             const SizedBox(height: 6),
             Text(
-              name,
+              tr(name),
               style: TextStyle(
                 fontWeight:
                 isSelected ? FontWeight.w900 : FontWeight.w700,
@@ -537,7 +538,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         ),
         const SizedBox(width: 10),
         Text(
-          'شوێنەکان',
+          tr('شوێنەکان'),
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
@@ -612,7 +613,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        store['name'] ?? '',
+                        tr(store['name'] ?? ''),
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 14,
@@ -634,7 +635,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
-                              store['address'] ?? 'کەلار',
+                              tr(store['address'] ?? 'کەلار'),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -700,7 +701,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             ),
             const SizedBox(height: 20),
             Text(
-              'هیچ شوێنێک نەدۆزرایەوە',
+              tr('هیچ شوێنێک نەدۆزرایەوە'),
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
@@ -709,7 +710,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'لەم بەشەدا هیچ شوێنێک نییە هێشتا',
+              tr('لەم بەشەدا هیچ شوێنێک نییە هێشتا'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,

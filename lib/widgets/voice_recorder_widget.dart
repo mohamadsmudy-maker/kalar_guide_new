@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import '../services/audio_service.dart';
+import '../l10n/tr.dart';
 
 /// 🎤 Widget ی تۆمارکردنی دەنگ
 class VoiceRecorderWidget extends StatefulWidget {
@@ -88,7 +89,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
           if (mounted) setState(() => _recordSeconds++);
         });
       } else {
-        _showError('نەتوانرا تۆمارکردن دەست پێبکات');
+        _showError(tr('نەتوانرا تۆمارکردن دەست پێبکات'));
       }
     }
   }
@@ -112,7 +113,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       }
     } catch (e) {
       debugPrint('❌ Play error: $e');
-      _showError('نەتوانرا دەنگ لێبدرێت');
+      _showError(tr('نەتوانرا دەنگ لێبدرێت'));
     }
   }
 
@@ -142,7 +143,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
   void _showError(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.red),
+      SnackBar(content: Text(tr(msg)), backgroundColor: Colors.red),
     );
   }
 
@@ -220,7 +221,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'خەریکی تۆمارکردنە... ${_formatDuration(_recordSeconds)}',
+                  trf('خەریکی تۆمارکردنە... {0}', [_formatDuration(_recordSeconds)]),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -243,10 +244,10 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                   onPressed: _togglePlay,
                 ),
                 const SizedBox(width: 4),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'دەنگ تۆمارکراوە',
-                    style: TextStyle(
+                    tr('دەنگ تۆمارکراوە'),
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1E88E5),
@@ -262,9 +263,9 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                 ),
               ],
             )
-                : const Text(
-              '🎤 کلیک بکە بۆ تۆمارکردنی دەنگ',
-              style: TextStyle(
+                : Text(
+              tr('🎤 کلیک بکە بۆ تۆمارکردنی دەنگ'),
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,

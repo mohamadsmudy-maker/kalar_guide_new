@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../services/whatsapp_complaint_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🎯 Bottom Sheet ی وردەکاری سکاڵا — ULTRA PRO + WhatsApp
 class ComplaintDetailsProSheet extends StatefulWidget {
@@ -138,10 +139,10 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ تێبینی پاشەکەوتکرا'),
+          SnackBar(
+            content: Text(tr('✅ تێبینی پاشەکەوتکرا')),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -149,7 +150,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(trf('هەڵە: {0}', [e])),
             backgroundColor: Colors.red,
           ),
         );
@@ -204,7 +205,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
       // ⭐ messenger بەکاربهێنە نەک context
       messenger.showSnackBar(
         SnackBar(
-          content: Text('✅ گۆڕدرا بۆ: ${_statusText(newStatus)}'),
+          content: Text(trf('✅ گۆڕدرا بۆ: {0}', [_statusText(newStatus)])),
           backgroundColor: _color(newStatus),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -228,7 +229,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('هەڵە: $e'),
+            content: Text(trf('هەڵە: {0}', [e])),
             backgroundColor: Colors.red,
           ),
         );
@@ -265,7 +266,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.92,
@@ -330,7 +331,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          statusText,
+                          tr(statusText),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
@@ -339,7 +340,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _formatFullDate(c['created_at']),
+                          tr(_formatFullDate(c['created_at'])),
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark
@@ -479,7 +480,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                         lng != null &&
                         lat != 0 &&
                         lng != 0) ...[
-                      _buildSectionTitle('📍 شوێن لەسەر نەخشە', isDark),
+                      _buildSectionTitle(tr('📍 شوێن لەسەر نەخشە'), isDark),
                       const SizedBox(height: 8),
                       Container(
                         height: 180,
@@ -537,18 +538,18 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                                   .withValues(alpha: 0.3),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.open_in_new_rounded,
                                 color: AppColors.primary,
                                 size: 16,
                               ),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
-                                'کردنەوە لە Google Maps',
-                                style: TextStyle(
+                                tr('کردنەوە لە Google Maps'),
+                                style: const TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 12,
@@ -562,7 +563,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                     ],
 
                     // 📝 تێبینی ئەدمین
-                    _buildSectionTitle('📝 تێبینی ئەدمین', isDark),
+                    _buildSectionTitle(tr('📝 تێبینی ئەدمین'), isDark),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
@@ -583,11 +584,11 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                           color: isDark ? Colors.white : Colors.black87,
                           fontSize: 13,
                         ),
-                        decoration: const InputDecoration(
-                          hintText: 'تێبینییەک بنووسە...',
-                          hintStyle: TextStyle(fontSize: 12),
+                        decoration: InputDecoration(
+                          hintText: tr('تێبینییەک بنووسە...'),
+                          hintStyle: const TextStyle(fontSize: 12),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.all(12),
+                          contentPadding: const EdgeInsets.all(12),
                         ),
                       ),
                     ),
@@ -607,9 +608,9 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                           ),
                         )
                             : const Icon(Icons.save_rounded, size: 18),
-                        label: const Text(
-                          'پاشەکەوتکردنی تێبینی',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                        label: Text(
+                          tr('پاشەکەوتکردنی تێبینی'),
+                          style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -706,18 +707,18 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.mic_rounded,
+                        const Icon(Icons.mic_rounded,
                             color: Colors.white, size: 16),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Text(
-                          'دەنگی سکاڵا',
-                          style: TextStyle(
+                          tr('دەنگی سکاڵا'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
@@ -725,10 +726,10 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'کرتە بکە بۆ لێدان',
-                      style: TextStyle(
+                      tr('کرتە بکە بۆ لێدان'),
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 10,
                       ),
@@ -743,7 +744,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
             Row(
               children: [
                 Text(
-                  _formatDuration(_voicePosition),
+                  tr(_formatDuration(_voicePosition)),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -765,7 +766,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                   ),
                 ),
                 Text(
-                  _formatDuration(_voiceDuration),
+                  tr(_formatDuration(_voiceDuration)),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -819,7 +820,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'ژمارەی پەیوەندی',
+                  tr('ژمارەی پەیوەندی'),
                   style: TextStyle(
                     fontSize: 10,
                     color: isDark ? Colors.white54 : Colors.grey.shade600,
@@ -828,7 +829,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  phone,
+                  tr(phone),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
@@ -910,7 +911,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,
+                  tr(label),
                   style: TextStyle(
                     fontSize: 10,
                     color: isDark ? Colors.white54 : Colors.grey,
@@ -919,7 +920,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  value,
+                  tr(value),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
@@ -947,7 +948,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         ),
         const SizedBox(width: 6),
         Text(
-          title,
+          tr(title),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w900,
@@ -991,9 +992,9 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         child: ElevatedButton.icon(
           onPressed: () => _updateStatus('completed'),
           icon: const Icon(Icons.check_circle_rounded, size: 20),
-          label: const Text(
-            'تەواوکردن و جێبەجێکردن ✅',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+          label: Text(
+            tr('تەواوکردن و جێبەجێکردن ✅'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF3498DB),
@@ -1031,7 +1032,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         onPressed: onTap,
         icon: Icon(icon, size: 18),
         label: Text(
-          label,
+          tr(label),
           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
         ),
         style: ElevatedButton.styleFrom(
@@ -1059,7 +1060,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
           Icon(icon, color: color, size: 22),
           const SizedBox(width: 8),
           Text(
-            text,
+            tr(text),
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w900,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
+import '../../l10n/tr.dart';
 
 /// 🎬 شاشەی ڤیدیۆ و ڕێنماییەکان
 class UserVideosScreen extends StatelessWidget {
@@ -10,13 +11,13 @@ class UserVideosScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: const Color(0xFFF7F5F8),
         appBar: AppBar(
-          title: const Text(
-            "ڤیدیۆ و ڕێنماییەکان 🎬",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          title: Text(
+            tr("ڤیدیۆ و ڕێنماییەکان 🎬"),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -36,19 +37,19 @@ class UserVideosScreen extends StatelessWidget {
 
             final videos = snapshot.data ?? [];
             if (videos.isEmpty) {
-              return const Center(
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.video_library_outlined,
                       size: 60,
                       color: Colors.grey,
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Text(
-                      "هیچ ڤیدیۆیەکی ڕێنمایی بەردەوام نییە 📭",
-                      style: TextStyle(
+                      tr("هیچ ڤیدیۆیەکی ڕێنمایی بەردەوام نییە 📭"),
+                      style: const TextStyle(
                         color: Colors.grey,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -92,7 +93,7 @@ class UserVideosScreen extends StatelessWidget {
                       ),
                     ),
                     title: Text(
-                      vid['title'] ?? '',
+                      tr(vid['title'] ?? ''),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -101,7 +102,7 @@ class UserVideosScreen extends StatelessWidget {
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        vid['description'] ?? '',
+                        tr(vid['description'] ?? ''),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,

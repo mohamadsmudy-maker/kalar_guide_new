@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../stores/store_details_dialog.dart';
+import '../../l10n/tr.dart';
 
 /// 📰 وردەکاری هەواڵ — ULTRA PRO MAX V2
 class NewsDetailsScreen extends StatefulWidget {
@@ -182,7 +183,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
         isLiked = wasLiked;
         likes = oldLikes;
       });
-      _showError('هەڵە لە لایککردن');
+      _showError(tr('هەڵە لە لایککردن'));
     } finally {
       if (mounted) setState(() => _isLiking = false);
     }
@@ -223,7 +224,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
       debugPrint('❌ Favorite error: $e');
       if (!mounted) return;
       setState(() => isFavorite = wasFavorite);
-      _showError('هەڵە لە دڵخوازکردن');
+      _showError(tr('هەڵە لە دڵخوازکردن'));
     } finally {
       if (mounted) setState(() => _isFavoriting = false);
     }
@@ -238,9 +239,9 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: const Text(
-            'تکایە سەرەتا بچۆ ژوورەوە ⚠',
-            style: TextStyle(fontWeight: FontWeight.w700),
+          content: Text(
+            tr('تکایە سەرەتا بچۆ ژوورەوە ⚠'),
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           backgroundColor: AppColors.orange,
           behavior: SnackBarBehavior.floating,
@@ -258,7 +259,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            message,
+            tr(message),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           backgroundColor: AppColors.red,
@@ -352,13 +353,13 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     );
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bgColor,
         appBar: AppBar(
-          title: const Text(
-            'وردەکاری هەواڵ',
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+          title: Text(
+            tr('وردەکاری هەواڵ'),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           ),
           backgroundColor:
           isDark ? AppColors.darkCard : AppColors.surface,
@@ -384,7 +385,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                     _buildTypeBadge(newsType),
                     const SizedBox(height: 10),
                     Text(
-                      title,
+                      tr(title),
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 22,
@@ -487,7 +488,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                         children: [
                           Flexible(
                             child: Text(
-                              store['name']?.toString() ?? 'شوێن',
+                              tr(store['name']?.toString() ?? 'شوێن'),
                               style: TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 16,
@@ -520,7 +521,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
-                              store['address']?.toString() ?? 'کەلار',
+                              tr(store['address']?.toString() ?? 'کەلار'),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isDark
@@ -568,7 +569,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
           Icon(_getTypeIcon(newsType), color: color, size: 16),
           const SizedBox(width: 6),
           Text(
-            newsType,
+            tr(newsType),
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w900,
@@ -596,7 +597,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              date,
+              tr(date),
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? Colors.white54 : AppColors.textSecondary,
@@ -672,7 +673,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 4),
         Text(
-          value,
+          tr(value),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w900,
@@ -828,7 +829,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
           ),
         ),
         child: Text(
-          description,
+          tr(description),
           style: TextStyle(
             fontSize: 15,
             color: isDark ? Colors.white70 : AppColors.textPrimary,

@@ -5,6 +5,7 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
 import 'package:kalar_guide_new/config/app_colors.dart';
+import '../l10n/tr.dart';
 
 /// 🖼️ بینەری وێنەی تەواو — بۆ گەلەری و هەموو شوێنەکان
 class FullScreenImageViewer extends StatefulWidget {
@@ -97,11 +98,11 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                             color: Colors.white,
                           ),
                           onPressed: () => Navigator.pop(context),
-                          tooltip: 'گەڕانەوە',
+                          tooltip: tr('گەڕانەوە'),
                         ),
                         Expanded(
                           child: Text(
-                            widget.imageTitle,
+                            tr(widget.imageTitle),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
