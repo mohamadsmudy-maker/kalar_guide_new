@@ -35,4 +35,20 @@ void main() {
       expect(list.every((t) => t['name']!.isNotEmpty), isTrue);
     });
   });
+
+  group('ناسینەوەی بەنزینخانە', () {
+    test('هەموو ناوەکانی داتابەیس', () {
+      expect(FuelService.isStation({'category': 'بەنزینخانەکان'}), isTrue);
+      expect(FuelService.isStation({'category': 'سوتەمەنی'}), isTrue);
+      expect(FuelService.isStation({'category': 'خزمەتگوزاری', 'sub_category': 'بەنزینخانە'}), isTrue);
+      expect(FuelService.isStation({'category': 'خواردن'}), isFalse);
+      expect(FuelService.isStation({}), isFalse);
+    });
+
+    test('فلتەری Supabase هەردوو ستوون دەگرێتەوە', () {
+      final f = FuelService.stationFilter;
+      expect(f, contains('category.ilike.*بەنزین*'));
+      expect(f, contains('sub_category.ilike.*سوتەمەنی*'));
+    });
+  });
 }
