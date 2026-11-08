@@ -381,6 +381,10 @@ class _AdminGalleryState extends State<AdminGallery> {
               builder: (_) => FullScreenImageViewer(
                 imageUrl: items[i].imageUrl,
                 imageTitle: items[i].title,
+                category: GalleryCategoryRegistry.byId(items[i].categoryId).label,
+                categoryIcon: GalleryCategoryRegistry.byId(items[i].categoryId).icon,
+                views: items[i].views,
+                date: items[i].createdAt,
               ),
             ),
           ),

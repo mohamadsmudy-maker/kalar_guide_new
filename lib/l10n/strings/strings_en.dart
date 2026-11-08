@@ -1636,4 +1636,11 @@ const Map<String, String> stringsEn = {
   'ئاینی': 'Religious',
   'بانکەکان': 'Banks',
   'دەرمانخانەکان': 'Pharmacies',
+  '{0} بینین': '{0} views',
+  'بارکردن سەرکەوتوو نەبوو': 'Failed to load',
+  'دووبارە هەوڵدانەوە': 'Try again',
+  'نەتوانرا ڤیدیۆکە بکرێتەوە': 'Could not open the video',
+  'هێشتا هیچ ڤیدیۆیەک نییە': 'No videos yet',
+  'پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە': 'Check your internet connection and try again',
+  'ڤیدیۆی ڕێنمایی بەم زووانە لێرە دادەنرێن': 'Guide videos will be added here soon',
 };

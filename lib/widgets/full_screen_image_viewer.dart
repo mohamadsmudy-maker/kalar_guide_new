@@ -5,17 +5,30 @@ import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
 import 'package:kalar_guide_new/config/app_colors.dart';
+import 'package:share_plus/share_plus.dart';
+
 import '../l10n/tr.dart';
+import '../utils/gallery_helpers.dart';
 
 /// 🖼️ بینەری وێنەی تەواو — بۆ گەلەری و هەموو شوێنەکان
 class FullScreenImageViewer extends StatefulWidget {
   final String imageUrl;
   final String imageTitle;
 
+  /// زانیاری ئارەزوومەندانە بۆ پانێڵی خوارەوە
+  final String? category;
+  final IconData? categoryIcon;
+  final int? views;
+  final DateTime? date;
+
   const FullScreenImageViewer({
     super.key,
     required this.imageUrl,
     required this.imageTitle,
+    this.category,
+    this.categoryIcon,
+    this.views,
+    this.date,
   });
 
   @override
@@ -32,6 +45,55 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) setState(() => _showControls = false);
     });
+  }
+
+  bool get _hasInfo => widget.category != null || widget.views != null || widget.date != null;
+
+  String _digits(String s) => AppLang.isRtl ? toLocalDigits(s) : s;
+
+  Widget _pill(IconData icon, String text) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: Colors.white),
+            const SizedBox(width: 6),
+            Text(text, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      );
+
+  Widget _buildInfo() {
+    final d = widget.date?.toLocal();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+          colors: [Colors.black.withValues(alpha: 0.75), Colors.transparent],
+        ),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          if (widget.category != null)
+            _pill(widget.categoryIcon ?? Icons.photo_library_rounded, tr(widget.category!)),
+          if (widget.views != null)
+            _pill(Icons.visibility_rounded, trf('{0} بینین', [_digits('${widget.views}')])),
+          if (d != null)
+            _pill(Icons.calendar_today_rounded,
+                _digits('${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}')),
+        ],
+      ),
+    );
   }
 
   @override
@@ -113,10 +175,19 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                             textAlign: TextAlign.center,
                           ),
                         ),
-                        const SizedBox(width: 48),
+                        IconButton(
+                          icon: const Icon(Icons.share_rounded, color: Colors.white),
+                          tooltip: tr('هاوبەشکردن'),
+                          onPressed: () {
+                            HapticFeedback.selectionClick();
+                            Share.share('${tr(widget.imageTitle)}\n${widget.imageUrl}\n\n${tr('گەلەری کەلار')} • ${tr('ئەپی ڕێبەری کەلار')}');
+                          },
+                        ),
                       ],
                     ),
                   ),
+                  const Spacer(),
+                  if (_hasInfo) _buildInfo(),
                 ],
               ),
             ),

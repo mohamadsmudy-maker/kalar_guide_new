@@ -198,13 +198,10 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0.5,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          color: onSurface,
-          fontFamily: defaultFontFamily,
-        ),
-        iconTheme: IconThemeData(color: appBarFg),
+        // ⚠️ titleTextStyle و iconTheme لێرە دانانرێن: ئەگەر ڕەنگیان تێدا بێت،
+        // foregroundColor ی هەر شاشەیەک پشتگوێ دەخەن (ئایکۆنی ڕەش لەسەر
+        // app bar ی تاریک). ستایلی ناونیشان لە textTheme.titleLarge دێت
+        // (18، w800) و ڕەنگەکەی لە foregroundColor.
       ),
       iconTheme: IconThemeData(
         color: brightness == Brightness.dark ? Colors.white : primaryColor,

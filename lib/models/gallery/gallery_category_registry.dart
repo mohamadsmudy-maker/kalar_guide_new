@@ -1,59 +1,58 @@
 import 'package:flutter/material.dart';
 import 'gallery_category.dart';
-import '../../l10n/tr.dart';
 
 /// 📚 ڕیجستری هەموو جۆرەکانی گەلەری
 class GalleryCategoryRegistry {
   GalleryCategoryRegistry._();
 
   static final List<GalleryCategory> all = [
-    GalleryCategory(
+    const GalleryCategory(
       id: 'nature',
-      label: tr('سروشت'),
+      label: 'سروشت', // tr() لە شوێنی پیشاندان
       icon: Icons.forest_rounded,
-      color: const Color(0xFF2E7D32),
+      color: Color(0xFF2E7D32),
     ),
-    GalleryCategory(
+    const GalleryCategory(
       id: 'history',
-      label: tr('مێژوو'),
+      label: 'مێژوو', // tr() لە شوێنی پیشاندان
       icon: Icons.account_balance_rounded,
-      color: const Color(0xFF6D4C41),
+      color: Color(0xFF6D4C41),
     ),
-    GalleryCategory(
+    const GalleryCategory(
       id: 'city',
-      label: tr('شار'),
+      label: 'شار', // tr() لە شوێنی پیشاندان
       icon: Icons.location_city_rounded,
-      color: const Color(0xFF1565C0),
+      color: Color(0xFF1565C0),
     ),
-    GalleryCategory(
+    const GalleryCategory(
       id: 'events',
-      label: tr('بۆنەکان'),
+      label: 'بۆنەکان', // tr() لە شوێنی پیشاندان
       icon: Icons.celebration_rounded,
-      color: const Color(0xFFE65100),
+      color: Color(0xFFE65100),
     ),
-    GalleryCategory(
+    const GalleryCategory(
       id: 'sports',
-      label: tr('وەرزش'),
+      label: 'وەرزش', // tr() لە شوێنی پیشاندان
       icon: Icons.sports_soccer_rounded,
-      color: const Color(0xFF00838F),
+      color: Color(0xFF00838F),
     ),
-    GalleryCategory(
+    const GalleryCategory(
       id: 'culture',
-      label: tr('کەلتوور'),
+      label: 'کەلتوور', // tr() لە شوێنی پیشاندان
       icon: Icons.theater_comedy_rounded,
-      color: const Color(0xFF6A1B9A),
+      color: Color(0xFF6A1B9A),
     ),
-    GalleryCategory(
+    const GalleryCategory(
       id: 'food',
-      label: tr('خواردن'),
+      label: 'خواردن', // tr() لە شوێنی پیشاندان
       icon: Icons.restaurant_rounded,
-      color: const Color(0xFFD84315),
+      color: Color(0xFFD84315),
     ),
-    GalleryCategory(
+    const GalleryCategory(
       id: 'general',
-      label: tr('گشتی'),
+      label: 'گشتی', // tr() لە شوێنی پیشاندان
       icon: Icons.photo_library_rounded,
-      color: const Color(0xFF455A64),
+      color: Color(0xFF455A64),
     ),
   ];
 

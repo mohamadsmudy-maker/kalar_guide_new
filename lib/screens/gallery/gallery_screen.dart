@@ -12,6 +12,7 @@ import '../../widgets/gallery/gallery_image_card.dart';
 import '../../widgets/gallery/gallery_shimmer_grid.dart';
 import '../../widgets/full_screen_image_viewer.dart';
 import '../../l10n/tr.dart';
+import '../../models/gallery/gallery_category_registry.dart';
 
 /// 🖼️ گەلەری بەکارهێنەر — ULTRA PRO MAX V4
 class GalleryScreen extends StatefulWidget {
@@ -81,6 +82,10 @@ class _GalleryScreenState extends State<GalleryScreen> {
         builder: (_) => FullScreenImageViewer(
           imageUrl: img.imageUrl,
           imageTitle: img.title,
+          category: GalleryCategoryRegistry.byId(img.categoryId).label,
+          categoryIcon: GalleryCategoryRegistry.byId(img.categoryId).icon,
+          views: updated.views,
+          date: img.createdAt,
         ),
       ),
     );
@@ -110,6 +115,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
               isDark: isDark,
               selectedId: _selectedCategory,
               counts: _counts,
+              hideEmpty: true,
               onSelected: (id) => setState(() => _selectedCategory = id),
             ),
             const SizedBox(height: 8),
