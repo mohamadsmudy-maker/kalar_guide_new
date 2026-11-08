@@ -61,16 +61,6 @@ class AiService {
   // 📝 فەنکشنەکانی تر
   // ═══════════════════════════════════════════════════════════
 
-  /// دروستکردنی وەسفی کاڵا
-  static Future<String> generateDescription(
-      String name,
-      String price,
-      ) async {
-    return await _callGemini(
-      "You are a copywriter for 'Kalar Guide' (ڕێبەری کەلار) - local city guide and market. Write a 2-line attractive Kurdish Sorani description for: $name with price $price IQD. Use emoji.",
-    );
-  }
-
   /// وەڵامدانەوەی کڕیار
   static Future<String> replyToCustomer(String message) async {
     return await _callGemini(
@@ -124,19 +114,6 @@ class AiService {
     }
   }
 
-  /// پێشنیاری کاڵا
-  static Future<String> recommendProducts(
-      String currentProductName,
-      List<String> availableProducts,
-      ) async {
-    String prompt =
-        "تۆ یاریدەدەری ڕێبەری کەلاریت. کڕیار سەیری ئەم کاڵا یان شوێنەی کردووە: '$currentProductName'. "
-        "لە میانەی ئەم لیستەی بەردەست: ${availableProducts.join(', ')}, "
-        "تەنها ناوی 2 تا 3 دانە لەم لیستە هەڵبژێرە کە گونجاو بن بۆ پێشنیارکردن بۆی. "
-        "تەنها ناوەکان بە بەستەر بە کۆما (،) بنووسە و هیچ دەقێکی تر مێنوسە.";
-    return await _callGemini(prompt);
-  }
-
   /// چاککردنی دەقی کوردی
   static Future<String> fixKurdishText(String messyText) async {
     return await _callGemini(
@@ -150,13 +127,6 @@ class AiService {
       ) async {
     return await _callGemini(
       "تۆ نوێنەری فرۆشگا یان خزمەتگوزاری لە ڕێبەری کەلاریت. کڕیار پرسیوە: '$customerQuestion'. وەڵامێکی کورتی بە ئاداب و ڕوون بە زمانی کوردی سۆرانی بنووسە.",
-    );
-  }
-
-  /// پێشنیاری نرخ
-  static Future<String> suggestProductPrice(String productName) async {
-    return await _callGemini(
-      "تۆ شارەزای بازاڕی کەلاری. بۆ کاڵای '$productName'، مەودایەکی گونجاوی نرخی فرۆشتن بە دیناری عێراقی (IQD) پێشنیار بکە لەگەڵ هۆکارێکی کورت بە کوردی.",
     );
   }
 

@@ -232,4 +232,36 @@ set role authenticated;
 select t.as_user('00000000-0000-0000-0000-0000000000a9');
 select t.check(app_delete_account() = 'not_logged_in', 'guest cannot delete');
 
+-- ── place suggestions + settings ─────────────────────────────────
+select t.check(app_setting_on('place_suggestions_enabled'), 'suggestions on by default');
+select t.check(t.rows($$insert into place_suggestions(name, latitude, longitude) values ('X', 34.6, 45.3)$$) = -1,
+               'guest cannot suggest');
+select t.check(t.rows($$update app_settings set value = 'false'$$) = 0, 'guest cannot toggle');
+select t.as_user('00000000-0000-0000-0000-0000000000c1');
+select app_login('07500000004', 'custpass1');                                       -- customer
+select t.check(t.rows($$insert into place_suggestions(name, category, latitude, longitude) values ('دوکانی نوێ', 'بازاڕ', 34.61, 45.33)$$) = 1,
+               'customer suggests a place');
+select t.check(t.rows($$insert into place_suggestions(name, latitude, longitude, status) values ('Y', 34.6, 45.3, 'approved')$$) = -1,
+               'cannot self-approve');
+select t.check(t.rows($$update place_suggestions set status = 'approved'$$) = 0, 'customer cannot approve');
+select t.check((select count(*) from place_suggestions) = 1, 'customer sees own suggestion');
+select t.as_user('00000000-0000-0000-0000-0000000000c2');
+select app_login('07500000001', 'adminpass');                                       -- admin
+select t.check(t.rows($$update app_settings set value = 'false', updated_at = now() where key = 'place_suggestions_enabled'$$) = 1,
+               'admin turns suggestions off');
+select t.check((select count(*) from place_suggestions) >= 1, 'admin sees suggestions');
+select t.check(t.rows($$update place_suggestions set status = 'approved', dukan_id = 1, reviewed_at = now()$$) = 1,
+               'admin approves');
+select t.as_user('00000000-0000-0000-0000-0000000000c1');
+select t.check(t.rows($$insert into place_suggestions(name, latitude, longitude) values ('Z', 34.6, 45.3)$$) = -1,
+               'no suggestions while turned off');
+reset role;
+update dukan set external_id = 'osm:node/1' where id = 1;
+do $$ begin
+  update dukan set external_id = 'osm:node/1' where id = 2;
+  raise exception 'FAILED: same OSM place added twice';
+exception when unique_violation then raise notice 'ok: same OSM place cannot be added twice';
+end $$;
+set role authenticated;
+
 \echo 'ALL RLS TESTS PASSED'

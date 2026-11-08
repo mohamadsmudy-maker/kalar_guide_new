@@ -146,31 +146,6 @@ class StorageService {
     }
   }
 
-  /// ✅ سڕینەوەی هەموو فایلەکانی **کاڵا**
-  static Future<void> deleteProductFiles({
-    required Map<String, dynamic> product,
-  }) async {
-    try {
-      const bucket = 'products';
-
-      final images = product['images'];
-      if (images is List && images.isNotEmpty) {
-        final urls = images.map((e) => e.toString()).toList();
-        await deleteImages(bucketName: bucket, imageUrls: urls);
-      }
-
-      // img ی تاک
-      final img = product['img']?.toString() ?? '';
-      if (img.isNotEmpty) {
-        await deleteVoice(bucketName: bucket, voiceUrl: img);
-      }
-
-      debugPrint('✅ هەموو فایلەکانی کاڵا سڕایەوە');
-    } catch (e) {
-      debugPrint('❌ هەڵە لە سڕینەوەی فایلەکانی کاڵا: $e');
-    }
-  }
-
   /// ✅ سڕینەوەی هەموو فایلەکانی **شوێن**
   static Future<void> deleteStoreFiles({
     required Map<String, dynamic> store,

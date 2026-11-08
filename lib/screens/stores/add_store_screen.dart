@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
@@ -10,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/app_colors.dart';
 import '../../services/image_service.dart';
+import '../../services/places/place_writer.dart';
 import 'map_picker.dart';
 import '../../l10n/tr.dart';
 
@@ -17,7 +17,13 @@ import '../../l10n/tr.dart';
 class AddStoreScreen extends StatefulWidget {
   final Map<String, dynamic>? storeToEdit;
 
-  const AddStoreScreen({super.key, this.storeToEdit});
+  /// شوێنێکی نوێ کە زانیارییەکانی پێشتر پڕ کراونەتەوە (پێشنیاری هاوڵاتی یان
+  /// OpenStreetMap): name, category, type, phone, address, description,
+  /// latitude, longitude, source, external_id. دوای تۆمارکردن ئایدی شوێنە
+  /// نوێکە دەگەڕێنێتەوە (Navigator.pop(context, id)).
+  final Map<String, dynamic>? prefill;
+
+  const AddStoreScreen({super.key, this.storeToEdit, this.prefill});
 
   @override
   State<AddStoreScreen> createState() => _AddStoreScreenState();
@@ -95,24 +101,29 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       _existingLogo = widget.storeToEdit!['logo']?.toString();
     } else {
       _generateRandomVendorCode();
+      final p = widget.prefill;
+      if (p != null) {
+        String str(String k) => '${p[k] ?? ''}'.trim();
+        _nameController.text = str('name');
+        _phoneController.text = str('phone');
+        _addressController.text = str('address');
+        _descController.text = str('description');
+        if (str('category').isNotEmpty) _selectedMainCategory = str('category');
+        if (str('type').isNotEmpty) _storeType = str('type');
+        _latitude = (p['latitude'] as num?)?.toDouble();
+        _longitude = (p['longitude'] as num?)?.toDouble();
+        if (_latitude != null && _longitude != null) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _detectNeighborhood(_latitude!, _longitude!),
+          );
+        }
+      }
     }
     _fetchCategories();
   }
 
   void _generateRandomVendorCode() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const nums = '0123456789';
-    final rand = Random();
-
-    String result = '';
-    for (int i = 0; i < 4; i++) {
-      result += chars[rand.nextInt(chars.length)];
-    }
-    for (int i = 0; i < 3; i++) {
-      result += nums[rand.nextInt(nums.length)];
-    }
-
-    _vendorCodeController.text = result;
+    _vendorCodeController.text = PlaceWriter.generateVendorCode();
   }
 
   @override
@@ -430,8 +441,21 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
 
       if (editingId == null) {
         storeData['created_at'] = DateTime.now().toIso8601String();
-        await Supabase.instance.client.from('dukan').insert(storeData);
+        final p = widget.prefill;
+        if (p != null) {
+          storeData['source'] = p['source'] ?? 'manual';
+          if (p['external_id'] != null) storeData['external_id'] = p['external_id'];
+        }
+        final created = await Supabase.instance.client
+            .from('dukan')
+            .insert(storeData)
+            .select('id')
+            .single();
         _showSnackBar(tr('زیادکرا ✅'), const Color(0xFF0F9D7A));
+        if (mounted && p != null) {
+          Navigator.pop(context, (created['id'] as num?)?.toInt());
+          return;
+        }
       } else {
         await Supabase.instance.client
             .from('dukan')
@@ -1063,8 +1087,11 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
     required bool isDark,
     required Function(String?) onChanged,
   }) {
+    // بەهایەک کە لە لیستەکەدا نییە (بۆ نموونە پێش بارکردنی بەشەکان) dropdown
+    // تێکدەدات؛ key دوای بارکردنی لیستەکە دووبارە دروستی دەکاتەوە
     return DropdownButtonFormField<String>(
-      initialValue: value,
+      key: ValueKey('$label/${items.length}'),
+      initialValue: items.contains(value) ? value : null,
       isExpanded: true,
       hint: Text(
         tr('هەڵبژێرە'),

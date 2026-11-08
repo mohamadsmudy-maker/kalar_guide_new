@@ -21,6 +21,8 @@ import 'admin_fuel_stations.dart';
 import 'admin_currency_stations.dart';
 import 'admin_prayer_times.dart';
 import 'admin_translations.dart';
+import 'admin_osm_import.dart';
+import 'admin_place_suggestions.dart';
 import 'admin_weather.dart';
 import 'admin_notifications.dart';
 import 'admin_vendor_requests.dart';
@@ -182,7 +184,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   int _totalComplaints = 0;
   int _pendingComplaints = 0;
   int _pendingRequests = 0;
-  int _totalProducts = 0;
+  int _totalNews = 0;
 
   StreamSubscription<int>? _onlineSub;
   Timer? _autoRefreshTimer;
@@ -383,7 +385,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             .select('id')
             .eq('is_approved', false)
             .count()),
-        _count(() => client.from('products').select('id').count()),
+        _count(() => client.from('news').select('id').count()),
       ]);
     } catch (e) {
       debugPrint('❌ loadData error: $e');
@@ -402,7 +404,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       _totalComplaints = results[2] ?? _totalComplaints;
       _pendingComplaints = results[3] ?? _pendingComplaints;
       _pendingRequests = results[4] ?? _pendingRequests;
-      _totalProducts = results[5] ?? _totalProducts;
+      _totalNews = results[5] ?? _totalNews;
 
       _loading = false;
       if (failed < results.length) {
@@ -665,6 +667,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           subtitle: tr('ڕاستکردنەوەی وەرگێڕانی ناوی شوێن و هەواڵ'),
           adminOnly: true,
           screen: () => const AdminTranslationsScreen(),
+        ),
+        _DashItem(
+          id: 'place_suggestions',
+          icon: Icons.add_location_alt_rounded,
+          color: const Color(0xFF0F9D7A),
+          title: tr('پێشنیاری شوێنەکان'),
+          subtitle: tr('پێشنیاری هاوڵاتیان — چالاک/ناچالاک و پەسەندکردن'),
+          adminOnly: true,
+          screen: () => const AdminPlaceSuggestionsScreen(),
+        ),
+        _DashItem(
+          id: 'osm_import',
+          icon: Icons.travel_explore_rounded,
+          color: const Color(0xFF1E88E5),
+          title: tr('هێنانی شوێن لە OpenStreetMap'),
+          subtitle: tr('زیادکردنی شوێنەکانی کەلار بە کۆمەڵ'),
+          adminOnly: true,
+          screen: () => const AdminOsmImportScreen(),
         ),
       ]),
       _DashSection('system', '⚙️ ڕێکخستن و سیستەم', [
