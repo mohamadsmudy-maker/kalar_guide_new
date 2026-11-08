@@ -43,13 +43,6 @@ class _AdminDatabaseViewerScreenState
       'columns': 'id, title, description, images, likes, views, created_at, store_id',
     },
     {
-      'key': 'products',
-      'name': 'کاڵاکان',
-      'icon': Icons.shopping_bag_rounded,
-      'color': Color(0xFFD9822B),
-      'columns': 'id, name, price, category, img, store_id, created_at',
-    },
-    {
       'key': 'orders',
       'name': 'ئۆردەرەکان',
       'icon': Icons.receipt_long_rounded,

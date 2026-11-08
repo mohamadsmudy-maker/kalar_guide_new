@@ -182,7 +182,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   int _totalComplaints = 0;
   int _pendingComplaints = 0;
   int _pendingRequests = 0;
-  int _totalProducts = 0;
+  int _totalNews = 0;
 
   StreamSubscription<int>? _onlineSub;
   Timer? _autoRefreshTimer;
@@ -383,7 +383,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             .select('id')
             .eq('is_approved', false)
             .count()),
-        _count(() => client.from('products').select('id').count()),
+        _count(() => client.from('news').select('id').count()),
       ]);
     } catch (e) {
       debugPrint('❌ loadData error: $e');
@@ -402,7 +402,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       _totalComplaints = results[2] ?? _totalComplaints;
       _pendingComplaints = results[3] ?? _pendingComplaints;
       _pendingRequests = results[4] ?? _pendingRequests;
-      _totalProducts = results[5] ?? _totalProducts;
+      _totalNews = results[5] ?? _totalNews;
 
       _loading = false;
       if (failed < results.length) {

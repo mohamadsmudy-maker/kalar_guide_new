@@ -19,7 +19,6 @@ class AppConstants {
   // ═══════════════════════════════════════════════════════════
   static const int maxImageSizeKB = 800;
   static const int imageQuality = 70;
-  static const int maxProductImages = 4;
   static const int maxNewsImages = 4;
   static const int maxStoreImages = 3;
   static const int maxComplaintImages = 2;
