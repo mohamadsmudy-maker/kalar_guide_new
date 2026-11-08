@@ -92,14 +92,18 @@ class _CategoriesScreenState extends State<CategoriesScreen>
 
   Future<void> _fetchCounts() async {
     try {
-      final res = await Supabase.instance.client.from('dukan').select('category');
-      final cats = [for (final r in res as List) '${r['category'] ?? ''}'];
+      final res = await Supabase.instance.client
+          .from('dukan')
+          .select('category, sub_category');
+      final stores = List<Map<String, dynamic>>.from(res as List);
       final cached = await _categoriesFuture;
       if (!mounted) return;
       setState(() {
         _counts = {
           for (final c in cached)
-            '${c['name']}': cats.where((x) => x.contains('${c['name']}')).length,
+            '${c['name']}': stores
+                .where((st) => PlaceDisplay.inCategory(st, '${c['name']}'))
+                .length,
         };
       });
     } catch (e) {
@@ -593,7 +597,11 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                           children: [
                             Expanded(
                               child: Text(
-                                count == null ? '' : trf('{0} شوێن', [PlaceDisplay.digits(count)]),
+                                count == null
+                                    ? ''
+                                    : count == 0
+                                        ? tr('هێشتا شوێنی تێدا نییە')
+                                        : trf('{0} شوێن', [PlaceDisplay.digits(count)]),
                                 style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: sub),
                               ),
                             ),

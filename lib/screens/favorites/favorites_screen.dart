@@ -560,6 +560,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           color: Colors.pink,
           isDark: isDark,
           actionLabel: tr('چوونەژوورەوە'),
+          actionIcon: Icons.login_rounded,
           onAction: () {
             Navigator.pushNamed(context, '/auth').then((_) {
               if (mounted) {
