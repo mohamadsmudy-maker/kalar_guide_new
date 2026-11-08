@@ -11,6 +11,11 @@ void main() {
     expect(tr(' بارەگا  حزبيیەکان‌ '), tr('بارەگا حزبییەکان'));
     expect(tr('ئیدارەی گەرمیان'), 'Garmiyan Administration');
     expect(tr('هیچ دەقێکی وانییە'), 'هیچ دەقێکی وانییە');
+    // نووسینی جیاواز لە داتابەیس
+    final party = tr('بارەگا حزبییەکان');
+    expect(tr('بارەگا حزبیەکان'), party);
+    expect(tr('بارهگا حزبییهکان'), party);
+    expect(tr('بارەگاحزبییەکان'), party);
   });
 
   test('category matching uses category and sub_category, normalized', () {

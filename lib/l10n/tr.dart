@@ -41,10 +41,35 @@ class AppLang {
     final index = _normalized[lang] ??= {
       for (final e in table.entries) normalizeKey(e.key): e.value,
     };
-    return index[normalizeKey(text)];
+    final hit = index[normalizeKey(text)];
+    if (hit != null || text.length > 48) return hit;
+
+    // ناوی کورت (بەش، جۆر): بێ «ی/ە/ه» و بۆشایی بەراورد دەکرێت، بۆ
+    // نووسینی وەک «حزبیەکان» / «حزبییەکان» / «حزبییهکان». ئەگەر دوو
+    // کلیل هەمان شێوەیان هەبێت، هیچیان بەکارنایەت (null).
+    final loose = _loose[lang] ??= _buildLoose(table);
+    final v = loose[looseKey(text)];
+    return identical(v, _ambiguous) ? null : v;
   }
 
   static final Map<String, Map<String, String>> _normalized = {};
+  static final Map<String, Map<String, String>> _loose = {};
+  static const String _ambiguous = '\u0000';
+  static final RegExp _looseDrop = RegExp('[\\sیەه]');
+
+  static String looseKey(String s) => normalizeKey(s).replaceAll(_looseDrop, '');
+
+  static Map<String, String> _buildLoose(Map<String, String> table) {
+    final out = <String, String>{};
+    for (final e in table.entries) {
+      if (e.key.length > 48) continue;
+      final k = looseKey(e.key);
+      if (k.length < 3) continue;
+      final prev = out[k];
+      out[k] = (prev == null || prev == e.value) ? e.value : _ambiguous;
+    }
+    return out;
+  }
 
   static final RegExp _spaces = RegExp(r'\s+');
 
