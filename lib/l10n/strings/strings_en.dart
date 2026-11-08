@@ -1689,4 +1689,7 @@ const Map<String, String> stringsEn = {
   'ئەکاونتت نییە؟': 'Don\'t have an account?',
   'چەند زانیارییەکی کەم، پاشان ئامادەیت': 'Just a few details and you\'re ready',
   'بۆ بەردەوامبوون بچۆ ژوورەوە': 'Sign in to continue',
+  'بە بەردەوامبوون، ڕازیت بە': 'By continuing, you agree to the',
+  'سیاسەتی تایبەتمەندی': 'Privacy Policy',
+  'چ زانیارییەک کۆدەکرێتەوە و بۆچی': 'What we collect and why',
 };

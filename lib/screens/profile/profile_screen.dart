@@ -16,6 +16,7 @@ import '../admin/admin_gallery.dart';
 import '../gallery/gallery_screen.dart';
 import '../../l10n/tr.dart';
 import '../../services/google_auth_service.dart';
+import '../legal/privacy_policy_screen.dart';
 
 class _QuickAction {
   final IconData icon;
@@ -339,6 +340,15 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         title: tr('دەربارەی ئەپ و پشتگیری'),
                         subtitle: tr('زانیاری زیاتر و پەیوەندی'),
                         onTap: () => _push(const AboutScreen()),
+                        itemIndex: 9,
+                      ),
+                      _buildMenuItem(
+                        isDark: isDark,
+                        icon: Icons.privacy_tip_rounded,
+                        color: const Color(0xFF5B6B82),
+                        title: tr('سیاسەتی تایبەتمەندی'),
+                        subtitle: tr('چ زانیارییەک کۆدەکرێتەوە و بۆچی'),
+                        onTap: () => _push(const PrivacyPolicyScreen()),
                         itemIndex: 9,
                       ),
 

@@ -122,6 +122,12 @@ select t.check(t.rows($$update app_users set is_approved = false where phone = '
 reset role;
 select t.check((select role from app_sessions where auth_uid = '00000000-0000-0000-0000-00000000000b') = 'customer',
                'revoked vendor session drops to customer');
+set role authenticated;
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+select t.check((select role from app_current_user()) = 'customer',
+               'app shows the revoked vendor as customer');
+select t.check((select is_approved from app_current_user()) = false, 'approval status still reported');
+reset role;
 select t.check((select fcm_token from app_users where phone = '07500000002') = 'tok', 'fcm token saved via RPC');
 select t.check((select bool_and(password like '$2%') from app_users), 'legacy passwords upgraded to bcrypt');
 select t.check(not exists (select 1 from pg_policies where tablename = 'banners' and policyname = 'old_allow_all'),
