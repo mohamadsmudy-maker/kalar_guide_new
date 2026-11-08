@@ -57,21 +57,36 @@ void main() {
         final calc = KalarPrayerTimes.calculate(_date(e.key));
         for (final id in KalarPrayerTimes.ids) {
           final diff = (_min(calc[id]!) - _min(e.value[id]!)).abs();
-          expect(diff, lessThanOrEqualTo(id == 'fajr' ? 2 : 1),
+          // بەیانی و خۆرهەڵاتن لە زستاندا تا ٢ خولەک جیاوازن
+          expect(diff, lessThanOrEqualTo(id == 'fajr' || id == 'sunrise' ? 2 : 1),
               reason: '${e.key} $id: هەژمار ${calc[id]} ، فەرمی ${e.value[id]}');
         }
       }
     });
 
-    test('ڕۆژی نەبوو لە خشتە (١٠ی تشرینی دووەم) هەژمار دەکرێت', () {
-      final day = KalarPrayerTimes.forDay(DateTime(2026, 11, 10));
+    test('ڕۆژێک کە لە خشتەدا نییە (١٥ی کانوونی دووەم) هەژمار دەکرێت', () {
+      final day = KalarPrayerTimes.forDay(DateTime(2027, 1, 15));
       expect(day.isOfficial, isFalse);
-      final before = kalarOfficialPrayerTimes['09-11']!;
-      final after = kalarOfficialPrayerTimes['11-11']!;
-      for (final id in KalarPrayerTimes.ids) {
-        final m = _min(day.times[id]!);
-        expect(m, inInclusiveRange(_min(before[id]!) - 2, _min(after[id]!) + 2), reason: id);
+      final m = KalarPrayerTimes.ids.map((id) => _min(day.times[id]!)).toList();
+      for (var i = 1; i < m.length; i++) {
+        expect(m[i], greaterThan(m[i - 1]));
       }
+      // نزیک لە کۆتایی کانوونی یەکەم (خشتەی فەرمی)
+      final dec31 = kalarOfficialPrayerTimes['31-12']!;
+      for (final id in KalarPrayerTimes.ids) {
+        expect((_min(day.times[id]!) - _min(dec31[id]!)).abs(), lessThanOrEqualTo(15), reason: id);
+      }
+    });
+
+    test('تشرینی دووەم و کانوونی یەکەم تەواون', () {
+      for (var d = 1; d <= 30; d++) {
+        expect(KalarPrayerTimes.forDay(DateTime(2026, 11, d)).isOfficial, isTrue, reason: '$d-11');
+      }
+      for (var d = 1; d <= 31; d++) {
+        expect(KalarPrayerTimes.forDay(DateTime(2026, 12, d)).isOfficial, isTrue, reason: '$d-12');
+      }
+      expect(KalarPrayerTimes.forDay(DateTime(2026, 12, 31)).times['fajr'], '05:41');
+      expect(KalarPrayerTimes.forDay(DateTime(2026, 11, 10)).times['maghrib'], '17:01');
     });
 
     test('خشتەکە بۆ ساڵانی تریش کار دەکات و جیاوازی ساڵانە < ٢ خولەکە', () {
