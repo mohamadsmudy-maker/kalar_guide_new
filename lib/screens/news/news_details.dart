@@ -6,6 +6,7 @@ import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../stores/store_details_dialog.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 📰 وردەکاری هەواڵ — ULTRA PRO MAX V2
 class NewsDetailsScreen extends StatefulWidget {
@@ -496,7 +497,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                                     ? Colors.white
                                     : AppColors.textPrimary,
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -521,7 +522,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
-                              tr(store['address']?.toString() ?? 'کەلار'),
+                              tr(PlaceDisplay.address(store['address'])),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isDark
@@ -608,7 +609,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
               children: [
                 _buildStatItem(
                   icon: Icons.visibility_rounded,
-                  value: '$views',
+                  value: PlaceDisplay.digits(views),
                   color: isDark
                       ? Colors.white70
                       : AppColors.textSecondary,
@@ -626,7 +627,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                     icon: isLiked
                         ? Icons.thumb_up_rounded
                         : Icons.thumb_up_off_alt_rounded,
-                    value: '$likes',
+                    value: PlaceDisplay.digits(likes),
                     color: isLiked
                         ? AppColors.primary
                         : (isDark

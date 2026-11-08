@@ -393,7 +393,7 @@ class _DailyScreenState extends State<DailyScreen>
                   child: _buildFooter(isDark),
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 112)),
+              SliverToBoxAdapter(child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom)),
             ],
           ),
         ),
@@ -892,8 +892,7 @@ class _ServiceCard extends StatelessWidget {
                               color: color.withValues(alpha: 0.09),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
-                              isRtl ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
+                            child: Icon(Icons.arrow_forward_rounded,
                               size: 16,
                               color: color,
                             ),
@@ -956,7 +955,6 @@ class _PromoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rtl = Directionality.of(context) == TextDirection.rtl;
 
     return Semantics(
       button: true,
@@ -1045,8 +1043,7 @@ class _PromoCard extends StatelessWidget {
                             color: Colors.white.withValues(alpha: 0.16),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(
-                            rtl ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
+                          child: const Icon(Icons.arrow_forward_rounded,
                             color: Colors.white,
                             size: 18,
                           ),

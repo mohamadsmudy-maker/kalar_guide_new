@@ -5,6 +5,7 @@ import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../stores/store_details_dialog.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 📂 شاشەی وردەکاری بەش — ULTRA PRO EDITION
 class CategoryDetailsScreen extends StatefulWidget {
@@ -635,7 +636,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
-                              tr(store['address'] ?? 'کەلار'),
+                              tr(PlaceDisplay.address(store['address'])),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,

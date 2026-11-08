@@ -6,6 +6,7 @@ import '../../widgets/common/optimized_network_image.dart';
 import '../news/news_details.dart';
 import '../admin/admin_news.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 class StoreNewsScreen extends StatefulWidget {
   final Map<String, dynamic> store;
@@ -155,7 +156,7 @@ class _StoreNewsScreenState extends State<StoreNewsScreen> {
                               const SizedBox(width: 3),
                               Expanded(
                                 child: Text(
-                                  tr(store['address'] ?? 'کەلار'),
+                                  tr(PlaceDisplay.address(store['address'])),
                                   style: const TextStyle(color: Colors.white70, fontSize: 11),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
