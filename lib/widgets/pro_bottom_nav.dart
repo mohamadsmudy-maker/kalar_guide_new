@@ -32,9 +32,10 @@ class ProBottomNav extends StatefulWidget {
   }) : assert(items.length >= 2, 'ProBottomNav needs at least 2 items');
 
   /// بەرزی بەشی سەرەوە کە بازنەکەی تێدا بەرز دەبێتەوە
-  static const double bumpHeight = 28;
+  static const double bumpHeight = 24;
   static const double _baseBarHeight = 62;
-  static const double _circle = 50;
+  static const double _circle = 64;
+  static const double _ring = 5; // ئەڵقەی ڕەنگی شریت لە دەوری بازنە
 
   @override
   State<ProBottomNav> createState() => _ProBottomNavState();
@@ -46,6 +47,12 @@ class _ProBottomNavState extends State<ProBottomNav>
     vsync: this,
     duration: const Duration(milliseconds: 420),
   );
+  @override
+  void initState() {
+    super.initState();
+    _c.value = 1; // یەکەم جار بەبێ ئەنیمەیشن
+  }
+
   late double _from = widget.currentIndex.toDouble();
   late double _to = _from;
 
@@ -92,6 +99,7 @@ class _ProBottomNavState extends State<ProBottomNav>
     final barHeight = ProBottomNav._baseBarHeight + (scale - 1) * 24;
     const bump = ProBottomNav.bumpHeight;
     const d = ProBottomNav._circle;
+    const outer = d + ProBottomNav._ring * 2;
     final n = widget.items.length;
     final current = widget.items[widget.currentIndex];
 
@@ -116,7 +124,8 @@ class _ProBottomNavState extends State<ProBottomNav>
                       cx: cx,
                       top: bump,
                       color: barColor,
-                      shadow: Colors.black.withValues(alpha: isDark ? 0.55 : 0.10),
+                      shadow:
+                          Colors.black.withValues(alpha: isDark ? 0.55 : 0.10),
                       border: isDark
                           ? Colors.white.withValues(alpha: 0.06)
                           : Colors.black.withValues(alpha: 0.04),
@@ -139,8 +148,9 @@ class _ProBottomNavState extends State<ProBottomNav>
                             index: i,
                             total: n,
                             // ئایکۆن کاڵ دەبێتەوە کاتێک بازنەکە لێی نزیک دەبێتەوە
-                            closeness:
-                                (1 - (_pos - i).abs()).clamp(0.0, 1.0).toDouble(),
+                            closeness: (1 - (_pos - i).abs())
+                                .clamp(0.0, 1.0)
+                                .toDouble(),
                             isActive: i == widget.currentIndex,
                             activeColor: active,
                             inactiveColor: inactive,
@@ -152,42 +162,86 @@ class _ProBottomNavState extends State<ProBottomNav>
                   ),
                 ),
 
-                // ─── بازنەی چالاک ───
+                // ─── بازنەی چالاک (ناوی تێدا نییە، وەک دوگمەی سەرەکی) ───
                 Positioned(
-                  left: cx - d / 2,
-                  top: bump - d / 2 + 6,
-                  width: d,
-                  height: d,
-                  child: GestureDetector(
-                    onTap: () => _tap(widget.currentIndex),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color.lerp(active, Colors.white, 0.18)!,
-                            active,
-                          ],
+                  left: cx - outer / 2,
+                  top: bump + 16 - outer / 2,
+                  width: outer,
+                  height: outer,
+                  child: Transform.scale(
+                    // کەمێک «باز» دەدات کاتێک دەگاتە بەشی نوێ
+                    scale: 0.86 + 0.14 * Curves.easeOutBack.transform(_c.value),
+                    child: GestureDetector(
+                      onTap: () => _tap(widget.currentIndex),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: barColor,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: active.withValues(alpha: 0.40),
-                            blurRadius: 14,
-                            offset: const Offset(0, 6),
+                        padding: const EdgeInsets.all(ProBottomNav._ring),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color.lerp(active, Colors.white, 0.25)!,
+                                active,
+                                Color.lerp(active, Colors.black, 0.12)!,
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: active.withValues(alpha: 0.45),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
-                        transitionBuilder: (child, a) =>
-                            ScaleTransition(scale: a, child: child),
-                        child: Icon(
-                          current.activeIcon,
-                          key: ValueKey(widget.currentIndex),
-                          color: Colors.white,
-                          size: 24,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // درەوشانەوەی نەرم لە سەرەوە
+                              Positioned(
+                                top: 6,
+                                left: 12,
+                                right: 12,
+                                height: d * 0.32,
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(d),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0.28),
+                                        Colors.white.withValues(alpha: 0),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 280),
+                                transitionBuilder: (child, a) =>
+                                    ScaleTransition(
+                                  scale: a,
+                                  child: RotationTransition(
+                                    turns: Tween(begin: -0.12, end: 0.0)
+                                        .animate(a),
+                                    child: child,
+                                  ),
+                                ),
+                                child: Icon(
+                                  current.activeIcon,
+                                  key: ValueKey(widget.currentIndex),
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -220,7 +274,7 @@ class _BarPainter extends CustomPainter {
 
   Size _size = Size.zero;
 
-  static const double _halfWidth = 62; // نیوەی پانی چەماوە
+  static const double _halfWidth = 76; // نیوەی پانی چەماوە
 
   Path _path(Size size) {
     final w = size.width;
@@ -339,21 +393,24 @@ class _NavTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 5),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 300),
-              style: (Theme.of(context).textTheme.labelSmall ??
-                      const TextStyle())
-                  .copyWith(
-                fontSize: 10.5,
-                fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
-                color: isActive ? activeColor : inactiveColor,
-                height: 1.0,
-                letterSpacing: 0,
-              ),
-              child: Text(
-                tr(item.label),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Opacity(
+              opacity: 1 - closeness,
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 300),
+                style: (Theme.of(context).textTheme.labelSmall ??
+                        const TextStyle())
+                    .copyWith(
+                  fontSize: 10.5,
+                  fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+                  color: isActive ? activeColor : inactiveColor,
+                  height: 1.0,
+                  letterSpacing: 0,
+                ),
+                child: Text(
+                  tr(item.label),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
             const SizedBox(height: 12),

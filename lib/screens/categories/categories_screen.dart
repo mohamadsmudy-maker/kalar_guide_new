@@ -604,8 +604,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                                 color: hasImage ? Colors.white.withValues(alpha: 0.25) : color,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
-                                AppLang.isRtl ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
+                              child: const Icon(Icons.arrow_forward_rounded,
                                 size: 15,
                                 color: Colors.white,
                               ),

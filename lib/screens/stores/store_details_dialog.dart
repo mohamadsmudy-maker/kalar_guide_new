@@ -8,6 +8,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'store_news_screen.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 🏪 دیالۆگی وردەکاری شوێن — ULTRA PRO V3
 ///
@@ -178,6 +179,8 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
     String address = (store['address'] ?? '').toString().trim();
     if (address.isEmpty || address.contains('کۆئۆردینەت')) {
       address = 'کەلار';
+    } else {
+      address = PlaceDisplay.address(address);
     }
 
     final String storeType = (store['type'] ?? 'حکومی').toString().trim();

@@ -145,7 +145,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         : const <dynamic>[];
 
     // ✅ چاککرا: پێشتر لە کاتی بارکردندا ئەم بەشە شاردرابووەوە، بۆیە skeleton هەرگیز دەرنەدەکەوت
-    final showOtherSection = news.isNotEmpty || isLoading;
+    // ئەگەر هەموو هەواڵەکان لە سلایدەرەکەدان، بەشی «هەواڵەکانی تر» بەتاڵ پیشان نادرێت
+    final showOtherSection = (news.isEmpty && isLoading) || otherNews.isNotEmpty;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -213,7 +214,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               _buildNewsListSliver(news, otherNews, isLoading, isDark, t, lang),
             ],
 
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            // بۆشایی بۆ ناڤیگەیشنی خوارەوە (بازنە بەرزەکەشی)
+            SliverToBoxAdapter(
+              child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom),
+            ),
           ],
         ),
       ),
@@ -430,11 +434,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 // ═══════════════════════════════════════════════════════════
 // 🔧 Free helpers
 // ═══════════════════════════════════════════════════════════
-IconData _forwardIcon(BuildContext context, {bool small = false}) {
-  final rtl = Directionality.of(context) == TextDirection.rtl;
-  if (small) return rtl ? Icons.arrow_back_ios_new_rounded : Icons.arrow_forward_ios_rounded;
-  return rtl ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded;
-}
+/// ئایکۆنەکانی Material خۆیان لە RTL دا وەردەگەڕێن (matchTextDirection)
+IconData _forwardIcon(BuildContext context, {bool small = false}) =>
+    small ? Icons.arrow_forward_ios_rounded : Icons.arrow_forward_rounded;
 
 class _Fmt {
   const _Fmt._();
