@@ -8,6 +8,7 @@ import '../../widgets/gallery/gallery_image_card.dart';
 import '../../widgets/gallery/gallery_shimmer_grid.dart';
 import '../../widgets/full_screen_image_viewer.dart';
 import '../../l10n/tr.dart';
+import '../../models/gallery/gallery_category_registry.dart';
 
 class GalleryCategoryScreen extends StatefulWidget {
   final GalleryCategory category;
@@ -74,6 +75,10 @@ class _GalleryCategoryScreenState extends State<GalleryCategoryScreen> {
                 builder: (_) => FullScreenImageViewer(
                   imageUrl: _images[i].imageUrl,
                   imageTitle: _images[i].title,
+                  category: GalleryCategoryRegistry.byId(_images[i].categoryId).label,
+                  categoryIcon: GalleryCategoryRegistry.byId(_images[i].categoryId).icon,
+                  views: _images[i].views,
+                  date: _images[i].createdAt,
                 ),
               ),
             ),

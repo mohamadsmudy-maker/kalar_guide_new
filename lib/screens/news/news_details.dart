@@ -539,7 +539,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                   ),
                 ),
                 Icon(
-                  Icons.chevron_left_rounded,
+                  Icons.chevron_right_rounded,
                   color: isDark ? Colors.white54 : Colors.grey,
                   size: 24,
                 ),

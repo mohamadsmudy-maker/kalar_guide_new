@@ -365,7 +365,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                     ),
                   ),
                   Icon(
-                    Icons.chevron_left_rounded,
+                    Icons.chevron_right_rounded,
                     size: 20,
                     color: isDark ? Colors.white38 : Colors.grey[400],
                   ),

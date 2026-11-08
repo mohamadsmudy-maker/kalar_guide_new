@@ -825,7 +825,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                     ),
                   ),
-                  const Icon(Icons.chevron_left_rounded, color: Colors.red),
+                  const Icon(Icons.chevron_right_rounded, color: Colors.red),
                 ],
               ),
             ),

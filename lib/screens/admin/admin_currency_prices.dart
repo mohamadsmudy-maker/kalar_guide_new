@@ -682,7 +682,7 @@ class _AdminCurrencyPricesScreenState
                     ),
                     const Spacer(),
                     Icon(
-                      Icons.chevron_left_rounded,
+                      Icons.chevron_right_rounded,
                       color: color,
                       size: 18,
                     ),

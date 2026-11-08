@@ -1,6 +1,8 @@
 // lib/utils/place_display.dart
 import 'package:flutter/material.dart';
 
+import '../l10n/tr.dart';
+
 /// 🏷️ یارمەتیدەری پیشاندانی شوێن و بەش (ناونیشان، ئایکۆن، ڕەنگ)
 class PlaceDisplay {
   PlaceDisplay._();
@@ -135,7 +137,14 @@ class PlaceDisplay {
     final text =
         km < 1 ? '${(km * 1000).round()} م' : '${km.toStringAsFixed(1)} کم';
     if (!kurdishDigits) return text;
+    return _toKu(text);
+  }
+
+  /// ژمارە بە پیتی زمانی ئێستا: کوردی/عەرەبی → «١٤١»، ئینگلیزی → «141»
+  static String digits(Object n) => AppLang.isRtl ? _toKu('$n') : '$n';
+
+  static String _toKu(String s) {
     const ku = '٠١٢٣٤٥٦٧٨٩';
-    return text.replaceAllMapped(RegExp(r'\d'), (m) => ku[int.parse(m[0]!)]);
+    return s.replaceAllMapped(RegExp(r'\d'), (m) => ku[int.parse(m[0]!)]);
   }
 }

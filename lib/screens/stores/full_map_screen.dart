@@ -13,6 +13,7 @@ import '../../widgets/common/optimized_network_image.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'store_details_dialog.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 part 'full_map_screen_ui.dart';
 
@@ -126,7 +127,7 @@ class FullMapScreen extends StatefulWidget {
 }
 
 class _FullMapScreenState extends State<FullMapScreen> {
-  static const double _clusterPixelRadius = 48;
+  static const double _clusterPixelRadius = 56; // > قەبارەی بازنە، بۆ ئەوەی بەسەر یەکدا نەکەون
 
   gmaps.GoogleMapController? _mapController;
   gmaps.MapType _currentMapType = gmaps.MapType.normal;
@@ -185,65 +186,65 @@ class _FullMapScreenState extends State<FullMapScreen> {
     final cached = _clusterIconCache[count];
     if (cached != null) return cached;
 
+    // قەبارەی لۆجیکی (dp) — پێشتر وێنەکە ١٢٠ پیکسڵ بوو و وەک ١٢٠dp
+    // پیشان دەدرا، بۆیە بازنەکان زۆر گەورە بوون و بەسەر یەکدا دەکەوتن.
+    final logical = count < 10 ? 38.0 : (count < 100 ? 44.0 : 50.0);
+    const scale = 3.0; // وێنەی ڕوون لەسەر هەموو شاشەیەک
+    final size = logical * scale;
+    final center = Offset(size / 2, size / 2);
+    final radius = size / 2 - 3 * scale;
+
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    const size = 120.0;
-    const radius = 50.0;
-    const center = Offset(size / 2, size / 2);
 
+    // سێبەری نەرم
     canvas.drawCircle(
-      center,
-      radius + 4,
-      Paint()..color = Colors.white.withValues(alpha: 0.9),
+      center.translate(0, 1.5 * scale),
+      radius + 1.5 * scale,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.18)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
+    // ئەڵقەی سپی
+    canvas.drawCircle(center, radius + 2 * scale, Paint()..color = Colors.white);
 
     final gradient = ui.Gradient.linear(
       Offset.zero,
-      const Offset(size, size),
+      Offset(size, size),
       [const Color(0xFF1E88E5), const Color(0xFF6C5CE7)],
     );
     canvas.drawCircle(center, radius, Paint()..shader = gradient);
 
-    canvas.drawCircle(
-      const Offset(size / 2 - 12, size / 2 - 12),
-      18,
-      Paint()..color = Colors.white.withValues(alpha: 0.15),
-    );
-
-    final text =
-    count >= 1000 ? '${(count / 1000).toStringAsFixed(1)}k' : '$count';
+    final text = count >= 1000
+        ? '${(count / 1000).toStringAsFixed(1)}k'
+        : PlaceDisplay.digits(count);
     final textPainter = TextPainter(
       text: TextSpan(
         text: text,
         style: TextStyle(
           color: Colors.white,
-          fontSize: text.length >= 3 ? 28 : 34,
-          fontWeight: FontWeight.w900,
+          fontSize: (text.length >= 3 ? 14.0 : 16.0) * scale,
+          fontWeight: FontWeight.w800,
           height: 1.0,
-          shadows: [
-            Shadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
     textPainter.paint(
       canvas,
-      Offset((size - textPainter.width) / 2,
-          (size - textPainter.height) / 2 - 2),
+      Offset((size - textPainter.width) / 2, (size - textPainter.height) / 2),
     );
 
     gmaps.BitmapDescriptor descriptor;
     try {
       final image =
-      await recorder.endRecording().toImage(size.toInt(), size.toInt());
+          await recorder.endRecording().toImage(size.toInt(), size.toInt());
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-      descriptor =
-          gmaps.BitmapDescriptor.bytes(bytes!.buffer.asUint8List());
+      descriptor = gmaps.BitmapDescriptor.bytes(
+        bytes!.buffer.asUint8List(),
+        width: logical,
+        height: logical,
+      );
     } catch (e) {
       debugPrint('⚠️ cluster icon error: $e');
       descriptor = gmaps.BitmapDescriptor.defaultMarker;
@@ -1201,7 +1202,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
   Widget _buildStoreTile(_StorePoint p, bool isDark, String lang) {
     final store = p.store;
     final name = store['name']?.toString() ?? '';
-    final address = store['address']?.toString() ?? 'کەلار';
+    final address = PlaceDisplay.address(store['address']);
     final image = store['image']?.toString() ?? '';
     final isGov = (store['type']?.toString() ?? '') == 'حکومی';
     final accent = isGov ? const Color(0xFF10B981) : AppColors.primary;
@@ -1296,7 +1297,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
                             _tag(_distanceText(dist), Icons.near_me_rounded,
                                 const Color(0xFF1E88E5)),
                           if (p.pos == null)
-                            _tag('بێ لۆکەیشن', Icons.location_off_rounded,
+                            _tag(tr('بێ لۆکەیشن'), Icons.location_off_rounded,
                                 Colors.orange),
                         ],
                       ),
@@ -1310,7 +1311,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
                   color: accent.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.chevron_left_rounded, color: accent, size: 18),
+                child: Icon(Icons.chevron_right_rounded, color: accent, size: 18),
               ),
             ],
           ),

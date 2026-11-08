@@ -203,9 +203,7 @@ class NeighborhoodCard extends StatelessWidget {
                 ),
               ),
               child: Icon(
-                lang == 'en'
-                    ? Icons.chevron_right_rounded
-                    : Icons.chevron_left_rounded,
+                Icons.chevron_right_rounded,
                 color: color,
                 size: 20,
               ),
@@ -305,9 +303,7 @@ class NeighborhoodCard extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Icon(
-              lang == 'en'
-                  ? Icons.chevron_right_rounded
-                  : Icons.chevron_left_rounded,
+              Icons.chevron_right_rounded,
               color: color,
               size: 18,
             ),

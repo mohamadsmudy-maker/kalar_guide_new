@@ -572,7 +572,7 @@ class _FuelCard extends StatelessWidget {
                       ),
                       if (m?.lastChange != null) _ChangeChip(change: m!.lastChange!, lang: lang),
                       const SizedBox(width: 4),
-                      Icon(lang == 'en' ? Icons.chevron_right_rounded : Icons.chevron_left_rounded,
+                      Icon(Icons.chevron_right_rounded,
                           color: isDark ? Colors.white38 : Colors.grey.shade400),
                     ],
                   ),

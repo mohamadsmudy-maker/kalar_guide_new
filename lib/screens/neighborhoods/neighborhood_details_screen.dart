@@ -539,7 +539,7 @@ class _NeighborhoodDetailsScreenState
                 ],
               ),
             ),
-            Icon(Icons.chevron_left_rounded, color: color, size: 20),
+            Icon(Icons.chevron_right_rounded, color: color, size: 20),
           ],
         ),
       ),

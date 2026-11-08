@@ -616,7 +616,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     ),
                     const Spacer(),
                     Icon(
-                      Icons.chevron_left_rounded,
+                      Icons.chevron_right_rounded,
                       color: color,
                       size: 18,
                     ),
