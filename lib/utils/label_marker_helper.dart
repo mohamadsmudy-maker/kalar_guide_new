@@ -13,7 +13,7 @@ class LabelMarkerHelper {
   static Future<BitmapDescriptor> createLabelMarker({
     required String text,
     Color textColor = Colors.white,
-    Color backgroundColor = Colors.blue,
+    Color backgroundColor = const Color(0xFF1E88E5),
     double fontSize = 26,
     double padding = 14,
     double borderRadius = 20,

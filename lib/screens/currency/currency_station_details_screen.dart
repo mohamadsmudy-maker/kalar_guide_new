@@ -110,7 +110,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
         ),
         floatingActionButton: (_canEdit && !_loading && _station != null && _missingTypes.isNotEmpty)
             ? FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: const Color(0xFF0F9D7A),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text(t('add_price'), style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -118,7 +118,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
         )
             : null,
         body: _loading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)))
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF0F9D7A)))
             : _station == null
             ? Center(child: Text(t('not_found'), style: const TextStyle(color: Colors.grey)))
             : RefreshIndicator(
@@ -177,13 +177,13 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF064E3B), Color(0xFF10B981)],
+          colors: [Color(0xFF064E3B), Color(0xFF0F9D7A)],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+          BoxShadow(color: const Color(0xFF0F9D7A).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -280,7 +280,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
   Widget _sectionTitle(String title, bool isDark, {Widget? trailing}) {
     return Row(
       children: [
-        Container(width: 4, height: 18, decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(4))),
+        Container(width: 4, height: 18, decoration: BoxDecoration(color: const Color(0xFF0F9D7A), borderRadius: BorderRadius.circular(4))),
         const SizedBox(width: 8),
         Expanded(
           child: Text(tr(title),
@@ -338,7 +338,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
                     Text(
                       '${t('per')} ${CurrencyService.localizeDigits('${CurrencyService.getQuoteUnit(type)}', lang)} ${CurrencyService.getUnitName(type, lang)}'
                           '${updated != null ? ' • ${CurrencyStrings.timeAgo(updated, lang)}' : ''}',
-                      style: TextStyle(fontSize: 10, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600),
+                      style: TextStyle(fontSize: 10, color: stale ? const Color(0xFFD9822B) : sub, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -369,9 +369,9 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _priceBox(t('buy'), buy, const Color(0xFF3B82F6), lang)),
+              Expanded(child: _priceBox(t('buy'), buy, const Color(0xFF1E88E5), lang)),
               const SizedBox(width: 8),
-              Expanded(child: _priceBox(t('sell'), sell, const Color(0xFF10B981), lang)),
+              Expanded(child: _priceBox(t('sell'), sell, const Color(0xFF0F9D7A), lang)),
             ],
           ),
         ],
@@ -443,9 +443,9 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(change > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                    size: 14, color: change > 0 ? Colors.red : Colors.green),
+                    size: 14, color: change > 0 ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A)),
                 Text(tr(CurrencyService.formatPrice(change.abs(), lang)),
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: change > 0 ? Colors.red : Colors.green)),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: change > 0 ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A))),
               ],
             ),
         ],
@@ -503,7 +503,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
   Future<void> _showEditSheet(String type, double buy, double sell, String lang, bool isDark) async {
     if (!_canEdit) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr(CurrencyStrings.of(lang, 'no_permission'))), backgroundColor: Colors.orange),
+        SnackBar(content: Text(tr(CurrencyStrings.of(lang, 'no_permission'))), backgroundColor: const Color(0xFFD9822B)),
       );
       return;
     }
@@ -550,14 +550,14 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
                     autofocus: true,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: deco(t('buy'), Icons.shopping_cart_rounded, Colors.blue),
+                    decoration: deco(t('buy'), Icons.shopping_cart_rounded, const Color(0xFF1E88E5)),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: sellCtrl,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: deco(t('sell'), Icons.sell_rounded, Colors.green),
+                    decoration: deco(t('sell'), Icons.sell_rounded, const Color(0xFF0F9D7A)),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -568,7 +568,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
                   if (error != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(tr(error!), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 12)),
+                      child: Text(tr(error!), style: const TextStyle(color: Color(0xFFDC3545), fontWeight: FontWeight.w700, fontSize: 12)),
                     ),
                   Row(
                     children: [
@@ -642,7 +642,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(ok ? '✅ ${t('saved')}' : result.message),
-        backgroundColor: ok ? Colors.green : Colors.red,
+        backgroundColor: ok ? const Color(0xFF0F9D7A) : const Color(0xFFDC3545),
         behavior: SnackBarBehavior.floating,
       ),
     );

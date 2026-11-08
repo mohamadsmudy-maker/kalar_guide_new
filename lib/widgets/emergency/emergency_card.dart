@@ -16,7 +16,7 @@ class EmergencyCard extends StatelessWidget {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFFEF4444);
+      return const Color(0xFFDC3545);
     }
   }
 

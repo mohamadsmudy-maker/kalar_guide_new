@@ -153,7 +153,7 @@ class _NeighborhoodsDrawerState extends State<NeighborhoodsDrawer> {
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
+                    colors: [Color(0xFF1E88E5), Color(0xFF1E88E5)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -281,7 +281,7 @@ class _NeighborhoodsDrawerState extends State<NeighborhoodsDrawer> {
                             const SizedBox(width: 6),
                             const Icon(Icons.favorite_rounded,
                                 size: 14,
-                                color: Color(0xFFEC4899)),
+                                color: Color(0xFFC2557A)),
                           ],
                         ],
                       ),

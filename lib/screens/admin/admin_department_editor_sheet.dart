@@ -71,7 +71,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('ناوی فەرمانگە پێویستە')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -148,7 +148,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
                       ),
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -229,8 +229,8 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [
-                                Color(0xFF10B981),
-                                Color(0xFF059669),
+                                Color(0xFF0F9D7A),
+                                Color(0xFF0F9D7A),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(2),
@@ -326,14 +326,14 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                 height: 54,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
+                    backgroundColor: const Color(0xFF0F9D7A),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 3,
                     shadowColor:
-                    const Color(0xFF10B981).withValues(alpha: 0.4),
+                    const Color(0xFF0F9D7A).withValues(alpha: 0.4),
                   ),
                   onPressed: _save,
                   icon: Icon(
@@ -395,7 +395,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
-            color: Color(0xFF10B981),
+            color: Color(0xFF0F9D7A),
             width: 1.5,
           ),
         ),
@@ -415,7 +415,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFF10B981);
+      return const Color(0xFF0F9D7A);
     }
   }
 }

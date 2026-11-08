@@ -123,7 +123,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: isError ? Colors.red : Colors.green,
+          backgroundColor: isError ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -149,7 +149,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -176,7 +176,7 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                colors: [Color(0xFFC2557A), Color(0xFFC2557A)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -251,12 +251,12 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isDark ? Colors.blue.withValues(alpha: 0.2) : const Color(0xFFE3F2FD),
+              color: isDark ? const Color(0xFF1E88E5).withValues(alpha: 0.2) : const Color(0xFFE3F2FD),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.touch_app_rounded,
-              color: Color(0xFF1976D2),
+              color: Color(0xFF1E88E5),
               size: 18,
             ),
           ),
@@ -375,9 +375,9 @@ class _AdminReorderBannersScreenState extends State<AdminReorderBannersScreen> {
           children: [
             if (!isEmpty)
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Color(0xFFEF5350)),
+                icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Color(0xFFDC3545)),
                 style: IconButton.styleFrom(
-                  backgroundColor: isDark ? Colors.red.withValues(alpha: 0.15) : const Color(0xFFFFEBEE),
+                  backgroundColor: isDark ? const Color(0xFFDC3545).withValues(alpha: 0.15) : const Color(0xFFFFEBEE),
                 ),
                 onPressed: () => _deleteSlot(banner),
               ),
@@ -595,7 +595,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isError ? Colors.orange : Colors.green,
+        backgroundColor: isError ? const Color(0xFFD9822B) : const Color(0xFF0F9D7A),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -804,7 +804,7 @@ class EditSlideProDialogState extends State<EditSlideProDialog>
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: isDark ? Colors.blue.withValues(alpha: 0.15) : Colors.blue.shade50,
+            color: isDark ? const Color(0xFF1E88E5).withValues(alpha: 0.15) : Colors.blue.shade50,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(

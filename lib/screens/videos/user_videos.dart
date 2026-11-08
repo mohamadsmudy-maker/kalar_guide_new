@@ -79,7 +79,7 @@ class _UserVideosScreenState extends State<UserVideosScreen> {
               if (snapshot.hasError) {
                 return _message(
                   icon: Icons.wifi_off_rounded,
-                  color: Colors.orange,
+                  color: const Color(0xFFD9822B),
                   title: tr('بارکردن سەرکەوتوو نەبوو'),
                   subtitle: tr('پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە'),
                   action: true,

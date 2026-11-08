@@ -28,7 +28,7 @@ class LiveUsersBadge extends StatefulWidget {
 
 class _LiveUsersBadgeState extends State<LiveUsersBadge>
     with SingleTickerProviderStateMixin {
-  static const Color _green = Color(0xFF10B981);
+  static const Color _green = Color(0xFF0F9D7A);
 
   StreamSubscription<int>? _sub;
   late final AnimationController _pulse;
@@ -133,7 +133,7 @@ class _LiveUsersBadgeState extends State<LiveUsersBadge>
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [_green, Color(0xFF059669)],
+          colors: [_green, Color(0xFF0F9D7A)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [

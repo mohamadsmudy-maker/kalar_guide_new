@@ -117,7 +117,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                   child: Padding(
                     padding: EdgeInsets.all(40),
                     child: CircularProgressIndicator(
-                      color: Color(0xFFFFD700),
+                      color: Color(0xFFD9822B),
                     ),
                   ),
                 )
@@ -165,12 +165,12 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                      color: const Color(0xFFD9822B).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
                       Icons.compare_arrows_rounded,
-                      color: Color(0xFFFFD700),
+                      color: Color(0xFFD9822B),
                       size: 24,
                     ),
                   ),
@@ -194,7 +194,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                           tr('دوو جۆری سووتەمەنی بەراورد بکە'),
                           style: const TextStyle(
                             fontSize: 12,
-                            color: Color(0xFFFFD700),
+                            color: Color(0xFFD9822B),
                           ),
                         ),
                       ],
@@ -217,7 +217,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
             isDark: isDark,
             label: tr('جۆری یەکەم'),
             value: _selectedType1,
-            color: const Color(0xFF3B82F6),
+            color: const Color(0xFF1E88E5),
             onChanged: (v) {
               setState(() => _selectedType1 = v);
               _entryController.forward(from: 0);
@@ -228,12 +228,12 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+            color: const Color(0xFFD9822B).withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           child: const Icon(
             Icons.compare_arrows_rounded,
-            color: Color(0xFFFFD700),
+            color: Color(0xFFD9822B),
             size: 20,
           ),
         ),
@@ -243,7 +243,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
             isDark: isDark,
             label: tr('جۆری دووەم'),
             value: _selectedType2,
-            color: const Color(0xFFEF4444),
+            color: const Color(0xFFDC3545),
             onChanged: (v) {
               setState(() => _selectedType2 = v);
               _entryController.forward(from: 0);
@@ -390,13 +390,13 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
               gradient: LinearGradient(
                 colors: diff > 0
                     ? [
-                  const Color(0xFFEF4444).withValues(alpha: 0.2),
-                  const Color(0xFFEF4444).withValues(alpha: 0.05),
+                  const Color(0xFFDC3545).withValues(alpha: 0.2),
+                  const Color(0xFFDC3545).withValues(alpha: 0.05),
                 ]
                     : diff < 0
                     ? [
-                  const Color(0xFF10B981).withValues(alpha: 0.2),
-                  const Color(0xFF10B981).withValues(alpha: 0.05),
+                  const Color(0xFF0F9D7A).withValues(alpha: 0.2),
+                  const Color(0xFF0F9D7A).withValues(alpha: 0.05),
                 ]
                     : [
                   Colors.grey.withValues(alpha: 0.2),
@@ -406,9 +406,9 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: diff > 0
-                    ? const Color(0xFFEF4444).withValues(alpha: 0.3)
+                    ? const Color(0xFFDC3545).withValues(alpha: 0.3)
                     : diff < 0
-                    ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                    ? const Color(0xFF0F9D7A).withValues(alpha: 0.3)
                     : Colors.grey.withValues(alpha: 0.3),
               ),
             ),
@@ -421,9 +421,9 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                       ? Icons.trending_down_rounded
                       : Icons.trending_flat_rounded,
                   color: diff > 0
-                      ? const Color(0xFFEF4444)
+                      ? const Color(0xFFDC3545)
                       : diff < 0
-                      ? const Color(0xFF10B981)
+                      ? const Color(0xFF0F9D7A)
                       : Colors.grey,
                   size: 40,
                 ),
@@ -438,9 +438,9 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: diff > 0
-                        ? const Color(0xFFEF4444)
+                        ? const Color(0xFFDC3545)
                         : diff < 0
-                        ? const Color(0xFF10B981)
+                        ? const Color(0xFF0F9D7A)
                         : Colors.grey,
                   ),
                 ),
@@ -498,7 +498,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                 vertical: 3,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF0F9D7A),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -630,7 +630,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
         color: isDark ? const Color(0xFF1A1B2E) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+          color: const Color(0xFFD9822B).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -640,7 +640,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
             children: [
               const Icon(
                 Icons.bar_chart_rounded,
-                color: Color(0xFFFFD700),
+                color: Color(0xFFD9822B),
                 size: 18,
               ),
               const SizedBox(width: 8),
@@ -649,7 +649,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFFFFD700),
+                  color: Color(0xFFD9822B),
                 ),
               ),
             ],
@@ -769,7 +769,7 @@ class _FuelComparisonScreenState extends State<FuelComparisonScreen>
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFFFFD700);
+      return const Color(0xFFD9822B);
     }
   }
 }

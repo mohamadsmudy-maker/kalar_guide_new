@@ -47,7 +47,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
               colors: [
                 Color(0xFF1A1B2E),
                 Color(0xFF2D1B4E),
-                Color(0xFF8B5CF6),
+                Color(0xFF4F5BD5),
               ],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
@@ -98,12 +98,12 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFFFFD700), Color(0xFFFF8F00)],
+                                colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
                               ),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFFFD700)
+                                  color: const Color(0xFFD9822B)
                                       .withValues(alpha: 0.5),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
@@ -144,8 +144,8 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                                     height: 6,
                                     decoration: BoxDecoration(
                                       color: hasError
-                                          ? const Color(0xFFF59E0B)
-                                          : const Color(0xFF10B981),
+                                          ? const Color(0xFFD9822B)
+                                          : const Color(0xFF0F9D7A),
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -193,13 +193,13 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.orange.withValues(alpha: 0.12),
+          color: const Color(0xFFD9822B).withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+          border: Border.all(color: const Color(0xFFD9822B).withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_rounded, color: Colors.orange, size: 20),
+            const Icon(Icons.cloud_off_rounded, color: Color(0xFFD9822B), size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -278,14 +278,14 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFEF4444), Color(0xFFF97316)],
+              colors: [Color(0xFFDC3545), Color(0xFFE35D6A)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFEF4444).withValues(alpha: 0.35),
+                color: const Color(0xFFDC3545).withValues(alpha: 0.35),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
                 spreadRadius: -4,
@@ -476,7 +476,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
   Widget _buildLiveUsersCard({required int itemIndex}) {
     return _heroCard(
       itemIndex: itemIndex,
-      colors: const [Color(0xFF10B981), Color(0xFF059669)],
+      colors: const [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
       icon: Icons.people_rounded,
       title: tr('بەکارهێنەرانی چالاک'),
       semanticsLabel:
@@ -529,7 +529,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
             height: 20,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.primary, Color(0xFF6C5CE7)],
+                colors: [AppColors.primary, Color(0xFF4F5BD5)],
               ),
               borderRadius: BorderRadius.circular(4),
             ),
@@ -568,7 +568,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           icon: Icons.storefront_rounded,
           label: tr('شوێنەکان'),
           value: _totalStores,
-          color: const Color(0xFFF59E0B),
+          color: const Color(0xFFD9822B),
           itemIndex: 3,
           onTap: () => _push(const AdminStoresScreen()),
         ),
@@ -577,7 +577,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           icon: Icons.business_rounded,
           label: tr('فەرمانگەکان'),
           value: _totalDepartments,
-          color: const Color(0xFF10B981),
+          color: const Color(0xFF0F9D7A),
           itemIndex: 4,
           onTap: () => _push(const AdminDepartmentsScreen()),
         ),
@@ -586,7 +586,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           icon: Icons.report_rounded,
           label: tr('کۆی سکاڵاکان'),
           value: _totalComplaints,
-          color: const Color(0xFFE91E63),
+          color: const Color(0xFFC2557A),
           itemIndex: 5,
           onTap: () => _push(const AdminComplaintsProScreen()),
         ),
@@ -595,7 +595,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           icon: Icons.hourglass_empty_rounded,
           label: tr('سکاڵای چاوەڕوان'),
           value: _pendingComplaints,
-          color: const Color(0xFFEF4444),
+          color: const Color(0xFFDC3545),
           itemIndex: 6,
           isImportant: _pendingComplaints > 0,
           onTap: () => _push(const AdminComplaintsProScreen()),
@@ -605,7 +605,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           icon: Icons.assignment_ind_rounded,
           label: tr('داوکاری ئەدمین'),
           value: _pendingRequests,
-          color: const Color(0xFF8B5CF6),
+          color: const Color(0xFF4F5BD5),
           itemIndex: 7,
           isImportant: _pendingRequests > 0,
           onTap: canOpenRequests
@@ -617,7 +617,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
           icon: Icons.shopping_bag_rounded,
           label: tr('کاڵاکان'),
           value: _totalProducts,
-          color: const Color(0xFFF97316),
+          color: const Color(0xFFD9822B),
           itemIndex: 8,
         ),
       ],

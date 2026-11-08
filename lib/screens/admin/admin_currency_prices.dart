@@ -81,12 +81,12 @@ class _AdminCurrencyPricesScreenState
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  color: const Color(0xFF0F9D7A).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.edit_rounded,
-                  color: Color(0xFF059669),
+                  color: Color(0xFF0F9D7A),
                   size: 22,
                 ),
               ),
@@ -180,7 +180,7 @@ class _AdminCurrencyPricesScreenState
                     labelText: tr('نرخی فرۆشتن (د.ع)'),
                     prefixIcon: const Icon(
                       Icons.sell_rounded,
-                      color: Color(0xFF10B981),
+                      color: Color(0xFF0F9D7A),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -188,7 +188,7 @@ class _AdminCurrencyPricesScreenState
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFF10B981),
+                        color: Color(0xFF0F9D7A),
                         width: 2,
                       ),
                     ),
@@ -205,7 +205,7 @@ class _AdminCurrencyPricesScreenState
                     hintText: tr('بۆ نموونە: بەهۆی گۆڕانی بازاڕ'),
                     prefixIcon: const Icon(
                       Icons.note_rounded,
-                      color: Color(0xFF10B981),
+                      color: Color(0xFF0F9D7A),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -213,7 +213,7 @@ class _AdminCurrencyPricesScreenState
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFF10B981),
+                        color: Color(0xFF0F9D7A),
                         width: 2,
                       ),
                     ),
@@ -229,7 +229,7 @@ class _AdminCurrencyPricesScreenState
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
+                backgroundColor: const Color(0xFF0F9D7A),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -243,7 +243,7 @@ class _AdminCurrencyPricesScreenState
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
                       content: Text(tr('تکایە نرخێکی دروست بنووسە')),
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color(0xFFD9822B),
                     ),
                   );
                   return;
@@ -253,7 +253,7 @@ class _AdminCurrencyPricesScreenState
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
                       content: Text(tr('تکایە لانیکەم یەک نرخ بنووسە')),
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color(0xFFD9822B),
                     ),
                   );
                   return;
@@ -278,7 +278,7 @@ class _AdminCurrencyPricesScreenState
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
                       content: Text(result.message),
-                      backgroundColor: Colors.red,
+                      backgroundColor: const Color(0xFFDC3545),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -312,7 +312,7 @@ class _AdminCurrencyPricesScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ نرخ نوێکرایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
@@ -355,7 +355,7 @@ class _AdminCurrencyPricesScreenState
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF10B981)),
+          child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
         )
             : ListView(
           padding: const EdgeInsets.all(16),
@@ -385,12 +385,12 @@ class _AdminCurrencyPricesScreenState
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+          color: const Color(0xFF0F9D7A).withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+            color: const Color(0xFF0F9D7A).withValues(alpha: 0.15),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -402,12 +402,12 @@ class _AdminCurrencyPricesScreenState
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                  color: const Color(0xFF0F9D7A).withValues(alpha: 0.4),
                   blurRadius: 15,
                 ),
               ],
@@ -440,7 +440,7 @@ class _AdminCurrencyPricesScreenState
                     children: [
                       const Icon(
                         Icons.location_on_rounded,
-                        color: Color(0xFF10B981),
+                        color: Color(0xFF0F9D7A),
                         size: 12,
                       ),
                       const SizedBox(width: 4),
@@ -474,7 +474,7 @@ class _AdminCurrencyPricesScreenState
           height: 20,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF10B981), Color(0xFF059669)],
+              colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
             ),
             borderRadius: BorderRadius.circular(4),
           ),
@@ -712,7 +712,7 @@ class _AdminCurrencyPricesScreenState
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFF10B981);
+      return const Color(0xFF0F9D7A);
     }
   }
 }

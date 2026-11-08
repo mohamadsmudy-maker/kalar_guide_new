@@ -76,7 +76,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
           tooltip: tr('پاشەکەوتکردنی ڕەشنووس'),
           onPressed: () async {
             await _saveDraft();
-            _showSnackBar(tr('💾 ڕەشنووس پاشەکەوت کرا'), Colors.green);
+            _showSnackBar(tr('💾 ڕەشنووس پاشەکەوت کرا'), const Color(0xFF0F9D7A));
           },
         ),
       ],
@@ -352,13 +352,13 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.blue),
+                  strokeWidth: 2, color: Color(0xFF1E88E5)),
             ),
             const SizedBox(width: 12),
             Text(tr('دۆزینەوەی گەڕەک...'),
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    color: Color(0xFF1E88E5),
                     fontSize: 13)),
           ],
         ),
@@ -387,7 +387,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
   Widget _buildMapSection() {
     final hasFix = _locIssue != _LocIssue.none ||
         (!_hasLocation && !_locationBusy);
-    final okColor = _hasLocation ? Colors.green : Colors.orange;
+    final okColor = _hasLocation ? const Color(0xFF0F9D7A) : const Color(0xFFD9822B);
 
     return Column(
       children: [
@@ -419,8 +419,8 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                         circleId: const gmaps.CircleId('accuracy'),
                         center: gmaps.LatLng(_lat!, _lng!),
                         radius: _accuracy!.clamp(5, 200).toDouble(),
-                        fillColor: Colors.blue.withValues(alpha: 0.12),
-                        strokeColor: Colors.blue.withValues(alpha: 0.4),
+                        fillColor: const Color(0xFF1E88E5).withValues(alpha: 0.12),
+                        strokeColor: const Color(0xFF1E88E5).withValues(alpha: 0.4),
                         strokeWidth: 1,
                       ),
                     }
@@ -476,7 +476,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: okColor.shade50,
+            color: okColor.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -485,7 +485,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                 _hasLocation
                     ? Icons.check_circle_rounded
                     : Icons.access_time_rounded,
-                color: okColor.shade700,
+                color: okColor,
                 size: 18,
               ),
               const SizedBox(width: 8),
@@ -496,7 +496,7 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
                       : _locationStatusText),
                   style: TextStyle(
                       fontSize: 11,
-                      color: okColor.shade800,
+                      color: okColor,
                       fontWeight: FontWeight.bold),
                 ),
               ),
@@ -533,13 +533,13 @@ extension _SubmitComplaintScreenStateUi on _SubmitComplaintScreenState {
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF0F9D7A), size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(tr('دەنگەکە تۆمارکرا و ئامادەیە بۆ ناردن'),
                 style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.green,
+                    color: Color(0xFF0F9D7A),
                     fontWeight: FontWeight.bold)),
           ),
         ],

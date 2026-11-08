@@ -578,12 +578,12 @@ class _StoresScreenState extends State<StoresScreen>
               height: 48,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
+                  colors: [Color(0xFF1E88E5), Color(0xFF1E88E5)],
                 ),
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF2196F3).withValues(alpha: 0.3),
+                    color: const Color(0xFF1E88E5).withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -664,7 +664,7 @@ class _StoresScreenState extends State<StoresScreen>
                   height: 18,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE91E63),
+                    color: const Color(0xFFC2557A),
                     shape: BoxShape.circle,
                     border: Border.all(
                         color: isDark ? const Color(0xFF0F0F14) : Colors.white,
@@ -796,7 +796,7 @@ class _StoresScreenState extends State<StoresScreen>
               onPressed: _clearFilters,
               style: TextButton.styleFrom(
                 visualDensity: VisualDensity.compact,
-                foregroundColor: const Color(0xFFE91E63),
+                foregroundColor: const Color(0xFFC2557A),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
               icon: const Icon(Icons.close_rounded, size: 14),
@@ -930,7 +930,7 @@ class _StoresScreenState extends State<StoresScreen>
     final distance = _calculateDistance(lat, lng);
 
     final accentColor =
-        isGov ? const Color(0xFF10B981) : const Color(0xFFE91E63);
+        isGov ? const Color(0xFF0F9D7A) : const Color(0xFFC2557A);
 
     return GestureDetector(
       onTap: () {
@@ -996,13 +996,13 @@ class _StoresScreenState extends State<StoresScreen>
                       Row(
                         children: [
                           const Icon(Icons.near_me_rounded,
-                              size: 10, color: Colors.green),
+                              size: 10, color: Color(0xFF0F9D7A)),
                           const SizedBox(width: 3),
                           Text(
                             trf('{0} کم', [PlaceDisplay.digits(distance.toStringAsFixed(1))]),
                             style: const TextStyle(
                               fontSize: 10,
-                              color: Colors.green,
+                              color: Color(0xFF0F9D7A),
                               fontWeight: FontWeight.w900,
                             ),
                           ),

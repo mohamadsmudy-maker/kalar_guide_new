@@ -42,22 +42,22 @@ class _ComplaintType {
 
 const List<_ComplaintType> _kTypes = [
   _ComplaintType('خۆڵ و خاشاک و ژینگە', 'شارەوانی کەلار',
-      Icons.delete_rounded, Color(0xFF2E7D32),
+      Icons.delete_rounded, Color(0xFF0F9D7A),
       cameraOnly: true),
   _ComplaintType('ناڕێکی شار و سیفەتی گشتی', 'قایمقامیەتی قەزای کەلار',
-      Icons.location_city_rounded, Color(0xFF5E35B1)),
+      Icons.location_city_rounded, Color(0xFF4F5BD5)),
   _ComplaintType('کێشەی پچڕانی کارەبا', 'بەڕێوەبەرایەتی کارەبای گەرمیان',
-      Icons.bolt_rounded, Color(0xFFF9A825)),
+      Icons.bolt_rounded, Color(0xFFD9822B)),
   _ComplaintType('کێشەی پچڕان یان لێچوونی ئاو', 'فەرمەنگەی ئاوی کەلار',
-      Icons.water_drop_rounded, Color(0xFF0288D1)),
+      Icons.water_drop_rounded, Color(0xFF1E88E5)),
   _ComplaintType(
       'کێشەی ڕێگاوبان و چاڵ و چۆڵی',
       'سەرۆکایەتی شارەوانی کەلار (بەشی ڕێگاوبان)',
       Icons.construction_rounded,
-      Color(0xFFEF6C00)),
+      Color(0xFFD9822B)),
   _ComplaintType('تەندروستی و خاوێنی مۆڵ و ڕێستۆرانت',
       'بەڕێوەبەرایەتی تەندروستی گەرمیان', Icons.local_hospital_rounded,
-      Color(0xFFC62828)),
+      Color(0xFFDC3545)),
   _ComplaintType('کێشەی تر', 'گشتی', Icons.report_problem_rounded,
       Color(0xFF546E7A)),
 ];
@@ -489,7 +489,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
   Future<void> _handleImagePicking() async {
     if (_images.length >= _maxImages) {
       _showSnackBar(trf('تەنها دەتوانیت تا {0} وێنە زیاد بکەیت ⚠', [_ku(_maxImages)]),
-          Colors.orange);
+          const Color(0xFFD9822B));
       return;
     }
     if (_type?.cameraOnly ?? false) {
@@ -538,7 +538,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                       child: _buildSourceCard(
                         icon: Icons.photo_library_rounded,
                         label: tr('گەلەری'),
-                        color: Colors.purple,
+                        color: const Color(0xFF4F5BD5),
                         onTap: () {
                           Navigator.pop(ctx);
                           _pickImageFromSource(ImageSource.gallery);
@@ -578,7 +578,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     } on PlatformException catch (e) {
       debugPrint('❌ Image pick error: $e');
       _showSnackBar(tr('ناتوانم دەستم بگات بە کامێرا یان گەلەری — مۆڵەتەکان بپشکنە'),
-          Colors.red);
+          const Color(0xFFDC3545));
     } catch (e) {
       debugPrint('❌ Image pick error: $e');
     }
@@ -629,7 +629,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
   }
 
   void _fail(String msg, {GlobalKey? scrollTo}) {
-    _showSnackBar(msg, Colors.orange);
+    _showSnackBar(msg, const Color(0xFFD9822B));
     HapticFeedback.vibrate();
     if (scrollTo != null) _scrollTo(scrollTo);
   }
@@ -776,7 +776,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       HapticFeedback.heavyImpact();
       if (voiceFailed) {
         _showSnackBar(
-            tr('سکاڵا نێردرا، بەڵام دەنگەکە نەنێردرا ⚠'), Colors.orange);
+            tr('سکاڵا نێردرا، بەڵام دەنگەکە نەنێردرا ⚠'), const Color(0xFFD9822B));
       }
       _showSuccessDialog();
     } on PostgrestException catch (e) {
@@ -785,25 +785,25 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       final m = e.message;
       if (m.contains('voice_url')) {
         _showSnackBar(tr('⚠️ ستوونی voice_url لە داتابەیسدا نییە. ئەدمین ئاگادار بکە.'),
-            Colors.red);
+            const Color(0xFFDC3545));
       } else if (m.contains('neighborhood_id')) {
         _showSnackBar(
-            tr('⚠️ ستوونی neighborhood_id لە داتابەیسدا نییە.'), Colors.red);
+            tr('⚠️ ستوونی neighborhood_id لە داتابەیسدا نییە.'), const Color(0xFFDC3545));
       } else if (m.contains('row-level security')) {
         _showSnackBar(
-            tr('⚠️ کێشەی ئاسایش — تکایە دووبارە بچۆ ژوورەوە.'), Colors.red);
+            tr('⚠️ کێشەی ئاسایش — تکایە دووبارە بچۆ ژوورەوە.'), const Color(0xFFDC3545));
       } else {
-        _showSnackBar(tr('هەڵەی داتابەیس، تکایە دووبارە هەوڵبدەرەوە'), Colors.red);
+        _showSnackBar(tr('هەڵەی داتابەیس، تکایە دووبارە هەوڵبدەرەوە'), const Color(0xFFDC3545));
       }
     } on TimeoutException {
       _showSnackBar(
           tr('پەیوەندی زۆر هێواشە — تکایە ئینتەرنێت بپشکنە و دووبارە هەوڵبدەرەوە ⏱'),
-          Colors.red);
+          const Color(0xFFDC3545));
     } on SocketException {
-      _showSnackBar(tr('ئینتەرنێت نییە — پەیوەندییەکەت بپشکنە 📡'), Colors.red);
+      _showSnackBar(tr('ئینتەرنێت نییە — پەیوەندییەکەت بپشکنە 📡'), const Color(0xFFDC3545));
     } catch (e) {
       debugPrint('❌ Submit error: $e');
-      _showSnackBar(tr('هەڵەیەک ڕووی دا، تکایە دووبارە هەوڵبدەرەوە'), Colors.red);
+      _showSnackBar(tr('هەڵەیەک ڕووی دا، تکایە دووبارە هەوڵبدەرەوە'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -1164,7 +1164,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
   }
 
   Widget _buildImageSection(bool garbage) {
-    const blue = Color(0xFF2196F3);
+    const blue = Color(0xFF1E88E5);
 
     return GestureDetector(
       onTap: _images.isEmpty ? _handleImagePicking : null,
@@ -1261,7 +1261,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(
-                              color: Colors.red,
+                              color: Color(0xFFDC3545),
                               shape: BoxShape.circle),
                           child: const Icon(Icons.close,
                               size: 12, color: Colors.white),

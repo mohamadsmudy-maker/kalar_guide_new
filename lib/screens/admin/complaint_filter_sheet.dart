@@ -117,7 +117,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
+                  colors: [Color(0xFF4F5BD5), Color(0xFFC2557A)],
                 ),
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(28),
@@ -193,7 +193,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFFB300)],
+                          colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
                         ),
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -303,7 +303,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                       tr('تەنها وێنە هەیە'),
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
-                    secondary: const Icon(Icons.image_rounded, color: Color(0xFFE91E63)),
+                    secondary: const Icon(Icons.image_rounded, color: Color(0xFFC2557A)),
                   ),
 
                   const SizedBox(height: 20),

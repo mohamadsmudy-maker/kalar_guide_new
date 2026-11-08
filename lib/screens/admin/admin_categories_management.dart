@@ -71,7 +71,7 @@ class _AdminCategoriesManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isError ? Colors.red : Colors.green,
+        backgroundColor: isError ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -89,7 +89,7 @@ class _AdminCategoriesManagementScreenState
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
-                child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+                child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545), size: 20),
               ),
               const SizedBox(width: 10),
               Text(tr("سڕینەوەی بەش"), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
@@ -109,7 +109,7 @@ class _AdminCategoriesManagementScreenState
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.red.shade200),
                 ),
-                child: Text(tr(catName), style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.red, fontSize: 14)),
+                child: Text(tr(catName), style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFDC3545), fontSize: 14)),
               ),
               const SizedBox(height: 10),
               Text(tr("تێبینی: بە سڕینەوەی ئەم بەشە، هەموو ژێربەشەکانیشی دەسڕێنەوە."), style: TextStyle(fontSize: 11, color: Colors.red.shade700)),
@@ -122,7 +122,7 @@ class _AdminCategoriesManagementScreenState
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -207,7 +207,7 @@ class _AdminCategoriesManagementScreenState
                             children: [
                               _buildStatChip("${_mainCategories.length}", "بەشی سەرەکی", Icons.apps_rounded, AppColors.primary),
                               const SizedBox(width: 8),
-                              _buildStatChip("${_subCategories.length}", "ژێربەش", Icons.subdirectory_arrow_right_rounded, Colors.green),
+                              _buildStatChip("${_subCategories.length}", "ژێربەش", Icons.subdirectory_arrow_right_rounded, const Color(0xFF0F9D7A)),
                             ],
                           ),
                         ],
@@ -405,7 +405,7 @@ class _AdminCategoriesManagementScreenState
                   child: _buildActionButton(
                     icon: Icons.edit_rounded,
                     label: tr("دەستکاری"),
-                    color: Colors.blue,
+                    color: const Color(0xFF1E88E5),
                     onTap: () {
                       showDialog(
                         context: context,
@@ -433,7 +433,7 @@ class _AdminCategoriesManagementScreenState
                   child: _buildActionButton(
                     icon: Icons.delete_outline_rounded,
                     label: tr("سڕینەوە"),
-                    color: Colors.red,
+                    color: const Color(0xFFDC3545),
                     onTap: () => _deleteMainCategory(mainCat['id'], mainName),
                   ),
                 ),
@@ -684,7 +684,7 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                     onPressed: () async {
                       if (_titleCtrl.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(tr("تکایە ناوی بەش بنووسە ⚠")), backgroundColor: Colors.orange),
+                          SnackBar(content: Text(tr("تکایە ناوی بەش بنووسە ⚠")), backgroundColor: const Color(0xFFD9822B)),
                         );
                         return;
                       }
@@ -712,13 +712,13 @@ class _AddOrEditMainCategoryDialogState extends State<AddOrEditMainCategoryDialo
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(tr("بە سەرکەوتوویی پاشەکەوت کرا ✅")), backgroundColor: Colors.green),
+                            SnackBar(content: Text(tr("بە سەرکەوتوویی پاشەکەوت کرا ✅")), backgroundColor: const Color(0xFF0F9D7A)),
                           );
                         }
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(trf("هەڵە ڕووی دا: {0}", [e])), backgroundColor: Colors.red),
+                            SnackBar(content: Text(trf("هەڵە ڕووی دا: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
                           );
                         }
                       } finally {
@@ -829,7 +829,7 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
               child: Text(tr("نەخێر")),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC3545), foregroundColor: Colors.white),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(tr("سڕینەوە")),
             ),
@@ -855,7 +855,7 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isError ? Colors.red : Colors.green,
+        backgroundColor: isError ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -1005,10 +1005,10 @@ class _AdminSubCategoriesScreenState extends State<AdminSubCategoriesScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: isDark ? Colors.red.withValues(alpha: 0.15) : Colors.red.withValues(alpha: 0.1),
+                                color: isDark ? const Color(0xFFDC3545).withValues(alpha: 0.15) : const Color(0xFFDC3545).withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 18),
+                              child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC3545), size: 18),
                             ),
                           ),
                         ],

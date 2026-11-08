@@ -65,13 +65,13 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     // ✅ پشکنینی چوونەژوورەوە
     final user = AuthSessionManager.currentUser;
     if (user == null) {
-      _showSnack(tr('تکایە سەرەتا بچۆ ژوورەوە ⚠'), Colors.orange);
+      _showSnack(tr('تکایە سەرەتا بچۆ ژوورەوە ⚠'), const Color(0xFFD9822B));
       return;
     }
 
     // ✅ پشکنینی Rating
     if (_rating < 1 || _rating > 5) {
-      _showSnack(tr('تکایە ئەستێرەیەک هەڵبژێرە ⭐'), Colors.orange);
+      _showSnack(tr('تکایە ئەستێرەیەک هەڵبژێرە ⭐'), const Color(0xFFD9822B));
       return;
     }
 
@@ -112,7 +112,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                 ),
               ],
             ),
-            backgroundColor: const Color(0xFF10B981),
+            backgroundColor: const Color(0xFF0F9D7A),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -125,7 +125,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     } catch (e) {
       debugPrint('❌ submit review error: $e');
       if (mounted) {
-        _showSnack(trf('هەڵە: {0}', [e]), Colors.red);
+        _showSnack(trf('هەڵە: {0}', [e]), const Color(0xFFDC3545));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -422,7 +422,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 color: _charCount > 450
-                    ? Colors.red
+                    ? const Color(0xFFDC3545)
                     : (isDark ? Colors.white38 : Colors.grey),
               ),
             ),
@@ -534,10 +534,10 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFC107).withValues(alpha: 0.08),
+        color: const Color(0xFFD9822B).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFFFFC107).withValues(alpha: 0.25),
+          color: const Color(0xFFD9822B).withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -546,12 +546,12 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFC107).withValues(alpha: 0.15),
+              color: const Color(0xFFD9822B).withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.lightbulb_rounded,
-              color: Color(0xFFB8860B),
+              color: Color(0xFFD9822B),
               size: 14,
             ),
           ),
@@ -561,7 +561,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
               tr('کۆمێنتی ڕاستەقینە و بەسوود یارمەتی بەکارهێنەرانی تر دەدات بۆ هەڵبژاردنی باشترین شوێن.'),
               style: const TextStyle(
                 fontSize: 11,
-                color: Color(0xFFB8860B),
+                color: Color(0xFFD9822B),
                 height: 1.5,
                 fontWeight: FontWeight.w600,
               ),
@@ -586,7 +586,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           ),
           title: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 8),
               Text(
                 tr('سڕینەوەی کۆمێنت'),
@@ -604,7 +604,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -637,7 +637,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ کۆمێنت سڕایەوە')),
-            backgroundColor: const Color(0xFF10B981),
+            backgroundColor: const Color(0xFF0F9D7A),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -668,8 +668,8 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
   }
 
   Color _getRatingColor(int rating) {
-    if (rating >= 4) return const Color(0xFF10B981);
-    if (rating == 3) return const Color(0xFFF59E0B);
-    return const Color(0xFFEF4444);
+    if (rating >= 4) return const Color(0xFF0F9D7A);
+    if (rating == 3) return const Color(0xFFD9822B);
+    return const Color(0xFFDC3545);
   }
 }

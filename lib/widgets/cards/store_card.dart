@@ -38,8 +38,6 @@ class StoreCard extends StatelessWidget {
     this.isFavorite = false,
   });
 
-  static const Color _govColor = Color(0xFF10B981);
-  static const Color _privateColor = Color(0xFFE91E63);
   static const Color _verifiedColor = Color(0xFF3B82F6);
 
   static const Map<String, Map<String, String>> _tr = {
@@ -72,11 +70,11 @@ class StoreCard extends StatelessWidget {
     final address = PlaceDisplay.address(store['address']);
     final category = store['category']?.toString().trim() ?? '';
     final image = store['image']?.toString().trim() ?? '';
-    final type = store['type']?.toString().trim() ?? '';
-    final isGov = type == 'حکومی' || type.toLowerCase() == 'government';
     final isVerified = store['is_verified'] == true;
 
-    final accent = isGov ? _govColor : _privateColor;
+    // ڕەنگی بەش (پالێتی ئارام) — هەمان ڕەنگی ئایکۆنەکە
+    final accent = PlaceDisplay.colorForPlace(store);
+    final hairline = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE8EDF3);
     final cardColor = isDark ? const Color(0xFF1A1A22) : Colors.white;
     final borderColor = isDark ? Colors.white12 : Colors.grey.shade100;
 
@@ -114,7 +112,7 @@ class StoreCard extends StatelessWidget {
                 spreadRadius: -4,
               ),
               BoxShadow(
-                color: accent.withValues(alpha: 0.08),
+                color: accent.withValues(alpha: 0.0),
                 blurRadius: 30,
                 offset: const Offset(0, 12),
                 spreadRadius: -6,
@@ -149,10 +147,7 @@ class StoreCard extends StatelessWidget {
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: accent.withValues(alpha: 0.2),
-                              width: 2,
-                            ),
+                            border: Border.all(color: hairline, width: 1.5),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(16),
@@ -233,7 +228,7 @@ class StoreCard extends StatelessWidget {
                               Icon(
                                 Icons.location_on_rounded,
                                 size: 14,
-                                color: accent.withValues(alpha: 0.8),
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                               ),
                               const SizedBox(width: 4),
                               Expanded(
@@ -273,18 +268,18 @@ class StoreCard extends StatelessWidget {
                                   ),
                                 if (distanceText != null)
                                   _Chip(
-                                    color: Colors.green,
+                                    color: AppColors.toneSlate,
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         const Icon(Icons.near_me_rounded,
-                                            size: 10, color: Colors.green),
+                                            size: 10, color: AppColors.toneSlate),
                                         const SizedBox(width: 3),
                                         Text(
                                           tr(distanceText),
                                           style: const TextStyle(
                                             fontSize: 9,
-                                            color: Colors.green,
+                                            color: AppColors.toneSlate,
                                             fontWeight: FontWeight.w900,
                                           ),
                                         ),
@@ -326,7 +321,7 @@ class StoreCard extends StatelessWidget {
                                     key: ValueKey(isFavorite),
                                     size: 20,
                                     color: isFavorite
-                                        ? const Color(0xFFEC4899)
+                                        ? AppColors.toneRed
                                         : (isDark
                                         ? Colors.white38
                                         : Colors.grey.shade400),

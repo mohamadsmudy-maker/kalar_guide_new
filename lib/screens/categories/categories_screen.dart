@@ -515,9 +515,9 @@ class _CategoriesScreenState extends State<CategoriesScreen>
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: hasImage ? Colors.white.withValues(alpha: 0.22) : color.withValues(alpha: 0.14),
+            color: hasImage ? Colors.white.withValues(alpha: 0.22) : color.withValues(alpha: 0.10),
             shape: BoxShape.circle,
-            border: Border.all(color: hasImage ? Colors.white54 : color.withValues(alpha: 0.25)),
+            border: hasImage ? Border.all(color: Colors.white54) : null,
           ),
           child: Icon(PlaceDisplay.icon(name), color: hasImage ? Colors.white : color, size: size * 0.5),
         );
@@ -544,19 +544,12 @@ class _CategoriesScreenState extends State<CategoriesScreen>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
               color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-              gradient: hasImage
-                  ? null
-                  : LinearGradient(
-                      colors: isDark
-                          ? [const Color(0xFF1A1A22), color.withValues(alpha: 0.10)]
-                          : [Colors.white, Color.alphaBlend(color.withValues(alpha: 0.07), Colors.white)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-              border: Border.all(color: color.withValues(alpha: 0.18), width: 1.2),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8EDF3),
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: color.withValues(alpha: isDark ? 0.12 : 0.1),
+                  color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.045),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),

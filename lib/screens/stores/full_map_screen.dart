@@ -211,7 +211,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
     final gradient = ui.Gradient.linear(
       Offset.zero,
       Offset(size, size),
-      [const Color(0xFF1E88E5), const Color(0xFF6C5CE7)],
+      [const Color(0xFF1E88E5), const Color(0xFF4F5BD5)],
     );
     canvas.drawCircle(center, radius, Paint()..shader = gradient);
 
@@ -491,7 +491,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
       if (!mounted) return;
       if (pos == null) {
         _snack(tr('نەتوانرا شوێنی تۆ بدۆزرێتەوە — GPS و مۆڵەتەکان بپشکنە'),
-            Colors.orange);
+            const Color(0xFFD9822B));
         return;
       }
       final here = gmaps.LatLng(pos.latitude, pos.longitude);
@@ -499,7 +499,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
       _mapController?.animateCamera(gmaps.CameraUpdate.newLatLngZoom(here, 16));
     } catch (e) {
       debugPrint('❌ location error: $e');
-      _snack(tr('هەڵە لە وەرگرتنی شوێن'), Colors.red);
+      _snack(tr('هەڵە لە وەرگرتنی شوێن'), const Color(0xFFDC3545));
     }
   }
 
@@ -581,7 +581,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
   Future<void> _goToStore(Map<String, dynamic> store) async {
     final p = _StorePoint.from(store);
     if (p.pos == null) {
-      _snack(tr('ئەم شوێنە لۆکەیشنی نییە'), Colors.orange);
+      _snack(tr('ئەم شوێنە لۆکەیشنی نییە'), const Color(0xFFD9822B));
       return;
     }
 
@@ -694,7 +694,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
                     _buildMapButton(
                       icon: Icons.center_focus_strong_rounded,
                       tooltip: tr('نیشاندانی هەموو شوێنەکان'),
-                      color: const Color(0xFF10B981),
+                      color: const Color(0xFF0F9D7A),
                       onTap: _fitAll,
                     ),
                     const SizedBox(height: 10),
@@ -708,7 +708,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
                     _buildMapButton(
                       icon: Icons.info_outline_rounded,
                       tooltip: tr('ڕەنگی پینەکان'),
-                      color: const Color(0xFF6C5CE7),
+                      color: const Color(0xFF4F5BD5),
                       onTap: () {
                         HapticFeedback.lightImpact();
                         setState(() => _showLegend = !_showLegend);
@@ -867,7 +867,7 @@ class _FullMapScreenState extends State<FullMapScreen> {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? const LinearGradient(
-                          colors: [AppColors.primary, Color(0xFF6C5CE7)])
+                          colors: [AppColors.primary, Color(0xFF4F5BD5)])
                           : null,
                       color: isSelected
                           ? null
@@ -1062,7 +1062,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [AppColors.primary, Color(0xFF6C5CE7)],
+                            colors: [AppColors.primary, Color(0xFF4F5BD5)],
                           ),
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
@@ -1205,7 +1205,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
     final address = PlaceDisplay.address(store['address']);
     final image = store['image']?.toString() ?? '';
     final isGov = (store['type']?.toString() ?? '') == 'حکومی';
-    final accent = isGov ? const Color(0xFF10B981) : AppColors.primary;
+    final accent = isGov ? const Color(0xFF0F9D7A) : AppColors.primary;
     final dist = _dist[p];
 
     return Semantics(
@@ -1298,7 +1298,7 @@ class _StoreListSheetState extends State<_StoreListSheet> {
                                 const Color(0xFF1E88E5)),
                           if (p.pos == null)
                             _tag(tr('بێ لۆکەیشن'), Icons.location_off_rounded,
-                                Colors.orange),
+                                const Color(0xFFD9822B)),
                         ],
                       ),
                     ],

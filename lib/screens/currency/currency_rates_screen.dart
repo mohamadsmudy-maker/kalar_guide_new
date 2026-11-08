@@ -38,7 +38,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
   bool _liveFlash = false;
 
   static const Color _dark = Color(0xFF0F172A);
-  static const Color _green = Color(0xFF10B981);
+  static const Color _green = Color(0xFF0F9D7A);
 
   @override
   void initState() {
@@ -105,7 +105,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
     final history = _snapshot?.history ?? const [];
     if (history.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr(CurrencyStrings.of(lang, 'no_history'))), backgroundColor: Colors.orange),
+        SnackBar(content: Text(tr(CurrencyStrings.of(lang, 'no_history'))), backgroundColor: const Color(0xFFD9822B)),
       );
       return;
     }
@@ -115,7 +115,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${CurrencyStrings.of(lang, 'error')}: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${CurrencyStrings.of(lang, 'error')}: $e'), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -513,7 +513,7 @@ class _MarketCard extends StatelessWidget {
                                   ? '${CurrencyService.localizeDigits('${m!.stationCount}', lang)} ${t('stations')}'
                                       '${m.lastUpdated != null ? ' • ${CurrencyStrings.timeAgo(m.lastUpdated, lang)}' : ''}'
                                   : t('no_prices')),
-                              style: TextStyle(fontSize: 11, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 11, color: stale ? const Color(0xFFD9822B) : sub, fontWeight: FontWeight.w600),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -535,7 +535,7 @@ class _MarketCard extends StatelessWidget {
                             label: t('best_sell'),
                             value: CurrencyService.formatPrice(m!.bestSellPrice, lang),
                             station: m.bestSell?['station_name']?.toString(),
-                            color: const Color(0xFF10B981),
+                            color: const Color(0xFF0F9D7A),
                             isDark: isDark,
                           ),
                         ),
@@ -545,7 +545,7 @@ class _MarketCard extends StatelessWidget {
                             label: t('best_buy'),
                             value: CurrencyService.formatPrice(m.bestBuyPrice, lang),
                             station: m.bestBuy?['station_name']?.toString(),
-                            color: const Color(0xFF3B82F6),
+                            color: const Color(0xFF1E88E5),
                             isDark: isDark,
                           ),
                         ),
@@ -634,7 +634,7 @@ class _ChangeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (change == 0) return const SizedBox.shrink();
     final up = change > 0;
-    final color = up ? const Color(0xFFEF4444) : const Color(0xFF10B981);
+    final color = up ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -668,7 +668,7 @@ class _LiveBadge extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: flash ? const Color(0xFF10B981) : Colors.white.withValues(alpha: 0.1),
+        color: flash ? const Color(0xFF0F9D7A) : Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -678,7 +678,7 @@ class _LiveBadge extends StatelessWidget {
             width: 7,
             height: 7,
             decoration: BoxDecoration(
-              color: flash ? Colors.white : const Color(0xFF10B981),
+              color: flash ? Colors.white : const Color(0xFF0F9D7A),
               shape: BoxShape.circle,
             ),
           ),

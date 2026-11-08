@@ -55,7 +55,7 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
         foregroundColor: Colors.white,
         title: Row(
           children: [
-            const Icon(Icons.people_alt_rounded, color: Colors.green),
+            const Icon(Icons.people_alt_rounded, color: Color(0xFF0F9D7A)),
             const SizedBox(width: 8),
             Text(
               tr('بەکارهێنەرانی چالاک'),
@@ -103,14 +103,14 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF10B981), Color(0xFF059669)],
+              colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                color: const Color(0xFF0F9D7A).withValues(alpha: 0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -189,15 +189,15 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
   Widget _buildStatsGrid(bool isDark) {
     final items = [
       _StatItem('٥ خولەکی ڕابردوو', _stats['last_5min'] ?? 0,
-          Icons.timer_rounded, const Color(0xFF3B82F6)),
+          Icons.timer_rounded, const Color(0xFF1E88E5)),
       _StatItem('٣٠ خولەکی ڕابردوو', _stats['last_30min'] ?? 0,
-          Icons.hourglass_bottom_rounded, const Color(0xFF8B5CF6)),
+          Icons.hourglass_bottom_rounded, const Color(0xFF4F5BD5)),
       _StatItem('کاتژمێری ڕابردوو', _stats['last_1hour'] ?? 0,
-          Icons.access_time_rounded, const Color(0xFFF59E0B)),
+          Icons.access_time_rounded, const Color(0xFFD9822B)),
       _StatItem('ئەمڕۆ', _stats['today'] ?? 0, Icons.today_rounded,
-          const Color(0xFFEF4444)),
+          const Color(0xFFDC3545)),
       _StatItem('کۆی گشتی', _stats['total_users'] ?? 0,
-          Icons.people_outline_rounded, const Color(0xFF06B6D4)),
+          Icons.people_outline_rounded, const Color(0xFF1E88E5)),
     ];
 
     return Container(
@@ -300,7 +300,7 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
                     padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.15),
+                      color: const Color(0xFF0F9D7A).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -308,7 +308,7 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
-                        color: Colors.green,
+                        color: Color(0xFF0F9D7A),
                       ),
                     ),
                   ),
@@ -347,8 +347,8 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: Colors.green.withValues(alpha: 0.2),
-            child: const Icon(Icons.person, color: Colors.green, size: 18),
+            backgroundColor: const Color(0xFF0F9D7A).withValues(alpha: 0.2),
+            child: const Icon(Icons.person, color: Color(0xFF0F9D7A), size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(

@@ -82,7 +82,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: c.official
-                      ? Colors.amber.withValues(alpha: 0.3)
+                      ? const Color(0xFFD9822B).withValues(alpha: 0.3)
                       : Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -102,7 +102,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                   child: const Padding(
                     padding: EdgeInsetsDirectional.only(end: 6),
                     child: Icon(Icons.cloud_off_rounded,
-                        color: Colors.amberAccent, size: 13),
+                        color: Color(0xFFD9822B), size: 13),
                   ),
                 ),
               Icon(Icons.access_time_rounded,
@@ -348,7 +348,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
             decoration: isNow
                 ? BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF4FC3F7), Color(0xFF0288D1)],
+                colors: [Color(0xFF1E88E5), Color(0xFF1E88E5)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -391,7 +391,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: isNow ? Colors.white : const Color(0xFF29B6F6),
+                    color: isNow ? Colors.white : const Color(0xFF1E88E5),
                     height: 1.2,
                   ),
                 ),
@@ -451,13 +451,13 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
             Row(
               children: [
                 end(Icons.wb_twilight_rounded, _t('sunrise'), _hm(rise),
-                    const Color(0xFFFFA000)),
+                    const Color(0xFFD9822B)),
                 const Spacer(),
                 end(Icons.hourglass_bottom_rounded, _t('daylight'),
                     _n(daylight), _WeatherWidgetState._accent),
                 const Spacer(),
                 end(Icons.nights_stay_rounded, _t('sunset'), _hm(set),
-                    const Color(0xFFF4511E)),
+                    const Color(0xFFD9822B)),
               ],
             ),
             const SizedBox(height: 16),
@@ -481,9 +481,9 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                               begin: AlignmentDirectional.centerStart,
                               end: AlignmentDirectional.centerEnd,
                               colors: [
-                                Color(0xFFFFCA28),
-                                Color(0xFFFFA000),
-                                Color(0xFFF4511E),
+                                Color(0xFFD9822B),
+                                Color(0xFFD9822B),
+                                Color(0xFFD9822B),
                               ],
                             ),
                           ),
@@ -498,8 +498,8 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isDayNow
-                                ? const Color(0xFFFFB300)
-                                : const Color(0xFF3949AB),
+                                ? const Color(0xFFD9822B)
+                                : const Color(0xFF4F5BD5),
                             border: Border.all(color: Colors.white, width: 2),
                             boxShadow: [
                               BoxShadow(
@@ -543,7 +543,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
       _tile(
         isDark: isDark,
         icon: const Icon(Icons.wb_sunny_rounded),
-        color: const Color(0xFFFFA000),
+        color: const Color(0xFFD9822B),
         label: _t('uv'),
         value: uv == null ? '--' : _n(uv.round()),
         sub: uvL?.text,
@@ -552,14 +552,14 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
       _tile(
         isDark: isDark,
         icon: const Icon(Icons.visibility_rounded),
-        color: const Color(0xFF26A69A),
+        color: const Color(0xFF0F9D7A),
         label: _t('visibility'),
         value: vis == null ? '--' : '${_n(_fmt1(vis))} ${_t('km')}',
       ),
       _tile(
         isDark: isDark,
         icon: const Icon(Icons.storm_rounded),
-        color: const Color(0xFF5C6BC0),
+        color: const Color(0xFF4F5BD5),
         label: _t('gust'),
         value: c.gust == null ? '--' : '${_n(c.gust!)} ${_t('kmh')}',
       ),
@@ -570,7 +570,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
           angle: ((c.windDir ?? 0) + 180) * math.pi / 180,
           child: const Icon(Icons.navigation_rounded),
         ),
-        color: const Color(0xFF29B6F6),
+        color: const Color(0xFF1E88E5),
         label: _t('wind_dir'),
         value: c.windDir == null ? '--' : _compass(c.windDir!),
         sub: c.windDir == null ? null : '${_n(c.windDir!)}°',
@@ -779,15 +779,15 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFA000).withValues(alpha: 0.12),
+                color: const Color(0xFFD9822B).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: const Color(0xFFFFA000).withValues(alpha: 0.4)),
+                    color: const Color(0xFFD9822B).withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.warning_amber_rounded,
-                      color: Color(0xFFFFA000), size: 20),
+                      color: Color(0xFFD9822B), size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -877,7 +877,7 @@ extension _WeatherWidgetStateUi on _WeatherWidgetState {
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF29B6F6),
+                      color: Color(0xFF1E88E5),
                     ),
                   )
                       : const SizedBox.shrink(),

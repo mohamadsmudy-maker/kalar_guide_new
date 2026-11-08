@@ -62,7 +62,7 @@ class EventReminderService {
             importance: Importance.high,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
-            color: Color(0xFF6C5CE7),
+            color: Color(0xFF4F5BD5),
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

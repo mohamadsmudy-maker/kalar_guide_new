@@ -145,7 +145,7 @@ class _SplashScreenState extends State<SplashScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark
         ? const [Color(0xFF0F0F14), Color(0xFF1A1B2E)]
-        : const [Color(0xFF1E88E5), Color(0xFF1565C0)];
+        : const [Color(0xFF1E88E5), Color(0xFF1E88E5)];
 
     return PopScope(
       // The splash must not be dismissible with the back button

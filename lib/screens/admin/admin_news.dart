@@ -90,7 +90,7 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr("نەخێر"))),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC3545), foregroundColor: Colors.white),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(tr("سڕینەوە")),
             ),
@@ -112,13 +112,13 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
       await _fetchNews();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr("✅ هەواڵەکە سڕایەوە")), backgroundColor: Colors.green),
+          SnackBar(content: Text(tr("✅ هەواڵەکە سڕایەوە")), backgroundColor: const Color(0xFF0F9D7A)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -247,11 +247,11 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+              icon: const Icon(Icons.edit, color: Color(0xFF1E88E5), size: 20),
               onPressed: () => _openAddNewsDialog(newsToEdit: news),
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+              icon: const Icon(Icons.delete, color: Color(0xFFDC3545), size: 20),
               onPressed: _isDeleting ? null : () => _deleteNews(news),
             ),
           ],
@@ -393,7 +393,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
   Future<void> _save() async {
     if (_titleCtrl.text.trim().isEmpty || _selectedStoreId == null || _selectedNewsType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr("تکایە هەموو خانەکان پڕ بکەرەوە ⚠")), backgroundColor: Colors.orange),
+        SnackBar(content: Text(tr("تکایە هەموو خانەکان پڕ بکەرەوە ⚠")), backgroundColor: const Color(0xFFD9822B)),
       );
       return;
     }
@@ -434,13 +434,13 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr(isEditing ? "✅ دەستکاری کرا" : "✅ بڵاوکرایەوە")), backgroundColor: Colors.green),
+          SnackBar(content: Text(tr(isEditing ? "✅ دەستکاری کرا" : "✅ بڵاوکرایەوە")), backgroundColor: const Color(0xFF0F9D7A)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -501,7 +501,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                             child: GestureDetector(
                               onTap: () => setState(() => _newsImages.removeAt(i)),
                               child: Container(
-                                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                decoration: const BoxDecoration(color: Color(0xFFDC3545), shape: BoxShape.circle),
                                 padding: const EdgeInsets.all(4),
                                 child: const Icon(Icons.close, size: 12, color: Colors.white),
                               ),

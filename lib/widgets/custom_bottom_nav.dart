@@ -195,7 +195,7 @@ class _NavButton extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 5),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEF4444),
+                              color: const Color(0xFFDC3545),
                               borderRadius: BorderRadius.circular(9),
                               border: Border.all(
                                 color: isDark

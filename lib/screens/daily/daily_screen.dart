@@ -242,7 +242,7 @@ class _DailyScreenState extends State<DailyScreen>
         title: _t('emergency'),
         subtitle: _t('emergency_sub'),
         icon: Icons.emergency_rounded,
-        color: const Color(0xFFEF4444),
+        color: AppColors.toneRed,
         tag: 'SOS',
         onTap: () => _open(const EmergencyScreen()),
       ),
@@ -250,14 +250,14 @@ class _DailyScreenState extends State<DailyScreen>
         title: _t('prayer'),
         subtitle: _t('prayer_sub'),
         icon: Icons.mosque_rounded,
-        color: const Color(0xFF8B5CF6),
+        color: AppColors.toneIndigo,
         onTap: () => _open(const PrayerTimesScreen()),
       ),
       _ServiceData(
         title: _t('currency'),
         subtitle: _t('currency_sub'),
         icon: Icons.currency_exchange_rounded,
-        color: const Color(0xFF10B981),
+        color: AppColors.toneTeal,
         isLive: true,
         onTap: () => _open(const CurrencyRatesScreen()),
       ),
@@ -265,14 +265,14 @@ class _DailyScreenState extends State<DailyScreen>
         title: _t('qibla'),
         subtitle: _t('qibla_sub'),
         icon: Icons.explore_rounded,
-        color: const Color(0xFFF59E0B),
+        color: AppColors.toneAmber,
         onTap: () => _open(const QiblaFinderScreen()),
       ),
       _ServiceData(
         title: _t('fuel'),
         subtitle: _t('fuel_sub'),
         icon: Icons.local_gas_station_rounded,
-        color: const Color(0xFFF97316),
+        color: AppColors.toneAmber,
         isLive: true,
         onTap: () => _open(const FuelTypesScreen()),
       ),
@@ -280,9 +280,9 @@ class _DailyScreenState extends State<DailyScreen>
         title: _t('weather'),
         subtitle: _t('weather_sub'),
         icon: Icons.cloud_rounded,
-        color: const Color(0xFF3B82F6),
+        color: AppColors.toneBlue,
         trailing: _WeatherPill(
-          color: const Color(0xFF3B82F6),
+          color: AppColors.toneBlue,
           lang: _lang,
           liveLabel: _t('live'),
         ),
@@ -366,7 +366,7 @@ class _DailyScreenState extends State<DailyScreen>
                       title: _t('departments'),
                       subtitle: _t('departments_sub'),
                       icon: Icons.account_balance_rounded,
-                      colors: const [Color(0xFF10B981), Color(0xFF047857)],
+                      colors: const [Color(0xFF0F9D7A), Color(0xFF0B7A60)],
                       onTap: () => _open(const DepartmentsScreen()),
                     ),
                   ),
@@ -381,7 +381,7 @@ class _DailyScreenState extends State<DailyScreen>
                       title: _t('videos'),
                       subtitle: _t('videos_sub'),
                       icon: Icons.play_circle_fill_rounded,
-                      colors: const [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                      colors: const [Color(0xFF4F5BD5), Color(0xFF3B47B8)],
                       onTap: () => _open(const UserVideosScreen()),
                     ),
                   ),
@@ -449,12 +449,12 @@ class _DailyScreenState extends State<DailyScreen>
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                colors: [Color(0xFF1E88E5), Color(0xFF1565C0)],
               ),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE91E63).withValues(alpha: 0.25),
+                  color: AppColors.primary.withValues(alpha: 0.22),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -516,12 +516,12 @@ class _DailyScreenState extends State<DailyScreen>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF312E81), Color(0xFF5B21B6), Color(0xFF9333EA)],
+          colors: [Color(0xFF0D47A1), Color(0xFF1565C0), Color(0xFF1E88E5)],
         ),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6D28D9).withValues(alpha: 0.24),
+            color: const Color(0xFF1565C0).withValues(alpha: 0.22),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -807,47 +807,32 @@ class _ServiceCard extends StatelessWidget {
       child: Container(
         // ✅ چاککرا: سێبەرەکان لێرەدان بۆ ئەوەی کارتەکە خڕ بێت
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.035),
-              blurRadius: 17,
-              offset: const Offset(0, 7),
-            ),
-            BoxShadow(
-              color: color.withValues(alpha: isDark ? 0.10 : 0.07),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.045),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(22),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: service.onTap,
-              splashColor: color.withValues(alpha: 0.10),
-              highlightColor: color.withValues(alpha: 0.05),
+              splashColor: color.withValues(alpha: 0.08),
+              highlightColor: color.withValues(alpha: 0.04),
               child: Ink(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                      const Color(0xFF1E293B),
-                      Color.lerp(const Color(0xFF1E293B), color, 0.09)!,
-                    ]
-                        : [
-                      Colors.white,
-                      Color.lerp(Colors.white, color, 0.035)!,
-                    ],
-                  ),
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: BorderRadius.circular(22),
                   border: Border.all(
-                    color: color.withValues(alpha: isDark ? 0.30 : 0.20),
-                    width: 1.2,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : const Color(0xFFE8EDF3),
                   ),
                 ),
                 child: Column(
@@ -857,27 +842,13 @@ class _ServiceCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          width: 51,
-                          height: 51,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                color,
-                                Color.lerp(color, Colors.white, 0.27)!,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(17),
-                            boxShadow: [
-                              BoxShadow(
-                                color: color.withValues(alpha: 0.28),
-                                blurRadius: 12,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
+                            color: color.withValues(alpha: isDark ? 0.18 : 0.10),
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          child: Icon(service.icon, color: Colors.white, size: 26),
+                          child: Icon(service.icon, color: color, size: 25),
                         ),
                         const Spacer(),
                         if (service.trailing != null)
@@ -889,12 +860,14 @@ class _ServiceCard extends StatelessWidget {
                             width: 30,
                             height: 30,
                             decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.09),
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : const Color(0xFFF1F4F8),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(Icons.arrow_forward_rounded,
                               size: 16,
-                              color: color,
+                              color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
                             ),
                           ),
                       ],

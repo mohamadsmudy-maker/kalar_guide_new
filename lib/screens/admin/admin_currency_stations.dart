@@ -105,7 +105,7 @@ class _AdminCurrencyStationsScreenState
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF10B981)),
+          child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
         )
             : Column(
           children: [
@@ -139,7 +139,7 @@ class _AdminCurrencyStationsScreenState
                       ),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
-                        color: Color(0xFF10B981),
+                        color: Color(0xFF0F9D7A),
                       ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -154,7 +154,7 @@ class _AdminCurrencyStationsScreenState
               child: _filteredStations.isEmpty
                   ? _buildEmptyState(isDark)
                   : RefreshIndicator(
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF0F9D7A),
                 onRefresh: _loadStations,
                 child: ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -202,7 +202,7 @@ class _AdminCurrencyStationsScreenState
           color: isDark ? const Color(0xFF1A1B2E) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFF10B981).withValues(alpha: 0.2),
+            color: const Color(0xFF0F9D7A).withValues(alpha: 0.2),
             width: 1,
           ),
           boxShadow: [
@@ -276,7 +276,7 @@ class _AdminCurrencyStationsScreenState
                       trf('دۆلار: {0} د.ع', [usdSell.toStringAsFixed(0)]),
                       style: const TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF10B981),
+                        color: Color(0xFF0F9D7A),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -287,7 +287,7 @@ class _AdminCurrencyStationsScreenState
 
             const Icon(
               Icons.chevron_right_rounded,
-              color: Color(0xFF10B981),
+              color: Color(0xFF0F9D7A),
               size: 22,
             ),
           ],
@@ -302,12 +302,12 @@ class _AdminCurrencyStationsScreenState
       height: 56,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF059669)],
+          colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
         ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+            color: const Color(0xFF0F9D7A).withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

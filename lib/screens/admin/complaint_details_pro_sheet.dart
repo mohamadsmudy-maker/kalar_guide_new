@@ -141,7 +141,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ تێبینی پاشەکەوتکرا')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -151,7 +151,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(trf('هەڵە: {0}', [e])),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFDC3545),
           ),
         );
       }
@@ -230,7 +230,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(trf('هەڵە: {0}', [e])),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFDC3545),
           ),
         );
       }
@@ -661,7 +661,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E88E5), Color(0xFF64B5F6)],
+          colors: [Color(0xFF1E88E5), Color(0xFF1E88E5)],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -970,7 +970,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
             child: _buildActionBtn(
               'پەسەندکردن',
               Icons.check_circle_rounded,
-              const Color(0xFF2ECC71),
+              const Color(0xFF0F9D7A),
                   () => _updateStatus('in_progress'),
             ),
           ),
@@ -979,7 +979,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
             child: _buildActionBtn(
               'ڕەتکردنەوە',
               Icons.cancel_rounded,
-              const Color(0xFFE74C3C),
+              const Color(0xFFDC3545),
                   () => _updateStatus('rejected'),
             ),
           ),
@@ -997,7 +997,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3498DB),
+            backgroundColor: const Color(0xFF1E88E5),
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -1009,13 +1009,13 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
       return _statusBanner(
         'ئەم سکاڵایە جێبەجێکراوە',
         Icons.check_circle_rounded,
-        const Color(0xFF3498DB),
+        const Color(0xFF1E88E5),
       );
     } else {
       return _statusBanner(
         'ئەم سکاڵایە ڕەتکراوەتەوە',
         Icons.cancel_rounded,
-        const Color(0xFFE74C3C),
+        const Color(0xFFDC3545),
       );
     }
   }
@@ -1078,14 +1078,14 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
   Color _color(String? s) {
     switch (s) {
       case 'pending':
-        return const Color(0xFFFF9800);
+        return const Color(0xFFD9822B);
       case 'approved':
       case 'in_progress':
-        return const Color(0xFF2ECC71);
+        return const Color(0xFF0F9D7A);
       case 'rejected':
-        return const Color(0xFFE74C3C);
+        return const Color(0xFFDC3545);
       case 'completed':
-        return const Color(0xFF3498DB);
+        return const Color(0xFF1E88E5);
       default:
         return Colors.grey;
     }

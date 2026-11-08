@@ -103,7 +103,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
                 ? const SliverFillRemaining(
               child: Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFF10B981),
+                  color: Color(0xFF0F9D7A),
                 ),
               ),
             )
@@ -155,12 +155,12 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+            color: const Color(0xFF0F9D7A).withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             Icons.arrow_forward_rounded,
-            color: isDark ? Colors.white : const Color(0xFF10B981),
+            color: isDark ? Colors.white : const Color(0xFF0F9D7A),
             size: 20,
           ),
         ),
@@ -187,7 +187,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
                     height: 58,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -195,7 +195,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
                       boxShadow: [
                         BoxShadow(
                           color:
-                          const Color(0xFF10B981).withValues(alpha: 0.45),
+                          const Color(0xFF0F9D7A).withValues(alpha: 0.45),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                           spreadRadius: -4,
@@ -260,7 +260,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: _searchQuery.isNotEmpty
-              ? const Color(0xFF10B981).withValues(alpha: 0.5)
+              ? const Color(0xFF0F9D7A).withValues(alpha: 0.5)
               : (isDark
               ? Colors.white.withValues(alpha: 0.06)
               : Colors.grey.shade200),
@@ -280,7 +280,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
           const SizedBox(width: 16),
           const Icon(
             Icons.search_rounded,
-            color: Color(0xFF10B981),
+            color: Color(0xFF0F9D7A),
             size: 22,
           ),
           const SizedBox(width: 10),
@@ -331,14 +331,14 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
       int index,
       ) {
     final palettes = [
-      [const Color(0xFF1E88E5), const Color(0xFF42A5F5)],
-      [const Color(0xFFE91E63), const Color(0xFFF06292)],
-      [const Color(0xFF10B981), const Color(0xFF34D399)],
-      [const Color(0xFFF59E0B), const Color(0xFFFBBF24)],
-      [const Color(0xFF8B5CF6), const Color(0xFFA78BFA)],
-      [const Color(0xFF14B8A6), const Color(0xFF2DD4BF)],
-      [const Color(0xFFEF4444), const Color(0xFFF87171)],
-      [const Color(0xFF6366F1), const Color(0xFF818CF8)],
+      [const Color(0xFF1E88E5), const Color(0xFF1E88E5)],
+      [const Color(0xFFC2557A), const Color(0xFFC2557A)],
+      [const Color(0xFF0F9D7A), const Color(0xFF0F9D7A)],
+      [const Color(0xFFD9822B), const Color(0xFFD9822B)],
+      [const Color(0xFF4F5BD5), const Color(0xFFA78BFA)],
+      [const Color(0xFF0F9D7A), const Color(0xFF0F9D7A)],
+      [const Color(0xFFDC3545), const Color(0xFFDC3545)],
+      [const Color(0xFF4F5BD5), const Color(0xFF4F5BD5)],
     ];
     final palette = palettes[index % palettes.length];
     final primaryColor = palette[0];
@@ -529,13 +529,13 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              color: const Color(0xFF0F9D7A).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.business_outlined,
               size: 60,
-              color: Color(0xFF10B981),
+              color: Color(0xFF0F9D7A),
             ),
           ),
           const SizedBox(height: 16),

@@ -186,7 +186,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                    color: Colors.red, borderRadius: BorderRadius.circular(8)),
+                    color: const Color(0xFFDC3545), borderRadius: BorderRadius.circular(8)),
                 child: _deleting
                     ? const SizedBox(
                     width: 14,
@@ -437,7 +437,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.favorite_rounded,
-                                color: Colors.pink, size: 12),
+                                color: Color(0xFFC2557A), size: 12),
                             const SizedBox(width: 4),
                             Text(tr('دڵخواز'),
                                 style: const TextStyle(

@@ -514,7 +514,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'complaints',
           icon: Icons.assignment_rounded,
-          color: const Color(0xFFEF4444),
+          color: const Color(0xFFDC3545),
           title: tr('بەڕێوەبردنی سکاڵاکان'),
           subtitle: tr('بینین و جێبەجێکردنی سکاڵاکان'),
           badge: _pendingComplaints,
@@ -524,7 +524,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'complaints_map',
           icon: Icons.map_rounded,
-          color: const Color(0xFFE91E63),
+          color: const Color(0xFFC2557A),
           title: tr('نەخشەی گشتی سکاڵاکان'),
           subtitle: tr('بینینی گشت سکاڵاکان لەسەر نەخشە'),
           screen: () => const AllComplaintsMapScreen(),
@@ -532,7 +532,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'complaint_instructions',
           icon: Icons.campaign_rounded,
-          color: const Color(0xFFF97316),
+          color: const Color(0xFFD9822B),
           title: tr('ڕێنماییەکانی سکاڵا'),
           subtitle: tr('دەستکاری و گۆڕینی پۆپئاپی سکاڵا'),
           screen: () => const AdminComplaintInstructionsListScreen(),
@@ -542,7 +542,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'stores',
           icon: Icons.storefront_rounded,
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF1E88E5),
           title: tr('بەڕێوەبردنی شوێنەکان'),
           subtitle: tr('سەرجەم شوێنە تۆمارکراوەکان'),
           badge: _totalStores,
@@ -551,7 +551,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'departments',
           icon: Icons.business_rounded,
-          color: const Color(0xFF10B981),
+          color: const Color(0xFF0F9D7A),
           title: tr('بەڕێوەبردنی فەرمانگەکان'),
           subtitle: tr('زیادکردن و دەستکاری مامەڵەکانی فەرمانگەکان'),
           badge: _totalDepartments,
@@ -560,7 +560,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'categories',
           icon: Icons.category_rounded,
-          color: const Color(0xFF8B5CF6),
+          color: const Color(0xFF4F5BD5),
           title: tr('بەشە سەرەکی و ژێربەشەکان'),
           subtitle: tr('زیادکردن و دەستکاری بەشەکان'),
           screen: () => const AdminCategoriesManagementScreen(),
@@ -568,7 +568,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'neighborhoods',
           icon: Icons.location_city_rounded,
-          color: const Color(0xFF06B6D4),
+          color: const Color(0xFF1E88E5),
           title: tr('بەڕێوەبردنی گەڕەکەکان'),
           subtitle: tr('زیادکردن و دەستکاری گەڕەکانی کەلار'),
           screen: () => const AdminNeighborhoodsScreen(),
@@ -576,7 +576,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'news',
           icon: Icons.newspaper_rounded,
-          color: const Color(0xFF6366F1),
+          color: const Color(0xFF4F5BD5),
           title: tr('بەڕێوەبردنی هەواڵ'),
           subtitle: tr('زیادکردن و دەستکاری هەواڵەکان'),
           screen: () => const AdminNewsScreen(),
@@ -584,7 +584,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'gallery',
           icon: Icons.photo_library_rounded,
-          color: const Color(0xFFF59E0B),
+          color: const Color(0xFFD9822B),
           title: tr('بەڕێوەبردنی گەلەری'),
           subtitle: tr('زیادکردن و دەستکاریکردنی وێنەکان'),
           screen: () => const AdminGallery(),
@@ -592,7 +592,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'banners',
           icon: Icons.slideshow_rounded,
-          color: const Color(0xFFE91E63),
+          color: const Color(0xFFC2557A),
           title: tr('ڕێکخستنی سلایدەکان'),
           subtitle: tr('ڕێکخستن و گۆڕینی بانەرەکان'),
           screen: () => const AdminReorderBannersScreen(),
@@ -600,7 +600,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'videos',
           icon: Icons.video_library_rounded,
-          color: const Color(0xFF8B5CF6),
+          color: const Color(0xFF4F5BD5),
           title: tr('بەڕێوەبردنی ڤیدیۆکان'),
           subtitle: tr('زیادکردن و دەستکاری ڤیدیۆکان'),
           screen: () => const AdminVideosScreen(),
@@ -608,7 +608,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'events',
           icon: Icons.event_rounded,
-          color: const Color(0xFF6C5CE7),
+          color: const Color(0xFF4F5BD5),
           title: tr('ڕووداوەکان'),
           subtitle: tr('زیادکردن و دەستکاری ڕووداوەکان'),
           screen: () => const AdminEventsScreen(),
@@ -618,7 +618,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'emergency',
           icon: Icons.emergency_rounded,
-          color: const Color(0xFFDC2626),
+          color: const Color(0xFFDC3545),
           title: tr('بەڕێوەبردنی فریاکەوتن'),
           subtitle: tr('ژمارەکانی فریاکەوتن'),
           screen: () => const AdminEmergencyServicesScreen(),
@@ -626,7 +626,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'fuel',
           icon: Icons.local_gas_station_rounded,
-          color: const Color(0xFFFFD700),
+          color: const Color(0xFFD9822B),
           title: tr('بەڕێوەبردنی سووتەمەنی'),
           subtitle: tr('نوێکردنەوەی نرخی بەنزین و گاز'),
           screen: () => const AdminFuelStationsScreen(),
@@ -634,7 +634,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'currency',
           icon: Icons.attach_money_rounded,
-          color: const Color(0xFF10B981),
+          color: const Color(0xFF0F9D7A),
           title: tr('بەڕێوەبردنی دراوەکان'),
           subtitle: tr('نوێکردنەوەی نرخی دۆلار و زێڕ'),
           screen: () => const AdminCurrencyStationsScreen(),
@@ -642,7 +642,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'weather',
           icon: Icons.cloud_rounded,
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF1E88E5),
           title: tr('بەڕێوەبردنی کەشوهەوا'),
           subtitle: tr('نوێکردنەوەی پلەی گەرما و دۆخ'),
           screen: () => const AdminWeatherScreen(),
@@ -650,7 +650,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'prayer_times',
           icon: Icons.mosque_rounded,
-          color: const Color(0xFF10B981),
+          color: const Color(0xFF0F9D7A),
           title: tr('کاتەکانی نوێژ'),
           subtitle: tr('دەستکاری یان پەیستکردنی خشتەی ئامۆژگاری'),
           adminOnly: true,
@@ -661,7 +661,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'notifications',
           icon: Icons.notifications_active_rounded,
-          color: const Color(0xFFF59E0B),
+          color: const Color(0xFFD9822B),
           title: tr('ناردنی ئاگاداری'),
           subtitle: tr('ناردنی ئاگاداری بۆ بەکارهێنەران'),
           screen: () => const AdminNotificationsScreen(),
@@ -669,7 +669,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'vendor_requests',
           icon: Icons.assignment_ind_rounded,
-          color: const Color(0xFF8B5CF6),
+          color: const Color(0xFF4F5BD5),
           title: tr('داوکاری ئەدمینەکان'),
           subtitle: tr('پەسەندکردنی ئەدمینە نوێکان'),
           badge: _pendingRequests,
@@ -680,7 +680,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'database',
           icon: Icons.storage_rounded,
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF1E88E5),
           title: tr('خشتەکانی داتابەیس'),
           subtitle: tr('بینینی گشت خشتەکانی داتابەیس'),
           adminOnly: true,

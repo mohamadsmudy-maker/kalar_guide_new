@@ -31,7 +31,7 @@ class _AdminDatabaseViewerScreenState
       'key': 'dukan',
       'name': 'شوێنەکان',
       'icon': Icons.storefront_rounded,
-      'color': Colors.indigo,
+      'color': Color(0xFF4F5BD5),
       'columns': 'id, name, phone, address, category, type, is_verified, created_at',
       // ⚠️ 'password' و 'user_phone' لابراون
     },
@@ -39,28 +39,28 @@ class _AdminDatabaseViewerScreenState
       'key': 'news',
       'name': 'هەواڵەکان',
       'icon': Icons.newspaper_rounded,
-      'color': Colors.green,
+      'color': Color(0xFF0F9D7A),
       'columns': 'id, title, description, images, likes, views, created_at, store_id',
     },
     {
       'key': 'products',
       'name': 'کاڵاکان',
       'icon': Icons.shopping_bag_rounded,
-      'color': Colors.deepOrange,
+      'color': Color(0xFFD9822B),
       'columns': 'id, name, price, category, img, store_id, created_at',
     },
     {
       'key': 'orders',
       'name': 'ئۆردەرەکان',
       'icon': Icons.receipt_long_rounded,
-      'color': Colors.teal,
+      'color': Color(0xFF0F9D7A),
       'columns': 'id, store_id, total_price, status, customer_name, created_at',
     },
     {
       'key': 'complaints',
       'name': 'سکاڵاکان',
       'icon': Icons.assignment_late_rounded,
-      'color': Colors.red,
+      'color': Color(0xFFDC3545),
       'columns': 'id, title, description, status, responsible_authority, created_at',
       // ⚠️ 'user_phone' و 'user_id' لابراون
     },
@@ -68,35 +68,35 @@ class _AdminDatabaseViewerScreenState
       'key': 'main_categories',
       'name': 'بەشە سەرەکییەکان',
       'icon': Icons.category_rounded,
-      'color': Colors.pink,
+      'color': Color(0xFFC2557A),
       'columns': 'id, name, image, sort_order',
     },
     {
       'key': 'sub_categories',
       'name': 'ژێربەشەکان',
       'icon': Icons.subdirectory_arrow_right_rounded,
-      'color': Colors.orange,
+      'color': Color(0xFFD9822B),
       'columns': 'id, name, parent',
     },
     {
       'key': 'emergency_services',
       'name': 'خزمەتگوزاری فریاکەوتن',
       'icon': Icons.emergency_rounded,
-      'color': Colors.redAccent,
+      'color': Color(0xFFDC3545),
       'columns': 'id, name_ku, category, phone, is_active, display_order',
     },
     {
       'key': 'neighborhoods',
       'name': 'گەڕەکەکان',
       'icon': Icons.location_city_rounded,
-      'color': Colors.blue,
+      'color': Color(0xFF1E88E5),
       'columns': 'id, name_ku, description_ku, color, is_active',
     },
     {
       'key': 'events',
       'name': 'ڕووداوەکان',
       'icon': Icons.event_rounded,
-      'color': Colors.purple,
+      'color': Color(0xFF4F5BD5),
       'columns': 'id, title_ku, start_date, category, is_published, created_at',
     },
   ];
@@ -326,14 +326,14 @@ class _AdminDatabaseViewerScreenState
     required int index,
   }) {
     final colors = [
-      Colors.blue,
-      Colors.purple,
-      Colors.teal,
-      Colors.orange,
-      Colors.pink,
-      Colors.indigo,
-      Colors.green,
-      Colors.red,
+      const Color(0xFF1E88E5),
+      const Color(0xFF4F5BD5),
+      const Color(0xFF0F9D7A),
+      const Color(0xFFD9822B),
+      const Color(0xFFC2557A),
+      const Color(0xFF4F5BD5),
+      const Color(0xFF0F9D7A),
+      const Color(0xFFDC3545),
     ];
     final color = colors[(index - 1) % colors.length];
 
@@ -363,7 +363,7 @@ class _AdminDatabaseViewerScreenState
               vertical: 8,
             ),
             decoration: BoxDecoration(
-              color: (isNull ? Colors.red : color).withValues(alpha: 0.1),
+              color: (isNull ? const Color(0xFFDC3545) : color).withValues(alpha: 0.1),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(14),
               ),
@@ -372,7 +372,7 @@ class _AdminDatabaseViewerScreenState
               children: [
                 Icon(
                   isNull ? Icons.error_outline_rounded : Icons.label_rounded,
-                  color: isNull ? Colors.red : color,
+                  color: isNull ? const Color(0xFFDC3545) : color,
                   size: 14,
                 ),
                 const SizedBox(width: 6),
@@ -382,7 +382,7 @@ class _AdminDatabaseViewerScreenState
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 12,
-                      color: isNull ? Colors.red : color,
+                      color: isNull ? const Color(0xFFDC3545) : color,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -394,7 +394,7 @@ class _AdminDatabaseViewerScreenState
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: (isNull ? Colors.red : color)
+                    color: (isNull ? const Color(0xFFDC3545) : color)
                         .withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -410,7 +410,7 @@ class _AdminDatabaseViewerScreenState
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w900,
-                      color: isNull ? Colors.red : color,
+                      color: isNull ? const Color(0xFFDC3545) : color,
                     ),
                   ),
                 ),
@@ -472,7 +472,7 @@ class _AdminDatabaseViewerScreenState
           tr(imageUrl),
           style: const TextStyle(
             fontSize: 10,
-            color: Colors.blue,
+            color: Color(0xFF1E88E5),
             height: 1.4,
           ),
           maxLines: 2,
@@ -578,7 +578,7 @@ class _AdminDatabaseViewerScreenState
                                   children: [
                                     const Icon(
                                       Icons.dataset_rounded,
-                                      color: Colors.amber,
+                                      color: Color(0xFFD9822B),
                                       size: 14,
                                     ),
                                     const SizedBox(width: 4),

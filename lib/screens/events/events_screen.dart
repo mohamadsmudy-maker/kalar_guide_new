@@ -102,7 +102,7 @@ class _EventsScreenState extends State<EventsScreen>
                 ? const SliverFillRemaining(
               child: Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFF6C5CE7),
+                  color: Color(0xFF4F5BD5),
                 ),
               ),
             )
@@ -159,7 +159,7 @@ class _EventsScreenState extends State<EventsScreen>
     return SliverAppBar(
       expandedHeight: 160,
       pinned: true,
-      backgroundColor: const Color(0xFF6C5CE7),
+      backgroundColor: const Color(0xFF4F5BD5),
       foregroundColor: Colors.white,
       elevation: 0,
       leading: IconButton(
@@ -175,7 +175,7 @@ class _EventsScreenState extends State<EventsScreen>
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
+              colors: [Color(0xFF4F5BD5), Color(0xFFC2557A)],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),
@@ -264,7 +264,7 @@ class _EventsScreenState extends State<EventsScreen>
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                    colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
+                    colors: [Color(0xFF4F5BD5), Color(0xFFC2557A)],
                   )
                       : null,
                   color: isSelected
@@ -273,7 +273,7 @@ class _EventsScreenState extends State<EventsScreen>
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? const Color(0xFF6C5CE7)
+                        ? const Color(0xFF4F5BD5)
                         : (isDark ? Colors.white24 : Colors.grey.shade300),
                     width: isSelected ? 2 : 1,
                   ),
@@ -309,13 +309,13 @@ class _EventsScreenState extends State<EventsScreen>
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
+              color: const Color(0xFF4F5BD5).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.event_busy_rounded,
               size: 60,
-              color: Color(0xFF6C5CE7),
+              color: Color(0xFF4F5BD5),
             ),
           ),
           const SizedBox(height: 16),

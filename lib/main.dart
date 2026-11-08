@@ -396,7 +396,7 @@ class _BootErrorAppState extends State<_BootErrorApp> {
                     ),
                     child: const Icon(
                       Icons.cloud_off_rounded,
-                      color: Colors.redAccent,
+                      color: Color(0xFFDC3545),
                       size: 52,
                     ),
                   ),
@@ -425,7 +425,7 @@ class _BootErrorAppState extends State<_BootErrorApp> {
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Colors.orangeAccent,
+                          color: Color(0xFFD9822B),
                           fontSize: 10,
                         ),
                       ),
@@ -855,7 +855,7 @@ class _AppDrawer extends StatelessWidget {
           ),
           title: Row(
             children: [
-              const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              const Icon(Icons.logout_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 8),
               Text(
                 _t('logout', 'چوونەدەرەوە'),
@@ -876,7 +876,7 @@ class _AppDrawer extends StatelessWidget {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -980,7 +980,7 @@ class _AppDrawer extends StatelessWidget {
                         _item(
                           context,
                           icon: Icons.video_library_rounded,
-                          color: Colors.indigo,
+                          color: const Color(0xFF4F5BD5),
                           title: _t('drawer_videos', 'ڤیدیۆ و ڕێنماییەکان 🎬'),
                           onTap: () =>
                               _go(context, screen: const UserVideosScreen()),
@@ -1063,8 +1063,8 @@ class _AppDrawer extends StatelessWidget {
                           _item(
                             context,
                             icon: Icons.logout_rounded,
-                            color: Colors.redAccent,
-                            textColor: Colors.redAccent,
+                            color: const Color(0xFFDC3545),
+                            textColor: const Color(0xFFDC3545),
                             title: _t('drawer_logout', 'چوونەدەرەوە لە هەژمار'),
                             onTap: () => _confirmLogout(context),
                           ),

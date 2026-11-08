@@ -44,10 +44,10 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
   static const String _defaultSort = 'priority';
 
   static const List<Color> _neighborhoodColors = [
-    Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFF9800),
-    Color(0xFF9C27B0), Color(0xFFF44336), Color(0xFF009688),
-    Color(0xFFE91E63), Color(0xFF3F51B5), Color(0xFFFFC107),
-    Color(0xFF00BCD4), Color(0xFF8BC34A), Color(0xFFFF5722),
+    Color(0xFF1E88E5), Color(0xFF0F9D7A), Color(0xFFD9822B),
+    Color(0xFFC2557A), Color(0xFFDC3545), Color(0xFF0F9D7A),
+    Color(0xFFC2557A), Color(0xFF4F5BD5), Color(0xFFD9822B),
+    Color(0xFF1E88E5), Color(0xFF0F9D7A), Color(0xFFD9822B),
   ];
 
   late final TabController _tabController;
@@ -251,7 +251,7 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
         _loadFailed = _complaints.isEmpty;
       });
       if (_complaints.isNotEmpty) {
-        _snack(tr('نوێکردنەوە سەرنەکەوت — ئینتەرنێت بپشکنە'), Colors.orange);
+        _snack(tr('نوێکردنەوە سەرنەکەوت — ئینتەرنێت بپشکنە'), const Color(0xFFD9822B));
       }
     }
   }
@@ -319,7 +319,7 @@ $imagesText
         throw 'Could not launch WhatsApp';
       }
     } catch (e) {
-      _snack(tr('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.'), Colors.red);
+      _snack(tr('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.'), const Color(0xFFDC3545));
     }
   }
 
@@ -489,14 +489,14 @@ $imagesText
   Color _color(String? s) {
     switch (s) {
       case 'pending':
-        return const Color(0xFFFF9800);
+        return const Color(0xFFD9822B);
       case 'approved':
       case 'in_progress':
-        return const Color(0xFF2ECC71);
+        return const Color(0xFF0F9D7A);
       case 'rejected':
-        return const Color(0xFFE74C3C);
+        return const Color(0xFFDC3545);
       case 'completed':
-        return const Color(0xFF3498DB);
+        return const Color(0xFF1E88E5);
       default:
         return Colors.grey;
     }
@@ -737,12 +737,12 @@ $imagesText
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+                        colors: [Color(0xFFC2557A), Color(0xFFC2557A)],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFE91E63).withValues(alpha: 0.5),
+                          color: const Color(0xFFC2557A).withValues(alpha: 0.5),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -772,7 +772,7 @@ $imagesText
                                 width: 8,
                                 height: 8,
                                 decoration: const BoxDecoration(
-                                    color: Color(0xFF4CAF50),
+                                    color: Color(0xFF0F9D7A),
                                     shape: BoxShape.circle),
                               ),
                             ),
@@ -781,7 +781,7 @@ $imagesText
                           Text(tr('ڕاستەوخۆ • گەڕەک • WHATSAPP'),
                               style: const TextStyle(
                                   fontSize: 10,
-                                  color: Color(0xFF4CAF50),
+                                  color: Color(0xFF0F9D7A),
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1)),
                         ]),
@@ -918,18 +918,18 @@ $imagesText
                   padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: const Color(0xFFDC3545).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(children: [
                     const Icon(Icons.filter_alt_off_rounded,
-                        size: 12, color: Colors.red),
+                        size: 12, color: Color(0xFFDC3545)),
                     const SizedBox(width: 4),
                     Text(tr('سڕینەوەی فلتەر'),
                         style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
-                            color: Colors.red)),
+                            color: Color(0xFFDC3545))),
                   ]),
                 ),
               ),
@@ -1015,7 +1015,7 @@ $imagesText
               ? Border.all(color: AppColors.primary, width: 2.5)
               : isPending
               ? Border.all(
-              color: (overdue ? Colors.red : color)
+              color: (overdue ? const Color(0xFFDC3545) : color)
                   .withValues(alpha: 0.4),
               width: 1.5)
               : null,
@@ -1039,9 +1039,9 @@ $imagesText
               height: 4,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  (overdue ? Colors.red : color).withValues(alpha: 0.3),
-                  overdue ? Colors.red : color,
-                  (overdue ? Colors.red : color).withValues(alpha: 0.3),
+                  (overdue ? const Color(0xFFDC3545) : color).withValues(alpha: 0.3),
+                  overdue ? const Color(0xFFDC3545) : color,
+                  (overdue ? const Color(0xFFDC3545) : color).withValues(alpha: 0.3),
                 ]),
                 borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(20)),
@@ -1087,7 +1087,7 @@ $imagesText
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.red.withValues(alpha: 0.5),
+                                color: const Color(0xFFDC3545).withValues(alpha: 0.5),
                                 blurRadius: 8),
                           ],
                         ),
@@ -1100,7 +1100,7 @@ $imagesText
               _chip(_statusText(status), icon, color),
               if (overdue) ...[
                 const SizedBox(width: 6),
-                _chip('دواکەوتوو', Icons.warning_amber_rounded, Colors.red),
+                _chip('دواکەوتوو', Icons.warning_amber_rounded, const Color(0xFFDC3545)),
               ],
               if (nbName != null && nbName.isNotEmpty) ...[
                 const SizedBox(width: 6),
@@ -1190,7 +1190,7 @@ $imagesText
                               const Color(0xFF25D366)),
                         if (c['responsible_authority'] != null)
                           _buildTag(c['responsible_authority'].toString(),
-                              Icons.account_balance_rounded, Colors.indigo),
+                              Icons.account_balance_rounded, const Color(0xFF4F5BD5)),
                       ]),
                     ],
                   ),
@@ -1213,7 +1213,7 @@ $imagesText
                     child: _buildAction(
                       icon: Icons.check_circle_rounded,
                       label: tr('پەسەند'),
-                      color: const Color(0xFF2ECC71),
+                      color: const Color(0xFF0F9D7A),
                       onTap: () => _quickUpdate(c, 'in_progress'),
                     ),
                   ),
@@ -1222,7 +1222,7 @@ $imagesText
                     child: _buildAction(
                       icon: Icons.cancel_rounded,
                       label: tr('ڕەتکردنەوە'),
-                      color: const Color(0xFFE74C3C),
+                      color: const Color(0xFFDC3545),
                       onTap: () => _quickUpdate(c, 'rejected'),
                     ),
                   ),
@@ -1232,7 +1232,7 @@ $imagesText
                     child: _buildAction(
                       icon: Icons.check_circle_rounded,
                       label: tr('تەواوکردن'),
-                      color: const Color(0xFF3498DB),
+                      color: const Color(0xFF1E88E5),
                       onTap: () => _quickUpdate(c, 'completed'),
                     ),
                   ),
@@ -1258,7 +1258,7 @@ $imagesText
                 _buildIconBtn(Icons.visibility_rounded, AppColors.primary,
                         () => _showDetails(c)),
                 const SizedBox(width: 6),
-                _buildIconBtn(Icons.delete_rounded, Colors.red,
+                _buildIconBtn(Icons.delete_rounded, const Color(0xFFDC3545),
                     _isDeleting ? null : () => _delete(c)),
               ]),
             ),
@@ -1344,7 +1344,7 @@ $imagesText
         c['status'] = old;
         _recompute();
       });
-      _snack(tr('گۆڕینی دۆخ سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
+      _snack(tr('گۆڕینی دۆخ سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
       return;
     }
 
@@ -1381,7 +1381,7 @@ $imagesText
       });
     } catch (e) {
       debugPrint('❌ revert error: $e');
-      _snack(tr('گەڕاندنەوە سەرنەکەوت'), Colors.red);
+      _snack(tr('گەڕاندنەوە سەرنەکەوت'), const Color(0xFFDC3545));
     }
   }
 
@@ -1433,13 +1433,13 @@ $imagesText
                         fontWeight: FontWeight.w900, fontSize: 16)),
               ),
               tile('in_progress', 'پەسەندکردن', Icons.verified_rounded,
-                  const Color(0xFF2ECC71)),
+                  const Color(0xFF0F9D7A)),
               tile('completed', 'جێبەجێکردن (تەواو)',
-                  Icons.check_circle_rounded, const Color(0xFF3498DB)),
+                  Icons.check_circle_rounded, const Color(0xFF1E88E5)),
               tile('rejected', 'ڕەتکردنەوە', Icons.cancel_rounded,
-                  const Color(0xFFE74C3C)),
+                  const Color(0xFFDC3545)),
               const Divider(),
-              tile('delete', 'سڕینەوە', Icons.delete_sweep_rounded, Colors.red),
+              tile('delete', 'سڕینەوە', Icons.delete_sweep_rounded, const Color(0xFFDC3545)),
               const SizedBox(height: 8),
             ],
           ),
@@ -1469,7 +1469,7 @@ $imagesText
           .update({'status': status}).inFilter('id', ids);
     } catch (e) {
       debugPrint('❌ bulk status error: $e');
-      _snack(tr('گۆڕین سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
+      _snack(tr('گۆڕین سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
       return;
     }
 
@@ -1501,7 +1501,7 @@ $imagesText
             }
             await _fetchComplaints(showLoader: false);
           } catch (_) {
-            _snack(tr('گەڕاندنەوە سەرنەکەوت'), Colors.red);
+            _snack(tr('گەڕاندنەوە سەرنەکەوت'), const Color(0xFFDC3545));
           }
         },
       ),
@@ -1520,7 +1520,7 @@ $imagesText
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.red),
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545)),
             const SizedBox(width: 8),
             Expanded(child: Text(tr(title))),
           ]),
@@ -1532,7 +1532,7 @@ $imagesText
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  backgroundColor: const Color(0xFFDC3545), foregroundColor: Colors.white),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(tr(yes)),
             ),
@@ -1571,10 +1571,10 @@ $imagesText
         _recompute();
       });
       HapticFeedback.mediumImpact();
-      _snack(tr('✅ سکاڵا سڕایەوە'), Colors.green);
+      _snack(tr('✅ سکاڵا سڕایەوە'), const Color(0xFF0F9D7A));
     } catch (e) {
       debugPrint('❌ delete error: $e');
-      _snack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
+      _snack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
@@ -1616,10 +1616,10 @@ $imagesText
         _recompute();
       });
       HapticFeedback.heavyImpact();
-      _snack(trf('✅ {0} سکاڵا سڕانەوە', [_ku(ids.length)]), Colors.green);
+      _snack(trf('✅ {0} سکاڵا سڕانەوە', [_ku(ids.length)]), const Color(0xFF0F9D7A));
     } catch (e) {
       debugPrint('❌ bulk delete error: $e');
-      _snack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
+      _snack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
@@ -1632,7 +1632,7 @@ $imagesText
     if (_generatingPdf) return;
     final list = _currentList;
     if (list.isEmpty) {
-      _snack(tr('هیچ سکاڵایەک نییە'), Colors.orange);
+      _snack(tr('هیچ سکاڵایەک نییە'), const Color(0xFFD9822B));
       return;
     }
 
@@ -1646,7 +1646,7 @@ $imagesText
       );
     } catch (e) {
       debugPrint('❌ pdf error: $e');
-      _snack(tr('دروستکردنی PDF سەرنەکەوت'), Colors.red);
+      _snack(tr('دروستکردنی PDF سەرنەکەوت'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _generatingPdf = false);
     }

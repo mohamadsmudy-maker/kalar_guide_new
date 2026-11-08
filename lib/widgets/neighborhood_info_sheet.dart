@@ -225,7 +225,7 @@ class NeighborhoodInfoSheet extends StatelessWidget {
                           icon: Icons.people_rounded,
                           value: number(n.population),
                           label: t('population'),
-                          color: const Color(0xFF10B981),
+                          color: const Color(0xFF0F9D7A),
                           isDark: isDark,
                         ),
                       ),
@@ -238,7 +238,7 @@ class NeighborhoodInfoSheet extends StatelessWidget {
                           value:
                           '${digits(n.areaKm2.toStringAsFixed(n.areaKm2 < 1 ? 3 : 1))} ${lang == 'en' ? 'km²' : 'کم²'}',
                           label: t('area'),
-                          color: const Color(0xFFF59E0B),
+                          color: const Color(0xFFD9822B),
                           isDark: isDark,
                         ),
                       ),
@@ -286,7 +286,7 @@ class NeighborhoodInfoSheet extends StatelessWidget {
                         isFavorite ? t('fav_remove') : t('fav_add'),
                         child: Material(
                           color: isFavorite
-                              ? const Color(0xFFEC4899).withValues(alpha: 0.15)
+                              ? const Color(0xFFC2557A).withValues(alpha: 0.15)
                               : (isDark
                               ? Colors.white.withValues(alpha: 0.06)
                               : Colors.grey.withValues(alpha: 0.12)),
@@ -307,7 +307,7 @@ class NeighborhoodInfoSheet extends StatelessWidget {
                                       : Icons.favorite_border_rounded,
                                   key: ValueKey(isFavorite),
                                   color: isFavorite
-                                      ? const Color(0xFFEC4899)
+                                      ? const Color(0xFFC2557A)
                                       : (isDark
                                       ? Colors.white70
                                       : Colors.grey[700]),

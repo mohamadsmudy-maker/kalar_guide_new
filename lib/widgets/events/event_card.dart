@@ -15,7 +15,7 @@ class EventCard extends StatelessWidget {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFF6C5CE7);
+      return const Color(0xFF4F5BD5);
     }
   }
 
@@ -65,7 +65,7 @@ class EventCard extends StatelessWidget {
                             : Colors.grey.shade200,
                         child: const Center(
                           child: CircularProgressIndicator(
-                            color: Color(0xFF6C5CE7),
+                            color: Color(0xFF4F5BD5),
                             strokeWidth: 2,
                           ),
                         ),
@@ -160,7 +160,7 @@ class EventCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEF4444),
+                            color: const Color(0xFFDC3545),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -227,7 +227,7 @@ class EventCard extends StatelessWidget {
                         const Icon(
                           Icons.location_on_rounded,
                           size: 13,
-                          color: Color(0xFFEF4444),
+                          color: Color(0xFFDC3545),
                         ),
                         const SizedBox(width: 4),
                         Expanded(

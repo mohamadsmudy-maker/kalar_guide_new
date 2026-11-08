@@ -69,7 +69,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
       languageId: lang,
       initialFrom: _fromDate,
       initialTo: _toDate,
-      primaryColor: const Color(0xFFFFD700),
+      primaryColor: const Color(0xFFD9822B),
     );
 
     if (picked != null) {
@@ -157,7 +157,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Color(0xFFFFD700),
+                  color: Color(0xFFD9822B),
                 ),
               )
                   : const Icon(Icons.picture_as_pdf_rounded),
@@ -173,12 +173,12 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+          child: CircularProgressIndicator(color: Color(0xFFD9822B)),
         )
             : _history.isEmpty
             ? _buildEmptyState(isDark)
             : RefreshIndicator(
-          color: const Color(0xFFFFD700),
+          color: const Color(0xFFD9822B),
           onRefresh: _loadHistory,
           child: ListView(
             padding: const EdgeInsets.all(16),
@@ -238,12 +238,12 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFFFFD700), Color(0xFFFFB300)],
+            colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+              color: const Color(0xFFD9822B).withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -332,7 +332,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
           child: _buildStatBox(
             'نزمترین',
             minPrice.toStringAsFixed(0),
-            const Color(0xFF10B981),
+            const Color(0xFF0F9D7A),
             Icons.arrow_downward_rounded,
             isDark,
           ),
@@ -352,7 +352,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
           child: _buildStatBox(
             'بەرزترین',
             maxPrice.toStringAsFixed(0),
-            const Color(0xFFEF4444),
+            const Color(0xFFDC3545),
             Icons.arrow_upward_rounded,
             isDark,
           ),
@@ -437,10 +437,10 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
     Color changeColor;
     IconData changeIcon;
     if (isIncrease) {
-      changeColor = const Color(0xFFEF4444);
+      changeColor = const Color(0xFFDC3545);
       changeIcon = Icons.arrow_upward_rounded;
     } else if (isDecrease) {
-      changeColor = const Color(0xFF10B981);
+      changeColor = const Color(0xFF0F9D7A);
       changeIcon = Icons.arrow_downward_rounded;
     } else {
       changeColor = Colors.grey;
@@ -516,7 +516,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF10B981)
+                                color: const Color(0xFF0F9D7A)
                                     .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
@@ -524,7 +524,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
                                 tr('نوێترین'),
                                 style: const TextStyle(
                                   fontSize: 9,
-                                  color: Color(0xFF10B981),
+                                  color: Color(0xFF0F9D7A),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -704,7 +704,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
           height: 20,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFFFD700), Color(0xFFFFB300)],
+              colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
             ),
             borderRadius: BorderRadius.circular(4),
           ),
@@ -789,7 +789,7 @@ class _FuelHistoryScreenState extends State<FuelHistoryScreen> {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFFFFD700);
+      return const Color(0xFFD9822B);
     }
   }
 }

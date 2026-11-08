@@ -20,7 +20,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
     return SliverAppBar(
       expandedHeight: 180,
       pinned: true,
-      backgroundColor: const Color(0xFFDC2626),
+      backgroundColor: const Color(0xFFDC3545),
       foregroundColor: Colors.white,
       elevation: 0,
       actions: [
@@ -34,7 +34,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFFDC2626), Color(0xFFFF7043), Color(0xFFE53935)],
+              colors: [Color(0xFFB0283A), Color(0xFFDC3545), Color(0xFFE35D6A)],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),
@@ -282,12 +282,12 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: selected
-                        ? const Color(0xFFDC2626).withValues(alpha: 0.15)
+                        ? const Color(0xFFDC3545).withValues(alpha: 0.15)
                         : (isDark ? const Color(0xFF1A1A22) : Colors.white),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: selected
-                          ? const Color(0xFFDC2626)
+                          ? const Color(0xFFDC3545)
                           : Colors.transparent,
                     ),
                   ),
@@ -298,7 +298,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                         sort.icon,
                         size: 12,
                         color: selected
-                            ? const Color(0xFFDC2626)
+                            ? const Color(0xFFDC3545)
                             : (isDark ? Colors.white54 : Colors.grey),
                       ),
                       const SizedBox(width: 4),
@@ -308,7 +308,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           color: selected
-                              ? const Color(0xFFDC2626)
+                              ? const Color(0xFFDC3545)
                               : (isDark ? Colors.white54 : Colors.grey),
                         ),
                       ),
@@ -342,13 +342,13 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFFDC2626).withValues(alpha: 0.15),
-              const Color(0xFFFF7043).withValues(alpha: 0.05),
+              const Color(0xFFDC3545).withValues(alpha: 0.15),
+              const Color(0xFFE35D6A).withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFFDC2626).withValues(alpha: 0.3),
+            color: const Color(0xFFDC3545).withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -357,12 +357,12 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFDC2626).withValues(alpha: 0.15),
+                color: const Color(0xFFDC3545).withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.phone_rounded,
-                color: Color(0xFFDC2626),
+                color: Color(0xFFDC3545),
                 size: 18,
               ),
             ),
@@ -396,21 +396,21 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.15),
+                  color: const Color(0xFF0F9D7A).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.my_location_rounded,
-                        color: Colors.green, size: 11),
+                        color: Color(0xFF0F9D7A), size: 11),
                     const SizedBox(width: 3),
                     Text(
                       tr('نزیک'),
                       style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
-                        color: Colors.green,
+                        color: Color(0xFF0F9D7A),
                       ),
                     ),
                   ],
@@ -436,7 +436,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
       return const SliverFillRemaining(
         hasScrollBody: false,
         child: Center(
-          child: CircularProgressIndicator(color: Color(0xFFDC2626)),
+          child: CircularProgressIndicator(color: Color(0xFFDC3545)),
         ),
       );
     }
@@ -496,7 +496,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline_rounded,
-                size: 60, color: Color(0xFFDC2626)),
+                size: 60, color: Color(0xFFDC3545)),
             const SizedBox(height: 16),
             Text(
               tr('هەڵە لە بارکردنی داتا'),
@@ -521,7 +521,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
               icon: const Icon(Icons.refresh_rounded),
               label: Text(tr('دووبارە هەوڵ بدە')),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFDC2626),
+                backgroundColor: const Color(0xFFDC3545),
               ),
             ),
           ],
@@ -548,15 +548,15 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFFDC2626).withValues(alpha: 0.2),
-                        const Color(0xFFDC2626).withValues(alpha: 0.02),
+                        const Color(0xFFDC3545).withValues(alpha: 0.2),
+                        const Color(0xFFDC3545).withValues(alpha: 0.02),
                       ],
                     ),
                   ),
                   child: const Icon(
                     Icons.emergency_outlined,
                     size: 60,
-                    color: Color(0xFFDC2626),
+                    color: Color(0xFFDC3545),
                   ),
                 ),
               ),

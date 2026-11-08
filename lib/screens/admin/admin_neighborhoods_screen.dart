@@ -63,7 +63,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
             content: Text(
               tr(neighborhood == null ? '✅ زیادکرا' : '✅ نوێکرایەوە'),
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
@@ -73,7 +73,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(trf('هەڵە: {0}', [e])),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFDC3545),
           ),
         );
       }
@@ -103,7 +103,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -125,7 +125,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ گەڕەک سڕایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
@@ -135,7 +135,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(trf('هەڵە: {0}', [e])),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFDC3545),
           ),
         );
       }
@@ -282,7 +282,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
             IconButton(
               icon: const Icon(
                 Icons.edit_rounded,
-                color: Colors.blue,
+                color: Color(0xFF1E88E5),
                 size: 22,
               ),
               onPressed: () => _openEditor(neighborhood: n),
@@ -290,7 +290,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
             IconButton(
               icon: const Icon(
                 Icons.delete_outline_rounded,
-                color: Colors.red,
+                color: Color(0xFFDC3545),
                 size: 22,
               ),
               onPressed: () => _deleteNeighborhood(n),
@@ -425,7 +425,7 @@ class _NeighborhoodEditorDialogState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('ناوی گەڕەک پێویستە')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -444,7 +444,7 @@ class _NeighborhoodEditorDialogState
             content: Text(
               trf('⚠️ سنوور دەبێت لانیکەم ٣ خاڵ بێت (ئێستا: {0})', [boundaryPoints.length]),
             ),
-            backgroundColor: Colors.orange,
+            backgroundColor: const Color(0xFFD9822B),
           ),
         );
         return;

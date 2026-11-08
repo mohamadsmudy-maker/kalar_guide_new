@@ -27,7 +27,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
   Color get _color => ServiceDetailWidgets.hexToColor(
     (service['color'] ?? department['color'] ?? '#10B981')
         .toString(),
-    fallback: const Color(0xFF10B981),
+    fallback: const Color(0xFF0F9D7A),
   );
 
   // ═══════════════════════════════════════════════════════════
@@ -240,7 +240,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
   Widget _buildRequirementsCard(bool isDark, String lang) {
     return _buildCard(
       isDark: isDark,
-      color: const Color(0xFF8B5CF6),
+      color: const Color(0xFF4F5BD5),
       icon: Icons.checklist_rounded,
       title: tr('پێداویستییەکان'),
       lang: lang,
@@ -263,7 +263,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
   Widget _buildFeesCard(bool isDark, String lang) {
     return _buildCard(
       isDark: isDark,
-      color: const Color(0xFF10B981),
+      color: const Color(0xFF0F9D7A),
       icon: Icons.attach_money_rounded,
       title: tr('تێچووەکان'),
       lang: lang,
@@ -285,7 +285,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
   Widget _buildExtraInfoCard(bool isDark, String lang) {
     return _buildCard(
       isDark: isDark,
-      color: const Color(0xFFF59E0B),
+      color: const Color(0xFFD9822B),
       icon: Icons.info_rounded,
       title: tr('زانیاری زیاتر'),
       lang: lang,
@@ -296,7 +296,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
               icon: Icons.access_time_rounded,
               label: tr('ماوەی مامەڵە'),
               value: _duration,
-              color: const Color(0xFFF59E0B),
+              color: const Color(0xFFD9822B),
               isDark: isDark,
             ),
           if (_hasDuration && _hasLocation)
@@ -306,7 +306,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
               icon: Icons.location_on_rounded,
               label: tr('شوێنی مامەڵە'),
               value: _location,
-              color: const Color(0xFFEF4444),
+              color: const Color(0xFFDC3545),
               isDark: isDark,
             ),
         ],
@@ -321,10 +321,10 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+        color: const Color(0xFFD9822B).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+          color: const Color(0xFFD9822B).withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -332,7 +332,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
         children: [
           const Icon(
             Icons.lightbulb_rounded,
-            color: Color(0xFFF59E0B),
+            color: Color(0xFFD9822B),
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -342,7 +342,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
               lang: lang,
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFFF59E0B),
+                color: Color(0xFFD9822B),
                 fontWeight: FontWeight.w600,
                 height: 1.5,
               ),
@@ -370,7 +370,7 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
       height: 56,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E88E5), Color(0xFF6C5CE7)],
+          colors: [Color(0xFF1E88E5), Color(0xFF4F5BD5)],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),

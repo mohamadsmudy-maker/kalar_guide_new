@@ -77,7 +77,7 @@ class _AdminEmergencyServicesScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr(service == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
@@ -86,7 +86,7 @@ class _AdminEmergencyServicesScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(trf('هەڵە: {0}', [e])),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFDC3545),
           ),
         );
       }
@@ -104,7 +104,7 @@ class _AdminEmergencyServicesScreenState
           ),
           title: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 8),
               Text(tr('سڕینەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
             ],
@@ -117,7 +117,7 @@ class _AdminEmergencyServicesScreenState
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -142,7 +142,7 @@ class _AdminEmergencyServicesScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ سڕایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
@@ -151,7 +151,7 @@ class _AdminEmergencyServicesScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(trf('هەڵە: {0}', [e])),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFDC3545),
           ),
         );
       }
@@ -169,7 +169,7 @@ class _AdminEmergencyServicesScreenState
         isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: const Color(0xFFDC3545),
           foregroundColor: Colors.white,
           centerTitle: true,
           title: Text(
@@ -191,14 +191,14 @@ class _AdminEmergencyServicesScreenState
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFDC2626), Color(0xFF7F1D1D)],
+                  colors: [Color(0xFFDC3545), Color(0xFFDC3545)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFDC2626).withValues(alpha: 0.3),
+                    color: const Color(0xFFDC3545).withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -279,7 +279,7 @@ class _AdminEmergencyServicesScreenState
                     ),
                     prefixIcon: const Icon(
                       Icons.search_rounded,
-                      color: Color(0xFFDC2626),
+                      color: Color(0xFFDC3545),
                     ),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
@@ -303,7 +303,7 @@ class _AdminEmergencyServicesScreenState
               child: _loading
                   ? const Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFFDC2626),
+                  color: Color(0xFFDC3545),
                 ),
               )
                   : _filtered.isEmpty
@@ -319,7 +319,7 @@ class _AdminEmergencyServicesScreenState
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(),
-          backgroundColor: const Color(0xFFDC2626),
+          backgroundColor: const Color(0xFFDC3545),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text(
@@ -418,7 +418,7 @@ class _AdminEmergencyServicesScreenState
             IconButton(
               icon: const Icon(
                 Icons.edit_rounded,
-                color: Colors.blue,
+                color: Color(0xFF1E88E5),
                 size: 20,
               ),
               onPressed: () => _openEditor(service: service),
@@ -426,7 +426,7 @@ class _AdminEmergencyServicesScreenState
             IconButton(
               icon: const Icon(
                 Icons.delete_outline_rounded,
-                color: Colors.red,
+                color: Color(0xFFDC3545),
                 size: 20,
               ),
               onPressed: () => _deleteService(service),
@@ -445,13 +445,13 @@ class _AdminEmergencyServicesScreenState
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: const Color(0xFFDC2626).withValues(alpha: 0.1),
+              color: const Color(0xFFDC3545).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.emergency_outlined,
               size: 60,
-              color: Color(0xFFDC2626),
+              color: Color(0xFFDC3545),
             ),
           ),
           const SizedBox(height: 16),
@@ -501,7 +501,7 @@ class _AdminEmergencyServicesScreenState
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFFDC2626);
+      return const Color(0xFFDC3545);
     }
   }
 }
@@ -608,7 +608,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('ناو و ژمارە پێویستن')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -689,7 +689,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFDC2626), Color(0xFFFF7043)],
+                        colors: [Color(0xFFDC3545), Color(0xFFE35D6A)],
                       ),
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -751,8 +751,8 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                               gradient: isSelected
                                   ? const LinearGradient(
                                 colors: [
-                                  Color(0xFFDC2626),
-                                  Color(0xFFFF7043),
+                                  Color(0xFFDC3545),
+                                  Color(0xFFE35D6A),
                                 ],
                               )
                                   : null,
@@ -853,8 +853,8 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                               gradient: isSelected
                                   ? const LinearGradient(
                                 colors: [
-                                  Color(0xFFDC2626),
-                                  Color(0xFFFF7043),
+                                  Color(0xFFDC3545),
+                                  Color(0xFFE35D6A),
                                 ],
                               )
                                   : null,
@@ -943,7 +943,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                       'ژمارەی گرنگ',
                       'لە سەرەوەی لیست پیشان بدرێت',
                       Icons.star_rounded,
-                      const Color(0xFFF59E0B),
+                      const Color(0xFFD9822B),
                       _isImportant,
                           (v) => setState(() => _isImportant = v),
                       isDark,
@@ -952,7 +952,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                       '٢٤ سەعات کاردەکات',
                       null,
                       Icons.access_time_filled_rounded,
-                      const Color(0xFF10B981),
+                      const Color(0xFF0F9D7A),
                       _is24h,
                           (v) => setState(() => _is24h = v),
                       isDark,
@@ -995,13 +995,13 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                 height: 54,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC2626),
+                    backgroundColor: const Color(0xFFDC3545),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 3,
-                    shadowColor: const Color(0xFFDC2626).withValues(alpha: 0.4),
+                    shadowColor: const Color(0xFFDC3545).withValues(alpha: 0.4),
                   ),
                   onPressed: _save,
                   icon: Icon(
@@ -1032,7 +1032,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
           height: 16,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFDC2626), Color(0xFFFF7043)],
+              colors: [Color(0xFFDC3545), Color(0xFFE35D6A)],
             ),
             borderRadius: BorderRadius.circular(2),
           ),
@@ -1084,7 +1084,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFFDC3545), width: 1.5),
         ),
         filled: true,
         fillColor: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
@@ -1170,7 +1170,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFFDC2626);
+      return const Color(0xFFDC3545);
     }
   }
 }

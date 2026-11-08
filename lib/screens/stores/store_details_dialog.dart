@@ -88,7 +88,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
   Future<void> _toggleFavorite() async {
     final user = AuthSessionManager.currentUser;
     if (user == null || user['id'] == null) {
-      _showSnackBarOnParent('تکایە سەرەتا بچۆ ژوورەوە ⚠', Colors.orange);
+      _showSnackBarOnParent('تکایە سەرەتا بچۆ ژوورەوە ⚠', const Color(0xFFD9822B));
       return;
     }
 
@@ -114,13 +114,13 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
         });
         if (mounted) {
           setState(() => _isFav = true);
-          _showSnackBarOnParent('بۆ دڵخوازەکان زیادکرا ❤️', const Color(0xFF10B981));
+          _showSnackBarOnParent('بۆ دڵخوازەکان زیادکرا ❤️', const Color(0xFF0F9D7A));
         }
       }
     } catch (e) {
       debugPrint('❌ Favorite error: $e');
       if (mounted) {
-        _showSnackBarOnParent('⚠️ هەڵە لە پاشەکەوتکردن', Colors.red);
+        _showSnackBarOnParent('⚠️ هەڵە لە پاشەکەوتکردن', const Color(0xFFDC3545));
       }
     } finally {
       if (mounted) setState(() => _loadingFav = false);
@@ -316,7 +316,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                   ? Icons.favorite_rounded
                                   : Icons.favorite_border_rounded,
                               color: _isFav
-                                  ? Colors.redAccent
+                                  ? const Color(0xFFDC3545)
                                   : (isDark
                                   ? Colors.white54
                                   : Colors.black87),
@@ -334,7 +334,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                           decoration: BoxDecoration(
                             color: isGov
                                 ? AppColors.primary
-                                : const Color(0xFFE91E63),
+                                : const Color(0xFFC2557A),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
@@ -526,7 +526,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                       Icon(Icons.call_rounded,
                                           color: isDark
                                               ? Colors.green.shade300
-                                              : Colors.green,
+                                              : const Color(0xFF0F9D7A),
                                           size: 18),
                                       const SizedBox(width: 8),
                                       Text(
@@ -534,7 +534,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                         style: TextStyle(
                                           color: isDark
                                               ? Colors.green.shade300
-                                              : Colors.green,
+                                              : const Color(0xFF0F9D7A),
                                           fontWeight: FontWeight.w900,
                                           fontSize: 14,
                                         ),
@@ -608,7 +608,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.map_rounded,
-                                      color: Colors.blueAccent, size: 20),
+                                      color: Color(0xFF1E88E5), size: 20),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(

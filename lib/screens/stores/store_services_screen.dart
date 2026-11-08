@@ -194,7 +194,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
                         _buildSmallBadge(
                           Icons.attach_money_rounded,
                           trf('{0} تێچوو', [service.fees.length]),
-                          const Color(0xFF10B981),
+                          const Color(0xFF0F9D7A),
                         ),
                       const SizedBox(width: 6),
                       // 📄 ژمارەی پێداویستی
@@ -202,7 +202,7 @@ class _StoreServicesScreenState extends State<StoreServicesScreen> {
                         _buildSmallBadge(
                           Icons.checklist_rounded,
                           trf('{0} پێداویستی', [service.requirements.length]),
-                          const Color(0xFF8B5CF6),
+                          const Color(0xFF4F5BD5),
                         ),
                     ],
                   ),

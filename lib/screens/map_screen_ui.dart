@@ -22,7 +22,7 @@ extension _MapScreenStateUi on _MapScreenState {
                 height: 90,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1E88E5), Color(0xFF6C5CE7)],
+                    colors: [Color(0xFF1E88E5), Color(0xFF4F5BD5)],
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
@@ -181,7 +181,7 @@ extension _MapScreenStateUi on _MapScreenState {
                         child: Transform.rotate(
                           angle: -cam.bearing * math.pi / 180,
                           child: const Icon(Icons.navigation_rounded,
-                              color: Color(0xFFE53935), size: 22),
+                              color: Color(0xFFDC3545), size: 22),
                         ),
                       ),
                     )

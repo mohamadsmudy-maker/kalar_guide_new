@@ -99,7 +99,7 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+          child: CircularProgressIndicator(color: Color(0xFFD9822B)),
         )
             : SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -114,7 +114,7 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                       : Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: const Color(0xFFFFD700)
+                    color: const Color(0xFFD9822B)
                         .withValues(alpha: 0.3),
                   ),
                 ),
@@ -155,7 +155,7 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                       : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFFFD700)
+                    color: const Color(0xFFD9822B)
                         .withValues(alpha: 0.2),
                   ),
                 ),
@@ -164,13 +164,13 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700)
+                        color: const Color(0xFFD9822B)
                             .withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.attach_money_rounded,
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFD9822B),
                         size: 20,
                       ),
                     ),
@@ -191,7 +191,7 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFD9822B),
                       ),
                     ),
                   ],
@@ -219,13 +219,13 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: const BorderSide(
-                      color: Color(0xFFFFD700),
+                      color: Color(0xFFD9822B),
                       width: 2,
                     ),
                   ),
                   prefixIcon: const Icon(
                     Icons.local_gas_station_rounded,
-                    color: Color(0xFFFFD700),
+                    color: Color(0xFFD9822B),
                   ),
                   suffixText: tr('لیتر'),
                 ),
@@ -238,8 +238,8 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [
-                      Color(0xFFFFD700),
-                      Color(0xFFFFB300),
+                      Color(0xFFD9822B),
+                      Color(0xFFD9822B),
                     ],
                     begin: Alignment.topRight,
                     end: Alignment.bottomLeft,
@@ -247,7 +247,7 @@ class _FuelCalculatorScreenState extends State<FuelCalculatorScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFD700)
+                      color: const Color(0xFFD9822B)
                           .withValues(alpha: 0.4),
                       blurRadius: 24,
                       offset: const Offset(0, 10),

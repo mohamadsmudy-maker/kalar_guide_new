@@ -27,7 +27,7 @@ class WhatsAppComplaintService {
       // ١. دەرهێنانی ژمارەی مۆبایل
       final phone = _extractPhone(complaint);
       if (phone == null || phone.isEmpty) {
-        _showSnack(context, tr('⚠️ ژمارەی مۆبایلی سکاڵاکە نەدۆزرایەوە'), Colors.orange);
+        _showSnack(context, tr('⚠️ ژمارەی مۆبایلی سکاڵاکە نەدۆزرایەوە'), const Color(0xFFD9822B));
         return false;
       }
 
@@ -47,7 +47,7 @@ class WhatsAppComplaintService {
 
       // ٤. داگرتنی وێنە و ڤۆیسەکان
       if (!context.mounted) return false;
-      _showSnack(context, tr('⏳ ئامادەکردنی فایلەکان...'), Colors.blue);
+      _showSnack(context, tr('⏳ ئامادەکردنی فایلەکان...'), const Color(0xFF1E88E5));
       final mediaFiles = await _downloadMedia(complaint);
 
       // ٥. ناردن
@@ -60,7 +60,7 @@ class WhatsAppComplaintService {
       );
     } catch (e) {
       debugPrint('❌ WhatsApp send error: $e');
-      if (context.mounted) _showSnack(context, trf('هەڵە: {0}', [e]), Colors.red);
+      if (context.mounted) _showSnack(context, trf('هەڵە: {0}', [e]), const Color(0xFFDC3545));
       return false;
     }
   }
@@ -342,12 +342,12 @@ class WhatsAppComplaintService {
       }
 
       if (context.mounted) {
-        _showSnack(context, tr('⚠️ واتسئاپ دامەزراو نییە'), Colors.orange);
+        _showSnack(context, tr('⚠️ واتسئاپ دامەزراو نییە'), const Color(0xFFD9822B));
       }
       return false;
     } catch (e) {
       debugPrint('❌ WhatsApp open error: $e');
-      if (context.mounted) _showSnack(context, trf('هەڵە: {0}', [e]), Colors.red);
+      if (context.mounted) _showSnack(context, trf('هەڵە: {0}', [e]), const Color(0xFFDC3545));
       return false;
     }
   }
@@ -372,7 +372,7 @@ class WhatsAppComplaintService {
     final message = buildMessage(complaint);
     await Clipboard.setData(ClipboardData(text: message));
     if (!context.mounted) return;
-    _showSnack(context, tr('✅ نامە کۆپی کرا'), Colors.green);
+    _showSnack(context, tr('✅ نامە کۆپی کرا'), const Color(0xFF0F9D7A));
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -552,7 +552,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                     icon: Icons.attach_file_rounded,
                     label: tr('فایل'),
                     value: '${imageCount + (hasVoice ? 1 : 0)}',
-                    color: const Color(0xFF8B5CF6),
+                    color: const Color(0xFF4F5BD5),
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
@@ -587,13 +587,13 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                     _buildFileChip(
                       icon: Icons.mic_rounded,
                       label: tr('دەنگ'),
-                      color: const Color(0xFFE91E63),
+                      color: const Color(0xFFC2557A),
                     ),
                   if (hasLocation)
                     _buildFileChip(
                       icon: Icons.map_rounded,
                       label: tr('لینکی نەخشە'),
-                      color: const Color(0xFFF59E0B),
+                      color: const Color(0xFFD9822B),
                     ),
                 ],
               ),

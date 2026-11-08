@@ -65,7 +65,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -92,7 +92,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr("ڤیدیۆکە سڕایەوە 🗑️")),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
@@ -100,7 +100,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
       debugPrint('❌ Delete video error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -173,7 +173,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
                   ),
                   child: const Icon(
                     Icons.play_arrow_rounded,
-                    color: Colors.indigo,
+                    color: Color(0xFF4F5BD5),
                   ),
                 ),
                 title: Text(
@@ -198,7 +198,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
                     IconButton(
                       icon: const Icon(
                         Icons.edit,
-                        color: Colors.blue,
+                        color: Color(0xFF1E88E5),
                         size: 20,
                       ),
                       onPressed: _isDeleting
@@ -208,7 +208,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
                     IconButton(
                       icon: const Icon(
                         Icons.delete,
-                        color: Colors.red,
+                        color: Color(0xFFDC3545),
                         size: 20,
                       ),
                       onPressed: _isDeleting
@@ -273,7 +273,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr("تکایە ناونیشان و لینکی ڤیدیۆ پڕبکەرەوە ⚠")),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -302,7 +302,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr("پاشەکەوتکرا ✅")),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
@@ -310,7 +310,7 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
       debugPrint('❌ Save video error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {

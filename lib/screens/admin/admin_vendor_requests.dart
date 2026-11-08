@@ -69,7 +69,7 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
       debugPrint('❌ Fetch requests error: $e');
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar(trf('هەڵە لە هێنانی داتا: {0}', [e]), Colors.red);
+        _showSnackBar(trf('هەڵە لە هێنانی داتا: {0}', [e]), const Color(0xFFDC3545));
       }
     }
   }
@@ -85,11 +85,11 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
       }).eq('id', userId);
 
       if (mounted) {
-        _showSnackBar(trf('بەڕێوبەرایەتی {0} پەسەند کرا ✅', [name]), Colors.green);
+        _showSnackBar(trf('بەڕێوبەرایەتی {0} پەسەند کرا ✅', [name]), const Color(0xFF0F9D7A));
         _fetchData(); // نوێکردنەوەی لیستەکە بۆ ئەوەی بچێتە تابی دووەم
       }
     } catch (e) {
-      if (mounted) _showSnackBar(trf('هەڵە لە پەسەندکردن: {0}', [e]), Colors.red);
+      if (mounted) _showSnackBar(trf('هەڵە لە پەسەندکردن: {0}', [e]), const Color(0xFFDC3545));
     }
   }
 
@@ -110,11 +110,11 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
           .eq('id', userId);
 
       if (mounted) {
-        _showSnackBar(trf('داواکاری {0} ڕەتکرایەوە ❌', [name]), Colors.red);
+        _showSnackBar(trf('داواکاری {0} ڕەتکرایەوە ❌', [name]), const Color(0xFFDC3545));
         _fetchData();
       }
     } catch (e) {
-      if (mounted) _showSnackBar(trf('هەڵە لە ڕەتکردنەوە: {0}', [e]), Colors.red);
+      if (mounted) _showSnackBar(trf('هەڵە لە ڕەتکردنەوە: {0}', [e]), const Color(0xFFDC3545));
     }
   }
 
@@ -215,7 +215,7 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
             Icon(
               isPending ? Icons.check_circle_outline : Icons.inbox_rounded,
               size: 80,
-              color: isPending ? Colors.green : Colors.grey,
+              color: isPending ? const Color(0xFF0F9D7A) : Colors.grey,
             ),
             const SizedBox(height: 16),
             Text(
@@ -325,8 +325,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                           icon: const Icon(Icons.close_rounded, size: 18),
                           label: Text(tr('ڕەتکردنەوە'), style: const TextStyle(fontWeight: FontWeight.bold)),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
+                            foregroundColor: const Color(0xFFDC3545),
+                            side: const BorderSide(color: Color(0xFFDC3545)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -360,9 +360,9 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.verified_user_rounded, color: Colors.green, size: 18),
+                        const Icon(Icons.verified_user_rounded, color: Color(0xFF0F9D7A), size: 18),
                         const SizedBox(width: 8),
-                        Text(tr('ئەم بەکارهێنەرە پەسەندکراوە ✅'), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+                        Text(tr('ئەم بەکارهێنەرە پەسەندکراوە ✅'), style: const TextStyle(color: Color(0xFF0F9D7A), fontWeight: FontWeight.bold, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -385,7 +385,7 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('نەخێر'))),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC3545)),
             child: Text(tr('بەڵێ'), style: const TextStyle(color: Colors.white)),
           ),
         ],

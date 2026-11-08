@@ -78,7 +78,7 @@ class _AdminStoreServicesScreenState
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -222,7 +222,7 @@ class _AdminStoreServicesScreenState
               IconButton(
                 icon: const Icon(
                   Icons.edit_rounded,
-                  color: Colors.blue,
+                  color: Color(0xFF1E88E5),
                   size: 20,
                 ),
                 onPressed: () => _openEditor(service: service),
@@ -230,7 +230,7 @@ class _AdminStoreServicesScreenState
               IconButton(
                 icon: const Icon(
                   Icons.delete_outline_rounded,
-                  color: Colors.red,
+                  color: Color(0xFFDC3545),
                   size: 20,
                 ),
                 onPressed: () => _deleteService(service),
@@ -243,14 +243,14 @@ class _AdminStoreServicesScreenState
               _buildMiniInfo(
                 Icons.checklist_rounded,
                 trf('{0} پێداویستی', [service.requirements.length]),
-                const Color(0xFF8B5CF6),
+                const Color(0xFF4F5BD5),
                 isDark,
               ),
               const SizedBox(width: 10),
               _buildMiniInfo(
                 Icons.attach_money_rounded,
                 trf('{0} تێچوو', [service.fees.length]),
-                const Color(0xFF10B981),
+                const Color(0xFF0F9D7A),
                 isDark,
               ),
             ],
@@ -415,7 +415,7 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('ناونیشان پێویستە')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -580,7 +580,7 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
                       if (hex.length == 6) hex = 'FF$hex';
                       color = Color(int.parse(hex, radix: 16));
                     } catch (_) {
-                      color = Colors.blue;
+                      color = const Color(0xFF1E88E5);
                     }
                     final isSelected = _selectedColor == c;
 
