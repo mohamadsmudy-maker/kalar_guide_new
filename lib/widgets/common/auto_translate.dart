@@ -77,8 +77,14 @@ class _AutoTranslateState extends State<AutoTranslate> {
   @override
   void dispose() {
     _requestId++; // وەڵامی درەنگ پشتگوێ دەخرێت
+    _retry?.cancel();
     super.dispose();
   }
+
+  /// ئەگەر وەرگێڕان شکستی هێنا (بۆ نموونە سنووری خولەکی Gemini)، دوای
+  /// ماوەیەک دووبارە هەوڵ دەدرێتەوە — زۆرینە ٣ جار
+  Timer? _retry;
+  int _retries = 0;
 
   /// وەرگێڕانی ئامادەی ناو ئەپ (lib/l10n/strings) — خێرا و بێ سێرڤەر
   String? get _bundled => AppLang.lookup(widget.lang, widget.text);
@@ -110,6 +116,12 @@ class _AutoTranslateState extends State<AutoTranslate> {
     if (!mounted || requestId != _requestId) return;
     if (translated != null && translated != _displayed) {
       setState(() => _displayed = translated);
+    } else if (translated == null && _retries < 3) {
+      _retries++;
+      _retry?.cancel();
+      _retry = Timer(_TranslationStore._failCooldown + const Duration(seconds: 5), () {
+        if (mounted) _maybeTranslate();
+      });
     }
   }
 
@@ -148,7 +160,7 @@ class _TranslationStore {
   _TranslationStore._();
 
   static const int _maxEntries = 500;
-  static const int _maxConcurrent = 3;
+  static const int _maxConcurrent = 64; // TranslationService خۆی کۆیان دەکاتەوە
   static const Duration _failCooldown = Duration(seconds: 60);
 
   static final LinkedHashMap<String, String> _cache = LinkedHashMap();
@@ -205,12 +217,13 @@ class _TranslationStore {
     _running++;
 
     try {
-      final result = await TranslationService.translate(
+      final result = await TranslationService.tryTranslate(
         text: text,
         targetLanguage: lang,
       );
-      final cleaned = result.trim();
-      if (cleaned.isEmpty) {
+      final cleaned = result?.trim() ?? '';
+      // null یان هەمان دەقی کوردی = وەرنەگێڕدرا → کاش ناکرێت، دواتر دووبارە
+      if (cleaned.isEmpty || cleaned == text.trim()) {
         _failedAt[k] = DateTime.now();
         return null;
       }

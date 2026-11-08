@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,10 +26,18 @@ class TranslationService {
   static const int _maxTextLength = 5000;
 
   static final LinkedHashMap<String, String> _cache = LinkedHashMap();
-  static final Map<String, Future<String>> _inFlight = {};
+  static final Map<String, Future<String?>> _inFlight = {};
 
   /// دەقەکە وەردەگێڕێت بۆ [targetLanguage]. لە هەر هەڵەیەکدا دەقی ئەسڵی دەگەڕێنێتەوە.
   static Future<String> translate({
+    required String text,
+    required String targetLanguage,
+  }) async =>
+      (await tryTranslate(text: text, targetLanguage: targetLanguage)) ?? text;
+
+  /// وەک [translate]، بەڵام null = وەرگێڕان نەکرا (بۆ ئەوەی دەقە کوردییەکە
+  /// وەک «وەرگێڕان» هەڵنەگیرێت و دواتر دووبارە هەوڵ بدرێتەوە)
+  static Future<String?> tryTranslate({
     required String text,
     required String targetLanguage,
   }) {
@@ -49,12 +58,168 @@ class TranslationService {
       return SynchronousFuture(cached);
     }
 
-    return _inFlight[key] ??= (fetchOverride ?? _fetch)(trimmed, targetLanguage).then((result) {
+    if (fetchOverride != null) {
+      return _inFlight[key] ??= fetchOverride!(trimmed, targetLanguage).then((result) {
+        if (result != null) _put(key, result);
+        return result;
+      }).whenComplete(() {
+        _inFlight.remove(key);
+      });
+    }
+    // دەقە کورتەکان کۆ دەکرێنەوە و پێکەوە دەنێردرێن (سنووری خولەکی Gemini)
+    if (trimmed.length <= _batchItemMax) {
+      return _inFlight[key] ??= _enqueue(trimmed, targetLanguage).whenComplete(() {
+        _inFlight.remove(key);
+      });
+    }
+    return _inFlight[key] ??= _fetch(trimmed, targetLanguage).then((result) {
       if (result != null) _put(key, result);
-      return result ?? text;
+      return result;
     }).whenComplete(() {
       _inFlight.remove(key);
     });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📦 بە کۆمەڵ: ٤٠ دەق بە یەک داواکاری
+  // ═══════════════════════════════════════════════════════════
+  static const int _batchSize = 40;
+  static const int _batchItemMax = 600;
+  static const Duration _batchDelay = Duration(milliseconds: 350);
+
+  /// lang → دەق → چاوەڕوانەکان
+  static final Map<String, Map<String, List<Completer<String?>>>> _pending = {};
+  static Timer? _flushTimer;
+  static bool _flushing = false;
+
+  /// false = فەنکشنەکە هێشتا وەشانی کۆنە (texts نازانێت) → یەک یەک
+  static bool _batchSupported = true;
+
+  static Future<String?> _enqueue(String text, String lang) {
+    final c = Completer<String?>();
+    ((_pending[lang] ??= {})[text] ??= []).add(c);
+    _flushTimer ??= Timer(_batchDelay, _flush);
+    return c.future;
+  }
+
+  static Future<void> _flush() async {
+    _flushTimer = null;
+    if (_flushing) {
+      _flushTimer ??= Timer(_batchDelay, _flush);
+      return;
+    }
+    _flushing = true;
+    try {
+      while (_pending.isNotEmpty) {
+        final lang = _pending.keys.first;
+        final group = _pending.remove(lang)!;
+        final texts = group.keys.toList();
+        for (var i = 0; i < texts.length; i += _batchSize) {
+          final chunk = texts.sublist(i, math.min(i + _batchSize, texts.length));
+          final results = await _translateChunk(chunk, lang);
+          for (var j = 0; j < chunk.length; j++) {
+            for (final c in group[chunk[j]]!) {
+              if (!c.isCompleted) c.complete(results[j]);
+            }
+          }
+        }
+      }
+    } finally {
+      _flushing = false;
+    }
+  }
+
+  /// تەنها بۆ تاقیکردنەوە: لە جیاتی Edge Function (بە کۆمەڵ)
+  @visibleForTesting
+  static Future<List<String?>?> Function(List<String> texts, String lang)? fetchBatchOverride;
+
+  /// ئەنجام: هەمان ڕیز؛ null = وەرنەگێڕدرا
+  static Future<List<String?>> _translateChunk(List<String> chunk, String lang) async {
+    List<String?> results = List.filled(chunk.length, null);
+    if (fetchBatchOverride != null) {
+      results = await fetchBatchOverride!(chunk, lang) ?? results;
+    } else if (_batchSupported) {
+      final batch = await _fetchBatch(chunk, lang);
+      if (batch != null) {
+        results = batch;
+      } else if (!_batchSupported) {
+        // وەشانی کۆنی فەنکشنەکە: یەک یەک
+        results = [for (final t in chunk) await _fetch(t, lang)];
+      }
+    } else {
+      results = [for (final t in chunk) await _fetch(t, lang)];
+    }
+    for (var j = 0; j < chunk.length; j++) {
+      final r = results[j]?.trim();
+      if (r != null && r.isNotEmpty) _put('$lang\u0000${chunk[j]}', r);
+    }
+    return results;
+  }
+
+  static List<String?>? _readBatch(dynamic data, int n) {
+    dynamic d = data;
+    if (d is String) {
+      try {
+        d = jsonDecode(d);
+      } catch (_) {
+        return null;
+      }
+    }
+    final list = d is Map ? d['translations'] : null;
+    if (list is! List || list.length != n) return null;
+    return [
+      for (final x in list) (x is String && x.trim().isNotEmpty) ? x.trim() : null,
+    ];
+  }
+
+  /// null = داواکارییەکە بە تەواوی شکستی هێنا
+  static Future<List<String?>?> _fetchBatch(List<String> chunk, String lang) async {
+    try {
+      final response = await Supabase.instance.client.functions
+          .invoke(_functionName, body: {'texts': chunk, 'targetLanguage': lang})
+          .timeout(const Duration(seconds: 45));
+      return _readBatch(response.data, chunk.length);
+    } on FunctionException catch (e) {
+      // 400 «text and targetLanguage are required» = فەنکشنی کۆن
+      if (e.status == 400 && '${e.details}'.contains('text and targetLanguage')) {
+        _batchSupported = false;
+        return null;
+      }
+      debugPrint('❌ translate batch ${e.status}: ${e.details}');
+      // 429/502: ئەوانەی پێشتر هەبوون دەگەڕێنەوە
+      return _readBatch(e.details, chunk.length);
+    } catch (e) {
+      debugPrint('❌ translate batch: $e');
+      return null;
+    }
+  }
+
+  /// 🛠️ ئەدمین: هەموو دەقەکان یەکجار وەردەگێڕێت و لە کاشی هاوبەشدا هەڵیان
+  /// دەگرێت. لە نێوان داواکارییەکاندا [pause] چاوەڕێ دەکات (سنووری Gemini).
+  /// ژمارەی دەقە وەرگێڕدراوەکان دەگەڕێنێتەوە.
+  static Future<int> translateAllNow(
+    List<String> texts,
+    String lang, {
+    void Function(int done, int total)? onProgress,
+    Duration pause = const Duration(seconds: 7),
+  }) async {
+    final todo = {
+      for (final t in texts)
+        if (t.trim().isNotEmpty &&
+            t.trim().length <= _batchItemMax &&
+            !_looksUntranslatable(t.trim()) &&
+            cachedOrNull(t, lang) == null)
+          t.trim(),
+    }.toList();
+    var ok = 0;
+    for (var i = 0; i < todo.length; i += _batchSize) {
+      final chunk = todo.sublist(i, math.min(i + _batchSize, todo.length));
+      final res = await _translateChunk(chunk, lang);
+      ok += res.where((r) => r != null).length;
+      onProgress?.call(math.min(i + _batchSize, todo.length), todo.length);
+      if (i + _batchSize < todo.length) await Future<void>.delayed(pause);
+    }
+    return ok;
   }
 
   /// چەند دەقێک بە هاوکات وەردەگێڕێت (بۆ لیستەکان).
