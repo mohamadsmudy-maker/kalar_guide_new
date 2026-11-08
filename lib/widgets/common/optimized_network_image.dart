@@ -29,6 +29,9 @@ class OptimizedNetworkImage extends StatelessWidget {
   /// سنووری دیسک (پیکسڵ)
   final int maxDiskWidth;
 
+  /// ئەگەر وێنە نەبوو یان بار نەبوو ئەمە پیشان دەدرێت (لە جیاتی ئایکۆنی وێنەی تێکچوو)
+  final Widget? fallback;
+
   const OptimizedNetworkImage({
     super.key,
     required this.imageUrl,
@@ -39,6 +42,7 @@ class OptimizedNetworkImage extends StatelessWidget {
     this.semanticLabel,
     this.fadeInDuration = const Duration(milliseconds: 180),
     this.maxDiskWidth = 1000,
+    this.fallback,
   });
 
   /// کەمترین و زۆرترین قەبارە بۆ decode کردن
@@ -63,12 +67,14 @@ class OptimizedNetworkImage extends StatelessWidget {
     final lower = url.toLowerCase();
     final validUrl = lower.startsWith('http://') || lower.startsWith('https://');
 
-    Widget box(IconData icon) => Container(
-      width: width,
-      height: height,
-      color: bg,
-      child: Center(child: Icon(icon, color: iconColor, size: 24)),
-    );
+    Widget box(IconData icon) => fallback != null
+        ? SizedBox(width: width, height: height, child: fallback)
+        : Container(
+            width: width,
+            height: height,
+            color: bg,
+            child: Center(child: Icon(icon, color: iconColor, size: 24)),
+          );
 
     Widget image;
     if (!validUrl) {

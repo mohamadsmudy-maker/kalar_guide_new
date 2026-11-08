@@ -9,6 +9,7 @@ import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import 'category_details.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 🗂️ شاشەی بەشە سەرەکییەکان — ULTRA PRO V2
 class CategoriesScreen extends StatefulWidget {
@@ -23,6 +24,9 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen>
     with TickerProviderStateMixin {
   String _searchQuery = '';
+
+  /// ژمارەی شوێن بۆ هەر بەشێک (ناوی بەش → ژمارە)
+  Map<String, int> _counts = {};
   final TextEditingController _searchCtrl = TextEditingController();
 
   late AnimationController _entryController;
@@ -59,6 +63,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     );
 
     _categoriesFuture = _fetchCategories();
+    _fetchCounts();
     _entryController.forward();
   }
 
@@ -82,6 +87,23 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     } catch (e) {
       debugPrint('❌ Categories error: $e');
       return [];
+    }
+  }
+
+  Future<void> _fetchCounts() async {
+    try {
+      final res = await Supabase.instance.client.from('dukan').select('category');
+      final cats = [for (final r in res as List) '${r['category'] ?? ''}'];
+      final cached = await _categoriesFuture;
+      if (!mounted) return;
+      setState(() {
+        _counts = {
+          for (final c in cached)
+            '${c['name']}': cats.where((x) => x.contains('${c['name']}')).length,
+        };
+      });
+    } catch (e) {
+      debugPrint('⚠️ category counts: $e');
     }
   }
 
@@ -137,35 +159,28 @@ class _CategoriesScreenState extends State<CategoriesScreen>
 
                 return SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
-                  sliver: SliverList(
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: 0.92,
+                    ),
                     delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                        final card = _buildUltraCategoryCard(
-                          filteredCats[index],
-                          isDark,
-                          index,
-                          lang,
-                        );
-
-                        // ⭐ ئەنیمەیشن تەنها بۆ ٨ کارتی یەکەم
-                        if (index >= 8) return card;
-
+                      (context, index) {
+                        final tile = _buildCategoryTile(filteredCats[index], isDark, lang);
+                        if (index >= 8) return tile;
                         return AnimatedBuilder(
                           animation: _entryAnimation,
                           builder: (context, child) {
-                            final delay = index * 0.06;
                             final progress =
-                            ((_entryAnimation.value - delay) / 0.4)
-                                .clamp(0.0, 1.0);
-                            return Transform.translate(
-                              offset: Offset(0, 40 * (1 - progress)),
-                              child: Opacity(
-                                opacity: progress,
-                                child: child,
-                              ),
+                                ((_entryAnimation.value - index * 0.06) / 0.4).clamp(0.0, 1.0);
+                            return Transform.scale(
+                              scale: 0.9 + 0.1 * progress,
+                              child: Opacity(opacity: progress, child: child),
                             );
                           },
-                          child: card,
+                          child: tile,
                         );
                       },
                       childCount: filteredCats.length,
@@ -446,6 +461,10 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                   fontWeight: FontWeight.w500,
                 ),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                isDense: true,
               ),
             ),
           ),
@@ -478,297 +497,134 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     );
   }
 
-  Widget _buildUltraCategoryCard(
-      Map<String, dynamic> cat,
-      bool isDark,
-      int index,
-      String lang,
-      ) {
-    final String catName = cat['name'] ?? '';
-    final String? catImage = cat['image'];
-    final hasImage = catImage != null &&
-        catImage.isNotEmpty &&
-        catImage.startsWith('http');
+  // ═══════════════════════════════════════════════════════════
+  // 🧩 تایلی بەش — وێنە یان ئایکۆن، ناو، ژمارەی شوێن
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildCategoryTile(Map<String, dynamic> cat, bool isDark, String lang) {
+    final name = '${cat['name'] ?? ''}';
+    final image = '${cat['image'] ?? ''}';
+    final hasImage = image.startsWith('http');
+    final color = PlaceDisplay.color(name);
+    final count = _counts[name];
 
-    final palettes = [
-      [const Color(0xFF1E88E5), const Color(0xFF42A5F5)],
-      [const Color(0xFFE91E63), const Color(0xFFF06292)],
-      [const Color(0xFF10B981), const Color(0xFF34D399)],
-      [const Color(0xFFF59E0B), const Color(0xFFFBBF24)],
-      [const Color(0xFF8B5CF6), const Color(0xFFA78BFA)],
-      [const Color(0xFF14B8A6), const Color(0xFF2DD4BF)],
-      [const Color(0xFFEF4444), const Color(0xFFF87171)],
-      [const Color(0xFF6366F1), const Color(0xFF818CF8)],
-    ];
-    final palette = palettes[index % palettes.length];
-    final primaryColor = palette[0];
-    final secondaryColor = palette[1];
+    Widget iconBubble({double size = 54}) => Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: hasImage ? Colors.white.withValues(alpha: 0.22) : color.withValues(alpha: 0.14),
+            shape: BoxShape.circle,
+            border: Border.all(color: hasImage ? Colors.white54 : color.withValues(alpha: 0.25)),
+          ),
+          child: Icon(PlaceDisplay.icon(name), color: hasImage ? Colors.white : color, size: size * 0.5),
+        );
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+    final fg = hasImage ? Colors.white : (isDark ? Colors.white : const Color(0xFF1A1A2E));
+    final sub = hasImage ? Colors.white70 : (isDark ? Colors.white54 : const Color(0xFF64748B));
+
+    return Semantics(
+      button: true,
+      label: count == null ? name : '$name، ${trf('{0} شوێن', [count])}',
+      excludeSemantics: true,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(24),
         child: InkWell(
+          borderRadius: BorderRadius.circular(22),
           onTap: () {
             HapticFeedback.mediumImpact();
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => CategoryDetailsScreen(categoryName: catName),
-              ),
+              MaterialPageRoute(builder: (_) => CategoryDetailsScreen(categoryName: name)),
             );
           },
-          borderRadius: BorderRadius.circular(24),
-          child: Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [const Color(0xFF1A1A22), const Color(0xFF1F1F2A)]
-                        : [Colors.white, const Color(0xFFFAFBFF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: primaryColor.withValues(alpha: 0.2),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black
-                          .withValues(alpha: isDark ? 0.35 : 0.06),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                      spreadRadius: -6,
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+              gradient: hasImage
+                  ? null
+                  : LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF1A1A22), color.withValues(alpha: 0.10)]
+                          : [Colors.white, Color.alphaBlend(color.withValues(alpha: 0.07), Colors.white)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
-                    BoxShadow(
-                      color: primaryColor
-                          .withValues(alpha: isDark ? 0.25 : 0.15),
-                      blurRadius: 32,
-                      offset: const Offset(0, 14),
-                      spreadRadius: -10,
+              border: Border.all(color: color.withValues(alpha: 0.18), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: isDark ? 0.12 : 0.1),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(21),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (hasImage) ...[
+                    OptimizedNetworkImage(imageUrl: image, fit: BoxFit.cover, fallback: Container(color: color)),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0x14000000), Color(0xB3000000)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
                     ),
                   ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      _buildImageRing(
-                        catImage: catImage,
-                        hasImage: hasImage,
-                        catName: catName,
-                        primaryColor: primaryColor,
-                        secondaryColor: secondaryColor,
-                        isDark: isDark,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        iconBubble(),
+                        const Spacer(),
+                        AutoTranslate(
+                          text: name,
+                          lang: lang,
+                          maxLines: 2,
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900, color: fg, height: 1.3),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
                           children: [
-                            AutoTranslate(
-                              text: catName,
-                              lang: lang,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 17,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF1A1A2E),
-                                letterSpacing: 0.2,
-                                height: 1.2,
+                            Expanded(
+                              child: Text(
+                                count == null ? '' : trf('{0} شوێن', [count]),
+                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: sub),
                               ),
-                              maxLines: 1,
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        primaryColor
-                                            .withValues(alpha: 0.15),
-                                        secondaryColor
-                                            .withValues(alpha: 0.08),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: primaryColor
-                                          .withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.storefront_rounded,
-                                        size: 12,
-                                        color: primaryColor,
-                                      ),
-                                      const SizedBox(width: 5),
-                                      AutoTranslate(
-                                        text: tr('بینینی گشت'),
-                                        lang: lang,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w900,
-                                          color: primaryColor,
-                                          letterSpacing: 0.3,
-                                        ),
-                                        maxLines: 1,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Spacer(),
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        primaryColor,
-                                        secondaryColor,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: primaryColor
-                                            .withValues(alpha: 0.45),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                        spreadRadius: -2,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    lang == 'en'
-                                        ? Icons.chevron_right_rounded
-                                        : Icons.chevron_left_rounded,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                              ],
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: hasImage ? Colors.white.withValues(alpha: 0.25) : color,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                AppLang.isRtl ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
+                                size: 15,
+                                color: Colors.white,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: AnimatedBuilder(
-                    animation: _shimmerController,
-                    builder: (context, _) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          gradient: LinearGradient(
-                            begin: Alignment(
-                              -1.0 + _shimmerController.value * 3,
-                              -1.0,
-                            ),
-                            end: Alignment(
-                              1.0 + _shimmerController.value * 3,
-                              1.0,
-                            ),
-                            colors: [
-                              Colors.transparent,
-                              primaryColor.withValues(alpha: 0.06),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.0, 0.5, 1.0],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildImageRing({
-    required String? catImage,
-    required bool hasImage,
-    required String catName,
-    required Color primaryColor,
-    required Color secondaryColor,
-    required bool isDark,
-  }) {
-    return Container(
-      width: 84,
-      height: 84,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [
-            primaryColor.withValues(alpha: 0.25),
-            secondaryColor.withValues(alpha: 0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      padding: const EdgeInsets.all(3),
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-          border: Border.all(
-            color: primaryColor.withValues(alpha: 0.4),
-            width: 2,
-          ),
-        ),
-        padding: const EdgeInsets.all(2),
-        child: ClipOval(
-          child: hasImage
-              ? OptimizedNetworkImage(
-            imageUrl: catImage!,
-            width: 74,
-            height: 74,
-            fit: BoxFit.cover,
-          )
-              : Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  primaryColor.withValues(alpha: 0.25),
-                  secondaryColor.withValues(alpha: 0.15),
-                ],
-              ),
-            ),
-            child: Icon(
-              _getCategoryIcon(catName),
-              color: primaryColor,
-              size: 32,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildLoadingSkeleton(bool isDark) {
     return ListView.builder(
@@ -843,35 +699,4 @@ class _CategoriesScreenState extends State<CategoriesScreen>
     );
   }
 
-  IconData _getCategoryIcon(String name) {
-    final n = name.trim();
-    if (n.contains('تەندروستی') || n.contains('نەخۆشخانە')) {
-      return Icons.local_hospital_rounded;
-    }
-    if (n.contains('پەروەردە') || n.contains('قوتابخانە')) {
-      return Icons.school_rounded;
-    }
-    if (n.contains('بەڕێوەبەرایەتی') || n.contains('شارەوانی')) {
-      return Icons.account_balance_rounded;
-    }
-    if (n.contains('خوێندنی باڵا') || n.contains('زانکۆ')) {
-      return Icons.school_rounded;
-    }
-    if (n.contains('خواردن') || n.contains('شیرینی')) {
-      return Icons.restaurant_rounded;
-    }
-    if (n.contains('بازاڕ') || n.contains('شوێن')) {
-      return Icons.shopping_bag_rounded;
-    }
-    if (n.contains('سەرۆکایەتی') || n.contains('قایمقامیەت')) {
-      return Icons.business_rounded;
-    }
-    if (n.contains('بەنزینخانە') || n.contains('سووتەمەنی')) {
-      return Icons.local_gas_station_rounded;
-    }
-    if (n.contains('ئاینی') || n.contains('مزگەوت')) {
-      return Icons.mosque_rounded;
-    }
-    return Icons.category_rounded;
-  }
 }

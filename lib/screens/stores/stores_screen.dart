@@ -13,6 +13,7 @@ import '../../widgets/common/auto_translate.dart';
 import 'full_map_screen.dart';
 import 'store_details_dialog.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 🏪 شاشەی شوێنەکان — FULL ULTRA PRO MAX
 class StoresScreen extends StatefulWidget {
@@ -102,8 +103,8 @@ class _StoresScreenState extends State<StoresScreen>
         _scrollController.position.maxScrollExtent - 300) {
       if (_displayCount < _filteredStores.length) {
         setState(() {
-          _displayCount = (_displayCount + _pageSize)
-              .clamp(0, _filteredStores.length);
+          _displayCount =
+              (_displayCount + _pageSize).clamp(0, _filteredStores.length);
         });
       }
     }
@@ -146,10 +147,8 @@ class _StoresScreenState extends State<StoresScreen>
         }
       }
 
-      final res = await Supabase.instance.client
-          .from('dukan')
-          .select()
-          .order('name');
+      final res =
+          await Supabase.instance.client.from('dukan').select().order('name');
 
       final stores = List<Map<String, dynamic>>.from(res as List);
 
@@ -269,7 +268,9 @@ class _StoresScreenState extends State<StoresScreen>
       return matchesSearch && matchesCategory && matchesType;
     }).toList();
 
-    switch (_sortBy) {
+    // بێ GPS «نزیکترین» مانای نییە → بەپێی ناو
+    final sortBy = _currentPosition == null ? 'name' : _sortBy;
+    switch (sortBy) {
       case 'distance':
         list.sort((a, b) {
           final latA = double.tryParse(a['latitude']?.toString() ?? '');
@@ -326,7 +327,7 @@ class _StoresScreenState extends State<StoresScreen>
       textDirection: lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
+            isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         body: RefreshIndicator(
           color: AppColors.primary,
           onRefresh: () async {
@@ -341,8 +342,8 @@ class _StoresScreenState extends State<StoresScreen>
             slivers: [
               _buildPremiumAppBar(isDark, lang),
               SliverToBoxAdapter(child: _buildSearchBar(isDark, lang)),
-              SliverToBoxAdapter(child: _buildActionBar(isDark, lang)),
-              SliverToBoxAdapter(child: _buildStatsCard(isDark, lang)),
+              SliverToBoxAdapter(child: _buildQuickCategories(isDark)),
+              SliverToBoxAdapter(child: _buildResultBar(isDark)),
               _buildStoresList(isDark, lang),
             ],
           ),
@@ -363,12 +364,12 @@ class _StoresScreenState extends State<StoresScreen>
       scrolledUnderElevation: 0,
       leading: widget.onMenuTap != null
           ? IconButton(
-        icon: Icon(
-          Icons.menu_rounded,
-          color: isDark ? Colors.white : AppColors.primary,
-        ),
-        onPressed: widget.onMenuTap,
-      )
+              icon: Icon(
+                Icons.menu_rounded,
+                color: isDark ? Colors.white : AppColors.primary,
+              ),
+              onPressed: widget.onMenuTap,
+            )
           : null,
       actions: [
         IconButton(
@@ -442,7 +443,8 @@ class _StoresScreenState extends State<StoresScreen>
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF1A1A2E),
                           ),
                           maxLines: 1,
                         ),
@@ -450,12 +452,19 @@ class _StoresScreenState extends State<StoresScreen>
                         AutoTranslate(
                           text: _allStores.isEmpty
                               ? tr('خەریکی هێنان...')
-                              : trf('{0} شوێن لە شاری کەلار', [_allStores.length]),
+                              : _activeFilterCount == 0
+                                  ? trf('{0} شوێن لە شاری کەلار',
+                                      [_allStores.length])
+                                  : trf('{0} لە {1} شوێن', [
+                                      _filteredStores.length,
+                                      _allStores.length
+                                    ]),
                           lang: lang,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white54 : Colors.grey.shade600,
+                            color:
+                                isDark ? Colors.white54 : Colors.grey.shade600,
                           ),
                           maxLines: 1,
                         ),
@@ -502,7 +511,8 @@ class _StoresScreenState extends State<StoresScreen>
               child: Row(
                 children: [
                   const SizedBox(width: 14),
-                  const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
+                  const Icon(Icons.search_rounded,
+                      color: AppColors.primary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
@@ -519,18 +529,28 @@ class _StoresScreenState extends State<StoresScreen>
                       decoration: InputDecoration(
                         hintText: lang == 'ar'
                             ? tr('ابحث عن الأماكن...')
-                            : (lang == 'en' ? 'Search places...' : 'گەڕان بەدوای شوێنەکان...'),
+                            : (lang == 'en'
+                                ? 'Search places...'
+                                : 'گەڕان بەدوای شوێنەکان...'),
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark ? Colors.white38 : Colors.grey,
                         ),
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                        isDense: true,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
                   if (_searchQuery.isNotEmpty)
                     IconButton(
-                      icon: Icon(Icons.close_rounded, size: 16, color: isDark ? Colors.white54 : Colors.grey),
+                      icon: Icon(Icons.close_rounded,
+                          size: 16,
+                          color: isDark ? Colors.white54 : Colors.grey),
                       onPressed: () {
                         _searchCtrl.clear();
                         setState(() => _searchQuery = '');
@@ -542,6 +562,8 @@ class _StoresScreenState extends State<StoresScreen>
               ),
             ),
           ),
+          const SizedBox(width: 8),
+          _buildFilterButton(isDark),
           const SizedBox(width: 8),
           GestureDetector(
             onTap: () {
@@ -567,7 +589,8 @@ class _StoresScreenState extends State<StoresScreen>
                   ),
                 ],
               ),
-              child: const Icon(Icons.map_rounded, color: Colors.white, size: 22),
+              child:
+                  const Icon(Icons.map_rounded, color: Colors.white, size: 22),
             ),
           ),
         ],
@@ -576,96 +599,235 @@ class _StoresScreenState extends State<StoresScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🎯 Action Bar (فلتەر و ڕیزکردن لە یەک دوگما)
+  // 🎛️ فلتەر — ژمارەی فلتەرە چالاکەکان
   // ═══════════════════════════════════════════════════════════
-  Widget _buildActionBar(bool isDark, String lang) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: _showFilterSheet, // ✅ لیستی فلتەرەکان
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark ? Colors.white12 : Colors.grey.shade200,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.filter_list_rounded, size: 18, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      tr('فلتەرکردن و ڕیزکردن'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white70 : Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  int get _activeFilterCount =>
+      (_selectedCategory != 'هەموو' ? 1 : 0) +
+      (_selectedType != 'هەموو' ? 1 : 0) +
+      (_searchQuery.isNotEmpty ? 1 : 0);
+
+  void _clearFilters() {
+    HapticFeedback.selectionClick();
+    _searchCtrl.clear();
+    setState(() {
+      _searchQuery = '';
+      _selectedCategory = 'هەموو';
+      _selectedType = 'هەموو';
+    });
+    _applyFilters();
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 📊 Stats Card (پاکتر)
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildStatsCard(bool isDark, String lang) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-        ),
-        child: Row(
+  int _countFor(String category) => category == 'هەموو'
+      ? _allStores.length
+      : _allStores
+          .where((s) => (s['category'] ?? '')
+              .toString()
+              .toLowerCase()
+              .contains(category.toLowerCase()))
+          .length;
+
+  Widget _buildFilterButton(bool isDark) {
+    final n = (_selectedType != 'هەموو' ? 1 : 0) +
+        (_selectedCategory != 'هەموو' ? 1 : 0);
+    return Tooltip(
+      message: tr('فلتەرکردن و ڕیزکردن'),
+      child: GestureDetector(
+        onTap: _showFilterSheet,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 16),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                trf('{0} شوێن', [_filteredStores.length]),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-                ),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: n > 0
+                    ? AppColors.primary
+                    : (isDark ? const Color(0xFF1A1A22) : Colors.white),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
+              child: Icon(Icons.tune_rounded,
+                  size: 22, color: n > 0 ? Colors.white : AppColors.primary),
             ),
-            if (_currentPosition != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.my_location_rounded, color: Colors.green, size: 10),
-                    const SizedBox(width: 4),
-                    Text(
-                      tr('نزیک'),
-                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.green),
-                    ),
-                  ],
+            if (n > 0)
+              PositionedDirectional(
+                top: -4,
+                end: -4,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE91E63),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: isDark ? const Color(0xFF0F0F14) : Colors.white,
+                        width: 2),
+                  ),
+                  child: Text('$n',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900)),
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏷️ بەشەکان — ڕیزی ئاسۆیی، یەک کرتە بۆ فلتەرکردن
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildQuickCategories(bool isDark) {
+    final names = <String>[
+      'هەموو',
+      for (final c in _allCategories)
+        if ((c['name'] ?? '').toString().trim().isNotEmpty &&
+            _countFor(c['name'].toString()) > 0)
+          c['name'].toString(),
+    ];
+    if (names.length <= 1) return const SizedBox(height: 4);
+    return SizedBox(
+      height: 46,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+        itemCount: names.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final name = names[i];
+          final selected = _selectedCategory == name;
+          final color =
+              name == 'هەموو' ? AppColors.primary : PlaceDisplay.color(name);
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _selectedCategory =
+                  selected && name != 'هەموو' ? 'هەموو' : name);
+              _applyFilters();
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: selected
+                    ? color
+                    : (isDark ? const Color(0xFF1A1A22) : Colors.white),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: selected ? color : color.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    name == 'هەموو'
+                        ? Icons.apps_rounded
+                        : PlaceDisplay.icon(name),
+                    size: 15,
+                    color: selected ? Colors.white : color,
+                  ),
+                  const SizedBox(width: 6),
+                  AutoTranslate(
+                    text: tr(name),
+                    lang: AppLang.code,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: selected
+                          ? Colors.white
+                          : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? Colors.white.withValues(alpha: 0.25)
+                          : color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_countFor(name)}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: selected ? Colors.white : color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📊 ئەنجام + ڕیزکردن + لابردنی فلتەر
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildResultBar(bool isDark) {
+    final sub = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final byName = _sortBy == 'name';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 16, 0),
+      child: Row(
+        children: [
+          Text(
+            trf('{0} ئەنجام', [_filteredStores.length]),
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w800, color: sub),
+          ),
+          if (_activeFilterCount > 0) ...[
+            const SizedBox(width: 6),
+            TextButton.icon(
+              onPressed: _clearFilters,
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                foregroundColor: const Color(0xFFE91E63),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              icon: const Icon(Icons.close_rounded, size: 14),
+              label: Text(tr('سڕینەوەی فلتەرەکان'),
+                  style: const TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w800)),
+            ),
+          ],
+          const Spacer(),
+          if (_currentPosition != null)
+            TextButton.icon(
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                setState(() => _sortBy = byName ? 'distance' : 'name');
+                _applyFilters();
+              },
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              icon: Icon(
+                  byName ? Icons.sort_by_alpha_rounded : Icons.near_me_rounded,
+                  size: 15),
+              label: Text(
+                byName ? tr('بەپێی ناو') : tr('نزیکترین'),
+                style:
+                    const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -679,7 +841,7 @@ class _StoresScreenState extends State<StoresScreen>
         padding: const EdgeInsets.all(16),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-                (context, i) => _buildSkeletonCard(isDark),
+            (context, i) => _buildSkeletonCard(isDark),
             childCount: 5,
           ),
         ),
@@ -704,7 +866,7 @@ class _StoresScreenState extends State<StoresScreen>
             childAspectRatio: 0.75,
           ),
           delegate: SliverChildBuilderDelegate(
-                (context, i) => _buildGridCard(displayList[i], isDark, i),
+            (context, i) => _buildGridCard(displayList[i], isDark, i),
             childCount: displayList.length,
           ),
         ),
@@ -715,7 +877,7 @@ class _StoresScreenState extends State<StoresScreen>
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-              (context, i) {
+          (context, i) {
             if (i == displayList.length) {
               if (!hasMore) return const SizedBox.shrink();
               return _buildLoadMoreButton(isDark);
@@ -739,7 +901,8 @@ class _StoresScreenState extends State<StoresScreen>
               animation: _entryAnimation,
               builder: (context, child) {
                 final delay = (i * 0.06).clamp(0.0, 0.5);
-                final progress = ((_entryAnimation.value - delay) / 0.4).clamp(0.0, 1.0);
+                final progress =
+                    ((_entryAnimation.value - delay) / 0.4).clamp(0.0, 1.0);
                 return Transform.translate(
                   offset: Offset(0, 30 * (1 - progress)),
                   child: Opacity(opacity: progress, child: child),
@@ -766,7 +929,8 @@ class _StoresScreenState extends State<StoresScreen>
     final lng = double.tryParse(store['longitude']?.toString() ?? '');
     final distance = _calculateDistance(lat, lng);
 
-    final accentColor = isGov ? const Color(0xFF10B981) : const Color(0xFFE91E63);
+    final accentColor =
+        isGov ? const Color(0xFF10B981) : const Color(0xFFE91E63);
 
     return GestureDetector(
       onTap: () {
@@ -777,7 +941,8 @@ class _StoresScreenState extends State<StoresScreen>
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A1A22) : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: accentColor.withValues(alpha: 0.15), width: 1.5),
+          border: Border.all(
+              color: accentColor.withValues(alpha: 0.15), width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
@@ -794,13 +959,16 @@ class _StoresScreenState extends State<StoresScreen>
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
                     child: image.isNotEmpty
-                        ? Image.network(image, width: double.infinity, fit: BoxFit.cover)
+                        ? Image.network(image,
+                            width: double.infinity, fit: BoxFit.cover)
                         : Container(
-                      color: accentColor.withValues(alpha: 0.1),
-                      child: Icon(Icons.storefront_rounded, color: accentColor, size: 40),
-                    ),
+                            color: accentColor.withValues(alpha: 0.1),
+                            child: Icon(Icons.storefront_rounded,
+                                color: accentColor, size: 40),
+                          ),
                   ),
                 ],
               ),
@@ -827,7 +995,8 @@ class _StoresScreenState extends State<StoresScreen>
                     if (distance < 99999.0)
                       Row(
                         children: [
-                          const Icon(Icons.near_me_rounded, size: 10, color: Colors.green),
+                          const Icon(Icons.near_me_rounded,
+                              size: 10, color: Colors.green),
                           const SizedBox(width: 3),
                           Text(
                             trf('{0} کم', [distance.toStringAsFixed(1)]),
@@ -878,7 +1047,8 @@ class _StoresScreenState extends State<StoresScreen>
                 Container(
                   height: 14,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF2A2A35) : Colors.grey.shade200,
+                    color:
+                        isDark ? const Color(0xFF2A2A35) : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -887,7 +1057,8 @@ class _StoresScreenState extends State<StoresScreen>
                   height: 10,
                   width: 150,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF2A2A35) : Colors.grey.shade200,
+                    color:
+                        isDark ? const Color(0xFF2A2A35) : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -910,13 +1081,16 @@ class _StoresScreenState extends State<StoresScreen>
           onPressed: () {
             HapticFeedback.selectionClick();
             setState(() {
-              _displayCount = (_displayCount + _pageSize).clamp(0, _filteredStores.length);
+              _displayCount =
+                  (_displayCount + _pageSize).clamp(0, _filteredStores.length);
             });
           },
           icon: const Icon(Icons.expand_more_rounded, color: AppColors.primary),
           label: Text(
-            trf('بینینی زیاتر ({0} تر)', [_filteredStores.length - _displayCount]),
-            style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900),
+            trf('بینینی زیاتر ({0} تر)',
+                [_filteredStores.length - _displayCount]),
+            style: const TextStyle(
+                color: AppColors.primary, fontWeight: FontWeight.w900),
           ),
         ),
       ),
@@ -944,17 +1118,23 @@ class _StoresScreenState extends State<StoresScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
-                        colors: [AppColors.primary.withValues(alpha: 0.2), AppColors.primary.withValues(alpha: 0.02)],
+                        colors: [
+                          AppColors.primary.withValues(alpha: 0.2),
+                          AppColors.primary.withValues(alpha: 0.02)
+                        ],
                       ),
                     ),
-                    child: const Icon(Icons.location_off_rounded, size: 60, color: AppColors.primary),
+                    child: const Icon(Icons.location_off_rounded,
+                        size: 60, color: AppColors.primary),
                   ),
                 );
               },
             ),
             const SizedBox(height: 20),
             AutoTranslate(
-              text: _allStores.isEmpty ? tr('هیچ شوێنێک نییە') : tr('هیچ شوێنێک نەدۆزرایەوە'),
+              text: _allStores.isEmpty
+                  ? tr('هیچ شوێنێک نییە')
+                  : tr('هیچ شوێنێک نەدۆزرایەوە'),
               lang: lang,
               style: TextStyle(
                 fontSize: 16,
@@ -965,7 +1145,9 @@ class _StoresScreenState extends State<StoresScreen>
             ),
             const SizedBox(height: 8),
             AutoTranslate(
-              text: _allStores.isEmpty ? tr('داتابەیسەکە بەتاڵە — تکایە داتا زیاد بکە') : tr('گەڕانەکەت هیچ ئەنجامێکی نەبوو'),
+              text: _allStores.isEmpty
+                  ? tr('داتابەیسەکە بەتاڵە — تکایە داتا زیاد بکە')
+                  : tr('گەڕانەکەت هیچ ئەنجامێکی نەبوو'),
               lang: lang,
               style: TextStyle(
                 fontSize: 12,
@@ -978,12 +1160,15 @@ class _StoresScreenState extends State<StoresScreen>
             ElevatedButton.icon(
               onPressed: () => _fetchStores(forceRefresh: true),
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: Text(tr('دووبارە هەوڵ بدە'), style: const TextStyle(fontWeight: FontWeight.w900)),
+              label: Text(tr('دووبارە هەوڵ بدە'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ],
@@ -1000,120 +1185,206 @@ class _StoresScreenState extends State<StoresScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF16161D)
+          : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => Directionality(
-        textDirection: AppLang.direction,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          height: MediaQuery.of(context).size.height * 0.7,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(tr('فلتەرکردن'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-              const SizedBox(height: 20),
+      builder: (ctx) => StatefulBuilder(
+        // پەنجەرەکە خۆی نوێ دەبێتەوە کاتێک شتێک هەڵدەبژێردرێت
+        builder: (ctx, setSheet) {
+          void update(VoidCallback change) {
+            HapticFeedback.selectionClick();
+            setState(change);
+            setSheet(() {});
+            _applyFilters();
+          }
 
-              // فلتەری حکومی / ناحکومی
-              Text(tr('جۆری شوێن'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-              const SizedBox(height: 10),
-              Row(
+          Widget title(String t) => Padding(
+                padding: const EdgeInsets.only(bottom: 10, top: 18),
+                child: Text(tr(t),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 13)),
+              );
+
+          return Directionality(
+            textDirection: AppLang.direction,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              height: MediaQuery.of(context).size.height * 0.75,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFilterChip('حەموو', _selectedType == 'هەموو', () {
-                    setState(() => _selectedType = 'هەموو');
-                    _applyFilters();
-                  }),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('حکومی', _selectedType == 'حکومی', () {
-                    setState(() => _selectedType = 'حکومی');
-                    _applyFilters();
-                  }),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('ناحکومی', _selectedType == 'ناحکومی', () {
-                    setState(() => _selectedType = 'ناحکومی');
-                    _applyFilters();
-                  }),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // فلتەری جۆرەکان
-              Text(tr('جۆرەکان'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-              const SizedBox(height: 10),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Wrap(
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(tr('فلتەرکردن و ڕیزکردن'),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w900, fontSize: 18)),
+                      ),
+                      if (_selectedType != 'هەموو' ||
+                          _selectedCategory != 'هەموو')
+                        TextButton(
+                          onPressed: () => update(() {
+                            _selectedType = 'هەموو';
+                            _selectedCategory = 'هەموو';
+                          }),
+                          child: Text(tr('پاککردنەوە')),
+                        ),
+                    ],
+                  ),
+                  if (_currentPosition != null) ...[
+                    title('ڕیزکردن'),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildFilterChip('نزیکترین', _sortBy != 'name',
+                            () => update(() => _sortBy = 'distance'),
+                            icon: Icons.near_me_rounded),
+                        _buildFilterChip('بەپێی ناو', _sortBy == 'name',
+                            () => update(() => _sortBy = 'name'),
+                            icon: Icons.sort_by_alpha_rounded),
+                      ],
+                    ),
+                  ],
+                  title('جۆری شوێن'),
+                  Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildFilterChip('هەموو', _selectedCategory == 'هەموو', () {
-                        setState(() => _selectedCategory = 'هەموو');
-                        _applyFilters();
-                      }),
-                      ..._allCategories.map((cat) {
-                        final name = cat['name']?.toString() ?? '';
-                        return _buildFilterChip(name, _selectedCategory == name, () {
-                          setState(() => _selectedCategory = name);
-                          _applyFilters();
-                        });
-                      }).toList(),
+                      for (final t in ['هەموو', 'حکومی', 'ناحکومی'])
+                        _buildFilterChip(t, _selectedType == t,
+                            () => update(() => _selectedType = t),
+                            icon: t == 'حکومی'
+                                ? Icons.account_balance_rounded
+                                : t == 'ناحکومی'
+                                    ? Icons.storefront_rounded
+                                    : Icons.apps_rounded),
                     ],
                   ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              // دوگمەی داخستن
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  title('بەشەکان'),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildFilterChip(
+                              'هەموو',
+                              _selectedCategory == 'هەموو',
+                              () => update(() => _selectedCategory = 'هەموو'),
+                              icon: Icons.apps_rounded,
+                              count: _allStores.length),
+                          for (final cat in _allCategories)
+                            if ((cat['name'] ?? '')
+                                .toString()
+                                .trim()
+                                .isNotEmpty)
+                              _buildFilterChip(
+                                cat['name'].toString(),
+                                _selectedCategory == cat['name'].toString(),
+                                () => update(() =>
+                                    _selectedCategory = cat['name'].toString()),
+                                icon: PlaceDisplay.icon(cat['name'].toString()),
+                                count: _countFor(cat['name'].toString()),
+                              ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Text(tr('تەواو'), style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white)),
-                ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: Text(
+                        trf('پیشاندانی {0} ئەنجام', [_filteredStores.length]),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w900, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap,
+      {IconData? icon, int? count}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isSelected
+        ? Colors.white
+        : (isDark ? Colors.white70 : const Color(0xFF334155));
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected
+              ? AppColors.primary
+              : (isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+            color: isSelected
+                ? AppColors.primary
+                : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
           ),
         ),
-        child: Text(
-          tr(label),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.black87,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon,
+                  size: 15,
+                  color: isSelected ? Colors.white : AppColors.primary),
+              const SizedBox(width: 6),
+            ],
+            Flexible(
+              child: AutoTranslate(
+                text: tr(label),
+                lang: AppLang.code,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            ),
+            if (count != null) ...[
+              const SizedBox(width: 6),
+              Text(
+                '$count',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: fg.withValues(alpha: 0.7)),
+              ),
+            ],
+          ],
         ),
       ),
     );

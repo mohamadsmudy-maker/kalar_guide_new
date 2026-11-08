@@ -292,6 +292,10 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                     width: 68,
                     height: 68,
                     fit: BoxFit.cover,
+                    fallback: Container(
+                      color: PlaceDisplay.colorForPlace(store).withValues(alpha: 0.12),
+                      child: Icon(PlaceDisplay.iconForPlace(store), color: PlaceDisplay.colorForPlace(store), size: 30),
+                    ),
                   ),
                 ),
               ),
@@ -318,7 +322,7 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
                         const SizedBox(width: 3),
                         Expanded(
                           child: Text(
-                            tr((store['address'] ?? 'کەلار').toString()),
+                            tr(PlaceDisplay.address(store['address'])),
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
