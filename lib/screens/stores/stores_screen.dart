@@ -14,6 +14,8 @@ import 'full_map_screen.dart';
 import 'store_details_dialog.dart';
 import '../../l10n/tr.dart';
 import '../../utils/place_display.dart';
+import '../../services/app_settings_service.dart';
+import 'suggest_place_screen.dart';
 
 /// 🏪 شاشەی شوێنەکان — FULL ULTRA PRO MAX
 class StoresScreen extends StatefulWidget {
@@ -60,9 +62,15 @@ class _StoresScreenState extends State<StoresScreen>
   late Animation<double> _entryAnimation;
   late Animation<double> _pulseAnimation;
 
+  /// پێشنیاری شوێن لەلایەن هاوڵاتیانەوە (ئەدمین چالاک/ناچالاکی دەکات)
+  bool _suggestionsOn = false;
+
   @override
   void initState() {
     super.initState();
+    AppSettingsService.isOn(AppSettingsService.placeSuggestions, refresh: true).then((on) {
+      if (mounted && on != _suggestionsOn) setState(() => _suggestionsOn = on);
+    });
 
     _entryController = AnimationController(
       vsync: this,
@@ -372,6 +380,21 @@ class _StoresScreenState extends State<StoresScreen>
             )
           : null,
       actions: [
+        if (_suggestionsOn)
+          IconButton(
+            icon: Icon(
+              Icons.add_location_alt_rounded,
+              color: isDark ? Colors.white : AppColors.primary,
+            ),
+            tooltip: tr('پێشنیاری شوێنی نوێ'),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SuggestPlaceScreen()),
+              );
+            },
+          ),
         IconButton(
           icon: Icon(
             _viewMode == 'grid'

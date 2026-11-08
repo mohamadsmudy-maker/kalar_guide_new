@@ -272,6 +272,16 @@ class _AboutScreenState extends State<AboutScreen>
                   _buildVersionCard(isDark, 7, textTheme, successColor),
                   const SizedBox(height: 10),
                   _buildReportCard(isDark, 8, textTheme),
+                  const SizedBox(height: 18),
+                  // ODbL: هەندێک شوێن لە OpenStreetMap ـەوە هاتوون
+                  Text(
+                    tr('هەندێک داتای شوێنەکان: © OpenStreetMap contributors'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                    ),
+                  ),
                   const SizedBox(height: 40),
                 ],
               ),
