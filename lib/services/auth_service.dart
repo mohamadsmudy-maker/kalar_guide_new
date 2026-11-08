@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/app_logger.dart';
+import 'google_auth_service.dart';
 import 'notification_service.dart';
 
 class AuthSessionManager {
@@ -158,6 +159,7 @@ class AuthSessionManager {
         AppLogger.w('⚠️ app_logout: $e');
       }
       await _clearLocalSession();
+      await GoogleAuthService.signOut();
       try {
         await Supabase.instance.client.auth.signOut().timeout(_supabaseTimeout);
       } catch (e) {

@@ -7,6 +7,8 @@ create extension if not exists pgcrypto with schema extensions;
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid', true), '')::uuid $$;
 grant usage on schema auth, public, extensions to anon, authenticated;
 grant execute on function auth.uid() to anon, authenticated;
+create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('test.jwt', true), ''), '{}')::jsonb $$;
+grant execute on function auth.jwt() to anon, authenticated;
 create table app_users(id bigserial primary key, name text, phone text, password text, role text, is_approved boolean, store_id bigint, fcm_token text, created_at timestamptz default now());
 create table dukan(id bigserial primary key, name text, phone text, category text, vendor_code text, fuel_prices jsonb, currency_prices jsonb);
 create table news(id uuid primary key default gen_random_uuid(), title text, store_id bigint, views int default 0, likes int default 0);

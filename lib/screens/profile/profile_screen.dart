@@ -15,6 +15,7 @@ import '../admin/admin_dashboard.dart';
 import '../admin/admin_gallery.dart';
 import '../gallery/gallery_screen.dart';
 import '../../l10n/tr.dart';
+import '../../services/google_auth_service.dart';
 
 class _QuickAction {
   final IconData icon;
@@ -343,6 +344,20 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
 
                       const SizedBox(height: 24),
                       isLogged ? _buildLogoutButton(isDark, 10) : _buildLoginButton(isDark, 10),
+                      if (isLogged && !AuthSessionManager.isAdmin) ...[
+                        const SizedBox(height: 8),
+                        Center(
+                          child: TextButton.icon(
+                            onPressed: _loggingOut ? null : _confirmDeleteAccount,
+                            style: TextButton.styleFrom(
+                              foregroundColor: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+                            ),
+                            icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                            label: Text(tr('سڕینەوەی ئەکاونت'),
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -1045,6 +1060,50 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       _snack(tr('⚠️ چوونەدەرەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _loggingOut = false);
+    }
+  }
+
+  /// Google Play داوا دەکات بەکارهێنەر بتوانێت ئەکاونتەکەی لە ناو ئەپەکەدا بسڕێتەوە
+  Future<void> _confirmDeleteAccount() async {
+    HapticFeedback.mediumImpact();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: AppLang.direction,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(tr('سڕینەوەی ئەکاونت'), style: const TextStyle(fontWeight: FontWeight.w900)),
+          content: Text(
+            tr('ئەکاونتەکەت و دڵخواز، لایک و هەڵسەنگاندنەکانت بە یەکجاری دەسڕێنەوە. ئەمە ناگەڕێتەوە.'),
+            style: const TextStyle(height: 1.6),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('نەخێر'))),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC3545)),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr('سڕینەوە')),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _loggingOut = true);
+    final status = await GoogleAuthService.deleteAccount();
+    if (!mounted) return;
+    setState(() => _loggingOut = false);
+    if (status == 'ok') {
+      setState(() {
+        _profile = null;
+        _favoritesCount = 0;
+        _complaintsCount = 0;
+      });
+      _snack(tr('ئەکاونتەکەت سڕایەوە'), const Color(0xFF0F9D7A));
+      await _loadAll();
+    } else {
+      _snack(tr('سڕینەوە سەرکەوتوو نەبوو، دواتر هەوڵ بدەرەوە'), const Color(0xFFDC3545));
     }
   }
 
