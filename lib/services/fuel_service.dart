@@ -65,7 +65,42 @@ class FuelSnapshot {
 class FuelService {
   static SupabaseClient get _client => Supabase.instance.client;
 
-  static const String _category = 'سوتەمەنی';
+  /// بەنزینخانەکان لە داتابەیسدا بە چەند ناوێک تۆمار کراون
+  /// (بۆ نموونە «بەنزینخانەکان» یان «سوتەمەنی»)، لە category یان sub_category.
+  /// هەر شوێنێک یەکێک لەم وشانەی تێدابێت بەنزینخانەیە.
+  static const List<String> stationKeywords = ['بەنزین', 'سوتەمەنی', 'سووتەمەنی'];
+
+  /// فلتەری PostgREST بۆ `.or(...)`
+  static String get stationFilter => [
+        for (final k in stationKeywords) ...['category.ilike.*$k*', 'sub_category.ilike.*$k*'],
+      ].join(',');
+
+  /// ئەگەر ستوونی sub_category لە داتابەیسدا نەبێت، تەنها category
+  static String get _categoryOnlyFilter =>
+      [for (final k in stationKeywords) 'category.ilike.*$k*'].join(',');
+
+  static Future<List<Map<String, dynamic>>> _stations(String columns, {String? phone}) async {
+    Future<List> run(String filter) {
+      var q = _client.from('dukan').select(columns).or(filter);
+      if (phone != null) q = q.eq('phone', phone);
+      return q.order('name');
+    }
+
+    List res;
+    try {
+      res = await run(stationFilter);
+    } on PostgrestException catch (e) {
+      debugPrint('⚠️ fuel stations (sub_category?): ${e.message}');
+      res = await run(_categoryOnlyFilter);
+    }
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  /// بۆ پشکنینی شوێنێک کە پێشتر هێنراوە
+  static bool isStation(Map<String, dynamic> row) {
+    final c = '${row['category'] ?? ''} ${row['sub_category'] ?? ''}';
+    return stationKeywords.any(c.contains);
+  }
   static const String _stationColumns =
       'id, name, phone, address, logo, image, latitude, longitude, fuel_prices';
 
@@ -142,8 +177,7 @@ class FuelService {
   // ═══════════════════════════════════════════════════════════
   static Future<List<Map<String, dynamic>>> getAllStations() async {
     try {
-      final res = await _client.from('dukan').select().eq('category', _category).order('name');
-      return List<Map<String, dynamic>>.from(res as List);
+      return await _stations('*');
     } catch (e) {
       debugPrint('❌ هەڵە لە هێنانی بەنزینخانەکان: $e');
       return [];
@@ -153,13 +187,7 @@ class FuelService {
   static Future<List<Map<String, dynamic>>> getVendorStations(String phone) async {
     try {
       if (phone.trim().isEmpty) return [];
-      final res = await _client
-          .from('dukan')
-          .select()
-          .eq('category', _category)
-          .eq('phone', phone)
-          .order('name');
-      return List<Map<String, dynamic>>.from(res as List);
+      return await _stations('*', phone: phone);
     } catch (e) {
       debugPrint('❌ هەڵە لە هێنانی بەنزینخانەکانی فرۆشیار: $e');
       return [];
@@ -185,7 +213,7 @@ class FuelService {
   // ═══════════════════════════════════════════════════════════
   static Future<List<Map<String, dynamic>>> getCurrentPrices({String? fuelType}) async {
     try {
-      final res = await _client.from('dukan').select(_stationColumns).eq('category', _category);
+      final res = await _stations(_stationColumns);
       final list = <Map<String, dynamic>>[];
 
       for (final station in (res as List)) {
