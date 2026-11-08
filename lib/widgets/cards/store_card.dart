@@ -7,6 +7,7 @@ import '../../config/settings_provider.dart';
 import '../common/auto_translate.dart';
 import '../common/optimized_network_image.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 🏪 کارتی شوێن — ULTRA PRO MAX v2
 ///
@@ -69,8 +70,7 @@ class StoreCard extends StatelessWidget {
 
     final rawName = store['name']?.toString().trim() ?? '';
     final name = rawName.isEmpty ? t('store') : rawName;
-    final rawAddress = store['address']?.toString().trim() ?? '';
-    final address = rawAddress.isEmpty ? 'کەلار' : rawAddress;
+    final address = PlaceDisplay.address(store['address']);
     final category = store['category']?.toString().trim() ?? '';
     final image = store['image']?.toString().trim() ?? '';
     final type = store['type']?.toString().trim() ?? '';
@@ -81,7 +81,8 @@ class StoreCard extends StatelessWidget {
     final cardColor = isDark ? const Color(0xFF1A1A22) : Colors.white;
     final borderColor = isDark ? Colors.white12 : Colors.grey.shade100;
 
-    final distanceText = distance == null
+    // 9999+ = شوێنی بەکارهێنەر نەزانراوە
+    final distanceText = distance == null || distance! >= 9999
         ? null
         : distance! < 1
         ? '${_digits('${(distance! * 1000).round()}', lang)} ${t('m')}'
@@ -162,15 +163,23 @@ class StoreCard extends StatelessWidget {
                               width: 78,
                               height: 78,
                               fit: BoxFit.cover,
+                              fallback: _placeholder(store),
                             )
                                 : Container(
-                              color: accent.withValues(alpha: 0.1),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    PlaceDisplay.colorForPlace(store).withValues(alpha: 0.18),
+                                    PlaceDisplay.colorForPlace(store).withValues(alpha: 0.06),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
                               child: Icon(
-                                isGov
-                                    ? Icons.account_balance_rounded
-                                    : Icons.storefront_rounded,
-                                color: accent,
-                                size: 30,
+                                PlaceDisplay.iconForPlace(store),
+                                color: PlaceDisplay.colorForPlace(store),
+                                size: 34,
                               ),
                             ),
                           ),
@@ -215,8 +224,9 @@ class StoreCard extends StatelessWidget {
                               color:
                               isDark ? Colors.white : AppColors.textPrimary,
                               letterSpacing: 0.2,
+                              height: 1.35,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                           ),
                           const SizedBox(height: 6),
                           Row(
@@ -360,6 +370,20 @@ class StoreCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _placeholder(Map<String, dynamic> store) {
+  final c = PlaceDisplay.colorForPlace(store);
+  return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [c.withValues(alpha: 0.18), c.withValues(alpha: 0.06)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+    child: Icon(PlaceDisplay.iconForPlace(store), color: c, size: 34),
+  );
 }
 
 class _Chip extends StatelessWidget {

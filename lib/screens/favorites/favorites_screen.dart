@@ -12,6 +12,7 @@ import '../../widgets/ultra_pro/ultra_pro_components.dart';
 import '../stores/store_details_dialog.dart';
 import '../news/news_details.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 part 'favorites_screen_ui.dart';
 
