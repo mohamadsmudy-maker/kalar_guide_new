@@ -90,12 +90,15 @@ class _AutoTranslateState extends State<AutoTranslate> {
   String _initialText() {
     if (widget.translate && widget.lang != 'ku' && _bundled != null) return _bundled!;
     if (!_needsTranslation) return widget.text;
-    return _TranslationStore.get(widget.lang, widget.text) ?? widget.text;
+    return _TranslationStore.get(widget.lang, widget.text) ??
+        TranslationService.cachedOrNull(widget.text, widget.lang) ??
+        widget.text;
   }
 
   Future<void> _maybeTranslate() async {
     if (!_needsTranslation) return;
     if (_TranslationStore.get(widget.lang, widget.text) != null) return;
+    if (TranslationService.cachedOrNull(widget.text, widget.lang) != null) return;
 
     final requestId = ++_requestId;
     final text = widget.text;

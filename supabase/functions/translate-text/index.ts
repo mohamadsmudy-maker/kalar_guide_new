@@ -53,6 +53,35 @@ async function callGemini(apiKey: string, apiVersion: string, prompt: string): P
   return last ?? new Response('no model', { status: 502 });
 }
 
+// ── کاشی هاوبەش (خشتەی translations) ─────────────────────────
+// هەر دەقێک تەنها یەکجار بە Gemini وەردەگێڕدرێت؛ دواتر لێرەوە دێت.
+// SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY خۆکارانە لە Edge Functions دا هەن.
+const SB_URL = Deno.env.get('SUPABASE_URL');
+const SB_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+async function rpc(name: string, args: Record<string, unknown>): Promise<unknown> {
+  if (!SB_URL || !SB_KEY) return null;
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/rpc/${name}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SB_KEY,
+        Authorization: `Bearer ${SB_KEY}`,
+      },
+      body: JSON.stringify(args),
+    });
+    if (!res.ok) {
+      console.error(`${name}:`, res.status, await res.text());
+      return null;
+    }
+    return res.status === 204 ? null : await res.json();
+  } catch (e) {
+    console.error(`${name} exception:`, e);
+    return null; // کاش نەبوو → هەر وەردەگێڕین
+  }
+}
+
 const LANGS: Record<string, string> = { en: 'English', ar: 'Arabic' };
 const MAX_LEN = 5000;
 
@@ -67,6 +96,12 @@ serve(async (req) => {
     }
     if (text.length > MAX_LEN) return json({ error: 'text too long' }, 413);
 
+    const source = text.trim();
+    const cached = await rpc('translation_get', { p_lang: targetLanguage, p_source: source });
+    if (typeof cached === 'string' && cached.trim()) {
+      return json({ translation: cached, cached: true });
+    }
+
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) return json({ error: 'GEMINI_API_KEY is not set' }, 500);
     const apiVersion = Deno.env.get('GEMINI_API_VERSION') ?? 'v1beta';
@@ -80,7 +115,7 @@ serve(async (req) => {
       `- "کەلار" is "Kalar" in English and "كلار" in Arabic.\n` +
       `- Keep numbers, emojis, phone numbers and URLs unchanged.\n` +
       `- Reply with the translation only, no quotes and no explanation.\n\n` +
-      `Text:\n${text}`;
+      `Text:\n${source}`;
 
     const res = await callGemini(apiKey, apiVersion, prompt);
 
@@ -93,6 +128,11 @@ serve(async (req) => {
     const translation = (data.candidates?.[0]?.content?.parts?.[0]?.text ?? '').trim();
     if (!translation) return json({ error: 'empty translation' }, 502);
 
+    await rpc('translation_put', {
+      p_lang: targetLanguage,
+      p_source: source,
+      p_translation: translation,
+    });
     return json({ translation });
   } catch (e) {
     console.error('translate-text exception:', e);

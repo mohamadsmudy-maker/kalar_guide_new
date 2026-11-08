@@ -293,7 +293,9 @@ Future<void> _initSupabase() async {
       publishableKey: _supabaseAnonKey,
     );
     _supabaseReady = true;
-    unawaited(TranslationService.loadDiskCache());
+    // کاشی ناوخۆیی، پاشان وەرگێڕانە هاوبەشە نوێکان (Supabase: translations)
+    unawaited(TranslationService.loadDiskCache()
+        .then((_) => TranslationService.syncShared(AppLang.code)));
     AppLogger.i('✅ Supabase initialized');
   } catch (e) {
     _bootReason = 'Supabase init failed: $e';

@@ -20,6 +20,7 @@ import 'admin_emergency_services_screen.dart';
 import 'admin_fuel_stations.dart';
 import 'admin_currency_stations.dart';
 import 'admin_prayer_times.dart';
+import 'admin_translations.dart';
 import 'admin_weather.dart';
 import 'admin_notifications.dart';
 import 'admin_vendor_requests.dart';
@@ -655,6 +656,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           subtitle: tr('دەستکاری یان پەیستکردنی خشتەی ئامۆژگاری'),
           adminOnly: true,
           screen: () => const AdminPrayerTimesScreen(),
+        ),
+        _DashItem(
+          id: 'translations',
+          icon: Icons.translate_rounded,
+          color: const Color(0xFF4F5BD5),
+          title: tr('وەرگێڕانەکان'),
+          subtitle: tr('ڕاستکردنەوەی وەرگێڕانی ناوی شوێن و هەواڵ'),
+          adminOnly: true,
+          screen: () => const AdminTranslationsScreen(),
         ),
       ]),
       _DashSection('system', '⚙️ ڕێکخستن و سیستەم', [

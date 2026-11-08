@@ -1656,4 +1656,13 @@ const Map<String, String> stringsEn = {
   'بەڕێوەبەرایەتی': 'Directorate',
   'ئایینی': 'Religious',
   'مزگەوتەکان': 'Mosques',
+  'ئەم دەقە جارێکی تر بە Gemini وەردەگێڕدرێتەوە.': 'This text will be translated again by Gemini.',
+  'خشتەی translations نەدۆزرایەوە. فایلی 20261112_translations_cache.sql لە Supabase جێبەجێ بکە.': 'The translations table was not found. Run 20261112_translations_cache.sql in Supabase.',
+  'سڕینەوەی وەرگێڕان': 'Delete translation',
+  'هێشتا هیچ وەرگێڕانێک نییە': 'No translations yet',
+  'هەڵەیەک ڕوویدا': 'Something went wrong',
+  'وەرگێڕانەکان': 'Translations',
+  'ڕاستکردنەوەی وەرگێڕان': 'Correct translation',
+  'ڕاستکردنەوەی وەرگێڕانی ناوی شوێن و هەواڵ': 'Correct translations of place names and news',
+  'ڕێگەت پێنەدراوە': 'You are not allowed',
 };
