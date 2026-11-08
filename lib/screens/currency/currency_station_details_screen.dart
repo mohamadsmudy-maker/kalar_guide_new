@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/settings_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/currency_service.dart';
+import '../../services/price_save_result.dart';
 import 'currency_history_screen.dart';
 import 'currency_strings.dart';
 import '../../l10n/tr.dart';
@@ -590,8 +591,8 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
                           icon: const Icon(Icons.check_rounded),
                           label: Text(t('save'), style: const TextStyle(fontWeight: FontWeight.w900)),
                           onPressed: () {
-                            final nb = double.tryParse(buyCtrl.text) ?? 0;
-                            final ns = double.tryParse(sellCtrl.text) ?? 0;
+                            final nb = parsePrice(buyCtrl.text) ?? 0;
+                            final ns = parsePrice(sellCtrl.text) ?? 0;
                             if (nb <= 0 && ns <= 0) {
                               setSheet(() => error = t('invalid'));
                               return;
@@ -614,8 +615,8 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
       ),
     );
 
-    final newBuy = double.tryParse(buyCtrl.text) ?? 0;
-    final newSell = double.tryParse(sellCtrl.text) ?? 0;
+    final newBuy = parsePrice(buyCtrl.text) ?? 0;
+    final newSell = parsePrice(sellCtrl.text) ?? 0;
     final notes = notesCtrl.text.trim();
     // دوای تەواوبوونی ئەنیمەیشنی داخستن dispose دەکرێن
     Future.delayed(const Duration(milliseconds: 400), () {
@@ -626,7 +627,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
     if (saved != true || !mounted) return;
 
     setState(() => _saving = true);
-    final ok = await CurrencyService.updatePrice(
+    final result = await CurrencyService.updatePrice(
       stationId: widget.stationId,
       currencyType: type,
       newBuyPrice: newBuy,
@@ -636,10 +637,11 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
     );
     if (!mounted) return;
     setState(() => _saving = false);
+    final ok = result.isOk;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(tr(ok ? '✅ ${t('saved')}' : t('save_failed'))),
+        content: Text(ok ? '✅ ${t('saved')}' : result.message),
         backgroundColor: ok ? Colors.green : Colors.red,
         behavior: SnackBarBehavior.floating,
       ),

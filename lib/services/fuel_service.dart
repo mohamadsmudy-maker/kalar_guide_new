@@ -1,6 +1,7 @@
 // lib/services/fuel_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'price_save_result.dart';
 
 import 'auth_service.dart';
 
@@ -370,7 +371,9 @@ class FuelService {
   // ═══════════════════════════════════════════════════════════
   // 💾 نوێکردنەوەی نرخ
   // ═══════════════════════════════════════════════════════════
-  static Future<bool> updatePrice({
+  /// سەرەتا فەنکشنی سێرڤەر (app_update_fuel_price)؛ ئەگەر هێشتا
+  /// مایگرەیشنەکە جێبەجێ نەکرابێت، ڕێگەی کۆن بەکاردێت.
+  static Future<PriceSaveResult> updatePrice({
     required int stationId,
     required String fuelType,
     required double newPrice,
@@ -378,8 +381,23 @@ class FuelService {
     String? notes,
   }) async {
     try {
+      final res = await _client.rpc('app_update_fuel_price', params: {
+        'p_station_id': stationId,
+        'p_type': fuelType,
+        'p_price': newPrice,
+        'p_notes': notes,
+      });
+      return PriceSaveResult.fromServer(res);
+    } catch (e) {
+      if (!isMissingRpc(e)) {
+        debugPrint('❌ app_update_fuel_price: $e');
+        return PriceSaveResult.failed;
+      }
+    }
+
+    try {
       final station = await _client.from('dukan').select('fuel_prices').eq('id', stationId).maybeSingle();
-      if (station == null) return false;
+      if (station == null) return PriceSaveResult.notFound;
 
       final currentPrices = station['fuel_prices'] is Map
           ? Map<String, dynamic>.from(station['fuel_prices'] as Map)
@@ -388,7 +406,13 @@ class FuelService {
       final oldPrice = (currentPrices[fuelType] as num?)?.toDouble();
       currentPrices[fuelType] = newPrice;
 
-      await _client.from('dukan').update({'fuel_prices': currentPrices}).eq('id', stationId);
+      // RLS بە بێدەنگی ٠ ڕیز نوێ دەکاتەوە — بە select دەیناسینەوە
+      final updated = await _client
+          .from('dukan')
+          .update({'fuel_prices': currentPrices})
+          .eq('id', stationId)
+          .select('id');
+      if ((updated as List).isEmpty) return PriceSaveResult.forbidden;
 
       await _client.from('fuel_price_history').insert({
         'station_id': stationId,
@@ -398,10 +422,10 @@ class FuelService {
         'updated_by_name': updatedByName ?? AuthSessionManager.userName ?? 'نەناسراو',
         'notes': notes,
       });
-      return true;
+      return PriceSaveResult.ok;
     } catch (e) {
       debugPrint('❌ هەڵە لە نوێکردنەوەی نرخ: $e');
-      return false;
+      return isPermissionError(e) ? PriceSaveResult.forbidden : PriceSaveResult.failed;
     }
   }
 

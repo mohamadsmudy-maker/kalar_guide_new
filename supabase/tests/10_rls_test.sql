@@ -31,6 +31,8 @@ grant execute on all functions in schema t to anon, authenticated;
 
 -- seed
 insert into dukan(id, name, vendor_code) values (1, 'A', '111'), (2, 'B', '222');
+-- station 3 belongs to the vendor only through its phone number
+insert into dukan(id, name, phone, currency_prices) values (3, 'C', '07500000002', '{"USD": {"buy": 150000, "sell": 151000}}');
 insert into app_users(name, phone, password, role, is_approved, store_id) values
   ('admin', '07500000001', 'adminpass', 'admin', true, null),
   ('vend',  '07500000002', 'vendpass1', 'vendor', true, 1),
@@ -59,6 +61,7 @@ select t.check((select views from news where title = 'n1') = 1, 'view counter wo
 select increment_event_views('1');
 select t.check((select views from events where id = 1) = 1, 'event view counter works');
 select t.check(not exists (select 1 from app_current_user()), 'no session -> no profile');
+select t.check(app_update_fuel_price(1, 'normal', 1500) = 'not_logged_in', 'guest cannot save fuel price');
 
 -- ── customer ─────────────────────────────────────────────────────
 select t.check(not exists (select 1 from app_login('07500000004', 'wrong')), 'wrong password rejected');
@@ -77,6 +80,16 @@ select t.check(t.rows($$insert into news(title, store_id) values ('v', 2)$$) = -
 select t.check(t.rows($$insert into fuel_price_history(station_id, price) values (1, 1)$$) = 1, 'vendor adds own price history');
 select t.check(t.rows($$insert into fuel_price_history(station_id, price) values (2, 1)$$) = -1, 'vendor cannot add other price history');
 select t.check(t.rows($$delete from dukan where id = 1$$) = 0, 'vendor cannot delete stores');
+select t.check(app_update_fuel_price(1, 'normal', 1500, 'n') = 'ok', 'vendor saves fuel price via RPC');
+select t.check((select (fuel_prices->>'normal')::numeric from dukan where id = 1) = 1500, 'fuel price stored');
+select t.check(app_update_fuel_price(2, 'normal', 1500) = 'forbidden', 'vendor cannot price other station');
+select t.check(app_update_fuel_price(1, 'normal', 0) = 'invalid', 'zero fuel price rejected');
+select t.check(app_update_fuel_price(99, 'normal', 1500) = 'not_found', 'unknown station');
+select t.check(app_update_currency_price(3, 'USD', 157000, 158000) = 'ok', 'vendor saves currency for station linked by phone');
+select t.check((select (currency_prices->'USD'->>'sell')::numeric from dukan where id = 3) = 158000, 'currency price stored');
+select t.check((select old_buy_price = 150000 and new_sell_price = 158000 and updated_by_name = 'vend'
+                  from currency_price_history where station_id = 3), 'currency history row written');
+select t.check(app_update_currency_price(3, 'USD', 0, 0) = 'invalid', 'empty currency price rejected');
 select app_set_fcm_token('tok');
 
 -- ── department (department 1) ────────────────────────────────────
@@ -94,6 +107,7 @@ select t.check((select count(*) from app_users) = 4, 'admin reads users');
 select t.check((select count(*) from complaints) = 2, 'admin reads all complaints');
 select t.check(t.rows($$update complaints set status = 'done'$$) = 2, 'admin updates complaints');
 select t.check(t.rows($$insert into banners(title) values ('a')$$) = 1, 'admin adds banners');
+select t.check(app_update_currency_price(2, 'EUR', 1, 2) = 'ok', 'admin saves any station price');
 select t.check(t.rows($$update app_users set is_approved = false where phone = '07500000002'$$) = 1, 'admin revokes vendor');
 
 reset role;

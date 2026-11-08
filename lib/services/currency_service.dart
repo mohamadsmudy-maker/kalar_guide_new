@@ -3,6 +3,7 @@ import 'dart:ui' show Color;
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'price_save_result.dart';
 
 import 'auth_service.dart';
 
@@ -450,7 +451,42 @@ class CurrencyService {
   // 💾 نوێکردنەوەی نرخ
   // ═══════════════════════════════════════════════════════════
 
-  static Future<bool> updatePrice({
+  /// سەرەتا فەنکشنی سێرڤەر (app_update_currency_price)؛ ئەگەر هێشتا
+  /// مایگرەیشنەکە جێبەجێ نەکرابێت، ڕێگەی کۆن بەکاردێت.
+  static Future<PriceSaveResult> updatePrice({
+    required int stationId,
+    required String currencyType,
+    required double newBuyPrice,
+    required double newSellPrice,
+    String? updatedByName,
+    String? notes,
+  }) async {
+    try {
+      final res = await _client.rpc('app_update_currency_price', params: {
+        'p_station_id': stationId,
+        'p_type': currencyType,
+        'p_buy': newBuyPrice,
+        'p_sell': newSellPrice,
+        'p_notes': notes,
+      });
+      return PriceSaveResult.fromServer(res);
+    } catch (e) {
+      if (!isMissingRpc(e)) {
+        debugPrint('❌ app_update_currency_price: $e');
+        return PriceSaveResult.failed;
+      }
+    }
+    return _legacyUpdatePrice(
+      stationId: stationId,
+      currencyType: currencyType,
+      newBuyPrice: newBuyPrice,
+      newSellPrice: newSellPrice,
+      updatedByName: updatedByName,
+      notes: notes,
+    );
+  }
+
+  static Future<PriceSaveResult> _legacyUpdatePrice({
     required int stationId,
     required String currencyType,
     required double newBuyPrice,
@@ -465,7 +501,7 @@ class CurrencyService {
           .eq('id', stationId)
           .maybeSingle();
 
-      if (station == null) return false;
+      if (station == null) return PriceSaveResult.notFound;
 
       final currentPrices = station['currency_prices'] is Map
           ? Map<String, dynamic>.from(station['currency_prices'] as Map)
@@ -481,7 +517,13 @@ class CurrencyService {
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
 
-      await _client.from('dukan').update({'currency_prices': currentPrices}).eq('id', stationId);
+      // RLS بە بێدەنگی ٠ ڕیز نوێ دەکاتەوە — بە select دەیناسینەوە
+      final updated = await _client
+          .from('dukan')
+          .update({'currency_prices': currentPrices})
+          .eq('id', stationId)
+          .select('id');
+      if ((updated as List).isEmpty) return PriceSaveResult.forbidden;
 
       await _client.from('currency_price_history').insert({
         'station_id': stationId,
@@ -494,10 +536,10 @@ class CurrencyService {
         'notes': notes,
       });
 
-      return true;
+      return PriceSaveResult.ok;
     } catch (e) {
       debugPrint('❌ هەڵە لە updatePrice: $e');
-      return false;
+      return isPermissionError(e) ? PriceSaveResult.forbidden : PriceSaveResult.failed;
     }
   }
 
