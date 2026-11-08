@@ -24,7 +24,16 @@ begin
 end $$;
 
 create function t.as_user(uid text) returns void language sql as $$
-  select set_config('test.uid', uid, false);
+  select set_config('test.uid', uid, false), set_config('test.jwt', '', false);
+$$;
+
+-- a Google session: uid + JWT claims as Supabase issues them
+create function t.as_google(uid text, email text, anon boolean default false) returns void language sql as $$
+  select set_config('test.uid', uid, false),
+         set_config('test.jwt', json_build_object(
+           'email', email, 'is_anonymous', anon,
+           'app_metadata', json_build_object('provider', 'google', 'providers', json_build_array('google')),
+           'user_metadata', json_build_object('full_name', 'Ali Kalar'))::text, false);
 $$;
 
 grant execute on all functions in schema t to anon, authenticated;
@@ -182,5 +191,39 @@ select t.as_user('00000000-0000-0000-0000-00000000000d');
 
 select app_logout();
 select t.check(app_role() = 'guest', 'logout clears the session');
+
+-- ── Google sign-in ───────────────────────────────────────────────
+select t.as_google('00000000-0000-0000-0000-0000000000a1', 'Ali@Gmail.com');
+select t.check((select role from app_login_google()) = 'customer', 'google creates a customer');
+select t.check(app_role() = 'customer', 'google session bound');
+select t.check((select name from app_current_user()) = 'Ali Kalar', 'name from Google profile');
+select t.as_google('00000000-0000-0000-0000-0000000000a2', 'ali@gmail.com');      -- another phone, same account
+select t.check((select id from app_login_google('x')) = (select id from app_login_google()), 'same e-mail -> same account');
+reset role;
+select t.check((select count(*) from app_users where lower(email) = 'ali@gmail.com') = 1, 'no duplicate account');
+update app_users set email = 'boss@gmail.com' where phone = '07500000001';         -- admin links a Google e-mail
+set role authenticated;
+select t.as_google('00000000-0000-0000-0000-0000000000a3', 'boss@gmail.com');
+select t.check((select role from app_login_google()) = 'admin', 'linked admin keeps the admin role');
+select t.check(app_delete_account() = 'admin_forbidden', 'admin cannot delete itself');
+select t.as_google('00000000-0000-0000-0000-0000000000a4', 'x@gmail.com', true);   -- anonymous session
+select t.check(not exists (select 1 from app_login_google()), 'anonymous session cannot use google login');
+select t.as_user('00000000-0000-0000-0000-0000000000a5');
+select set_config('test.jwt', '{"email":"y@gmail.com","app_metadata":{"provider":"email"}}', false);
+select t.check(not exists (select 1 from app_login_google()), 'non-google login rejected');
+
+-- delete account
+select t.as_google('00000000-0000-0000-0000-0000000000a1', 'ali@gmail.com');
+select app_login_google();
+select t.check(t.rows($$insert into favorite_stores(user_id, store_id) values (app_user_id(), 1)$$) = 1, 'google user adds favorite');
+select t.check(app_delete_account() = 'ok', 'customer deletes account');
+select t.check(app_role() = 'guest', 'session gone after delete');
+reset role;
+select t.check(not exists (select 1 from app_users where lower(email) = 'ali@gmail.com'), 'account row deleted');
+select t.check(not exists (select 1 from favorite_stores where user_id in (select id::text from app_users) is not true
+                              and store_id = 1 and user_id not in ('999','4')), 'personal rows deleted');
+set role authenticated;
+select t.as_user('00000000-0000-0000-0000-0000000000a9');
+select t.check(app_delete_account() = 'not_logged_in', 'guest cannot delete');
 
 \echo 'ALL RLS TESTS PASSED'

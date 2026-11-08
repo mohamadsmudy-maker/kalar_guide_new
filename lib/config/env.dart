@@ -19,6 +19,17 @@ class AppEnv {
   );
 
   // ═══════════════════════════════════════════════════════════
+  // 🔵 Google Sign-In — «Web client ID» (لە Google Cloud / Firebase)
+  // نهێنی نییە. ئەگەر بەتاڵ بێت، دوگمەی Google پیشان نادرێت.
+  // ═══════════════════════════════════════════════════════════
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '',
+  );
+
+  static bool get isGoogleConfigured => googleWebClientId.isNotEmpty;
+
+  // ═══════════════════════════════════════════════════════════
   // 🛠️ Debug Flags
   // ═══════════════════════════════════════════════════════════
   static const bool enableLogging = bool.fromEnvironment(
