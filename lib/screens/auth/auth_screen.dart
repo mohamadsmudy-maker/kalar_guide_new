@@ -8,6 +8,7 @@ import '../../services/auth_service.dart';
 import '../../services/google_auth_service.dart';
 import '../../l10n/tr.dart';
 import '../../utils/place_display.dart';
+import '../legal/privacy_policy_screen.dart';
 
 /// 🔐 شاشەی چوونەژوورەوە / تۆمارکردن — ULTRA PRO MAX V2
 class AuthScreen extends StatefulWidget {
@@ -517,6 +518,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
                       // 🚀 Submit
                       _buildSubmitButton(isDark),
+                      if (_isSignUp || showGoogle) ...[
+                        const SizedBox(height: 14),
+                        _buildPrivacyNote(subColor),
+                      ],
                     ],
                   ),
                 ),
@@ -588,6 +593,39 @@ class _AuthScreenState extends State<AuthScreen> {
                 ],
               ),
       ),
+    );
+  }
+
+  /// Google Play: پێش دروستکردنی ئەکاونت، لینکی سیاسەتی تایبەتمەندی
+  Widget _buildPrivacyNote(Color color) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          tr('بە بەردەوامبوون، ڕازیت بە'),
+          style: TextStyle(fontSize: 12, color: color),
+        ),
+        TextButton(
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+          ),
+          child: Text(
+            tr('سیاسەتی تایبەتمەندی'),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
