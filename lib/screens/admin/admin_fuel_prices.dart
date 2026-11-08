@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../services/price_save_result.dart';
 import '../../services/fuel_service.dart';
 import '../fuel/fuel_history_screen.dart';
 import '../../l10n/tr.dart';
@@ -194,7 +195,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                 ),
               ),
               onPressed: () async {
-                final newPrice = double.tryParse(priceCtrl.text);
+                final newPrice = parsePrice(priceCtrl.text);
                 if (newPrice == null || newPrice < 0) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
@@ -205,7 +206,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                   return;
                 }
 
-                final success = await FuelService.updatePrice(
+                final result = await FuelService.updatePrice(
                   stationId: widget.station['id'],
                   fuelType: fuelType,
                   newPrice: newPrice,
@@ -215,8 +216,17 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                       : notesCtrl.text.trim(),
                 );
 
-                if (ctx.mounted && success) {
+                if (!ctx.mounted) return;
+                if (result.isOk) {
                   Navigator.pop(ctx, true);
+                } else {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text(result.message),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
                 }
               },
               icon: const Icon(Icons.check_rounded, size: 18),

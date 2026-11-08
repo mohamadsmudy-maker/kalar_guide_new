@@ -1643,4 +1643,9 @@ const Map<String, String> stringsEn = {
   'هێشتا هیچ ڤیدیۆیەک نییە': 'No videos yet',
   'پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە': 'Check your internet connection and try again',
   'ڤیدیۆی ڕێنمایی بەم زووانە لێرە دادەنرێن': 'Guide videos will be added here soon',
+  'ئەم شوێنە نەدۆزرایەوە': 'This place was not found',
+  'نرخەکە پاشەکەوت کرا': 'Price saved',
+  'پاشەکەوتکردن سەرکەوتوو نەبوو، دووبارە هەوڵ بدەرەوە': 'Saving failed, please try again',
+  'چوونەژوورەوەکەت بەسەرچووە، تکایە دووبارە بچۆ ژوورەوە': 'Your login has expired, please log in again',
+  'ڕێگەت پێنەدراوە نرخی ئەم شوێنە بگۆڕیت': 'You are not allowed to change prices for this place',
 };

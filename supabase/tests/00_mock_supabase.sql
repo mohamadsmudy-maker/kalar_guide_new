@@ -12,8 +12,8 @@ create table dukan(id bigserial primary key, name text, phone text, category tex
 create table news(id uuid primary key default gen_random_uuid(), title text, store_id bigint, views int default 0, likes int default 0);
 create table store_services(id bigserial primary key, store_id bigint, name text);
 create table products(id bigserial primary key, store_id bigint, name text);
-create table currency_price_history(id bigserial primary key, station_id bigint, price numeric);
-create table fuel_price_history(id bigserial primary key, station_id bigint, price numeric);
+create table currency_price_history(id bigserial primary key, station_id bigint, price numeric, currency_type text, old_buy_price numeric, new_buy_price numeric, old_sell_price numeric, new_sell_price numeric, updated_by_name text, notes text);
+create table fuel_price_history(id bigserial primary key, station_id bigint, price numeric, fuel_type text, old_price numeric, new_price numeric, updated_by_name text, notes text);
 create table departments(id bigserial primary key, name_ku text, user_phone text);
 create table department_services(id bigserial primary key, department_id bigint, name text);
 create table complaints(id bigserial primary key, user_id text, status text default 'pending', admin_notes text);

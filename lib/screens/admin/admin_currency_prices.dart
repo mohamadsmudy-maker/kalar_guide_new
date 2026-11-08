@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../services/price_save_result.dart';
 import '../../services/currency_service.dart';
 import '../currency/currency_history_screen.dart';
 import '../../l10n/tr.dart';
@@ -235,8 +236,8 @@ class _AdminCurrencyPricesScreenState
                 ),
               ),
               onPressed: () async {
-                final newBuy = double.tryParse(buyCtrl.text) ?? 0;
-                final newSell = double.tryParse(sellCtrl.text) ?? 0;
+                final newBuy = parsePrice(buyCtrl.text) ?? 0;
+                final newSell = parsePrice(sellCtrl.text) ?? 0;
 
                 if (newBuy < 0 || newSell < 0) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
@@ -258,7 +259,7 @@ class _AdminCurrencyPricesScreenState
                   return;
                 }
 
-                final success = await CurrencyService.updatePrice(
+                final result = await CurrencyService.updatePrice(
                   stationId: widget.station['id'],
                   currencyType: currencyType,
                   newBuyPrice: newBuy,
@@ -270,8 +271,17 @@ class _AdminCurrencyPricesScreenState
                       : notesCtrl.text.trim(),
                 );
 
-                if (ctx.mounted && success) {
+                if (!ctx.mounted) return;
+                if (result.isOk) {
                   Navigator.pop(ctx, true);
+                } else {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text(result.message),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
                 }
               },
               icon: const Icon(Icons.check_rounded, size: 18),
