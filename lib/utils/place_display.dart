@@ -1,6 +1,7 @@
 // lib/utils/place_display.dart
 import 'package:flutter/material.dart';
 
+import '../config/app_colors.dart';
 import '../l10n/tr.dart';
 
 /// 🏷️ یارمەتیدەری پیشاندانی شوێن و بەش (ناونیشان، ئایکۆن، ڕەنگ)
@@ -93,12 +94,13 @@ class PlaceDisplay {
     ),
   ];
 
+  /// ڕەنگەکانی سەرەوە دەگۆڕدرێن بۆ پالێتی ئارامی ئەپ (AppColors.calm)
   static (IconData, Color) _match(String text) {
     final n = text.trim();
     for (final (words, icon, color) in _rules) {
-      if (words.any(n.contains)) return (icon, color);
+      if (words.any(n.contains)) return (icon, AppColors.calm(color));
     }
-    return (Icons.storefront_rounded, const Color(0xFF64748B));
+    return (Icons.storefront_rounded, AppColors.toneSlate);
   }
 
   /// ئایکۆن بەپێی ناوی بەش (یان ناوی شوێن)

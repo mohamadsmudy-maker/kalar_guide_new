@@ -14,7 +14,7 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
         decoration: _floatDecoration(isDark),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_rounded, color: Colors.orange),
+            const Icon(Icons.cloud_off_rounded, color: Color(0xFFD9822B)),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -80,12 +80,12 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
                     fontWeight: FontWeight.w900,
                     color: Colors.grey)),
             const SizedBox(height: 8),
-            item(const Color(0xFF10B981), 'حکومی'),
+            item(const Color(0xFF0F9D7A), 'حکومی'),
             item(const Color(0xFF1E88E5), 'ناحکومی'),
-            item(const Color(0xFFF59E0B), 'خواردن'),
-            item(const Color(0xFFEF4444), 'تەندروستی'),
-            item(const Color(0xFF8B5CF6), 'پەروەردە'),
-            item(const Color(0xFFFFD600), 'بازاڕ و دوکان'),
+            item(const Color(0xFFD9822B), 'خواردن'),
+            item(const Color(0xFFDC3545), 'تەندروستی'),
+            item(const Color(0xFF4F5BD5), 'پەروەردە'),
+            item(const Color(0xFFD9822B), 'بازاڕ و دوکان'),
           ],
         ),
       ),
@@ -138,7 +138,7 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
                 height: 40,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppColors.primary, Color(0xFF6C5CE7)],
+                    colors: [AppColors.primary, Color(0xFF4F5BD5)],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
@@ -183,10 +183,10 @@ extension _FullMapScreenStateUi on _FullMapScreenState {
                         ),
                         if (mapped > 0)
                           _miniBadge(trf('{0} لەسەر نەخشە', [_ku(mapped)]),
-                              Icons.location_on_rounded, const Color(0xFF10B981)),
+                              Icons.location_on_rounded, const Color(0xFF0F9D7A)),
                         if (noLocation > 0)
                           _miniBadge(trf('{0} بێ لۆکەیشن', [_ku(noLocation)]),
-                              Icons.location_off_rounded, Colors.orange),
+                              Icons.location_off_rounded, const Color(0xFFD9822B)),
                       ],
                     ),
                   ],

@@ -106,13 +106,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // 🎨 ڕەنگ و شێواز
   // ═══════════════════════════════════════════════════════════
   static const List<Color> _vibrantPalette = [
-    Color(0xFFE53935), Color(0xFFD81B60), Color(0xFF8E24AA), Color(0xFF5E35B1),
-    Color(0xFF3949AB), Color(0xFF1E88E5), Color(0xFF039BE5), Color(0xFF00ACC1),
-    Color(0xFF00897B), Color(0xFF43A047), Color(0xFF7CB342), Color(0xFFC0CA33),
-    Color(0xFFFDD835), Color(0xFFFFB300), Color(0xFFFB8C00), Color(0xFFF4511E),
-    Color(0xFF6D4C41), Color(0xFF546E7A), Color(0xFF00BFA5), Color(0xFF64DD17),
-    Color(0xFFAA00FF), Color(0xFFFF4081), Color(0xFF2962FF), Color(0xFFFF6D00),
-    Color(0xFF00C853),
+    Color(0xFFDC3545), Color(0xFFC2557A), Color(0xFF4F5BD5), Color(0xFF4F5BD5),
+    Color(0xFF4F5BD5), Color(0xFF1E88E5), Color(0xFF1E88E5), Color(0xFF1E88E5),
+    Color(0xFF0F9D7A), Color(0xFF0F9D7A), Color(0xFF0F9D7A), Color(0xFF0F9D7A),
+    Color(0xFFD9822B), Color(0xFFD9822B), Color(0xFFD9822B), Color(0xFFD9822B),
+    Color(0xFF6D4C41), Color(0xFF546E7A), Color(0xFF0F9D7A), Color(0xFF0F9D7A),
+    Color(0xFF4F5BD5), Color(0xFFC2557A), Color(0xFF1E88E5), Color(0xFFD9822B),
+    Color(0xFF0F9D7A),
   ];
 
   static const String _darkMapStyle = '''
@@ -247,18 +247,18 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final name = n.nameKu;
     if (name.contains('زانکۆ')) return const Color(0xFF1E88E5);
     if (name.contains('شاری') || name.contains('سیتی')) {
-      return const Color(0xFFE53935);
+      return const Color(0xFFDC3545);
     }
     if (name.contains('زۆنی') || name.contains('دریم لاند')) {
-      return const Color(0xFF8E24AA);
+      return const Color(0xFF4F5BD5);
     }
-    if (name.contains('گەڕەکی')) return const Color(0xFF43A047);
-    if (name.contains('شارەوانی')) return const Color(0xFFFF6D00);
+    if (name.contains('گەڕەکی')) return const Color(0xFF0F9D7A);
+    if (name.contains('شارەوانی')) return const Color(0xFFD9822B);
     if (name.contains('پارک') || name.contains('باخ')) {
-      return const Color(0xFF00C853);
+      return const Color(0xFF0F9D7A);
     }
     if (name.contains('مەطار') || name.contains('وێستگە')) {
-      return const Color(0xFF00BFA5);
+      return const Color(0xFF0F9D7A);
     }
     return _vibrantPalette[index % _vibrantPalette.length];
   }
@@ -802,7 +802,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ? _t('مۆڵەتی شوێن لە ڕێکخستنەکانی مۆبایل بکەرەوە',
             'Enable location permission in settings')
             : _t('مۆڵەتی شوێن نەدرا', 'Location permission denied'),
-        Colors.red,
+        const Color(0xFFDC3545),
         Icons.location_disabled_rounded,
       );
       return false;
@@ -850,7 +850,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     } catch (e) {
       debugPrint('❌ شوێن: $e');
       _showSnackBar(_t('نەتوانرا شوێن بدۆزرێتەوە', 'Could not get location'),
-          Colors.red, Icons.error_outline_rounded);
+          const Color(0xFFDC3545), Icons.error_outline_rounded);
     }
   }
 
@@ -1024,7 +1024,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 icon: Icon(
                   _showLabels ? Icons.label_rounded : Icons.label_off_rounded,
                   color: _showLabels
-                      ? const Color(0xFF10B981)
+                      ? const Color(0xFF0F9D7A)
                       : (isDark ? Colors.white54 : Colors.grey),
                 ),
                 onPressed: () {
@@ -1149,14 +1149,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         label: _tracking
             ? _t('وەستاندنی شوێنی زیندوو', 'Stop live location')
             : _t('شوێنی زیندوو', 'Live location'),
-        color: const Color(0xFF10B981),
+        color: const Color(0xFF0F9D7A),
         active: _tracking,
         onTap: _toggleTracking,
       ),
       _MenuAction(
         icon: Icons.layers_rounded,
         label: '${_t('جۆری نەخشە', 'Map type')}: ${_mapTypeLabel(_mapType)}',
-        color: const Color(0xFFF59E0B),
+        color: const Color(0xFFD9822B),
         onTap: _cycleMapType,
       ),
       _MenuAction(
@@ -1166,7 +1166,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         label: (_darkOverride ?? Theme.of(context).brightness == Brightness.dark)
             ? _t('شێوازی ڕۆژ', 'Day style')
             : _t('شێوازی شەو', 'Night style'),
-        color: const Color(0xFF8B5CF6),
+        color: const Color(0xFF4F5BD5),
         onTap: () {
           final cur =
               _darkOverride ?? Theme.of(context).brightness == Brightness.dark;
@@ -1176,7 +1176,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       _MenuAction(
         icon: Icons.view_in_ar_rounded,
         label: is3d ? _t('دوو ڕەهەند', '2D view') : _t('سێ ڕەهەند (3D)', '3D view'),
-        color: const Color(0xFF06B6D4),
+        color: const Color(0xFF1E88E5),
         active: is3d,
         onTap: _toggleTilt,
       ),
@@ -1186,7 +1186,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           label: _showRoute
               ? _t('شاردنەوەی هێڵی دووری', 'Hide distance line')
               : _t('پیشاندانی هێڵی دووری', 'Show distance line'),
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF1E88E5),
           active: _showRoute,
           onTap: () => setState(() => _showRoute = !_showRoute),
         ),
@@ -1198,7 +1198,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           label: _isFav(sel)
               ? _t('لابردن لە دڵخواز', 'Remove favorite')
               : _t('زیادکردن بۆ دڵخواز', 'Add to favorites'),
-          color: const Color(0xFFEC4899),
+          color: const Color(0xFFC2557A),
           active: _isFav(sel),
           onTap: () => _toggleFavorite(sel),
         ),
@@ -1208,7 +1208,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           label: _favoritesOnly
               ? _t('هەموو گەڕەکەکان', 'Show all')
               : _t('تەنها دڵخوازەکان', 'Favorites only'),
-          color: const Color(0xFFFFB300),
+          color: const Color(0xFFD9822B),
           active: _favoritesOnly,
           onTap: () {
             setState(() => _favoritesOnly = !_favoritesOnly);
@@ -1219,7 +1219,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       _MenuAction(
         icon: Icons.zoom_out_map_rounded,
         label: _t('هەموو گەڕەکەکان', 'Fit all'),
-        color: const Color(0xFFE91E63),
+        color: const Color(0xFFC2557A),
         onTap: () {
           _clearSelection();
           _fitAll();
@@ -1229,7 +1229,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         _MenuAction(
           icon: Icons.close_rounded,
           label: _t('لابردنی هەڵبژاردن', 'Clear selection'),
-          color: const Color(0xFFEF4444),
+          color: const Color(0xFFDC3545),
           onTap: _clearSelection,
         ),
     ];
@@ -1306,7 +1306,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                             child: Icon(
                               Icons.add_rounded,
                               color: _isMenuOpen
-                                  ? const Color(0xFFEF4444)
+                                  ? const Color(0xFFDC3545)
                                   : _blue,
                               size: 28,
                             ),

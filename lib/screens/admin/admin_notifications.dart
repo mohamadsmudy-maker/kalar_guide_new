@@ -30,7 +30,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr("تکایە ناونیشان و دەق پڕبکەرەوە ⚠")),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -66,7 +66,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
             content: Text(
               trf("✅ ئاگاداری نێردرا بۆ {0} بەکارهێنەر", [sentCount]),
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
         _titleCtrl.clear();
@@ -78,7 +78,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(trf("هەڵە: {0}", [e])),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFDC3545),
           ),
         );
       }

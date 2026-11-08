@@ -89,7 +89,7 @@ class _FuelStationsMapScreenState extends State<FuelStationsMapScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+          child: CircularProgressIndicator(color: Color(0xFFD9822B)),
         )
             : Stack(
           children: [
@@ -129,8 +129,8 @@ class _FuelStationsMapScreenState extends State<FuelStationsMapScreen> {
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [
-                            Color(0xFFFFD700),
-                            Color(0xFFFFB300),
+                            Color(0xFFD9822B),
+                            Color(0xFFD9822B),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -169,7 +169,7 @@ class _FuelStationsMapScreenState extends State<FuelStationsMapScreen> {
                     IconButton(
                       icon: const Icon(
                         Icons.my_location_rounded,
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFD9822B),
                       ),
                       onPressed: () {
                         _mapController?.animateCamera(

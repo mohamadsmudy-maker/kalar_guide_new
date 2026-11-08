@@ -22,6 +22,37 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
+// gemini-1.5-* لەلایەن Google ەوە لابراون (404). GEMINI_MODEL دەتوانێت
+// مۆدێلێکی تر دیاری بکات؛ ئەگەر نەبوو یان 404 بوو، دانەی دواتر تاقی دەکرێتەوە.
+const MODELS = [Deno.env.get('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest']
+  .filter((m): m is string => !!m && !m.startsWith('gemini-1.5'));
+
+async function callGemini(apiKey: string, apiVersion: string, prompt: string): Promise<Response> {
+  let last: Response | null = null;
+  for (const model of MODELS) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0,
+            maxOutputTokens: 2048,
+            // وەرگێڕان پێویستی بە «بیرکردنەوە» نییە؛ بێ ئەمە تۆکنەکان دەخوات
+            ...(model.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          },
+        }),
+      },
+    );
+    if (res.status !== 404 && res.status !== 400) return res;
+    console.error(`model ${model}: ${res.status}`, await res.clone().text());
+    last = res;
+  }
+  return last ?? new Response('no model', { status: 502 });
+}
+
 const LANGS: Record<string, string> = { en: 'English', ar: 'Arabic' };
 const MAX_LEN = 5000;
 
@@ -38,7 +69,6 @@ serve(async (req) => {
 
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) return json({ error: 'GEMINI_API_KEY is not set' }, 500);
-    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-1.5-flash';
     const apiVersion = Deno.env.get('GEMINI_API_VERSION') ?? 'v1beta';
 
     const prompt =
@@ -52,17 +82,7 @@ serve(async (req) => {
       `- Reply with the translation only, no quotes and no explanation.\n\n` +
       `Text:\n${text}`;
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0, maxOutputTokens: 1024 },
-        }),
-      },
-    );
+    const res = await callGemini(apiKey, apiVersion, prompt);
 
     if (!res.ok) {
       console.error('Gemini error:', res.status, await res.text());

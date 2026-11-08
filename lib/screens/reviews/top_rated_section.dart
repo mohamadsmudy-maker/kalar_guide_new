@@ -56,12 +56,12 @@ class _TopRatedSectionState extends State<TopRatedSection> {
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFFC107), Color(0xFFFF8F00)],
+                      colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
                     ),
                     borderRadius: BorderRadius.circular(11),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFFC107).withValues(alpha: 0.4),
+                        color: const Color(0xFFD9822B).withValues(alpha: 0.4),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -112,11 +112,11 @@ class _TopRatedSectionState extends State<TopRatedSection> {
         int.tryParse(store['total_reviews']?.toString() ?? '0') ?? 0;
 
     final rankColor = rank == 1
-        ? const Color(0xFFFFC107)
+        ? const Color(0xFFD9822B)
         : rank == 2
         ? const Color(0xFFB0BEC5)
         : rank == 3
-        ? const Color(0xFFCD7F32)
+        ? const Color(0xFFD9822B)
         : const Color(0xFF9CA3AF);
 
     return GestureDetector(
@@ -229,7 +229,7 @@ class _TopRatedSectionState extends State<TopRatedSection> {
                       RatingStars(
                         rating: rating,
                         size: 12,
-                        color: const Color(0xFFFFC107),
+                        color: const Color(0xFFD9822B),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -237,7 +237,7 @@ class _TopRatedSectionState extends State<TopRatedSection> {
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFFFC107),
+                          color: Color(0xFFD9822B),
                         ),
                       ),
                       if (totalReviews > 0) ...[

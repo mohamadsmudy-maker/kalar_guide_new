@@ -79,14 +79,14 @@ class _DepartmentServicesAdminScreenState
           SnackBar(
             content:
             Text(tr(service == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -103,7 +103,7 @@ class _DepartmentServicesAdminScreenState
           ),
           title: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 8),
               Text(tr('سڕینەوەی مامەڵە')),
             ],
@@ -118,7 +118,7 @@ class _DepartmentServicesAdminScreenState
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -161,7 +161,7 @@ class _DepartmentServicesAdminScreenState
               fontSize: 15,
             ),
           ),
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: const Color(0xFF0F9D7A),
           foregroundColor: Colors.white,
           centerTitle: true,
           elevation: 0,
@@ -169,7 +169,7 @@ class _DepartmentServicesAdminScreenState
         body: _loading
             ? const Center(
           child: CircularProgressIndicator(
-            color: Color(0xFF10B981),
+            color: Color(0xFF0F9D7A),
           ),
         )
             : _services.isEmpty
@@ -182,7 +182,7 @@ class _DepartmentServicesAdminScreenState
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(),
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: const Color(0xFF0F9D7A),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text(
@@ -208,7 +208,7 @@ class _DepartmentServicesAdminScreenState
         color: isDark ? const Color(0xFF1A1A22) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF10B981).withValues(alpha: 0.2),
+          color: const Color(0xFF0F9D7A).withValues(alpha: 0.2),
           width: 1.2,
         ),
       ),
@@ -236,7 +236,7 @@ class _DepartmentServicesAdminScreenState
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6)
+                          color: const Color(0xFF4F5BD5)
                               .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -245,7 +245,7 @@ class _DepartmentServicesAdminScreenState
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF8B5CF6),
+                            color: Color(0xFF4F5BD5),
                           ),
                         ),
                       ),
@@ -258,7 +258,7 @@ class _DepartmentServicesAdminScreenState
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981)
+                          color: const Color(0xFF0F9D7A)
                               .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -267,7 +267,7 @@ class _DepartmentServicesAdminScreenState
                           style: const TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF10B981),
+                            color: Color(0xFF0F9D7A),
                           ),
                         ),
                       ),
@@ -279,7 +279,7 @@ class _DepartmentServicesAdminScreenState
           IconButton(
             icon: const Icon(
               Icons.edit_rounded,
-              color: Colors.blue,
+              color: Color(0xFF1E88E5),
               size: 20,
             ),
             onPressed: () => _openEditor(service: service),
@@ -287,7 +287,7 @@ class _DepartmentServicesAdminScreenState
           IconButton(
             icon: const Icon(
               Icons.delete_outline_rounded,
-              color: Colors.red,
+              color: Color(0xFFDC3545),
               size: 20,
             ),
             onPressed: () => _deleteService(service),
@@ -305,13 +305,13 @@ class _DepartmentServicesAdminScreenState
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              color: const Color(0xFF0F9D7A).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.description_outlined,
               size: 60,
-              color: Color(0xFF10B981),
+              color: Color(0xFF0F9D7A),
             ),
           ),
           const SizedBox(height: 16),
@@ -392,7 +392,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('ناونیشان پێویستە')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -475,7 +475,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
                       ),
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -575,7 +575,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
                 height: 54,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
+                    backgroundColor: const Color(0xFF0F9D7A),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -638,7 +638,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(
-            color: Color(0xFF10B981),
+            color: Color(0xFF0F9D7A),
             width: 1.5,
           ),
         ),

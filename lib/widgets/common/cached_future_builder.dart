@@ -253,14 +253,14 @@ class CachedFutureBuilderState<T> extends State<CachedFutureBuilder<T>> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.cloud_off_rounded,
-                  size: 56, color: Colors.redAccent),
+                  size: 56, color: Color(0xFFDC3545)),
               const SizedBox(height: 12),
               Text(
                 t('error'),
                 style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
-                  color: Colors.redAccent,
+                  color: Color(0xFFDC3545),
                 ),
                 textAlign: TextAlign.center,
               ),

@@ -10,7 +10,7 @@ class GalleryCategoryRegistry {
       id: 'nature',
       label: 'سروشت', // tr() لە شوێنی پیشاندان
       icon: Icons.forest_rounded,
-      color: Color(0xFF2E7D32),
+      color: Color(0xFF0F9D7A),
     ),
     const GalleryCategory(
       id: 'history',
@@ -22,31 +22,31 @@ class GalleryCategoryRegistry {
       id: 'city',
       label: 'شار', // tr() لە شوێنی پیشاندان
       icon: Icons.location_city_rounded,
-      color: Color(0xFF1565C0),
+      color: Color(0xFF1E88E5),
     ),
     const GalleryCategory(
       id: 'events',
       label: 'بۆنەکان', // tr() لە شوێنی پیشاندان
       icon: Icons.celebration_rounded,
-      color: Color(0xFFE65100),
+      color: Color(0xFFD9822B),
     ),
     const GalleryCategory(
       id: 'sports',
       label: 'وەرزش', // tr() لە شوێنی پیشاندان
       icon: Icons.sports_soccer_rounded,
-      color: Color(0xFF00838F),
+      color: Color(0xFF1E88E5),
     ),
     const GalleryCategory(
       id: 'culture',
       label: 'کەلتوور', // tr() لە شوێنی پیشاندان
       icon: Icons.theater_comedy_rounded,
-      color: Color(0xFF6A1B9A),
+      color: Color(0xFF4F5BD5),
     ),
     const GalleryCategory(
       id: 'food',
       label: 'خواردن', // tr() لە شوێنی پیشاندان
       icon: Icons.restaurant_rounded,
-      color: Color(0xFFD84315),
+      color: Color(0xFFD9822B),
     ),
     const GalleryCategory(
       id: 'general',

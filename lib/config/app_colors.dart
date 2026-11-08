@@ -9,7 +9,7 @@ class AppColors {
   // 🎯 ڕەنگی سەرەکی
   // ═══════════════════════════════════════════════════════════
   static const Color primary = Color(0xFF1E88E5);
-  static const Color secondary = Color(0xFF6C5CE7);
+  static const Color secondary = Color(0xFF4F5BD5); // ئیندیگۆی ئارام
   static const Color background = Color(0xFFF5F6FA);
   static const Color text = Color(0xFF1A1A22);
 
@@ -24,19 +24,19 @@ class AppColors {
   // ═══════════════════════════════════════════════════════════
   // 🎨 ڕەنگی یاریدەدەر
   // ═══════════════════════════════════════════════════════════
-  static const Color red = Color(0xFFEF4444);
-  static const Color green = Color(0xFF10B981);
-  static const Color orange = Color(0xFFF59E0B);
-  static const Color yellow = Color(0xFFFCD34D);
-  static const Color purple = Color(0xFF8B5CF6);
-  static const Color teal = Color(0xFF14B8A6);
-  static const Color pink = Color(0xFFEC4899);
+  static const Color red = Color(0xFFDC3545);
+  static const Color green = Color(0xFF0F9D7A);
+  static const Color orange = Color(0xFFD9822B);
+  static const Color yellow = Color(0xFFE0B341);
+  static const Color purple = Color(0xFF5B5FC7);
+  static const Color teal = Color(0xFF0E8C8C);
+  static const Color pink = Color(0xFFC2557A);
 
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color info = Color(0xFF3B82F6);
-  static const Color error = Color(0xFFEF4444);
-  static const Color danger = Color(0xFFEF4444);
+  static const Color success = Color(0xFF0F9D7A);
+  static const Color warning = Color(0xFFD9822B);
+  static const Color info = Color(0xFF1E88E5);
+  static const Color error = Color(0xFFDC3545);
+  static const Color danger = Color(0xFFDC3545);
 
   // ═══════════════════════════════════════════════════════════
   // 🎨 ڕەنگی نەرم (10% alpha)
@@ -77,7 +77,7 @@ class AppColors {
   // 🌈 Gradients
   // ═══════════════════════════════════════════════════════════
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF6C5CE7), Color(0xFFE91E63)],
+    colors: [Color(0xFF1E88E5), Color(0xFF3F51B5)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -89,25 +89,25 @@ class AppColors {
   );
 
   static const LinearGradient complaintGradient = LinearGradient(
-    colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+    colors: [Color(0xFF4F5BD5), Color(0xFF1E88E5)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient newsGradient = LinearGradient(
-    colors: [Color(0xFF1E88E5), Color(0xFF00BCD4)],
+    colors: [Color(0xFF1E88E5), Color(0xFF1565C0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient greenGradient = LinearGradient(
-    colors: [Color(0xFF10B981), Color(0xFF34D399)],
+    colors: [Color(0xFF0F9D7A), Color(0xFF14B8A6)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient orangeGradient = LinearGradient(
-    colors: [Color(0xFFF59E0B), Color(0xFFFBBF24)],
+    colors: [Color(0xFFD9822B), Color(0xFFE0A044)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -121,12 +121,12 @@ class AppColors {
   // ═══════════════════════════════════════════════════════════
   // 🏷️ ڕەنگی بەشەکان
   // ═══════════════════════════════════════════════════════════
-  static const Color catHealth = Color(0xFFEF4444);
+  static const Color catHealth = Color(0xFF0F9D7A);
   static const Color catEducation = Color(0xFF1E88E5);
-  static const Color catGovernment = Color(0xFF8B5CF6);
-  static const Color catHigherEd = Color(0xFF10B981);
-  static const Color catFood = Color(0xFFF59E0B);
-  static const Color catShopping = Color(0xFFEC4899);
+  static const Color catGovernment = Color(0xFF4F5BD5);
+  static const Color catHigherEd = Color(0xFF0E8C8C);
+  static const Color catFood = Color(0xFFD9822B);
+  static const Color catShopping = Color(0xFFC2557A);
 
   static const Map<String, Color> categoryColors = {
     'health': catHealth,
@@ -145,6 +145,36 @@ class AppColors {
   static Color categoryColorSoft(String? name) {
     return categoryColor(name).withValues(alpha: 0.10);
   }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🎛️ پالێتی ئارام — هەموو ڕەنگێکی تیژ دەگۆڕێت بۆ یەکێک لەمانە
+  // (شین، ئیندیگۆ، سەوزی تیل، کارەبایی، گوڵی، خۆڵەمێشی) بۆ ئەوەی
+  // ئەپەکە یەک ڕووخسار و ئارام بێت. سوور تەنها بۆ فریاکەوتن/هەڵە.
+  // ═══════════════════════════════════════════════════════════
+  static const Color toneBlue = primary;
+  static const Color toneIndigo = Color(0xFF4F5BD5);
+  static const Color toneTeal = Color(0xFF0F9D7A);
+  static const Color toneAmber = Color(0xFFD9822B);
+  static const Color toneRose = Color(0xFFC2557A);
+  static const Color toneRed = Color(0xFFDC3545);
+  static const Color toneSlate = Color(0xFF5B6B82);
+
+  /// ڕەنگێکی تیژ (بۆ نموونە 0xFFEF4444) → هاوتای ئارامی پالێتەکە
+  static Color calm(Color c) {
+    final hsv = HSVColor.fromColor(c);
+    if (hsv.saturation < 0.18 || hsv.value < 0.18) return toneSlate;
+    final h = hsv.hue;
+    if (h < 12 || h >= 350) return toneRed;
+    if (h < 55) return toneAmber;
+    if (h < 175) return toneTeal;
+    if (h < 228) return toneBlue;
+    if (h < 290) return toneIndigo;
+    return toneRose;
+  }
+
+  /// باکگراوندی کاڵی ئایکۆن (هەمان ڕەنگ، ١٠٪)
+  static Color calmSoft(Color c, {bool dark = false}) =>
+      calm(c).withValues(alpha: dark ? 0.18 : 0.10);
 
   // ═══════════════════════════════════════════════════════════
   // 🌓 Theme-aware helpers

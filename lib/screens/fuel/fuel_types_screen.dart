@@ -42,7 +42,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
   bool _liveFlash = false;
 
   static const Color _dark = Color(0xFF0F172A);
-  static const Color _amber = Color(0xFFF59E0B);
+  static const Color _amber = Color(0xFFD9822B);
 
   @override
   void initState() {
@@ -107,7 +107,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
   Future<void> _generatePdf(String lang) async {
     if (_snapshot?.history.isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr(FuelStrings.of(lang, 'no_history'))), backgroundColor: Colors.orange),
+        SnackBar(content: Text(tr(FuelStrings.of(lang, 'no_history'))), backgroundColor: const Color(0xFFD9822B)),
       );
       return;
     }
@@ -121,7 +121,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${FuelStrings.of(lang, 'error')}: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${FuelStrings.of(lang, 'error')}: $e'), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -231,7 +231,7 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF78350F)],
+              colors: [Color(0xFF0F172A), Color(0xFFD9822B)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -374,12 +374,12 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
 
     return Row(
       children: [
-        action(Icons.map_rounded, t('map'), const Color(0xFF10B981), () => _open(const FuelStationsMapScreen(fuelType: 'normal'))),
+        action(Icons.map_rounded, t('map'), const Color(0xFF0F9D7A), () => _open(const FuelStationsMapScreen(fuelType: 'normal'))),
         const SizedBox(width: 8),
-        action(Icons.compare_arrows_rounded, t('compare'), const Color(0xFF6366F1),
+        action(Icons.compare_arrows_rounded, t('compare'), const Color(0xFF4F5BD5),
             () => _open(FuelComparisonScreen(fuelTypes: FuelService.getFuelTypesForLang(lang)))),
         const SizedBox(width: 8),
-        action(Icons.insights_rounded, t('chart'), const Color(0xFF3B82F6), () => _open(const GlobalFuelChartScreen())),
+        action(Icons.insights_rounded, t('chart'), const Color(0xFF1E88E5), () => _open(const GlobalFuelChartScreen())),
       ],
     );
   }
@@ -565,7 +565,7 @@ class _FuelCard extends StatelessWidget {
                                   : t('no_prices')),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 11, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 11, color: stale ? const Color(0xFFD9822B) : sub, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -585,7 +585,7 @@ class _FuelCard extends StatelessWidget {
                             label: t('cheapest'),
                             value: fmt(m!.minPrice),
                             station: m.cheapest?['station_name']?.toString(),
-                            color: const Color(0xFF10B981),
+                            color: const Color(0xFF0F9D7A),
                             isDark: isDark,
                           ),
                         ),
@@ -595,7 +595,7 @@ class _FuelCard extends StatelessWidget {
                             label: t('expensive'),
                             value: fmt(m.maxPrice),
                             station: m.mostExpensive?['station_name']?.toString(),
-                            color: const Color(0xFFEF4444),
+                            color: const Color(0xFFDC3545),
                             isDark: isDark,
                           ),
                         ),
@@ -609,7 +609,7 @@ class _FuelCard extends StatelessWidget {
                         const Spacer(),
                         if (m.saving != null)
                           Text('💰 ${t('saving')} ${fmt(m.saving)}',
-                              style: const TextStyle(fontSize: 10, color: Color(0xFF10B981), fontWeight: FontWeight.w800)),
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF0F9D7A), fontWeight: FontWeight.w800)),
                       ],
                     ),
                   ],
@@ -668,7 +668,7 @@ class _ChangeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (change == 0) return const SizedBox.shrink();
     final up = change > 0;
-    final color = up ? const Color(0xFFEF4444) : const Color(0xFF10B981);
+    final color = up ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: color.withValues(alpha: onDark ? 0.25 : 0.12), borderRadius: BorderRadius.circular(10)),
@@ -697,7 +697,7 @@ class _LiveBadge extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: flash ? const Color(0xFFF59E0B) : Colors.white.withValues(alpha: 0.1),
+        color: flash ? const Color(0xFFD9822B) : Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -706,7 +706,7 @@ class _LiveBadge extends StatelessWidget {
           Container(
             width: 7,
             height: 7,
-            decoration: BoxDecoration(color: flash ? Colors.white : const Color(0xFFF59E0B), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: flash ? Colors.white : const Color(0xFFD9822B), shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
           Text(tr(label), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),

@@ -234,9 +234,9 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
         children: [
           Row(
             children: [
-              _summaryTile(t('best_sell'), CurrencyService.formatPrice(_bestSell, lang), const Color(0xFF10B981)),
+              _summaryTile(t('best_sell'), CurrencyService.formatPrice(_bestSell, lang), const Color(0xFF0F9D7A)),
               const SizedBox(width: 8),
-              _summaryTile(t('best_buy'), CurrencyService.formatPrice(_bestBuy, lang), const Color(0xFF60A5FA)),
+              _summaryTile(t('best_buy'), CurrencyService.formatPrice(_bestBuy, lang), const Color(0xFF1E88E5)),
               const SizedBox(width: 8),
               _summaryTile(t('stations'), CurrencyService.localizeDigits('${_stations.length}', lang), Colors.white),
             ],
@@ -326,7 +326,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
 
     final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final sub = isDark ? Colors.white54 : Colors.grey.shade600;
-    const best = Color(0xFF10B981);
+    const best = Color(0xFF0F9D7A);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -417,11 +417,11 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                             Row(
                               children: [
                                 Icon(stale ? Icons.warning_amber_rounded : Icons.schedule_rounded,
-                                    size: 12, color: stale ? Colors.orange : sub),
+                                    size: 12, color: stale ? const Color(0xFFD9822B) : sub),
                                 const SizedBox(width: 3),
                                 Text(
                                   tr(CurrencyStrings.timeAgo(updatedAt, lang)),
-                                  style: TextStyle(fontSize: 10, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600),
+                                  style: TextStyle(fontSize: 10, color: stale ? const Color(0xFFD9822B) : sub, fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
@@ -436,7 +436,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                   children: [
                     Expanded(child: _priceCell(t('sell'), sell, best, lang, highlight: _sort == _Sort.sell)),
                     const SizedBox(width: 8),
-                    Expanded(child: _priceCell(t('buy'), buy, const Color(0xFF3B82F6), lang, highlight: _sort == _Sort.buy)),
+                    Expanded(child: _priceCell(t('buy'), buy, const Color(0xFF1E88E5), lang, highlight: _sort == _Sort.buy)),
                   ],
                 ),
                 if (diff != null && diff > 0) ...[
@@ -445,7 +445,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                     alignment: AlignmentDirectional.centerStart,
                     child: Text(
                       '${CurrencyService.formatPrice(diff, lang)} ${t('iqd')} ${lang == 'en' ? 'from best' : (lang == 'ar' ? 'عن الأفضل' : 'جیاوازی لە باشترین')}',
-                      style: const TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.w700),
+                      style: const TextStyle(fontSize: 10, color: Color(0xFFD9822B), fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -453,9 +453,9 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                 Row(
                   children: [
                     if (phone.isNotEmpty)
-                      Expanded(child: _actionBtn(Icons.call_rounded, t('call'), Colors.green, () => _call(phone))),
+                      Expanded(child: _actionBtn(Icons.call_rounded, t('call'), const Color(0xFF0F9D7A), () => _call(phone))),
                     if (phone.isNotEmpty) const SizedBox(width: 8),
-                    Expanded(child: _actionBtn(Icons.share_rounded, t('share'), const Color(0xFF6366F1), () => _share(s, lang))),
+                    Expanded(child: _actionBtn(Icons.share_rounded, t('share'), const Color(0xFF4F5BD5), () => _share(s, lang))),
                     if (canEdit) ...[
                       const SizedBox(width: 8),
                       Expanded(child: _actionBtn(Icons.edit_rounded, t('edit_price'), color, () => _edit(s))),

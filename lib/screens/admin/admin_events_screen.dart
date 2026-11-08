@@ -99,7 +99,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(trf('هەڵە: {0}', [e])),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFDC3545),
           ),
         );
       }
@@ -127,7 +127,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -158,7 +158,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
             SliverAppBar(
               expandedHeight: 160,
               pinned: true,
-              backgroundColor: const Color(0xFF6C5CE7),
+              backgroundColor: const Color(0xFF4F5BD5),
               foregroundColor: Colors.white,
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
@@ -166,8 +166,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Color(0xFF6C5CE7),
-                        Color(0xFFE91E63),
+                        Color(0xFF4F5BD5),
+                        Color(0xFFC2557A),
                       ],
                     ),
                   ),
@@ -228,7 +228,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    labelColor: const Color(0xFF6C5CE7),
+                    labelColor: const Color(0xFF4F5BD5),
                     unselectedLabelColor: Colors.white,
                     labelStyle: const TextStyle(
                       fontWeight: FontWeight.w900,
@@ -246,7 +246,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
           body: _loading
               ? const Center(
             child: CircularProgressIndicator(
-              color: Color(0xFF6C5CE7),
+              color: Color(0xFF4F5BD5),
             ),
           )
               : TabBarView(
@@ -259,7 +259,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(),
-          backgroundColor: const Color(0xFF6C5CE7),
+          backgroundColor: const Color(0xFF4F5BD5),
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text(
@@ -323,7 +323,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
       if (hex.length == 6) hex = 'FF$hex';
       color = Color(int.parse(hex, radix: 16));
     } catch (_) {
-      color = const Color(0xFF6C5CE7);
+      color = const Color(0xFF4F5BD5);
     }
 
     return Container(
@@ -388,7 +388,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFC107),
+                          color: const Color(0xFFD9822B),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -418,7 +418,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                         IconButton(
                           icon: const Icon(
                             Icons.edit_rounded,
-                            color: Colors.blue,
+                            color: Color(0xFF1E88E5),
                             size: 20,
                           ),
                           onPressed: () => _openEditor(event: event),
@@ -426,7 +426,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                         IconButton(
                           icon: const Icon(
                             Icons.delete_outline_rounded,
-                            color: Colors.red,
+                            color: Color(0xFFDC3545),
                             size: 20,
                           ),
                           onPressed: () => _deleteEvent(event),
@@ -472,7 +472,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
                       const Icon(
                         Icons.location_on_rounded,
                         size: 12,
-                        color: Color(0xFFEF4444),
+                        color: Color(0xFFDC3545),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
@@ -629,7 +629,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('ناونیشان پێویستە')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -715,7 +715,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                   children: [
                     const Icon(
                       Icons.event_rounded,
-                      color: Color(0xFF6C5CE7),
+                      color: Color(0xFF4F5BD5),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -760,8 +760,8 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                           gradient: isSelected
                               ? const LinearGradient(
                             colors: [
-                              Color(0xFF6C5CE7),
-                              Color(0xFFE91E63),
+                              Color(0xFF4F5BD5),
+                              Color(0xFFC2557A),
                             ],
                           )
                               : null,
@@ -770,7 +770,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFF6C5CE7)
+                                ? const Color(0xFF4F5BD5)
                                 : Colors.grey.shade300,
                           ),
                         ),
@@ -808,11 +808,11 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6C5CE7)
+                            color: const Color(0xFF4F5BD5)
                                 .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: const Color(0xFF6C5CE7)
+                              color: const Color(0xFF4F5BD5)
                                   .withValues(alpha: 0.3),
                             ),
                           ),
@@ -820,7 +820,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                             children: [
                               const Icon(
                                 Icons.calendar_today_rounded,
-                                color: Color(0xFF6C5CE7),
+                                color: Color(0xFF4F5BD5),
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
@@ -828,7 +828,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                                 '${_startDate.year}/${_startDate.month}/${_startDate.day}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF6C5CE7),
+                                  color: Color(0xFF4F5BD5),
                                 ),
                               ),
                             ],
@@ -845,13 +845,13 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                           decoration: BoxDecoration(
                             color: _isAllDay
                                 ? Colors.grey.shade100
-                                : const Color(0xFF6C5CE7)
+                                : const Color(0xFF4F5BD5)
                                 .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _isAllDay
                                   ? Colors.grey.shade300
-                                  : const Color(0xFF6C5CE7)
+                                  : const Color(0xFF4F5BD5)
                                   .withValues(alpha: 0.3),
                             ),
                           ),
@@ -861,7 +861,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                                 Icons.access_time_rounded,
                                 color: _isAllDay
                                     ? Colors.grey
-                                    : const Color(0xFF6C5CE7),
+                                    : const Color(0xFF4F5BD5),
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
@@ -873,7 +873,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                                   fontWeight: FontWeight.w900,
                                   color: _isAllDay
                                       ? Colors.grey
-                                      : const Color(0xFF6C5CE7),
+                                      : const Color(0xFF4F5BD5),
                                 ),
                               ),
                             ],
@@ -933,7 +933,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                       if (hex.length == 6) hex = 'FF$hex';
                       color = Color(int.parse(hex, radix: 16));
                     } catch (_) {
-                      color = Colors.purple;
+                      color = const Color(0xFF4F5BD5);
                     }
                     final isSelected = _selectedColor == c;
                     return GestureDetector(
@@ -976,7 +976,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                   ),
                   secondary: const Icon(
                     Icons.star_rounded,
-                    color: Color(0xFFFFC107),
+                    color: Color(0xFFD9822B),
                   ),
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -988,7 +988,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                   height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C5CE7),
+                      backgroundColor: const Color(0xFF4F5BD5),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),

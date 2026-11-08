@@ -144,7 +144,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                       ServiceDetailWidgets.buildSectionTitle(
                         title: tr('📄 پێداویستییەکان'),
                         isDark: isDark,
-                        color: const Color(0xFF8B5CF6),
+                        color: const Color(0xFF4F5BD5),
                         badge: '${service.requirements.length}',
                       ),
                       const SizedBox(height: 10),
@@ -156,7 +156,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                               : Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFF8B5CF6)
+                            color: const Color(0xFF4F5BD5)
                                 .withValues(alpha: 0.2),
                           ),
                         ),
@@ -184,7 +184,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                       ServiceDetailWidgets.buildSectionTitle(
                         title: tr('💰 تێچووەکان'),
                         isDark: isDark,
-                        color: const Color(0xFF10B981),
+                        color: const Color(0xFF0F9D7A),
                         badge: '${service.fees.length}',
                       ),
                       const SizedBox(height: 10),
@@ -193,15 +193,15 @@ class ServiceDetailsScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF10B981)
+                              const Color(0xFF0F9D7A)
                                   .withValues(alpha: 0.1),
-                              const Color(0xFF10B981)
+                              const Color(0xFF0F9D7A)
                                   .withValues(alpha: 0.03),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFF10B981)
+                            color: const Color(0xFF0F9D7A)
                                 .withValues(alpha: 0.3),
                           ),
                         ),
@@ -227,7 +227,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                       ServiceDetailWidgets.buildSectionTitle(
                         title: tr('ℹ️ زانیاری زیاتر'),
                         isDark: isDark,
-                        color: const Color(0xFFF59E0B),
+                        color: const Color(0xFFD9822B),
                       ),
                       const SizedBox(height: 10),
                       if (_hasDuration)
@@ -235,7 +235,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                           icon: Icons.schedule_rounded,
                           label: tr('ماوەی مامەڵە'),
                           value: service.duration!,
-                          color: const Color(0xFFF59E0B),
+                          color: const Color(0xFFD9822B),
                           isDark: isDark,
                         ),
                       if (_hasDuration && _hasLocation)
@@ -245,7 +245,7 @@ class ServiceDetailsScreen extends StatelessWidget {
                           icon: Icons.location_on_rounded,
                           label: tr('شوێنی مامەڵە'),
                           value: service.location!,
-                          color: const Color(0xFFEF4444),
+                          color: const Color(0xFFDC3545),
                           isDark: isDark,
                         ),
                       const SizedBox(height: 20),
@@ -300,10 +300,10 @@ class ServiceDetailsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+        color: const Color(0xFFD9822B).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+          color: const Color(0xFFD9822B).withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -311,7 +311,7 @@ class ServiceDetailsScreen extends StatelessWidget {
         children: [
           const Icon(
             Icons.info_outline_rounded,
-            color: Color(0xFFF59E0B),
+            color: Color(0xFFD9822B),
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -320,7 +320,7 @@ class ServiceDetailsScreen extends StatelessWidget {
               tr(service.notes!),
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFFF59E0B),
+                color: Color(0xFFD9822B),
                 fontWeight: FontWeight.w600,
                 height: 1.5,
               ),

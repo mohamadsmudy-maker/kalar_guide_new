@@ -811,7 +811,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [AppColors.green, Color(0xFF059669)],
+            colors: [AppColors.green, Color(0xFF0F9D7A)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

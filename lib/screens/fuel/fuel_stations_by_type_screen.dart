@@ -273,8 +273,8 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
         children: [
           Row(
             children: [
-              tile(t('cheapest'), fmt(_min), const Color(0xFF10B981)),
-              tile(t('expensive'), fmt(_max), const Color(0xFFF87171)),
+              tile(t('cheapest'), fmt(_min), const Color(0xFF0F9D7A)),
+              tile(t('expensive'), fmt(_max), const Color(0xFFDC3545)),
               tile(t('avg'), fmt(_avg), Colors.white),
               tile(t('stations'), CurrencyService.localizeDigits('${_stations.length}', lang), Colors.white),
             ],
@@ -332,7 +332,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
 
     final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final sub = isDark ? Colors.white54 : Colors.grey.shade600;
-    const best = Color(0xFF10B981);
+    const best = Color(0xFF0F9D7A);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -421,10 +421,10 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
                             Row(
                               children: [
                                 Icon(stale ? Icons.warning_amber_rounded : Icons.schedule_rounded,
-                                    size: 12, color: stale ? Colors.orange : sub),
+                                    size: 12, color: stale ? const Color(0xFFD9822B) : sub),
                                 const SizedBox(width: 3),
                                 Text(tr(CurrencyStrings.timeAgo(updatedAt, lang)),
-                                    style: TextStyle(fontSize: 10, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600)),
+                                    style: TextStyle(fontSize: 10, color: stale ? const Color(0xFFD9822B) : sub, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ],
@@ -457,21 +457,21 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
                   Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: Text('+${CurrencyService.formatPrice(diff, lang)} ${t('iqd')} ${t('more_than_best')}',
-                        style: const TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.w700)),
+                        style: const TextStyle(fontSize: 10, color: Color(0xFFD9822B), fontWeight: FontWeight.w700)),
                   ),
                 ],
                 const SizedBox(height: 10),
                 Row(
                   children: [
                     if (phone.isNotEmpty) ...[
-                      Expanded(child: _actionBtn(Icons.call_rounded, t('call'), Colors.green, () => _call(phone))),
+                      Expanded(child: _actionBtn(Icons.call_rounded, t('call'), const Color(0xFF0F9D7A), () => _call(phone))),
                       const SizedBox(width: 6),
                     ],
                     if (ll != null) ...[
-                      Expanded(child: _actionBtn(Icons.directions_rounded, t('directions'), const Color(0xFF3B82F6), () => _directions(ll.$1, ll.$2))),
+                      Expanded(child: _actionBtn(Icons.directions_rounded, t('directions'), const Color(0xFF1E88E5), () => _directions(ll.$1, ll.$2))),
                       const SizedBox(width: 6),
                     ],
-                    Expanded(child: _actionBtn(Icons.share_rounded, t('share'), const Color(0xFF6366F1), () => _share(s, lang))),
+                    Expanded(child: _actionBtn(Icons.share_rounded, t('share'), const Color(0xFF4F5BD5), () => _share(s, lang))),
                     if (canEdit) ...[
                       const SizedBox(width: 6),
                       Expanded(child: _actionBtn(Icons.edit_rounded, t('edit_price'), color, () => _edit(s))),

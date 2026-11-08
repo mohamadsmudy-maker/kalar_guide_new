@@ -326,7 +326,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
       backgroundColor:
       isDark ? const Color(0xFF0F0F14) : const Color(0xFFF0F4F9),
       body: RefreshIndicator(
-        color: const Color(0xFFDC2626),
+        color: const Color(0xFFDC3545),
         onRefresh: _refresh,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
@@ -361,7 +361,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: filter.search.isNotEmpty
-                ? const Color(0xFFDC2626).withValues(alpha: 0.5)
+                ? const Color(0xFFDC3545).withValues(alpha: 0.5)
                 : (isDark
                 ? Colors.white.withValues(alpha: 0.06)
                 : Colors.grey.shade200),
@@ -398,7 +398,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
             ),
             prefixIcon: const Icon(
               Icons.search_rounded,
-              color: Color(0xFFDC2626),
+              color: Color(0xFFDC3545),
               size: 22,
             ),
             suffixIcon: filter.search.isNotEmpty
@@ -582,7 +582,7 @@ class _EmergencyCard extends ConsumerWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFDC2626),
+                                    color: const Color(0xFFDC3545),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -615,7 +615,7 @@ class _EmergencyCard extends ConsumerWidget {
                               ),
                               if (service.is24h) ...[
                                 const SizedBox(width: 8),
-                                _badge('٢٤/٧', Colors.green),
+                                _badge('٢٤/٧', const Color(0xFF0F9D7A)),
                               ],
                             ],
                           ),
@@ -647,13 +647,13 @@ class _EmergencyCard extends ConsumerWidget {
                                 if ((service.authorityName ?? '').isNotEmpty)
                                   const SizedBox(width: 8),
                                 const Icon(Icons.near_me_rounded,
-                                    size: 10, color: Colors.green),
+                                    size: 10, color: Color(0xFF0F9D7A)),
                                 const SizedBox(width: 3),
                                 Text(
                                   trf('{0} کم', [distance!.toStringAsFixed(1)]),
                                   style: const TextStyle(
                                     fontSize: 10,
-                                    color: Colors.green,
+                                    color: Color(0xFF0F9D7A),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -705,7 +705,7 @@ class _EmergencyCard extends ConsumerWidget {
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
                       label: isFavorite ? tr('دڵخواز') : tr('زیادکردن'),
-                      color: isFavorite ? Colors.pink : Colors.grey,
+                      color: isFavorite ? const Color(0xFFC2557A) : Colors.grey,
                       onTap: () {
                         if (service.id == null) {
                           onCopied('ژمارە کۆپی کرا');
@@ -720,14 +720,14 @@ class _EmergencyCard extends ConsumerWidget {
                     _actionBtn(
                       icon: Icons.share_rounded,
                       label: tr('هاوبەشکردن'),
-                      color: Colors.blue,
+                      color: const Color(0xFF1E88E5),
                       onTap: onShare,
                     ),
                     if (service.hasLocation)
                       _actionBtn(
                         icon: Icons.directions_rounded,
                         label: tr('ئاراستە'),
-                        color: Colors.green,
+                        color: const Color(0xFF0F9D7A),
                         onTap: onDirections,
                       ),
                   ],

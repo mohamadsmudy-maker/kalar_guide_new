@@ -127,7 +127,7 @@ class PriceAlertService {
             importance: Importance.high,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
-            color: Color(0xFFFFD700),
+            color: Color(0xFFD9822B),
           ),
         ),
       );

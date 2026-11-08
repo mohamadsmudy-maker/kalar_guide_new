@@ -118,14 +118,14 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr(department == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -147,7 +147,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
           ),
           title: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 8),
               Text(tr('سڕینەوەی فەرمانگە')),
             ],
@@ -162,7 +162,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -190,14 +190,14 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ فەرمانگە سڕایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -241,7 +241,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
               color: Colors.white,
             ),
           ),
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: const Color(0xFF0F9D7A),
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
@@ -254,7 +254,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
         ),
         body: _isLoading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF10B981)),
+          child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
         )
             : Column(
           children: [
@@ -289,7 +289,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                       ),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
-                        color: Color(0xFF10B981),
+                        color: Color(0xFF0F9D7A),
                       ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -320,7 +320,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
         floatingActionButton: isVendor
             ? null
             : FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: const Color(0xFF0F9D7A),
           foregroundColor: Colors.white,
           onPressed: () => _openEditor(),
           icon: const Icon(Icons.add_rounded),
@@ -491,7 +491,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                   child: _buildActionButton(
                     icon: Icons.list_alt_rounded,
                     label: tr('مامەڵەکان'),
-                    color: const Color(0xFF8B5CF6),
+                    color: const Color(0xFF4F5BD5),
                     onTap: _isDeleting
                         ? null
                         : () => _openServicesManager(department),
@@ -509,7 +509,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                   child: _buildActionButton(
                     icon: Icons.edit_rounded,
                     label: tr('دەستکاری'),
-                    color: Colors.blue,
+                    color: const Color(0xFF1E88E5),
                     onTap: _isDeleting
                         ? null
                         : () => _openEditor(department: department),
@@ -527,7 +527,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                   child: _buildActionButton(
                     icon: Icons.delete_outline_rounded,
                     label: tr('سڕینەوە'),
-                    color: Colors.red,
+                    color: const Color(0xFFDC3545),
                     onTap: _isDeleting
                         ? null
                         : () => _deleteDepartment(department),
@@ -578,13 +578,13 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              color: const Color(0xFF0F9D7A).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.business_outlined,
               size: 60,
-              color: Color(0xFF10B981),
+              color: Color(0xFF0F9D7A),
             ),
           ),
           const SizedBox(height: 16),
@@ -607,7 +607,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFF10B981);
+      return const Color(0xFF0F9D7A);
     }
   }
 }

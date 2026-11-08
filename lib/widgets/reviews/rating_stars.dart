@@ -19,7 +19,7 @@ class RatingStars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final starColor = color ?? const Color(0xFFFFC107);
+    final starColor = color ?? const Color(0xFFD9822B);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -97,7 +97,7 @@ class RatingInput extends StatelessWidget {
                 isSelected ? Icons.star_rounded : Icons.star_border_rounded,
                 size: size,
                 color: isSelected
-                    ? const Color(0xFFFFC107)
+                    ? const Color(0xFFD9822B)
                     : Colors.grey.shade400,
               ),
             ),

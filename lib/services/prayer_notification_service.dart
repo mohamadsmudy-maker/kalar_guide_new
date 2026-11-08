@@ -186,7 +186,7 @@ class PrayerNotificationService {
         priority: Priority.high,
         playSound: true,
         icon: '@mipmap/ic_launcher',
-        color: const Color(0xFFFFD700),
+        color: const Color(0xFFD9822B),
         enableVibration: true,
         category: AndroidNotificationCategory.alarm,
         fullScreenIntent: true,
@@ -249,7 +249,7 @@ class PrayerNotificationService {
               importance: Importance.high,
               priority: Priority.high,
               icon: '@mipmap/ic_launcher',
-              color: Color(0xFFFFD700),
+              color: Color(0xFFD9822B),
             ),
             iOS: DarwinNotificationDetails(
               presentAlert: true,
@@ -292,7 +292,7 @@ class PrayerNotificationService {
             priority: Priority.high,
             playSound: true,
             icon: '@mipmap/ic_launcher',
-            color: Color(0xFFFFD700),
+            color: Color(0xFFD9822B),
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,

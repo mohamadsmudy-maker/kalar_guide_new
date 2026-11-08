@@ -59,7 +59,7 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFF10B981);
+      return const Color(0xFF0F9D7A);
     }
   }
 
@@ -151,7 +151,7 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
                 ? const SliverFillRemaining(
               child: Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFF10B981),
+                  color: Color(0xFF0F9D7A),
                 ),
               ),
             )
@@ -322,21 +322,21 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
                       _buildInfoBadge(
                         Icons.checklist_rounded,
                         trf('{0} پێداویستی', [reqCount]),
-                        const Color(0xFF8B5CF6),
+                        const Color(0xFF4F5BD5),
                         lang,
                       ),
                     if (feeCount > 0)
                       _buildInfoBadge(
                         Icons.attach_money_rounded,
                         trf('{0} تێچوو', [feeCount]),
-                        const Color(0xFF10B981),
+                        const Color(0xFF0F9D7A),
                         lang,
                       ),
                     if (duration.isNotEmpty)
                       _buildInfoBadge(
                         Icons.access_time_rounded,
                         duration,
-                        const Color(0xFFF59E0B),
+                        const Color(0xFFD9822B),
                         lang,
                       ),
                   ],

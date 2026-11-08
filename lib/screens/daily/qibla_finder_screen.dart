@@ -716,7 +716,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: _facing
-                  ? [AppColors.green, const Color(0xFF34D399)]
+                  ? [AppColors.green, const Color(0xFF0F9D7A)]
                   : [AppColors.orange, AppColors.yellow],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -1033,7 +1033,7 @@ class _DialPainter extends CustomPainter {
     if (q != null) {
       final a = (q - 90) * math.pi / 180;
       final p = center + Offset(math.cos(a), math.sin(a)) * (r * 0.84);
-      canvas.drawCircle(p, r * 0.025, Paint()..color = const Color(0xFF34D399));
+      canvas.drawCircle(p, r * 0.025, Paint()..color = const Color(0xFF0F9D7A));
     }
 
     // N E S W
@@ -1046,7 +1046,7 @@ class _DialPainter extends CustomPainter {
         text: TextSpan(
           text: labels[i],
           style: TextStyle(
-            color: isNorth ? const Color(0xFFEF4444) : Colors.white54,
+            color: isNorth ? const Color(0xFFDC3545) : Colors.white54,
             fontSize: r * (isNorth ? 0.11 : 0.085),
             fontWeight: FontWeight.w900,
           ),

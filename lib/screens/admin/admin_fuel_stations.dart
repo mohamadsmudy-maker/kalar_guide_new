@@ -138,7 +138,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Color(0xFFFFD700),
+                  color: Color(0xFFD9822B),
                 ),
               )
                   : const Icon(Icons.picture_as_pdf_rounded),
@@ -153,10 +153,10 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+          child: CircularProgressIndicator(color: Color(0xFFD9822B)),
         )
             : RefreshIndicator(
-          color: const Color(0xFFFFD700),
+          color: const Color(0xFFD9822B),
           onRefresh: _loadAllData,
           child: CustomScrollView(
             slivers: [
@@ -281,7 +281,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
           ),
           prefixIcon: const Icon(
             Icons.search_rounded,
-            color: Color(0xFFFFD700),
+            color: Color(0xFFD9822B),
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -309,11 +309,11 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
     final types = [
       {'key': 'all', 'label': 'هەموو', 'color': Colors.grey},
       {'key': 'normal', 'label': 'ئاسایی', 'color': const Color(0xFF1E88E5)},
-      {'key': 'super', 'label': 'سوپەر', 'color': const Color(0xFFEF4444)},
-      {'key': 'muhassen', 'label': 'محەسەن', 'color': const Color(0xFFF59E0B)},
-      {'key': 'oil', 'label': 'زەیت', 'color': const Color(0xFF14B8A6)},
-      {'key': 'iraqi_gas', 'label': 'گازی عێراقی', 'color': const Color(0xFF10B981)},
-      {'key': 'iranian_gas', 'label': 'گازی ئێرانی', 'color': const Color(0xFF8B5CF6)},
+      {'key': 'super', 'label': 'سوپەر', 'color': const Color(0xFFDC3545)},
+      {'key': 'muhassen', 'label': 'محەسەن', 'color': const Color(0xFFD9822B)},
+      {'key': 'oil', 'label': 'زەیت', 'color': const Color(0xFF0F9D7A)},
+      {'key': 'iraqi_gas', 'label': 'گازی عێراقی', 'color': const Color(0xFF0F9D7A)},
+      {'key': 'iranian_gas', 'label': 'گازی ئێرانی', 'color': const Color(0xFF4F5BD5)},
     ];
 
     return SizedBox(
@@ -380,14 +380,14 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+            color: const Color(0xFFD9822B).withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             children: [
               const Icon(
                 Icons.storefront_rounded,
-                color: Color(0xFFFFB300),
+                color: Color(0xFFD9822B),
                 size: 14,
               ),
               const SizedBox(width: 6),
@@ -396,7 +396,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFB8860B),
+                  color: Color(0xFFD9822B),
                 ),
               ),
             ],
@@ -496,14 +496,14 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
               height: 56,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD700), Color(0xFFFFB300)],
+                  colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
                 ),
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                    color: const Color(0xFFD9822B).withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -588,7 +588,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
             ),
             const Icon(
               Icons.chevron_right_rounded,
-              color: Color(0xFFFFD700),
+              color: Color(0xFFD9822B),
               size: 22,
             ),
           ],

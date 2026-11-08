@@ -343,21 +343,21 @@ class _SettingsScreenState extends State<SettingsScreen>
           icon: Icons.light_mode_rounded,
           title: tr('ڕووناک'),
           subtitle: 'Light',
-          color: Colors.orange,
+          color: const Color(0xFFD9822B),
         ),
         option(
           mode: ThemeMode.dark,
           icon: Icons.dark_mode_rounded,
           title: tr('تاریک'),
           subtitle: 'Dark',
-          color: Colors.purple,
+          color: const Color(0xFF4F5BD5),
         ),
         option(
           mode: ThemeMode.system,
           icon: Icons.settings_brightness_rounded,
           title: tr('سیستەم'),
           subtitle: 'System',
-          color: Colors.blue,
+          color: const Color(0xFF1E88E5),
         ),
       ],
     );
@@ -405,7 +405,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           icon: Icons.newspaper_rounded,
           title: tr('هەواڵەکان'),
           subtitle: tr('ئاگادارکردنەوە بۆ هەواڵی نوێ'),
-          color: Colors.blue,
+          color: const Color(0xFF1E88E5),
           value: settings.newsNotifications,
           onChanged: settings.setNewsNotifications,
         ),
@@ -413,7 +413,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           icon: Icons.report_rounded,
           title: tr('سکاڵاکان'),
           subtitle: tr('ئاگادارکردنەوە بۆ سکاڵاکانت'),
-          color: Colors.red,
+          color: const Color(0xFFDC3545),
           value: settings.complaintNotifications,
           onChanged: settings.setComplaintNotifications,
         ),
@@ -421,7 +421,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           icon: Icons.shopping_bag_rounded,
           title: tr('داواکارییەکان'),
           subtitle: tr('ئاگادارکردنەوە بۆ ئۆردەرەکانت'),
-          color: Colors.green,
+          color: const Color(0xFF0F9D7A),
           value: settings.orderNotifications,
           onChanged: settings.setOrderNotifications,
         ),
@@ -429,7 +429,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           icon: Icons.volume_up_rounded,
           title: tr('دەنگ'),
           subtitle: tr('دەنگی ئاگادارکردنەوە'),
-          color: Colors.orange,
+          color: const Color(0xFFD9822B),
           value: settings.soundEnabled,
           onChanged: settings.setSoundEnabled,
         ),
@@ -437,7 +437,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           icon: Icons.vibration_rounded,
           title: tr('لەرینەوە'),
           subtitle: tr('لەرینەوەی مۆبایل'),
-          color: Colors.teal,
+          color: const Color(0xFF0F9D7A),
           value: settings.vibrationEnabled,
           onChanged: settings.setVibrationEnabled,
         ),
@@ -791,10 +791,10 @@ class _SettingsScreenState extends State<SettingsScreen>
       label: tr('گەڕاندنەوە بۆ دۆخی سەرەتا'),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.red.withValues(alpha: pal.isDark ? 0.15 : 0.08),
+          color: const Color(0xFFDC3545).withValues(alpha: pal.isDark ? 0.15 : 0.08),
           borderRadius: radius,
           border: Border.all(
-            color: Colors.red.withValues(alpha: 0.3),
+            color: const Color(0xFFDC3545).withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -812,7 +812,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 children: [
                   const _IconBadge(
                     icon: Icons.restore_rounded,
-                    color: Colors.red,
+                    color: Color(0xFFDC3545),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -821,11 +821,11 @@ class _SettingsScreenState extends State<SettingsScreen>
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
-                        color: Colors.red,
+                        color: Color(0xFFDC3545),
                       ),
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: Colors.red),
+                  const Icon(Icons.chevron_right_rounded, color: Color(0xFFDC3545)),
                 ],
               ),
             ),
@@ -846,7 +846,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           title: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.red),
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -868,7 +868,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(
                 tr('بەڵێ، بیگەڕێنەوە'),
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: Color(0xFFDC3545)),
               ),
             ),
           ],
@@ -903,7 +903,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             tr('❌ نەتوانرا ڕێکخستنەکان بگەڕێنرێنەوە'),
             style: const TextStyle(fontWeight: FontWeight.w900),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFDC3545),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -918,7 +918,7 @@ class _Pal {
   final bool isDark;
   const _Pal(this.isDark);
 
-  static const success = Color(0xFF10B981);
+  static const success = Color(0xFF0F9D7A);
 
   Color get bg => isDark ? const Color(0xFF0F0F14) : const Color(0xFFF5F6FA);
   Color get surface => isDark ? const Color(0xFF1A1A22) : Colors.white;

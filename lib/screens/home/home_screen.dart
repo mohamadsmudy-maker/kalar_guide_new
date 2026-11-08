@@ -335,7 +335,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _QuickAction(
         title: t('send_complaint', 'ناردنی سکاڵا'),
         icon: Icons.campaign_rounded,
-        color: AppColors.pink,
+        color: AppColors.toneIndigo,
         onTap: () {
           if (!mounted) return;
           ComplaintInstructionDialog.show(context);
@@ -610,7 +610,7 @@ class _QuickTile extends StatelessWidget {
       button: true,
       label: a.title,
       child: Material(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : a.color.withValues(alpha: 0.06),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -623,34 +623,63 @@ class _QuickTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: a.color.withValues(alpha: 0.12)),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8EDF3),
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   padding: const EdgeInsets.all(11),
-                  decoration: BoxDecoration(color: a.color.withValues(alpha: 0.15), shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: a.color.withValues(alpha: isDark ? 0.18 : 0.10),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   child: Icon(a.icon, color: a.color, size: 22),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  tr(a.title),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    height: 1.25,
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                  ),
+                _TileLabel(
+                  text: tr(a.title),
+                  color: isDark ? Colors.white : AppColors.textPrimary,
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// ناوی دوگمە: وشەیەکی درێژ (Neighborhoods) لە ناوەڕاستدا نابڕدرێت،
+/// بەڵکو کەمێک بچووک دەکرێتەوە؛ دەقی چەند وشەیی تا دوو دێڕ دەڕوات.
+class _TileLabel extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const _TileLabel({required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w800,
+      height: 1.25,
+      color: color,
+    );
+    if (!text.trim().contains(' ')) {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(text, maxLines: 1, style: style),
+      );
+    }
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: style,
     );
   }
 }

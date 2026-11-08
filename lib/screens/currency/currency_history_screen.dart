@@ -66,7 +66,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
       languageId: lang,
       initialFrom: _fromDate,
       initialTo: _toDate,
-      primaryColor: const Color(0xFF10B981),
+      primaryColor: const Color(0xFF0F9D7A),
     );
 
     if (picked != null) {
@@ -89,7 +89,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('هیچ داتایەک نییە بۆ ڕاپۆرت')),
-            backgroundColor: Colors.orange,
+            backgroundColor: const Color(0xFFD9822B),
           ),
         );
         return;
@@ -110,7 +110,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(trf('هەڵە: {0}', [e])),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFDC3545),
         ),
       );
     } finally {
@@ -173,7 +173,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Color(0xFF10B981),
+                  color: Color(0xFF0F9D7A),
                 ),
               )
                   : const Icon(Icons.picture_as_pdf_rounded),
@@ -189,12 +189,12 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF10B981)),
+          child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
         )
             : _history.isEmpty
             ? _buildEmptyState(isDark)
             : RefreshIndicator(
-          color: const Color(0xFF10B981),
+          color: const Color(0xFF0F9D7A),
           onRefresh: _loadHistory,
           child: ListView(
             padding: const EdgeInsets.all(16),
@@ -241,12 +241,12 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF10B981), Color(0xFF059669)],
+            colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.3),
+              color: const Color(0xFF0F9D7A).withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -380,7 +380,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF10B981)
+                                color: const Color(0xFF0F9D7A)
                                     .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
@@ -388,7 +388,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
                                 tr('نوێترین'),
                                 style: const TextStyle(
                                   fontSize: 9,
-                                  color: Color(0xFF10B981),
+                                  color: Color(0xFF0F9D7A),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -495,9 +495,9 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
     final isIncrease = oldPrice != null && newPrice > oldPrice;
     final isDecrease = oldPrice != null && newPrice < oldPrice;
     final color = isIncrease
-        ? const Color(0xFFEF4444)
+        ? const Color(0xFFDC3545)
         : isDecrease
-        ? const Color(0xFF10B981)
+        ? const Color(0xFF0F9D7A)
         : Colors.grey;
 
     return Column(
@@ -555,7 +555,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
           height: 20,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF10B981), Color(0xFF059669)],
+              colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
             ),
             borderRadius: BorderRadius.circular(4),
           ),
@@ -640,7 +640,7 @@ class _CurrencyHistoryScreenState extends State<CurrencyHistoryScreen> {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFF10B981);
+      return const Color(0xFF0F9D7A);
     }
   }
 }

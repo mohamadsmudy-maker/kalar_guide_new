@@ -132,7 +132,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -156,14 +156,14 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr("شوێنەکە سڕایەوە 🗑")),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -303,13 +303,13 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                   _buildFilterChip(
                     label: trf('بە لۆکەیشن ({0})', [_withLocationCount]),
                     value: 'with_location',
-                    color: Colors.green,
+                    color: const Color(0xFF0F9D7A),
                   ),
                   const SizedBox(width: 6),
                   _buildFilterChip(
                     label: trf('بێ لۆکەیشن ({0})', [_withoutLocationCount]),
                     value: 'without_location',
-                    color: Colors.orange,
+                    color: const Color(0xFFD9822B),
                   ),
                 ],
               ),
@@ -549,7 +549,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                     child: _buildActionButton(
                       icon: Icons.description_rounded,
                       label: tr('مامەڵەکان'),
-                      color: const Color(0xFF8B5CF6),
+                      color: const Color(0xFF4F5BD5),
                       onTap: () => _openStoreServices(store),
                     ),
                   ),
@@ -562,7 +562,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                     child: _buildActionButton(
                       icon: Icons.edit_rounded,
                       label: tr('دەستکاری'),
-                      color: Colors.blue,
+                      color: const Color(0xFF1E88E5),
                       onTap: () => _openEditStore(store),
                     ),
                   ),
@@ -575,7 +575,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                     child: _buildActionButton(
                       icon: Icons.delete_outline_rounded,
                       label: tr('سڕینەوە'),
-                      color: Colors.red,
+                      color: const Color(0xFFDC3545),
                       onTap: () => _deleteStore(store['id']),
                     ),
                   ),

@@ -26,7 +26,7 @@ void _toast(ScaffoldMessengerState messenger, String msg, {bool isError = false}
     ..showSnackBar(
       SnackBar(
         content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isError ? Colors.red : Colors.green,
+        backgroundColor: isError ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -40,7 +40,7 @@ Future<bool> _confirmDialog(
       required String confirmLabel,
       String cancelLabel = "نەخێر",
       IconData icon = Icons.warning_amber_rounded,
-      Color color = Colors.red,
+      Color color = const Color(0xFFDC3545),
     }) async {
   final res = await showDialog<bool>(
     context: context,
@@ -381,7 +381,7 @@ class _AdminComplaintInstructionsListScreenState
             children: [
               _statChip(isDark, Icons.layers_rounded, "$total / $_kMaxInstructions", "کۆی گشتی", AppColors.primary),
               const SizedBox(width: 8),
-              _statChip(isDark, Icons.visibility_rounded, "$active", "چالاک", Colors.green),
+              _statChip(isDark, Icons.visibility_rounded, "$active", "چالاک", const Color(0xFF0F9D7A)),
               const SizedBox(width: 8),
               _statChip(isDark, Icons.visibility_off_rounded, "${total - active}", "ناچالاک", Colors.grey),
             ],
@@ -391,13 +391,13 @@ class _AdminComplaintInstructionsListScreenState
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.12),
+                color: const Color(0xFFD9822B).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+                border: Border.all(color: const Color(0xFFD9822B).withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline_rounded, color: Colors.orange, size: 18),
+                  const Icon(Icons.info_outline_rounded, color: Color(0xFFD9822B), size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -531,7 +531,7 @@ class _AdminComplaintInstructionsListScreenState
         ],
         border: Border.all(
           color: isActive
-              ? Colors.green.withValues(alpha: 0.3)
+              ? const Color(0xFF0F9D7A).withValues(alpha: 0.3)
               : (isDark ? Colors.white12 : Colors.grey.shade200),
           width: 1.5,
         ),
@@ -586,7 +586,7 @@ class _AdminComplaintInstructionsListScreenState
                   left: 12,
                   child: _badge(
                     isActive ? "چالاک" : "ناچالاک",
-                    isActive ? Colors.green : Colors.grey,
+                    isActive ? const Color(0xFF0F9D7A) : Colors.grey,
                     icon: isActive ? Icons.visibility_rounded : Icons.visibility_off_rounded,
                   ),
                 ),
@@ -629,7 +629,7 @@ class _AdminComplaintInstructionsListScreenState
                     )
                         : Switch(
                       value: isActive,
-                      activeThumbColor: Colors.green,
+                      activeThumbColor: const Color(0xFF0F9D7A),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       onChanged: (v) => _toggleActive(item, v),
                     ),
@@ -675,10 +675,10 @@ class _AdminComplaintInstructionsListScreenState
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.red.withValues(alpha: 0.15) : Colors.red.shade50,
+                          color: isDark ? const Color(0xFFDC3545).withValues(alpha: 0.15) : Colors.red.shade50,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.delete_rounded, color: Colors.red, size: 18),
+                        child: const Icon(Icons.delete_rounded, color: Color(0xFFDC3545), size: 18),
                       ),
                     ),
                   ],
@@ -786,8 +786,8 @@ class _AdminComplaintInstructionsListScreenState
         children: [
           Container(
             padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.wifi_off_rounded, size: 52, color: Colors.red),
+            decoration: BoxDecoration(color: const Color(0xFFDC3545).withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: const Icon(Icons.wifi_off_rounded, size: 52, color: Color(0xFFDC3545)),
           ),
           const SizedBox(height: 16),
           Text(
@@ -984,8 +984,8 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
       border: border(fieldBorderColor),
       enabledBorder: border(fieldBorderColor),
       focusedBorder: border(AppColors.primary, 1.5),
-      errorBorder: border(Colors.red),
-      focusedErrorBorder: border(Colors.red, 1.5),
+      errorBorder: border(const Color(0xFFDC3545)),
+      focusedErrorBorder: border(const Color(0xFFDC3545), 1.5),
       filled: true,
       fillColor: isDark ? AppColors.darkBackground : Colors.grey.shade50,
       counterStyle: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey),
@@ -1011,7 +1011,7 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
             confirmLabel: tr("دەرچوون"),
             cancelLabel: tr("مانەوە"),
             icon: Icons.edit_off_rounded,
-            color: Colors.orange,
+            color: const Color(0xFFD9822B),
           );
           if (leave) navigator.pop(false);
         },
@@ -1115,7 +1115,7 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
                 color: isDark ? AppColors.darkBackground : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: _imageError ? Colors.red : AppColors.primary.withValues(alpha: 0.3),
+                  color: _imageError ? const Color(0xFFDC3545) : AppColors.primary.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -1133,7 +1133,7 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
                           children: [
                             _roundBtn(Icons.edit_rounded, _pickImage),
                             const SizedBox(width: 6),
-                            _roundBtn(Icons.delete_outline_rounded, _removeImage, color: Colors.red),
+                            _roundBtn(Icons.delete_outline_rounded, _removeImage, color: const Color(0xFFDC3545)),
                           ],
                         ),
                       ),
@@ -1145,7 +1145,7 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
           if (_imageError)
             Padding(
               padding: const EdgeInsets.only(top: 8, right: 4),
-              child: Text(tr("تکایا وێنەیەک هەڵبژێرە"), style: const TextStyle(color: Colors.red, fontSize: 11)),
+              child: Text(tr("تکایا وێنەیەک هەڵبژێرە"), style: const TextStyle(color: Color(0xFFDC3545), fontSize: 11)),
             ),
         ],
       ),
@@ -1204,7 +1204,7 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: _isActive
-            ? (isDark ? Colors.green.withValues(alpha: 0.15) : Colors.green.shade50)
+            ? (isDark ? const Color(0xFF0F9D7A).withValues(alpha: 0.15) : Colors.green.shade50)
             : (isDark ? AppColors.darkBackground : Colors.grey.shade100),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
@@ -1215,7 +1215,7 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
         children: [
           Icon(
             _isActive ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-            color: _isActive ? Colors.green : Colors.grey,
+            color: _isActive ? const Color(0xFF0F9D7A) : Colors.grey,
             size: 22,
           ),
           const SizedBox(width: 12),
@@ -1243,7 +1243,7 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
           ),
           Switch(
             value: _isActive,
-            activeThumbColor: Colors.green,
+            activeThumbColor: const Color(0xFF0F9D7A),
             onChanged: _loading ? null : (val) => setState(() => _isActive = val),
           ),
         ],

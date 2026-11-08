@@ -691,7 +691,7 @@ class CurrencyService {
       if (h.length == 6) h = 'FF$h';
       return Color(int.parse(h, radix: 16));
     } catch (_) {
-      return const Color(0xFF10B981);
+      return const Color(0xFF0F9D7A);
     }
   }
 }

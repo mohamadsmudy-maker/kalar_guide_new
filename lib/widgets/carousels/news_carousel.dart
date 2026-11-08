@@ -225,16 +225,16 @@ class _NewsCarouselState extends State<NewsCarousel>
   Color _getTypeColor(String type) {
     switch (type) {
       case 'ئاگاداری':
-        return const Color(0xFFFFA000);
+        return const Color(0xFFD9822B);
       case 'هۆشداری':
-        return const Color(0xFFE53935);
+        return const Color(0xFFDC3545);
       case 'ڕووداو':
-        return const Color(0xFF8E24AA);
+        return const Color(0xFF4F5BD5);
       case 'خزمەتگوزاری':
         return const Color(0xFF1E88E5);
       case 'هەواڵ':
       default:
-        return const Color(0xFF43A047);
+        return const Color(0xFF0F9D7A);
     }
   }
 

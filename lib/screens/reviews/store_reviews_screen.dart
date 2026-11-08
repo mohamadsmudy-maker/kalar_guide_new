@@ -66,7 +66,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('تکایە سەرەتا بچۆ ژوورەوە ⚠')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -223,7 +223,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
               RatingStars(
                 rating: avg,
                 size: 18,
-                color: const Color(0xFFFFC107),
+                color: const Color(0xFFD9822B),
               ),
               const SizedBox(height: 6),
               Text(
@@ -273,7 +273,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
           ),
           const Icon(
             Icons.star_rounded,
-            color: Color(0xFFFFC107),
+            color: Color(0xFFD9822B),
             size: 12,
           ),
           const SizedBox(width: 6),
@@ -283,7 +283,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
               child: LinearProgressIndicator(
                 value: percent / 100,
                 backgroundColor: Colors.white.withValues(alpha: 0.2),
-                valueColor: const AlwaysStoppedAnimation(Color(0xFFFFC107)),
+                valueColor: const AlwaysStoppedAnimation(Color(0xFFD9822B)),
                 minHeight: 6,
               ),
             ),
@@ -476,7 +476,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                         RatingStars(
                           rating: review.rating.toDouble(),
                           size: 13,
-                          color: const Color(0xFFFFC107),
+                          color: const Color(0xFFD9822B),
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -550,7 +550,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -568,7 +568,7 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('✅ کۆمێنت سڕایەوە')),
-          backgroundColor: Colors.green,
+          backgroundColor: const Color(0xFF0F9D7A),
         ),
       );
       _loadData();

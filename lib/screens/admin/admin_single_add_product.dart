@@ -87,7 +87,7 @@ class _AdminSingleAddProductScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr("تکایە سەرەتا ناو و نرخ بنووسە ⚠")),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -106,7 +106,7 @@ class _AdminSingleAddProductScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -119,7 +119,7 @@ class _AdminSingleAddProductScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr("تکایە ناو، نرخ و وێنە پڕبکەوە ⚠")),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -149,14 +149,14 @@ class _AdminSingleAddProductScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr("کاڵاکە زیادکرا ✅")),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {

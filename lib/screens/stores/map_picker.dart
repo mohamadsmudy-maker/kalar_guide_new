@@ -272,7 +272,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(tr(message), style: const TextStyle(fontSize: 12)),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFDC3545),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
         shape: RoundedRectangleBorder(
@@ -719,7 +719,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                           "📞 ${_selectedPOI!['phone']}",
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Colors.green,
+                            color: Color(0xFF0F9D7A),
                             fontWeight: FontWeight.bold,
                           ),
                         ),

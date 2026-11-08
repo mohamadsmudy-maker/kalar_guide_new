@@ -70,12 +70,12 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                  color: const Color(0xFFD9822B).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.edit_rounded,
-                  color: Color(0xFFB8860B),
+                  color: Color(0xFFD9822B),
                   size: 22,
                 ),
               ),
@@ -141,7 +141,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     labelText: tr('نرخی نوێ (د.ع)'),
                     prefixIcon: const Icon(
                       Icons.attach_money_rounded,
-                      color: Color(0xFFFFD700),
+                      color: Color(0xFFD9822B),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -149,7 +149,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFD9822B),
                         width: 2,
                       ),
                     ),
@@ -164,7 +164,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     hintText: tr('بۆ نموونە: بەهۆی گۆڕانی نرخی نەوت'),
                     prefixIcon: const Icon(
                       Icons.note_rounded,
-                      color: Color(0xFFFFD700),
+                      color: Color(0xFFD9822B),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -172,7 +172,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFD9822B),
                         width: 2,
                       ),
                     ),
@@ -188,7 +188,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
             ),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFD700),
+                backgroundColor: const Color(0xFFD9822B),
                 foregroundColor: const Color(0xFF0F1421),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -200,7 +200,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
                       content: Text(tr('تکایە نرخێکی دروست بنووسە')),
-                      backgroundColor: Colors.orange,
+                      backgroundColor: const Color(0xFFD9822B),
                     ),
                   );
                   return;
@@ -223,7 +223,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
                       content: Text(result.message),
-                      backgroundColor: Colors.red,
+                      backgroundColor: const Color(0xFFDC3545),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -257,7 +257,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ نرخ نوێکرایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
@@ -301,7 +301,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+          child: CircularProgressIndicator(color: Color(0xFFD9822B)),
         )
             : ListView(
           padding: const EdgeInsets.all(16),
@@ -338,12 +338,12 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+          color: const Color(0xFFD9822B).withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+            color: const Color(0xFFD9822B).withValues(alpha: 0.15),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -355,12 +355,12 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFFFB300)],
+                colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                  color: const Color(0xFFD9822B).withValues(alpha: 0.4),
                   blurRadius: 15,
                 ),
               ],
@@ -393,7 +393,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                     children: [
                       const Icon(
                         Icons.location_on_rounded,
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFD9822B),
                         size: 12,
                       ),
                       const SizedBox(width: 4),
@@ -430,7 +430,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
           height: 20,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFFFD700), Color(0xFFFFB300)],
+              colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
             ),
             borderRadius: BorderRadius.circular(4),
           ),
@@ -646,7 +646,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFFFFD700);
+      return const Color(0xFFD9822B);
     }
   }
 }

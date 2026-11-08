@@ -78,7 +78,7 @@ class EmergencyCategories {
       nameAr: 'الشرطة',
       nameEn: 'Police',
       icon: 'local_police',
-      color: Color(0xFF2563EB),
+      color: Color(0xFF1E88E5),
     ),
     EmergencyCategory(
       key: 'fire',
@@ -86,7 +86,7 @@ class EmergencyCategories {
       nameAr: 'الإطفاء',
       nameEn: 'Fire',
       icon: 'local_fire_department',
-      color: Color(0xFFEF4444),
+      color: Color(0xFFDC3545),
     ),
     EmergencyCategory(
       key: 'ambulance',
@@ -94,7 +94,7 @@ class EmergencyCategories {
       nameAr: 'الإسعاف',
       nameEn: 'Ambulance',
       icon: 'local_hospital',
-      color: Color(0xFFDC2626),
+      color: Color(0xFFDC3545),
     ),
     EmergencyCategory(
       key: 'hospital',
@@ -102,7 +102,7 @@ class EmergencyCategories {
       nameAr: 'المستشفى',
       nameEn: 'Hospital',
       icon: 'local_hospital',
-      color: Color(0xFF059669),
+      color: Color(0xFF0F9D7A),
     ),
     EmergencyCategory(
       key: 'power',
@@ -110,7 +110,7 @@ class EmergencyCategories {
       nameAr: 'الكهرباء',
       nameEn: 'Power',
       icon: 'electric_bolt',
-      color: Color(0xFFF59E0B),
+      color: Color(0xFFD9822B),
     ),
     EmergencyCategory(
       key: 'water',
@@ -118,7 +118,7 @@ class EmergencyCategories {
       nameAr: 'المياه',
       nameEn: 'Water',
       icon: 'water_drop',
-      color: Color(0xFF0EA5E9),
+      color: Color(0xFF1E88E5),
     ),
     EmergencyCategory(
       key: 'utility',
@@ -126,7 +126,7 @@ class EmergencyCategories {
       nameAr: 'الخدمات',
       nameEn: 'Utility',
       icon: 'electric_bolt',
-      color: Color(0xFF8B5CF6),
+      color: Color(0xFF4F5BD5),
     ),
     EmergencyCategory(
       key: 'other',

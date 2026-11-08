@@ -31,11 +31,10 @@ serve(async (req) => {
       );
     }
 
-    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-1.5-flash';
     const apiVersion = Deno.env.get('GEMINI_API_VERSION') ?? 'v1beta';
-
-    const url =
-      `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent`;
+    // gemini-1.5-* لەلایەن Google ەوە لابراون (404)؛ یەک لە دوای یەک تاقی دەکرێنەوە
+    const models = [Deno.env.get('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest']
+      .filter((m): m is string => !!m && !m.startsWith('gemini-1.5'));
 
     // ✅ پێکهاتەکانی دەق
     const parts: any[] = [{ text: prompt }];
@@ -51,20 +50,29 @@ serve(async (req) => {
     }
 
     // ✅ بانگکردن بە header (نەک URL)
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          temperature: temperature ?? 0.7,
-          maxOutputTokens: maxTokens ?? 2048,
+    let response: Response = new Response('no model', { status: 502 });
+    for (const model of models) {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: {
+              temperature: temperature ?? 0.7,
+              maxOutputTokens: maxTokens ?? 2048,
+              ...(model.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+            },
+          }),
         },
-      }),
-    });
+      );
+      if (response.status !== 404 && response.status !== 400) break;
+      console.error(`model ${model}:`, response.status, await response.clone().text());
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

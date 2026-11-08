@@ -84,7 +84,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr("کەشوهەوا نوێکرایەوە ✅")),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
         Navigator.pop(context);
@@ -92,7 +92,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {

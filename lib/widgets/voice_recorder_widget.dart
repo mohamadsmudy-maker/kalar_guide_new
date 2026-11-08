@@ -143,7 +143,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
   void _showError(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(tr(msg)), backgroundColor: Colors.red),
+      SnackBar(content: Text(tr(msg)), backgroundColor: const Color(0xFFDC3545)),
     );
   }
 
@@ -181,15 +181,15 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                 shape: BoxShape.circle,
                 gradient: _isRecording
                     ? const LinearGradient(
-                  colors: [Colors.red, Colors.redAccent],
+                  colors: [Color(0xFFDC3545), Color(0xFFDC3545)],
                 )
                     : const LinearGradient(
-                  colors: [Color(0xFF1E88E5), Color(0xFF64B5F6)],
+                  colors: [Color(0xFF1E88E5), Color(0xFF1E88E5)],
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: (_isRecording
-                        ? Colors.red
+                        ? const Color(0xFFDC3545)
                         : const Color(0xFF1E88E5))
                         .withValues(alpha: 0.3),
                     blurRadius: 10,
@@ -215,7 +215,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                   width: 10,
                   height: 10,
                   decoration: const BoxDecoration(
-                    color: Colors.red,
+                    color: Color(0xFFDC3545),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -225,7 +225,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Colors.red,
+                    color: Color(0xFFDC3545),
                   ),
                 ),
               ],
@@ -257,7 +257,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                 IconButton(
                   icon: const Icon(
                     Icons.delete_outline,
-                    color: Colors.red,
+                    color: Color(0xFFDC3545),
                   ),
                   onPressed: _deleteRecording,
                 ),

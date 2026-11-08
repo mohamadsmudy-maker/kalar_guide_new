@@ -16,8 +16,8 @@ import '../../utils/place_display.dart';
 
 part 'favorites_screen_ui.dart';
 
-const Color _kPink = Color(0xFFE91E63);
-const Color _kPurple = Color(0xFF9C27B0);
+const Color _kPink = Color(0xFFC2557A);
+const Color _kPurple = Color(0xFFC2557A);
 
 enum _Kind { stores, news }
 
@@ -305,7 +305,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       debugPrint('❌ Delete error: $e');
       if (!mounted) return;
       setState(() => list.insert(index > list.length ? list.length : index, item));
-      _showSnack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
+      _showSnack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
       return;
     }
 
@@ -323,7 +323,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           duration: const Duration(seconds: 4),
           action: SnackBarAction(
             label: tr('گەڕاندنەوە'),
-            textColor: Colors.amber,
+            textColor: const Color(0xFFD9822B),
             onPressed: () => _undoRemove(kind, item),
           ),
         ),
@@ -342,7 +342,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       await _load(kind, silent: true);
     } catch (e) {
       debugPrint('❌ Undo error: $e');
-      _showSnack(tr('گەڕاندنەوە سەرنەکەوت'), Colors.red);
+      _showSnack(tr('گەڕاندنەوە سەرنەکەوت'), const Color(0xFFDC3545));
     }
   }
 
@@ -364,7 +364,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFFDC3545)),
               child: Text(tr('سڕینەوە')),
             ),
           ],
@@ -392,10 +392,10 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         _batchMode = false;
       });
       await _load(kind, silent: true);
-      _showSnack(trf('{0} دڵخواز سڕایەوە', [_ku(ids.length)]), Colors.green);
+      _showSnack(trf('{0} دڵخواز سڕایەوە', [_ku(ids.length)]), const Color(0xFF0F9D7A));
     } catch (e) {
       debugPrint('❌ Batch delete error: $e');
-      _showSnack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), Colors.red);
+      _showSnack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _deleting = false);
     }
@@ -528,7 +528,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
               HapticFeedback.mediumImpact();
               _exitBatch();
             },
-            backgroundColor: selectedCount > 0 ? Colors.grey : Colors.red,
+            backgroundColor: selectedCount > 0 ? Colors.grey : const Color(0xFFDC3545),
             foregroundColor: Colors.white,
             icon: const Icon(Icons.close_rounded),
             label: Text(tr('هەڵوەشاندنەوە'),
@@ -557,7 +557,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           icon: Icons.favorite_rounded,
           title: tr('پێویستە بچیتە ژوورەوە'),
           subtitle: tr('بۆ بینینی دڵخوازەکانت سەرەتا بچۆ ژوورەوە'),
-          color: Colors.pink,
+          color: const Color(0xFFC2557A),
           isDark: isDark,
           actionLabel: tr('چوونەژوورەوە'),
           actionIcon: Icons.login_rounded,
@@ -597,7 +597,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           onPressed: () async {
             HapticFeedback.lightImpact();
             await _loadAll(silent: true);
-            _showSnack(tr('داتاکان نوێکرانەوە ✅'), Colors.green);
+            _showSnack(tr('داتاکان نوێکرانەوە ✅'), const Color(0xFF0F9D7A));
           },
         ),
         IconButton(

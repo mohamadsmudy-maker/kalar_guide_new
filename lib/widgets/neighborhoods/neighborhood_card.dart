@@ -165,7 +165,7 @@ class NeighborhoodCard extends StatelessWidget {
                           child: _buildMiniStat(
                             icon: Icons.landscape_rounded,
                             value: trf('{0} کم²', [areaStr]), // ✅ ئێستا 2 ژمارەی دەییە
-                            color: const Color(0xFFF59E0B),
+                            color: const Color(0xFFD9822B),
                             isDark: isDark,
                           ),
                         ),
@@ -178,7 +178,7 @@ class NeighborhoodCard extends StatelessWidget {
                           child: _buildMiniStat(
                             icon: Icons.people_rounded,
                             value: '${neighborhood.population}',
-                            color: const Color(0xFF10B981),
+                            color: const Color(0xFF0F9D7A),
                             isDark: isDark,
                           ),
                         ),

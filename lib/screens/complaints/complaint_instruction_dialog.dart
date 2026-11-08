@@ -218,7 +218,7 @@ class _ComplaintInstructionContentState
                                 height: 14,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.amber,
+                                  color: Color(0xFFD9822B),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -259,8 +259,8 @@ class _ComplaintInstructionContentState
                           gradient: _enableButton
                               ? const LinearGradient(
                             colors: [
-                              Color(0xFF66BB6A),
-                              Color(0xFF2E7D32),
+                              Color(0xFF0F9D7A),
+                              Color(0xFF0F9D7A),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -274,7 +274,7 @@ class _ComplaintInstructionContentState
                           boxShadow: [
                             BoxShadow(
                               color: _enableButton
-                                  ? const Color(0xFF2E7D32)
+                                  ? const Color(0xFF0F9D7A)
                                   .withValues(alpha: 0.5)
                                   : Colors.black.withValues(alpha: 0.3),
                               blurRadius: _enableButton ? 20 : 10,

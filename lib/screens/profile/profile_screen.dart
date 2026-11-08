@@ -257,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                       _buildMenuItem(
                         isDark: isDark,
                         icon: Icons.favorite_rounded,
-                        color: Colors.pink,
+                        color: const Color(0xFFC2557A),
                         title: tr('دڵخوازەکانم'),
                         subtitle: tr('شوێن و هەواڵەکان'),
                         badge: _favoritesCount > 0 ? _favoritesCount : null,
@@ -267,7 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                       _buildMenuItem(
                         isDark: isDark,
                         icon: Icons.video_library_rounded,
-                        color: Colors.indigo,
+                        color: const Color(0xFF4F5BD5),
                         title: tr('ڤیدیۆ و ڕێنماییەکان'),
                         subtitle: tr('بینینی ڤیدیۆکان'),
                         badge: _videosCount > 0 ? _videosCount : null,
@@ -277,7 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                       _buildMenuItem(
                         isDark: isDark,
                         icon: Icons.photo_library_rounded,
-                        color: Colors.amber,
+                        color: const Color(0xFFD9822B),
                         title: tr('گەلەری کەلار'),
                         subtitle: tr('بینینی وێنەکان'),
                         onTap: () => _push(const GalleryScreen()),
@@ -291,7 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         _buildMenuItem(
                           isDark: isDark,
                           icon: Icons.admin_panel_settings_rounded,
-                          color: const Color(0xFF3B82F6),
+                          color: const Color(0xFF1E88E5),
                           title: isAdmin ? tr('پانێڵی ئەدمین') : tr('پانێڵی بەڕێوەبردن'),
                           subtitle: isAdmin ? tr('دەستڕاگەیشتنی تەواو') : tr('دەستکاری شوێنەکان'),
                           isImportant: true,
@@ -302,7 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                           _buildMenuItem(
                             isDark: isDark,
                             icon: Icons.photo_camera_back_rounded,
-                            color: const Color(0xFF8B5CF6),
+                            color: const Color(0xFF4F5BD5),
                             title: tr('بەڕێوەبردنی گەلەری'),
                             subtitle: tr('زیادکردن و سڕینەوەی وێنە'),
                             onTap: () => _push(const AdminGallery()),
@@ -325,7 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                       _buildMenuItem(
                         isDark: isDark,
                         icon: Icons.share_rounded,
-                        color: const Color(0xFF06B6D4),
+                        color: const Color(0xFF1E88E5),
                         title: tr('هاوبەشکردنی ئەپ'),
                         subtitle: tr('بۆ هاوڕێکانت'),
                         onTap: _shareApp,
@@ -334,7 +334,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                       _buildMenuItem(
                         isDark: isDark,
                         icon: Icons.info_rounded,
-                        color: const Color(0xFF10B981),
+                        color: const Color(0xFF0F9D7A),
                         title: tr('دەربارەی ئەپ و پشتگیری'),
                         subtitle: tr('زانیاری زیاتر و پەیوەندی'),
                         onTap: () => _push(const AboutScreen()),
@@ -406,13 +406,13 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.orange.withValues(alpha: 0.12),
+          color: const Color(0xFFD9822B).withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+          border: Border.all(color: const Color(0xFFD9822B).withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_rounded, color: Colors.orange, size: 20),
+            const Icon(Icons.cloud_off_rounded, color: Color(0xFFD9822B), size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -508,7 +508,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF1E88E5), Color(0xFF6C5CE7), Color(0xFFE91E63)],
+                    colors: [Color(0xFF1E88E5), Color(0xFF4F5BD5), Color(0xFFC2557A)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -548,7 +548,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                       onTap: () {
                         HapticFeedback.selectionClick();
                         Clipboard.setData(ClipboardData(text: phone));
-                        _snack(tr('📋 ژمارە کۆپی کرا'), const Color(0xFF10B981));
+                        _snack(tr('📋 ژمارە کۆپی کرا'), const Color(0xFF0F9D7A));
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -580,7 +580,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.all(5),
-                    decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+                    decoration: const BoxDecoration(color: Color(0xFF0F9D7A), shape: BoxShape.circle),
                     child: const Icon(Icons.verified_rounded, color: Colors.white, size: 12),
                   ),
                 ],
@@ -646,7 +646,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               icon: Icons.favorite_rounded,
               value: _favoritesCount,
               label: tr('دڵخواز'),
-              color: const Color(0xFFE91E63),
+              color: const Color(0xFFC2557A),
               onTap: () => _push(const FavoritesScreen()),
             ),
             _divider(isDark),
@@ -655,7 +655,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               icon: Icons.video_library_rounded,
               value: _videosCount,
               label: tr('ڤیدیۆ'),
-              color: const Color(0xFF6366F1),
+              color: const Color(0xFF4F5BD5),
               onTap: () => _push(const UserVideosScreen()),
             ),
             _divider(isDark),
@@ -664,7 +664,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
               icon: Icons.assignment_rounded,
               value: _complaintsCount,
               label: tr('سکاڵاکانم'),
-              color: const Color(0xFFF59E0B),
+              color: const Color(0xFFD9822B),
             ),
           ],
         ),
@@ -732,10 +732,10 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
 
   Widget _buildQuickActions(bool isDark) {
     final actions = <_QuickAction>[
-      _QuickAction(Icons.favorite_rounded, 'دڵخوازەکان', const Color(0xFFE91E63), () => _push(const FavoritesScreen())),
-      _QuickAction(Icons.video_library_rounded, 'ڤیدیۆکان', const Color(0xFF6366F1), () => _push(const UserVideosScreen())),
+      _QuickAction(Icons.favorite_rounded, 'دڵخوازەکان', const Color(0xFFC2557A), () => _push(const FavoritesScreen())),
+      _QuickAction(Icons.video_library_rounded, 'ڤیدیۆکان', const Color(0xFF4F5BD5), () => _push(const UserVideosScreen())),
       _QuickAction(Icons.settings_rounded, 'ڕێکخستن', const Color(0xFF6B7280), () => _push(const SettingsScreen())),
-      _QuickAction(Icons.share_rounded, 'هاوبەشکردن', const Color(0xFF06B6D4), _shareApp),
+      _QuickAction(Icons.share_rounded, 'هاوبەشکردن', const Color(0xFF1E88E5), _shareApp),
     ];
 
     final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5);
@@ -972,17 +972,17 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
         child: ElevatedButton.icon(
           onPressed: _loggingOut ? null : _showLogoutDialog,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red.withValues(alpha: 0.1),
-            foregroundColor: Colors.red,
-            disabledBackgroundColor: Colors.red.withValues(alpha: 0.05),
+            backgroundColor: const Color(0xFFDC3545).withValues(alpha: 0.1),
+            foregroundColor: const Color(0xFFDC3545),
+            disabledBackgroundColor: const Color(0xFFDC3545).withValues(alpha: 0.05),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.red.withValues(alpha: 0.3), width: 1.5),
+              side: BorderSide(color: const Color(0xFFDC3545).withValues(alpha: 0.3), width: 1.5),
             ),
             elevation: 0,
           ),
           icon: _loggingOut
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFDC3545)))
               : const Icon(Icons.logout_rounded, size: 22),
           label: Text(tr('چوونەدەرەوە لە هەژمار'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         ),
@@ -1001,7 +1001,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
-              const Icon(Icons.logout_rounded, color: Colors.red),
+              const Icon(Icons.logout_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 10),
               Text(tr('چوونەدەرەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
             ],
@@ -1014,7 +1014,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -1038,11 +1038,11 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
         _favoritesCount = 0;
         _complaintsCount = 0;
       });
-      _snack(tr('✅ بە سەرکەوتوویی چوویتە دەرەوە'), const Color(0xFF10B981));
+      _snack(tr('✅ بە سەرکەوتوویی چوویتە دەرەوە'), const Color(0xFF0F9D7A));
       await _loadAll();
     } catch (e) {
       debugPrint('❌ Logout error: $e');
-      _snack(tr('⚠️ چوونەدەرەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFEF4444));
+      _snack(tr('⚠️ چوونەدەرەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _loggingOut = false);
     }
@@ -1056,7 +1056,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       );
     } catch (e) {
       debugPrint('❌ Share error: $e');
-      _snack(tr('⚠️ نەتوانرا هاوبەش بکرێت'), const Color(0xFFEF4444));
+      _snack(tr('⚠️ نەتوانرا هاوبەش بکرێت'), const Color(0xFFDC3545));
     }
   }
 
@@ -1096,19 +1096,19 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
 
   Color _getRoleColor(String role) {
     switch (role.toLowerCase()) {
-      case 'admin': return const Color(0xFFF59E0B);
-      case 'vendor': return const Color(0xFFE91E63);
-      case 'department': return const Color(0xFF8B5CF6);
+      case 'admin': return const Color(0xFFD9822B);
+      case 'vendor': return const Color(0xFFC2557A);
+      case 'department': return const Color(0xFF4F5BD5);
       default: return const Color(0xFF1E88E5);
     }
   }
 
   List<Color> _getRoleGradient(String role) {
     switch (role.toLowerCase()) {
-      case 'admin': return const [Color(0xFFF59E0B), Color(0xFFF97316)];
-      case 'vendor': return const [Color(0xFFE91E63), Color(0xFF9C27B0)];
-      case 'department': return const [Color(0xFF8B5CF6), Color(0xFF6366F1)];
-      default: return const [Color(0xFF1E88E5), Color(0xFF6C5CE7)];
+      case 'admin': return const [Color(0xFFD9822B), Color(0xFFD9822B)];
+      case 'vendor': return const [Color(0xFFC2557A), Color(0xFFC2557A)];
+      case 'department': return const [Color(0xFF4F5BD5), Color(0xFF4F5BD5)];
+      default: return const [Color(0xFF1E88E5), Color(0xFF4F5BD5)];
     }
   }
 }

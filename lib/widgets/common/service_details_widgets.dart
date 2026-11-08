@@ -15,8 +15,8 @@ import '../../l10n/tr.dart';
 class ServiceDetailWidgets {
   ServiceDetailWidgets._();
 
-  static const Color _purple = Color(0xFF8B5CF6);
-  static const Color _green = Color(0xFF10B981);
+  static const Color _purple = Color(0xFF4F5BD5);
+  static const Color _green = Color(0xFF0F9D7A);
 
   static Color _fg(bool isDark) =>
       isDark ? Colors.white : const Color(0xFF1A1A2E);

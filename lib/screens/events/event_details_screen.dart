@@ -24,7 +24,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       if (hex.length == 6) hex = 'FF$hex';
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
-      return const Color(0xFF6C5CE7);
+      return const Color(0xFF4F5BD5);
     }
   }
 
@@ -51,7 +51,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('تکایە سەرەتا بچۆ ژوورەوە ⚠')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -157,7 +157,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFC107),
+                              color: const Color(0xFFD9822B),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
@@ -329,11 +329,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: _isInterested
-                        ? const Color(0xFFEF4444)
+                        ? const Color(0xFFDC3545)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: const Color(0xFFEF4444),
+                      color: const Color(0xFFDC3545),
                       width: 2,
                     ),
                   ),
@@ -345,7 +345,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                             : Icons.favorite_border_rounded,
                         color: _isInterested
                             ? Colors.white
-                            : const Color(0xFFEF4444),
+                            : const Color(0xFFDC3545),
                         size: 20,
                       ),
                       const SizedBox(width: 6),
@@ -356,7 +356,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                           fontWeight: FontWeight.w900,
                           color: _isInterested
                               ? Colors.white
-                              : const Color(0xFFEF4444),
+                              : const Color(0xFFDC3545),
                         ),
                       ),
                     ],

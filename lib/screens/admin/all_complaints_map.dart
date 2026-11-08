@@ -143,14 +143,14 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
   Color _getStatusColor(String? status) {
     switch (status) {
       case 'pending':
-        return const Color(0xFFFF9800);
+        return const Color(0xFFD9822B);
       case 'approved':
       case 'in_progress':
-        return const Color(0xFF2ECC71);
+        return const Color(0xFF0F9D7A);
       case 'rejected':
-        return const Color(0xFFE74C3C);
+        return const Color(0xFFDC3545);
       case 'completed':
-        return const Color(0xFF3498DB);
+        return const Color(0xFF1E88E5);
       default:
         return Colors.grey;
     }
@@ -301,25 +301,25 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                       'چاوەڕوان',
                       'pending',
                       Icons.hourglass_top_rounded,
-                      const Color(0xFFFF9800),
+                      const Color(0xFFD9822B),
                     ),
                     _buildFilterChip(
                       'پەسەندکراو',
                       'approved',
                       Icons.verified_rounded,
-                      const Color(0xFF2ECC71),
+                      const Color(0xFF0F9D7A),
                     ),
                     _buildFilterChip(
                       'جێبەجێکرا',
                       'completed',
                       Icons.check_circle_rounded,
-                      const Color(0xFF3498DB),
+                      const Color(0xFF1E88E5),
                     ),
                     _buildFilterChip(
                       'ڕەتکراو',
                       'rejected',
                       Icons.cancel_rounded,
-                      const Color(0xFFE74C3C),
+                      const Color(0xFFDC3545),
                     ),
                   ],
                 ),
@@ -354,19 +354,19 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                     ),
                     const SizedBox(height: 6),
                     _buildLegendItem(
-                      const Color(0xFFFF9800),
+                      const Color(0xFFD9822B),
                       'چاوەڕوان',
                     ),
                     _buildLegendItem(
-                      const Color(0xFF2ECC71),
+                      const Color(0xFF0F9D7A),
                       'پەسەندکراو',
                     ),
                     _buildLegendItem(
-                      const Color(0xFF3498DB),
+                      const Color(0xFF1E88E5),
                       'جێبەجێکرا',
                     ),
                     _buildLegendItem(
-                      const Color(0xFFE74C3C),
+                      const Color(0xFFDC3545),
                       'ڕەتکراو',
                     ),
                   ],

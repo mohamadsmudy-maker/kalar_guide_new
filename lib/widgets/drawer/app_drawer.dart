@@ -92,7 +92,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                           _buildItem(
                             context,
                             icon: Icons.emergency_rounded,
-                            color: const Color(0xFFEF4444),
+                            color: const Color(0xFFDC3545),
                             title: tr('فریاکەوتن'),
                             subtitle: tr('ژمارە گرنگەکان'),
                             isDark: isDark,
@@ -102,7 +102,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                           _buildItem(
                             context,
                             icon: Icons.event_rounded,
-                            color: const Color(0xFF8B5CF6),
+                            color: const Color(0xFF4F5BD5),
                             title: tr('ڕووداوەکان'),
                             subtitle: tr('ڕووداوەکانی کەلار'),
                             isDark: isDark,
@@ -117,7 +117,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                           _buildItem(
                             context,
                             icon: Icons.map_rounded,
-                            color: const Color(0xFF10B981),
+                            color: const Color(0xFF0F9D7A),
                             title: tr('نەخشەی گەڕەکان'),
                             subtitle: tr('بینینی نەخشەی تەواوی کەلار'),
                             isDark: isDark,
@@ -167,7 +167,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
       padding: const EdgeInsets.only(top: 50, bottom: 25, left: 20, right: 20),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF1E88E5), Color(0xFF6C5CE7)],
+          colors: [Color(0xFF1E88E5), Color(0xFF4F5BD5)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -188,11 +188,11 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFFD700), Color(0xFFFF8F00)],
+                      colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                        color: const Color(0xFFD9822B).withValues(alpha: 0.4),
                         blurRadius: 15,
                         spreadRadius: 2,
                       ),
@@ -412,12 +412,12 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: (effectiveIsDark ? Colors.orange : Colors.purple).withValues(alpha: 0.15),
+                  color: (effectiveIsDark ? const Color(0xFFD9822B) : const Color(0xFF4F5BD5)).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   effectiveIsDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                  color: effectiveIsDark ? Colors.orange : Colors.purple,
+                  color: effectiveIsDark ? const Color(0xFFD9822B) : const Color(0xFF4F5BD5),
                   size: 20,
                 ),
               ),
@@ -499,10 +499,10 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
+                  color: const Color(0xFF1E88E5).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.language_rounded, color: Color(0xFF06B6D4), size: 20),
+                child: const Icon(Icons.language_rounded, color: Color(0xFF1E88E5), size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -543,10 +543,10 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF06B6D4).withValues(alpha: 0.15) : Colors.transparent,
+                          color: isSelected ? const Color(0xFF1E88E5).withValues(alpha: 0.15) : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isSelected ? const Color(0xFF06B6D4) : Colors.transparent,
+                            color: isSelected ? const Color(0xFF1E88E5) : Colors.transparent,
                             width: 1.5,
                           ),
                         ),
@@ -571,12 +571,12 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF10B981).withValues(alpha: 0.1),
-              const Color(0xFF10B981).withValues(alpha: 0.05),
+              const Color(0xFF0F9D7A).withValues(alpha: 0.1),
+              const Color(0xFF0F9D7A).withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+          border: Border.all(color: const Color(0xFF0F9D7A).withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -589,7 +589,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
+                      color: Color(0xFF0F9D7A),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -600,12 +600,12 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
             Expanded(
               child: Text(
                 tr('ئێستا بەکارهێنەر ئۆنلاینە'),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF0F9D7A)),
               ),
             ),
             Text(
               '$_onlineUsers',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F9D7A)),
             ),
           ],
         ),
@@ -627,12 +627,12 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF10B981), Color(0xFF059669)],
+              colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                color: const Color(0xFF0F9D7A).withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -659,16 +659,16 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.red.withValues(alpha: 0.1),
+            color: const Color(0xFFDC3545).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1.5),
+            border: Border.all(color: const Color(0xFFDC3545).withValues(alpha: 0.3), width: 1.5),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
+              const Icon(Icons.logout_rounded, color: Color(0xFFDC3545), size: 20),
               const SizedBox(width: 10),
-              Text(tr('چوونەدەرەوە لە هەژمار'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 15)),
+              Text(tr('چوونەدەرەوە لە هەژمار'), style: const TextStyle(color: Color(0xFFDC3545), fontWeight: FontWeight.w900, fontSize: 15)),
             ],
           ),
         ),
@@ -710,7 +710,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
-              const Icon(Icons.logout_rounded, color: Colors.red),
+              const Icon(Icons.logout_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 10),
               Text(tr('چوونەدەرەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
             ],
@@ -720,7 +720,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('نەخێر'))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -741,7 +741,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(tr('✅ بە سەرکەوتوویی چوویتە دەرەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: const Color(0xFF0F9D7A),
         behavior: SnackBarBehavior.floating,
       ),
     );

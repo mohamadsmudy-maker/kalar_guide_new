@@ -39,7 +39,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
   // 📈 Stats
   // ═══════════════════════════════════════════════════════════
   Widget _buildSliverStats(bool isDark) {
-    const green = Color(0xFF10B981);
+    const green = Color(0xFF0F9D7A);
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -48,16 +48,16 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
             Row(
               children: [
                 _buildMiniStat(tr('کۆی'), _allCount, Icons.assignment_rounded,
-                    const Color(0xFF6C5CE7), isDark),
+                    const Color(0xFF4F5BD5), isDark),
                 const SizedBox(width: 8),
                 _buildMiniStat(tr('چاوەڕوان'), _pendingCount,
-                    Icons.hourglass_top_rounded, const Color(0xFFFF9800), isDark),
+                    Icons.hourglass_top_rounded, const Color(0xFFD9822B), isDark),
                 const SizedBox(width: 8),
                 _buildMiniStat(tr('دواکەوتوو'), _overdueCount,
-                    Icons.warning_amber_rounded, const Color(0xFFE53935), isDark),
+                    Icons.warning_amber_rounded, const Color(0xFFDC3545), isDark),
                 const SizedBox(width: 8),
                 _buildMiniStat(tr('تەواو'), _completedCount,
-                    Icons.check_circle_rounded, const Color(0xFF3498DB), isDark),
+                    Icons.check_circle_rounded, const Color(0xFF1E88E5), isDark),
               ],
             ),
             const SizedBox(height: 12),
@@ -77,7 +77,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                          colors: [Color(0xFF10B981), Color(0xFF059669)]),
+                          colors: [Color(0xFF0F9D7A), Color(0xFF0F9D7A)]),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.trending_up_rounded,
@@ -261,10 +261,10 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
               return _nbChip(
                 isDark: isDark,
                 selected: _filterNeighborhood == null,
-                color: const Color(0xFF6C5CE7),
+                color: const Color(0xFF4F5BD5),
                 icon: Icons.location_city_rounded,
                 label: tr('هەموو گەڕەکەکان'),
-                selectedGradient: const [Color(0xFF6C5CE7), Color(0xFF9C27B0)],
+                selectedGradient: const [Color(0xFF4F5BD5), Color(0xFFC2557A)],
                 onTap: () {
                   _filterNeighborhood = null;
                   _refilter();

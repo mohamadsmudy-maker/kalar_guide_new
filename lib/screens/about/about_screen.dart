@@ -80,7 +80,7 @@ class _AboutScreenState extends State<AboutScreen>
     _ServiceItem(
       icon: Icons.phone_android_rounded,
       label: tr('گەشەپێدانی ئەپ'),
-      color: AppColors.pink, // ⚠️ دڵنیابە لەوەی ئەم ڕەنگە لە AppColors دا هەیە، ئەگەنا بیکە بە Colors.pink
+      color: AppColors.pink, // ⚠️ دڵنیابە لەوەی ئەم ڕەنگە لە AppColors دا هەیە، ئەگەنا بیکە بە const Color(0xFFC2557A)
     ),
     _ServiceItem(
       icon: Icons.palette_rounded,

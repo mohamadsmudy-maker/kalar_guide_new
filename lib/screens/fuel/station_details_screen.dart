@@ -124,7 +124,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
           ],
         ),
         body: _loading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFFF59E0B)))
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFFD9822B)))
             : _station == null
                 ? Center(child: Text(t('not_found'), style: const TextStyle(color: Colors.grey)))
                 : RefreshIndicator(
@@ -186,12 +186,12 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF78350F), Color(0xFFF59E0B)],
+          colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: const Color(0xFFF59E0B).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [BoxShadow(color: const Color(0xFFD9822B).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,7 +286,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
   Widget _sectionTitle(String title, bool isDark, {Widget? trailing}) {
     return Row(
       children: [
-        Container(width: 4, height: 18, decoration: BoxDecoration(color: const Color(0xFFF59E0B), borderRadius: BorderRadius.circular(4))),
+        Container(width: 4, height: 18, decoration: BoxDecoration(color: const Color(0xFFD9822B), borderRadius: BorderRadius.circular(4))),
         const SizedBox(width: 8),
         Expanded(
           child: Text(tr(title),
@@ -330,7 +330,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
                 if (updated != null)
                   Text(tr(CurrencyStrings.timeAgo(updated, lang)),
-                      style: TextStyle(fontSize: 10, color: stale ? Colors.orange : sub, fontWeight: FontWeight.w600)),
+                      style: TextStyle(fontSize: 10, color: stale ? const Color(0xFFD9822B) : sub, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -411,9 +411,9 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(change > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                    size: 14, color: change > 0 ? Colors.red : Colors.green),
+                    size: 14, color: change > 0 ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A)),
                 Text(tr(CurrencyService.formatPrice(change.abs(), lang)),
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: change > 0 ? Colors.red : Colors.green)),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: change > 0 ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A))),
               ],
             ),
         ],

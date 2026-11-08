@@ -83,7 +83,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFDC3545),
                 foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx, true),
@@ -108,14 +108,14 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ مامەڵە سڕایەوە')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -250,7 +250,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
               ),
               IconButton(
                 icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                color: Colors.red,
+                color: const Color(0xFFDC3545),
                 onPressed: () => _deleteService(service),
               ),
             ],
@@ -272,14 +272,14 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.schedule_rounded, size: 14, color: Colors.blue),
+                const Icon(Icons.schedule_rounded, size: 14, color: Color(0xFF1E88E5)),
                 const SizedBox(width: 6),
                 Text(
                   trf('ماوە: {0}', [duration]),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    color: Color(0xFF1E88E5),
                   ),
                 ),
               ],
@@ -290,14 +290,14 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.description_outlined, size: 14, color: Colors.green),
+                const Icon(Icons.description_outlined, size: 14, color: Color(0xFF0F9D7A)),
                 const SizedBox(width: 6),
                 Text(
                   tr('بەڵگەنامە پێویستەکان:'),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: Color(0xFF0F9D7A),
                   ),
                 ),
               ],
@@ -307,7 +307,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
               padding: const EdgeInsets.only(right: 20, bottom: 3),
               child: Row(
                 children: [
-                  const Icon(Icons.circle, size: 5, color: Colors.green),
+                  const Icon(Icons.circle, size: 5, color: Color(0xFF0F9D7A)),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -327,14 +327,14 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.attach_money_rounded, size: 14, color: Colors.orange),
+                const Icon(Icons.attach_money_rounded, size: 14, color: Color(0xFFD9822B)),
                 const SizedBox(width: 6),
                 Text(
                   tr('نرخ:'),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.orange,
+                    color: Color(0xFFD9822B),
                   ),
                 ),
               ],
@@ -344,7 +344,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
               padding: const EdgeInsets.only(right: 20, bottom: 3),
               child: Row(
                 children: [
-                  const Icon(Icons.circle, size: 5, color: Colors.orange),
+                  const Icon(Icons.circle, size: 5, color: Color(0xFFD9822B)),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -481,7 +481,7 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('ناوی مامەڵە پێویستە')),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFD9822B),
         ),
       );
       return;
@@ -533,14 +533,14 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tr('✅ پاشەکەوتکرا')),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: Colors.red),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
