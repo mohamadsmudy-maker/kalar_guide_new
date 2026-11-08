@@ -45,8 +45,15 @@ class OsmImportService {
 
   static const _endpoints = [
     'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.private.coffee/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   ];
+
+  /// Overpass داوای ناوێکی ڕوون دەکات (هەندێک سێرڤەر داواکاری بێ ناو ڕەت دەکەنەوە)
+  static const _headers = {
+    'User-Agent': 'KalarGuide/1.1 (Kalar city guide app; admin import)',
+    'Accept': 'application/json',
+  };
 
   static String get query {
     final (s, w, n, e) = bbox;
@@ -69,16 +76,24 @@ class OsmImportService {
     Object? lastError;
     try {
       for (final url in _endpoints) {
-        try {
-          final res = await c
-              .post(Uri.parse(url), body: {'data': query})
-              .timeout(const Duration(seconds: 70));
-          if (res.statusCode == 200) {
-            return parse(utf8.decode(res.bodyBytes));
+        // POST، پاشان GET (هەندێک تۆڕی مۆبایل POST ڕێگە نادەن)
+        for (final usePost in [true, false]) {
+          try {
+            final res = usePost
+                ? await c
+                    .post(Uri.parse(url), headers: _headers, body: {'data': query})
+                    .timeout(const Duration(seconds: 70))
+                : await c
+                    .get(Uri.parse(url).replace(queryParameters: {'data': query}),
+                        headers: _headers)
+                    .timeout(const Duration(seconds: 70));
+            if (res.statusCode == 200) {
+              return parse(utf8.decode(res.bodyBytes));
+            }
+            lastError = '${Uri.parse(url).host}: HTTP ${res.statusCode}';
+          } catch (e) {
+            lastError = '${Uri.parse(url).host}: $e';
           }
-          lastError = 'HTTP ${res.statusCode}';
-        } catch (e) {
-          lastError = e;
         }
       }
     } finally {

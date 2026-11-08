@@ -12,6 +12,7 @@ import '../../services/price_save_result.dart';
 import 'currency_history_screen.dart';
 import 'currency_strings.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 🏢 وردەکاری نوسینگەی دراو — ULTRA PRO MAX
 ///   🔐 دەستکاری تەنها بۆ ئەدمین یان خاوەنی نوسینگە (پێشتر هەموو کەسێک دەیتوانی)
@@ -169,7 +170,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
   Widget _buildInfoCard(Map<String, dynamic> s, String lang) {
     String t(String k) => CurrencyStrings.of(lang, k);
     final name = s['name']?.toString() ?? '';
-    final address = s['address']?.toString() ?? '';
+    final address = PlaceDisplay.address(s['address']);
     final phone = s['phone']?.toString() ?? '';
     final logo = (s['logo'] ?? s['image'] ?? '').toString();
 
@@ -641,7 +642,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ok ? '✅ ${t('saved')}' : result.message),
+        content: Text(ok ? '✅ ${t('saved')}' : result.messageFor(admin: AuthSessionManager.isAdmin)),
         backgroundColor: ok ? const Color(0xFF0F9D7A) : const Color(0xFFDC3545),
         behavior: SnackBarBehavior.floating,
       ),

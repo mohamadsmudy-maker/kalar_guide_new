@@ -1756,4 +1756,5 @@ const Map<String, String> stringsAr = {
   'بارەگای حزب': 'مقر حزب',
   'پارک': 'حديقة',
   'تەواوکردن و زیادکردن': 'إكمال وإضافة',
+  'فایلی 20261115_places_sources.sql هێشتا لە Supabase جێبەجێ نەکراوە': 'لم يتم تشغيل الملف 20261115_places_sources.sql في Supabase بعد',
 };

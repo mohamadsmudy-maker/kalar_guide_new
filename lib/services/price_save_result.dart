@@ -16,6 +16,23 @@ enum PriceSaveResult {
 
   bool get isOk => this == ok;
 
+  /// دوایین هەڵەی تەکنیکی (تەنها بۆ ئەدمین پیشان دەدرێت بۆ دۆزینەوەی هۆکار)
+  static String? lastError;
+
+  static void noteError(Object e) {
+    final s = e is PostgrestException
+        ? '${e.code ?? ''} ${e.message}${e.details != null ? ' — ${e.details}' : ''}'
+        : '$e';
+    lastError = s.length > 220 ? '${s.substring(0, 220)}…' : s;
+  }
+
+  /// پەیامی بەکارهێنەر؛ بۆ ئەدمین هۆکاری تەکنیکیش زیاد دەکرێت
+  String messageFor({required bool admin}) {
+    final err = lastError;
+    if (!admin || isOk || err == null || err.isEmpty) return message;
+    return '$message\n($err)';
+  }
+
   static PriceSaveResult fromServer(Object? status) => switch ('$status') {
         'ok' => ok,
         'not_logged_in' => notLoggedIn,

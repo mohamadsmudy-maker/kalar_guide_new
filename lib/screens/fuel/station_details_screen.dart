@@ -11,6 +11,7 @@ import '../currency/currency_strings.dart';
 import 'fuel_history_screen.dart';
 import 'fuel_strings.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 🏢 وردەکاری بەنزینخانە — ULTRA PRO MAX
 class StationDetailsScreen extends StatefulWidget {
@@ -176,7 +177,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
     String t(String k) => FuelStrings.of(lang, k);
     final s = _station!;
     final name = s['name']?.toString() ?? '';
-    final address = s['address']?.toString() ?? '';
+    final address = PlaceDisplay.address(s['address']);
     final phone = s['phone']?.toString() ?? '';
     final logoRaw = s['logo']?.toString() ?? '';
     final logo = logoRaw.isNotEmpty ? logoRaw : (s['image']?.toString() ?? '');
