@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
 import '../../services/app_settings_service.dart';
-import '../../services/places/place_writer.dart';
+import '../stores/add_store_screen.dart';
 
 /// 📥 پێشنیاری شوێنەکانی هاوڵاتیان — چالاک/ناچالاک، پەسەند/ڕەتکردنەوە
 class AdminPlaceSuggestionsScreen extends StatefulWidget {
@@ -88,79 +88,30 @@ class _AdminPlaceSuggestionsScreenState
     );
   }
 
+  /// شاشەی «زیادکردنی شوێن» بە زانیارییەکانی پێشنیارەکە پڕ دەکرێتەوە؛ ئەدمین
+  /// وێنە، لۆگۆ، ژێربەش و ... زیاد دەکات. کۆدی نهێنی خۆکارانە دروست دەبێت.
   Future<void> _approve(Map<String, dynamic> s) async {
-    final nameCtrl = TextEditingController(text: '${s['name'] ?? ''}');
-    String? category =
-        _categories.contains(s['category']) ? '${s['category']}' : null;
-    bool government = false;
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setD) => Directionality(
-          textDirection: AppLang.direction,
-          child: AlertDialog(
-            title: Text(tr('پەسەندکردنی شوێن')),
-            content: SingleChildScrollView(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                TextField(
-                    controller: nameCtrl,
-                    decoration: InputDecoration(labelText: tr('ناوی شوێن'))),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: category,
-                  isExpanded: true,
-                  decoration: InputDecoration(labelText: tr('بەش')),
-                  items: [
-                    for (final c in _categories)
-                      DropdownMenuItem(value: c, child: Text(tr(c)))
-                  ],
-                  onChanged: (v) => setD(() => category = v),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(tr('حکومی')),
-                  value: government,
-                  onChanged: (v) => setD(() => government = v),
-                ),
-              ]),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: Text(tr('پاشگەزبوونەوە'))),
-              FilledButton(
-                onPressed: category == null || nameCtrl.text.trim().length < 2
-                    ? null
-                    : () => Navigator.pop(ctx, true),
-                child: Text(tr('زیادکردن بۆ ئەپ')),
-              ),
-            ],
-          ),
-        ),
+    final id = (s['id'] as num).toInt();
+    final dukanId = await Navigator.push<Object?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddStoreScreen(prefill: {
+          'name': s['name'],
+          'category': _categories.contains(s['category']) ? s['category'] : null,
+          'phone': s['phone'],
+          'address': s['address'],
+          'description': s['note'],
+          'latitude': s['latitude'],
+          'longitude': s['longitude'],
+          'type': 'ناحکومی',
+          'source': 'suggestion',
+        }),
       ),
     );
-    final name = nameCtrl.text.trim();
-    nameCtrl.dispose();
-    if (ok != true || category == null) return;
+    if (dukanId is! int || !mounted) return;
 
-    final id = (s['id'] as num).toInt();
     setState(() => _busy.add(id));
     try {
-      final lat = (s['latitude'] as num).toDouble();
-      final lng = (s['longitude'] as num).toDouble();
-      final dukanId = await PlaceWriter.insert(PlaceWriter.row(
-        name: name,
-        category: category!,
-        lat: lat,
-        lng: lng,
-        source: 'suggestion',
-        phone: s['phone']?.toString(),
-        address: s['address']?.toString(),
-        description: s['note']?.toString(),
-        government: government,
-        neighborhood: await PlaceWriter.neighborhoodOf(lat, lng),
-      ));
       await _db.from('place_suggestions').update({
         'status': 'approved',
         'dukan_id': dukanId,

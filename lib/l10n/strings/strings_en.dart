@@ -1755,4 +1755,5 @@ const Map<String, String> stringsEn = {
   'ڕێکخراو': 'Organization',
   'بارەگای حزب': 'Party office',
   'پارک': 'Park',
+  'تەواوکردن و زیادکردن': 'Complete and add',
 };

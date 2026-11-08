@@ -1,5 +1,6 @@
 // lib/services/places/place_writer.dart
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,6 +11,22 @@ class PlaceWriter {
   PlaceWriter._();
 
   static SupabaseClient get _db => Supabase.instance.client;
+
+  static final Random _rand = Random.secure();
+
+  /// کۆدی نهێنی شوێن: ٤ پیت + ٣ ژمارە (بۆ نموونە BGDY125) — هەمان شێوازی
+  /// شاشەی زیادکردنی شوێن؛ خاوەن شوێن بەم کۆدە داوای بەڕێوەبردن دەکات
+  static String generateVendorCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    final b = StringBuffer();
+    for (var i = 0; i < 4; i++) {
+      b.write(chars[_rand.nextInt(chars.length)]);
+    }
+    for (var i = 0; i < 3; i++) {
+      b.write(_rand.nextInt(10));
+    }
+    return b.toString();
+  }
 
   /// ڕیزی ئامادە بۆ dukan
   static Map<String, dynamic> row({
@@ -42,6 +59,7 @@ class PlaceWriter {
         'coordinates': [lng, lat],
       }),
       'neighborhood_name': neighborhood,
+      'vendor_code': generateVendorCode(),
       'image': '',
       'images': <String>[],
       'is_approved': true,
@@ -50,6 +68,7 @@ class PlaceWriter {
       'total_reviews': 0,
       'services': <dynamic>[],
       'source': source,
+      'created_at': DateTime.now().toIso8601String(),
       if (externalId != null) 'external_id': externalId,
     };
   }

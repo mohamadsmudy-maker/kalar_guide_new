@@ -6,6 +6,7 @@ import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
 import '../../services/places/osm_import_service.dart';
 import '../../services/places/place_writer.dart';
+import '../stores/add_store_screen.dart';
 
 /// 🗺️ هێنانی شوێنەکانی کەلار لە OpenStreetMap — ئەدمین هەڵیاندەبژێرێت
 class AdminOsmImportScreen extends StatefulWidget {
@@ -117,6 +118,28 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
       content: Text(trf('{0} شوێن زیاد کرا، {1} سەرکەوتوو نەبوو', [ok, failed])),
     ));
     await _fetch();
+  }
+
+  /// شاشەی «زیادکردنی شوێن» بە زانیاری OSM پڕ دەکرێتەوە (وێنە، لۆگۆ، ژێربەش...)
+  Future<void> _completeAndAdd(_Row r) async {
+    final p = r.place;
+    final id = await Navigator.push<Object?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddStoreScreen(prefill: {
+          'name': p.name,
+          'category': r.category,
+          'phone': p.phone,
+          'address': p.address,
+          'latitude': p.lat,
+          'longitude': p.lng,
+          'type': p.isGovernment ? 'حکومی' : 'ناحکومی',
+          'source': 'osm',
+          'external_id': p.externalId,
+        }),
+      ),
+    );
+    if (id is int && mounted) await _fetch();
   }
 
   @override
@@ -265,7 +288,14 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
                               _chip(tr('لەوانەیە پێشتر هەبێت'), AppColors.toneAmber),
                           ]),
                           if (!added) ...[
-                            const SizedBox(height: 6),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: TextButton.icon(
+                                onPressed: _saving ? null : () => _completeAndAdd(r),
+                                icon: const Icon(Icons.edit_location_alt_rounded, size: 18),
+                                label: Text(tr('تەواوکردن و زیادکردن')),
+                              ),
+                            ),
                             DropdownButton<String>(
                               isExpanded: true,
                               isDense: true,
