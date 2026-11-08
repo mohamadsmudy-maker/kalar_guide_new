@@ -1657,7 +1657,7 @@ const Map<String, String> stringsAr = {
   'ئایینی': 'ديني',
   'مزگەوتەکان': 'المساجد',
   'ئەم دەقە جارێکی تر بە Gemini وەردەگێڕدرێتەوە.': 'سيُترجم هذا النص مرة أخرى بواسطة Gemini.',
-  'خشتەی translations نەدۆزرایەوە. فایلی 20261112_translations_cache.sql لە Supabase جێبەجێ بکە.': 'لم يتم العثور على جدول translations. شغّل الملف 20261112_translations_cache.sql في Supabase.',
+  'خشتەی text_translations نەدۆزرایەوە. فایلی 20261112_translations_cache.sql لە Supabase جێبەجێ بکە.': 'لم يتم العثور على جدول text_translations. شغّل الملف 20261112_translations_cache.sql في Supabase.',
   'سڕینەوەی وەرگێڕان': 'حذف الترجمة',
   'هێشتا هیچ وەرگێڕانێک نییە': 'لا توجد ترجمات بعد',
   'هەڵەیەک ڕوویدا': 'حدث خطأ ما',

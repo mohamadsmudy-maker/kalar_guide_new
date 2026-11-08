@@ -1657,7 +1657,7 @@ const Map<String, String> stringsEn = {
   'ئایینی': 'Religious',
   'مزگەوتەکان': 'Mosques',
   'ئەم دەقە جارێکی تر بە Gemini وەردەگێڕدرێتەوە.': 'This text will be translated again by Gemini.',
-  'خشتەی translations نەدۆزرایەوە. فایلی 20261112_translations_cache.sql لە Supabase جێبەجێ بکە.': 'The translations table was not found. Run 20261112_translations_cache.sql in Supabase.',
+  'خشتەی text_translations نەدۆزرایەوە. فایلی 20261112_translations_cache.sql لە Supabase جێبەجێ بکە.': 'The text_translations table was not found. Run 20261112_translations_cache.sql in Supabase.',
   'سڕینەوەی وەرگێڕان': 'Delete translation',
   'هێشتا هیچ وەرگێڕانێک نییە': 'No translations yet',
   'هەڵەیەک ڕوویدا': 'Something went wrong',

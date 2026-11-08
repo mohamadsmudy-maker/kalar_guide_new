@@ -2,6 +2,8 @@
 -- 🌍 Kalar Guide — shared translation cache for database text
 -- ═══════════════════════════════════════════════════════════════════
 -- Run AFTER 20261108_rls_lockdown.sql. Safe to run more than once.
+-- The table is called text_translations because some projects already have
+-- an unrelated table named "translations"; that one is left untouched.
 --
 -- Place names, news and categories are translated by Gemini (Edge
 -- Function translate-text). Without this table every phone translated
@@ -13,7 +15,7 @@
 --     overwritten by Gemini).
 -- ═══════════════════════════════════════════════════════════════════
 
-create table if not exists public.translations (
+create table if not exists public.text_translations (
   lang        text not null check (lang in ('en', 'ar')),
   source      text not null check (length(source) between 1 and 5000),
   -- long texts cannot be indexed directly, so rows are keyed by a hash
@@ -25,26 +27,26 @@ create table if not exists public.translations (
   primary key (lang, source_hash)
 );
 
-create index if not exists translations_lang_updated_idx
-  on public.translations (lang, updated_at desc);
+create index if not exists text_translations_lang_updated_idx
+  on public.text_translations (lang, updated_at desc);
 
-alter table public.translations enable row level security;
+alter table public.text_translations enable row level security;
 
-drop policy if exists read_all     on public.translations;
-drop policy if exists admin_insert on public.translations;
-drop policy if exists admin_update on public.translations;
-drop policy if exists admin_delete on public.translations;
+drop policy if exists read_all     on public.text_translations;
+drop policy if exists admin_insert on public.text_translations;
+drop policy if exists admin_update on public.text_translations;
+drop policy if exists admin_delete on public.text_translations;
 
 -- everyone reads; only the admin changes rows by hand.
 -- The Edge Function writes with the service role, which bypasses RLS.
-create policy read_all     on public.translations for select using (true);
-create policy admin_insert on public.translations for insert with check (public.app_is_admin());
-create policy admin_update on public.translations for update
+create policy read_all     on public.text_translations for select using (true);
+create policy admin_insert on public.text_translations for insert with check (public.app_is_admin());
+create policy admin_update on public.text_translations for update
   using (public.app_is_admin()) with check (public.app_is_admin());
-create policy admin_delete on public.translations for delete using (public.app_is_admin());
+create policy admin_delete on public.text_translations for delete using (public.app_is_admin());
 
-grant select on public.translations to anon, authenticated;
-grant insert, update, delete on public.translations to authenticated;
+grant select on public.text_translations to anon, authenticated;
+grant insert, update, delete on public.text_translations to authenticated;
 
 -- Used by the Edge Function (service role only): read one translation /
 -- store a new one. A stored row is never overwritten, so an admin
@@ -54,7 +56,7 @@ returns text
 language sql stable security definer
 set search_path = public
 as $$
-  select t.translation from public.translations t
+  select t.translation from public.text_translations t
    where t.lang = p_lang and t.source_hash = md5(p_source) and t.source = p_source;
 $$;
 
@@ -63,7 +65,7 @@ returns void
 language sql security definer
 set search_path = public
 as $$
-  insert into public.translations (lang, source, translation)
+  insert into public.text_translations (lang, source, translation)
   values (p_lang, p_source, p_translation)
   on conflict (lang, source_hash) do nothing;
 $$;
@@ -79,4 +81,4 @@ end $$;
 -- 🔙 ROLLBACK
 -- drop function public.translation_put(text, text, text);
 -- drop function public.translation_get(text, text);
--- drop table public.translations;
+-- drop table public.text_translations;
