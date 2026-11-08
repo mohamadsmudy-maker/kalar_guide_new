@@ -140,6 +140,18 @@ class PlaceDisplay {
     return _toKu(text);
   }
 
+  /// ئایا شوێنەکە سەر بەم بەشەیە؟ category یان sub_category، بە
+  /// ئاسایی‌کردنی «ي/ك»، ZWNJ و بۆشایی (هەمان شت لە ژمارەکردن و لیستدا)
+  static bool inCategory(Map<String, dynamic> store, String categoryName) {
+    final want = AppLang.normalizeKey(categoryName);
+    if (want.isEmpty) return false;
+    for (final f in const ['category', 'sub_category']) {
+      final v = AppLang.normalizeKey('${store[f] ?? ''}');
+      if (v.isNotEmpty && v.contains(want)) return true;
+    }
+    return false;
+  }
+
   /// ژمارە بە پیتی زمانی ئێستا: کوردی/عەرەبی → «١٤١»، ئینگلیزی → «141»
   static String digits(Object n) => AppLang.isRtl ? _toKu('$n') : '$n';
 

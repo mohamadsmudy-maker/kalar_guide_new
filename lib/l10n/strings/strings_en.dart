@@ -1648,4 +1648,12 @@ const Map<String, String> stringsEn = {
   'پاشەکەوتکردن سەرکەوتوو نەبوو، دووبارە هەوڵ بدەرەوە': 'Saving failed, please try again',
   'چوونەژوورەوەکەت بەسەرچووە، تکایە دووبارە بچۆ ژوورەوە': 'Your login has expired, please log in again',
   'ڕێگەت پێنەدراوە نرخی ئەم شوێنە بگۆڕیت': 'You are not allowed to change prices for this place',
+  'هێشتا شوێنی تێدا نییە': 'No places yet',
+  'بەڕێوەبەرایەتیەکان': 'Directorates',
+  'بەڕێوەبەرایەتی پۆلیس هاتووچۆ': 'Traffic Police Directorate',
+  'بانک و نوسینگەی دراو': 'Banks & exchange offices',
+  'ئیدارەی گەرمیان': 'Garmiyan Administration',
+  'بەڕێوەبەرایەتی': 'Directorate',
+  'ئایینی': 'Religious',
+  'مزگەوتەکان': 'Mosques',
 };

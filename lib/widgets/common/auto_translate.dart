@@ -81,7 +81,7 @@ class _AutoTranslateState extends State<AutoTranslate> {
   }
 
   /// وەرگێڕانی ئامادەی ناو ئەپ (lib/l10n/strings) — خێرا و بێ سێرڤەر
-  String? get _bundled => AppLang.tables[widget.lang]?[widget.text.trim()];
+  String? get _bundled => AppLang.lookup(widget.lang, widget.text);
 
   bool get _needsTranslation =>
       widget.translate && _bundled == null && _shouldTranslate(widget.text, widget.lang);

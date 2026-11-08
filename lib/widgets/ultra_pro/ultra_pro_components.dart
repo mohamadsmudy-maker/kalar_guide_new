@@ -91,6 +91,9 @@ class ProEmptyState extends StatefulWidget {
   final Color color;
   final VoidCallback? onAction;
   final String? actionLabel;
+
+  /// ئایکۆنی دوگمەکە (بنەڕەت: +)
+  final IconData actionIcon;
   final bool isDark;
 
   const ProEmptyState({
@@ -101,6 +104,7 @@ class ProEmptyState extends StatefulWidget {
     required this.color,
     this.onAction,
     this.actionLabel,
+    this.actionIcon = Icons.add_rounded,
     required this.isDark,
   });
 
@@ -253,8 +257,8 @@ class _ProEmptyStateState extends State<ProEmptyState>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.add_rounded,
+                      Icon(
+                        widget.actionIcon,
                         color: Colors.white,
                         size: 18,
                       ),

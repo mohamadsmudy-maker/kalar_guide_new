@@ -50,10 +50,13 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         .select()
         .eq('parent', widget.categoryName);
 
-    _storesFuture = Supabase.instance.client
-        .from('dukan')
-        .select()
-        .ilike('category', '%${widget.categoryName}%');
+    // هەمان ڕێسای ژمارەکردنی شاشەی بەشەکان (PlaceDisplay.inCategory)
+    _storesFuture = Supabase.instance.client.from('dukan').select().then(
+          (rows) => [
+            for (final r in rows)
+              if (PlaceDisplay.inCategory(r, widget.categoryName)) r,
+          ],
+        );
   }
 
   @override
