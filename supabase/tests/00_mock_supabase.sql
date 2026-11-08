@@ -43,3 +43,7 @@ grant all on all sequences in schema public to anon, authenticated;
 -- real project; the migration must replace it.
 create function app_current_user() returns json language sql as $$ select '{}'::json $$;
 create function app_is_admin() returns integer language sql as $$ select 0 $$;
+
+-- a pre-existing version with other parameter names (as on the live project)
+create function public.app_update_currency_price(p_station_id bigint, p_currency text, p_buy numeric, p_sell numeric, p_notes text)
+returns boolean language sql as $$ select true $$;

@@ -13,9 +13,17 @@
 --   ok | not_logged_in | forbidden | not_found | invalid
 -- ═══════════════════════════════════════════════════════════════════
 
+-- An older version of these functions may already exist (e.g. from a
+-- local currency-vendors migration) with other parameter names, which
+-- "create or replace" cannot change. Drop those first.
+drop function if exists public.app_update_currency_price(bigint, text, numeric, numeric, text);
+drop function if exists public.app_update_currency_price(bigint, text, numeric, numeric);
+drop function if exists public.app_update_fuel_price(bigint, text, numeric, text);
+drop function if exists public.app_update_fuel_price(bigint, text, numeric);
+
 -- Admin, or an approved vendor whose store_id is this station or whose
 -- phone is the station's phone.
-create or replace function public.app_can_edit_station(p_station_id bigint)
+create or replace function public.app_price_station_editable(p_station_id bigint)
 returns boolean
 language sql stable security definer
 set search_path = public
@@ -28,10 +36,10 @@ as $$
                     or (coalesce(d.phone::text, '') <> ''
                         and d.phone::text = public.app_phone()))));
 $$;
-grant execute on function public.app_can_edit_station(bigint) to anon, authenticated;
+grant execute on function public.app_price_station_editable(bigint) to anon, authenticated;
 
 -- number from a json value, or null if it is not a number
-create or replace function public.app_json_num(v jsonb)
+create or replace function public.app_price_json_num(v jsonb)
 returns numeric
 language sql immutable
 as $$
@@ -66,7 +74,7 @@ begin
   select coalesce(d.currency_prices::jsonb, '{}'::jsonb) into cur
     from public.dukan d where d.id = p_station_id for update;
   if not found then return 'not_found'; end if;
-  if not public.app_can_edit_station(p_station_id) then return 'forbidden'; end if;
+  if not public.app_price_station_editable(p_station_id) then return 'forbidden'; end if;
 
   if jsonb_typeof(cur) <> 'object' then cur := '{}'::jsonb; end if;
   old := cur -> p_type;
@@ -84,8 +92,8 @@ begin
     (station_id, currency_type, old_buy_price, new_buy_price,
      old_sell_price, new_sell_price, updated_by_name, notes)
   values
-    (p_station_id, p_type, public.app_json_num(old -> 'buy'), p_buy,
-     public.app_json_num(old -> 'sell'), p_sell, coalesce(who, 'نەناسراو'),
+    (p_station_id, p_type, public.app_price_json_num(old -> 'buy'), p_buy,
+     public.app_price_json_num(old -> 'sell'), p_sell, coalesce(who, 'نەناسراو'),
      nullif(btrim(p_notes), ''));
 
   return 'ok';
@@ -115,7 +123,7 @@ begin
   select coalesce(d.fuel_prices::jsonb, '{}'::jsonb) into cur
     from public.dukan d where d.id = p_station_id for update;
   if not found then return 'not_found'; end if;
-  if not public.app_can_edit_station(p_station_id) then return 'forbidden'; end if;
+  if not public.app_price_station_editable(p_station_id) then return 'forbidden'; end if;
 
   if jsonb_typeof(cur) <> 'object' then cur := '{}'::jsonb; end if;
 
@@ -128,7 +136,7 @@ begin
   insert into public.fuel_price_history
     (station_id, fuel_type, old_price, new_price, updated_by_name, notes)
   values
-    (p_station_id, p_type, public.app_json_num(cur -> p_type), p_price,
+    (p_station_id, p_type, public.app_price_json_num(cur -> p_type), p_price,
      coalesce(who, 'نەناسراو'), nullif(btrim(p_notes), ''));
 
   return 'ok';
@@ -140,5 +148,5 @@ grant execute on function public.app_update_fuel_price(bigint, text, numeric, te
 -- 🔙 ROLLBACK
 -- drop function public.app_update_fuel_price(bigint, text, numeric, text);
 -- drop function public.app_update_currency_price(bigint, text, numeric, numeric, text);
--- drop function public.app_json_num(jsonb);
--- drop function public.app_can_edit_station(bigint);
+-- drop function public.app_price_json_num(jsonb);
+-- drop function public.app_price_station_editable(bigint);
