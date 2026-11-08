@@ -40,34 +40,54 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
       _loading = true;
       _error = null;
     });
+
+    // ١) بەشەکان
+    List<String> cats = [];
     try {
-      final results = await Future.wait<Object>([
-        Future<Object>.value(_db.from('main_categories').select('name').order('name')),
-        Future<Object>.value(_db.from('dukan').select('name, latitude, longitude, external_id')),
-        OsmImportService.fetch(),
-      ]);
-      final cats = {
-        for (final r in results[0] as List) '${(r as Map)['name'] ?? ''}'.trim(),
-      }..remove('');
-      final existing = List<Map<String, dynamic>>.from(results[1] as List);
-      final places = results[2] as List<OsmPlace>;
-      if (!mounted) return;
-      setState(() {
-        _categories = cats.toList();
-        _rows = [
-          for (final p in places)
-            _Row(p, OsmImportService.match(p, existing),
-                OsmImportService.suggestCategory(p.kind, _categories)),
-        ];
-        _loading = false;
-      });
+      final res = await _db.from('main_categories').select('name').order('name');
+      cats = {for (final r in res) '${r['name'] ?? ''}'.trim()}.where((c) => c.isNotEmpty).toList();
+    } catch (_) {}
+
+    // ٢) شوێنەکانی ئێستا (بۆ دووبارە نەبوونەوە)
+    List<Map<String, dynamic>> existing = [];
+    String? schemaNote;
+    try {
+      existing = List<Map<String, dynamic>>.from(
+          await _db.from('dukan').select('name, latitude, longitude, external_id'));
+    } catch (e) {
+      // ستوونی external_id نییە → 20261115_places_sources.sql جێبەجێ نەکراوە
+      schemaNote = tr('فایلی 20261115_places_sources.sql هێشتا لە Supabase جێبەجێ نەکراوە');
+      try {
+        existing = List<Map<String, dynamic>>.from(
+            await _db.from('dukan').select('name, latitude, longitude'));
+      } catch (_) {}
+    }
+
+    // ٣) OpenStreetMap
+    List<OsmPlace> places;
+    try {
+      places = await OsmImportService.fetch();
     } catch (e) {
       if (!mounted) return;
+      final msg = '$e';
       setState(() {
         _loading = false;
-        _error = '$e';
+        _error = msg.length > 300 ? '${msg.substring(0, 300)}…' : msg;
       });
+      return;
     }
+
+    if (!mounted) return;
+    setState(() {
+      _categories = cats;
+      _rows = [
+        for (final p in places)
+          _Row(p, OsmImportService.match(p, existing),
+              OsmImportService.suggestCategory(p.kind, _categories)),
+      ];
+      _loading = false;
+      _error = schemaNote;
+    });
   }
 
   List<_Row> get _visible =>
@@ -206,6 +226,12 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
             const SizedBox(height: 12),
             Text(tr('هێنان سەرکەوتوو نەبوو، پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە'),
                 textAlign: TextAlign.center, style: const TextStyle(color: AppColors.toneRed)),
+            const SizedBox(height: 6),
+            // هۆکاری تەکنیکی — بۆ ناردنی وێنە بۆ گەشەپێدەر
+            SelectableText(_error!,
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8))),
           ],
           const SizedBox(height: 20),
           FilledButton.icon(
@@ -224,6 +250,17 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
     final same = _rows.where((r) => r.match == OsmMatch.same).length;
     return Column(
       children: [
+        if (_error != null)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.toneAmber.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text('⚠️ ${_error!}', style: const TextStyle(fontWeight: FontWeight.w700)),
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Row(

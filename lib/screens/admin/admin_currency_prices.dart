@@ -4,6 +4,7 @@ import '../../services/price_save_result.dart';
 import '../../services/currency_service.dart';
 import '../currency/currency_history_screen.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 💰 نوێکردنەوەی نرخی نوسینگەی دراو + مێژوو
 class AdminCurrencyPricesScreen extends StatefulWidget {
@@ -277,7 +278,8 @@ class _AdminCurrencyPricesScreenState
                 } else {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
-                      content: Text(result.message),
+                      content: Text(result.messageFor(admin: AuthSessionManager.isAdmin)),
+                      duration: const Duration(seconds: 8),
                       backgroundColor: const Color(0xFFDC3545),
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -323,7 +325,7 @@ class _AdminCurrencyPricesScreenState
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = widget.station['name']?.toString() ?? 'نوسینگەی دراو';
-    final address = widget.station['address']?.toString() ?? '';
+    final address = PlaceDisplay.address(widget.station['address']);
 
     const currencyTypes = CurrencyService.currencyTypes;
 

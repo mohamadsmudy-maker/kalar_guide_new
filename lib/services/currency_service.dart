@@ -461,6 +461,7 @@ class CurrencyService {
     String? updatedByName,
     String? notes,
   }) async {
+    PriceSaveResult.lastError = null;
     try {
       final res = await _client.rpc('app_update_currency_price', params: {
         'p_station_id': stationId,
@@ -469,10 +470,13 @@ class CurrencyService {
         'p_sell': newSellPrice,
         'p_notes': notes,
       });
-      return PriceSaveResult.fromServer(res);
+      final result = PriceSaveResult.fromServer(res);
+      if (result == PriceSaveResult.failed) PriceSaveResult.noteError('server: $res');
+      return result;
     } catch (e) {
       if (!isMissingRpc(e)) {
         debugPrint('❌ app_update_currency_price: $e');
+      PriceSaveResult.noteError(e);
         return PriceSaveResult.failed;
       }
     }
@@ -539,6 +543,7 @@ class CurrencyService {
       return PriceSaveResult.ok;
     } catch (e) {
       debugPrint('❌ هەڵە لە updatePrice: $e');
+      PriceSaveResult.noteError(e);
       return isPermissionError(e) ? PriceSaveResult.forbidden : PriceSaveResult.failed;
     }
   }

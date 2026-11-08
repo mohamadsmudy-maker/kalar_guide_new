@@ -29,4 +29,14 @@ void main() {
     expect(isPermissionError(const PostgrestException(
         message: 'new row violates row-level security policy', code: '42501')), isTrue);
   });
+
+  test('admins see the technical reason, others do not', () {
+    PriceSaveResult.noteError(const PostgrestException(
+        message: 'column "notes" does not exist', code: '42703'));
+    const r = PriceSaveResult.failed;
+    expect(r.messageFor(admin: true), contains('42703'));
+    expect(r.messageFor(admin: false), r.message);
+    expect(PriceSaveResult.ok.messageFor(admin: true), PriceSaveResult.ok.message);
+    PriceSaveResult.lastError = null;
+  });
 }

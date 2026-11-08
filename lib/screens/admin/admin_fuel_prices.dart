@@ -4,6 +4,7 @@ import '../../services/price_save_result.dart';
 import '../../services/fuel_service.dart';
 import '../fuel/fuel_history_screen.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 💰 نوێکردنەوەی نرخی بەنزینخانە + مێژوو
 class AdminFuelPricesScreen extends StatefulWidget {
@@ -222,7 +223,8 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                 } else {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
-                      content: Text(result.message),
+                      content: Text(result.messageFor(admin: AuthSessionManager.isAdmin)),
+                      duration: const Duration(seconds: 8),
                       backgroundColor: const Color(0xFFDC3545),
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -268,7 +270,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = widget.station['name']?.toString() ?? 'بەنزینخانە';
-    final address = widget.station['address']?.toString() ?? '';
+    final address = PlaceDisplay.address(widget.station['address']);
 
     // ✅ بەکارهێنانی هەمان جۆرەکانی FuelService
     const fuelTypes = FuelService.fuelTypes;

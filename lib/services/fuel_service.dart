@@ -380,6 +380,7 @@ class FuelService {
     String? updatedByName,
     String? notes,
   }) async {
+    PriceSaveResult.lastError = null;
     try {
       final res = await _client.rpc('app_update_fuel_price', params: {
         'p_station_id': stationId,
@@ -387,10 +388,13 @@ class FuelService {
         'p_price': newPrice,
         'p_notes': notes,
       });
-      return PriceSaveResult.fromServer(res);
+      final result = PriceSaveResult.fromServer(res);
+      if (result == PriceSaveResult.failed) PriceSaveResult.noteError('server: $res');
+      return result;
     } catch (e) {
       if (!isMissingRpc(e)) {
         debugPrint('❌ app_update_fuel_price: $e');
+      PriceSaveResult.noteError(e);
         return PriceSaveResult.failed;
       }
     }
@@ -425,6 +429,7 @@ class FuelService {
       return PriceSaveResult.ok;
     } catch (e) {
       debugPrint('❌ هەڵە لە نوێکردنەوەی نرخ: $e');
+      PriceSaveResult.noteError(e);
       return isPermissionError(e) ? PriceSaveResult.forbidden : PriceSaveResult.failed;
     }
   }
