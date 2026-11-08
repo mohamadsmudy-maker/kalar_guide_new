@@ -507,10 +507,8 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
                     ),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    lang == 'en'
-                        ? Icons.chevron_right_rounded
-                        : Icons.chevron_left_rounded,
+                  child: const Icon(
+                    Icons.chevron_right_rounded,
                     color: Colors.white,
                     size: 20,
                   ),

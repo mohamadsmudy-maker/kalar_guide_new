@@ -275,7 +275,7 @@ class FuelChartWidget extends StatelessWidget {
           const SizedBox(width: 4),
           // tappable hint
           Icon(
-            Icons.chevron_left_rounded,
+            Icons.chevron_right_rounded,
             size: 20,
             color: isDark ? Colors.white38 : Colors.grey.shade400,
           ),

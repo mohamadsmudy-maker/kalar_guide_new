@@ -587,7 +587,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
               ),
             ),
             const Icon(
-              Icons.chevron_left_rounded,
+              Icons.chevron_right_rounded,
               color: Color(0xFFFFD700),
               size: 22,
             ),

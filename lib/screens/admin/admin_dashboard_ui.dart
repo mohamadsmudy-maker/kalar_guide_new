@@ -899,7 +899,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_left_rounded, size: 20, color: p.chevron),
+                  Icon(Icons.chevron_right_rounded, size: 20, color: p.chevron),
                 ],
               ),
             ),

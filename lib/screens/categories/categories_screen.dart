@@ -593,7 +593,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                           children: [
                             Expanded(
                               child: Text(
-                                count == null ? '' : trf('{0} شوێن', [count]),
+                                count == null ? '' : trf('{0} شوێن', [PlaceDisplay.digits(count)]),
                                 style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: sub),
                               ),
                             ),

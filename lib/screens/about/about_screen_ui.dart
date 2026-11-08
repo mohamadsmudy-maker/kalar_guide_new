@@ -65,7 +65,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_left_rounded, color: isDark ? Colors.white38 : Colors.grey[400]),
+                Icon(Icons.chevron_right_rounded, color: isDark ? Colors.white38 : Colors.grey[400]),
               ],
             ),
           ),
@@ -512,7 +512,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                 ),
                 const SizedBox(width: 6),
                 Icon(
-                  Icons.chevron_left_rounded,
+                  Icons.chevron_right_rounded,
                   color: isDark ? Colors.white38 : Colors.grey[400],
                   size: 18,
                 ),
@@ -790,7 +790,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                 ),
               ),
               const Icon(
-                Icons.chevron_left_rounded,
+                Icons.chevron_right_rounded,
                 color: AppColors.yellow,
                 size: 22,
               ),

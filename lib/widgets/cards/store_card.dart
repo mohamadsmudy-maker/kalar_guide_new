@@ -65,7 +65,6 @@ class StoreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lang = context.select<SettingsProvider, String>((s) => s.languageId);
-    final rtl = Directionality.of(context) == TextDirection.rtl;
     String t(String k) => _tr[k]?[lang] ?? _tr[k]?['en'] ?? k;
 
     final rawName = store['name']?.toString().trim() ?? '';
@@ -351,9 +350,7 @@ class StoreCard extends StatelessWidget {
                             ),
                           ),
                           child: Icon(
-                            rtl
-                                ? Icons.chevron_left_rounded
-                                : Icons.chevron_right_rounded,
+                            Icons.chevron_right_rounded,
                             color:
                             isDark ? Colors.white54 : Colors.grey.shade500,
                             size: 18,

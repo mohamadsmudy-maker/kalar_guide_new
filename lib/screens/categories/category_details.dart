@@ -661,7 +661,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.chevron_left_rounded,
+                    Icons.chevron_right_rounded,
                     color: AppColors.primary,
                     size: 18,
                   ),

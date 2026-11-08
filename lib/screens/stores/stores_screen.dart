@@ -454,10 +454,10 @@ class _StoresScreenState extends State<StoresScreen>
                               ? tr('خەریکی هێنان...')
                               : _activeFilterCount == 0
                                   ? trf('{0} شوێن لە شاری کەلار',
-                                      [_allStores.length])
+                                      [PlaceDisplay.digits(_allStores.length)])
                                   : trf('{0} لە {1} شوێن', [
-                                      _filteredStores.length,
-                                      _allStores.length
+                                      PlaceDisplay.digits(_filteredStores.length),
+                                      PlaceDisplay.digits(_allStores.length)
                                     ]),
                           lang: lang,
                           style: TextStyle(
@@ -758,7 +758,7 @@ class _StoresScreenState extends State<StoresScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      '${_countFor(name)}',
+                      PlaceDisplay.digits(_countFor(name)),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -786,7 +786,7 @@ class _StoresScreenState extends State<StoresScreen>
       child: Row(
         children: [
           Text(
-            trf('{0} ئەنجام', [_filteredStores.length]),
+            trf('{0} ئەنجام', [PlaceDisplay.digits(_filteredStores.length)]),
             style: TextStyle(
                 fontSize: 12, fontWeight: FontWeight.w800, color: sub),
           ),
@@ -999,7 +999,7 @@ class _StoresScreenState extends State<StoresScreen>
                               size: 10, color: Colors.green),
                           const SizedBox(width: 3),
                           Text(
-                            trf('{0} کم', [distance.toStringAsFixed(1)]),
+                            trf('{0} کم', [PlaceDisplay.digits(distance.toStringAsFixed(1))]),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Colors.green,
@@ -1088,7 +1088,7 @@ class _StoresScreenState extends State<StoresScreen>
           icon: const Icon(Icons.expand_more_rounded, color: AppColors.primary),
           label: Text(
             trf('بینینی زیاتر ({0} تر)',
-                [_filteredStores.length - _displayCount]),
+                [PlaceDisplay.digits(_filteredStores.length - _displayCount)]),
             style: const TextStyle(
                 color: AppColors.primary, fontWeight: FontWeight.w900),
           ),
@@ -1317,7 +1317,7 @@ class _StoresScreenState extends State<StoresScreen>
                             borderRadius: BorderRadius.circular(14)),
                       ),
                       child: Text(
-                        trf('پیشاندانی {0} ئەنجام', [_filteredStores.length]),
+                        trf('پیشاندانی {0} ئەنجام', [PlaceDisplay.digits(_filteredStores.length)]),
                         style: const TextStyle(
                             fontWeight: FontWeight.w900, color: Colors.white),
                       ),
@@ -1377,7 +1377,7 @@ class _StoresScreenState extends State<StoresScreen>
             if (count != null) ...[
               const SizedBox(width: 6),
               Text(
-                '$count',
+                PlaceDisplay.digits(count),
                 style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w900,

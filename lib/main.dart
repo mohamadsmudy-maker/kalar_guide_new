@@ -1228,7 +1228,6 @@ class _AppDrawer extends StatelessWidget {
         required VoidCallback onTap,
         Color? textColor,
       }) {
-    final rtl = Directionality.of(context) == TextDirection.rtl;
 
     return Material(
       color: _bg,
@@ -1252,7 +1251,7 @@ class _AppDrawer extends StatelessWidget {
           ),
         ),
         trailing: Icon(
-          rtl ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+          Icons.chevron_right_rounded,
           size: 20,
           color: isDark ? Colors.white54 : Colors.grey[500],
         ),

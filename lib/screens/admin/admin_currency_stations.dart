@@ -286,7 +286,7 @@ class _AdminCurrencyStationsScreenState
             ),
 
             const Icon(
-              Icons.chevron_left_rounded,
+              Icons.chevron_right_rounded,
               color: Color(0xFF10B981),
               size: 22,
             ),
