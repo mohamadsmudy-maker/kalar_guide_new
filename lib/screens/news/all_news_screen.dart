@@ -308,7 +308,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => NewsDetailsScreen(newsItem: news.toJson()),
+            builder: (_) => NewsDetailsScreen(newsItem: news.toDisplayMap()),
           ),
         );
       },

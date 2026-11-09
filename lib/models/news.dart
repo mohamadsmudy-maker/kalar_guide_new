@@ -100,6 +100,16 @@ class News {
     };
   }
 
+  /// بۆ پیشاندان (کارت و وردەکاری): بەروار و لایەنی بڵاوکەرەوەش لەخۆ دەگرێت
+  Map<String, dynamic> toDisplayMap() {
+    return {
+      ...toJson(),
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
+      if (hasStore || (storeAvatar?.isNotEmpty ?? false))
+        'dukan': {'name': storeName ?? '', 'logo': storeLogo, 'image': storeImage},
+    };
+  }
+
   Map<String, dynamic> toUpdateJson() {
     final json = toJson(includeNullables: true);
     json['updated_at'] = DateTime.now().toUtc().toIso8601String();

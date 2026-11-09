@@ -139,7 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final surfaceColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
-    final carouselItems = news.take(_kCarouselCount).map((n) => n.toJson()).toList();
+    final carouselItems = news.take(_kCarouselCount).map((n) => n.toDisplayMap()).toList();
     final List<dynamic> otherNews = news.length > _kCarouselCount
         ? news.skip(_kCarouselCount).take(_kListCount).toList()
         : const <dynamic>[];
@@ -401,7 +401,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             map = raw;
           } else {
             try {
-              map = (raw as dynamic).toJson() as Map<String, dynamic>;
+              map = (raw as dynamic).toDisplayMap() as Map<String, dynamic>;
             } catch (e) {
               debugPrint('⚠️ news item conversion error: $e');
             }
@@ -909,32 +909,6 @@ class _NewsTile extends StatelessWidget {
                       )
                           : box(child: const Icon(Icons.image, color: AppColors.textTertiary)),
                     ),
-                    if (storeLogo.isNotEmpty)
-                      PositionedDirectional(
-                        bottom: 6,
-                        end: 6,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 2)),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: CachedNetworkImage(
-                              imageUrl: storeLogo,
-                              fit: BoxFit.cover,
-                              memCacheWidth: 100,
-                              errorWidget: (_, __, ___) =>
-                              const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 16),
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
                 const SizedBox(width: 12),
@@ -945,6 +919,25 @@ class _NewsTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        if (storeName.isNotEmpty)
+                          Row(
+                            children: [
+                              _PublisherLogo(logo: storeLogo, name: storeName, size: 24),
+                              const SizedBox(width: 7),
+                              Flexible(
+                                child: Text(
+                                  tr(storeName),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark ? Colors.white70 : const Color(0xFF1565C0),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         Text(
                           tr(title),
                           style: TextStyle(
@@ -955,49 +948,6 @@ class _NewsTile extends StatelessWidget {
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                        ),
-                        Row(
-                          children: [
-                            if (storeName.isNotEmpty) ...[
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primarySoft,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.storefront_rounded, size: 10, color: AppColors.primary),
-                                      const SizedBox(width: 3),
-                                      Flexible(
-                                        child: Text(
-                                          tr(storeName),
-                                          style: const TextStyle(
-                                            fontSize: 9,
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                            Flexible(
-                              child: Text(
-                                tr(timeAgo),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 10, color: subColor, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ],
                         ),
                         Row(
                           children: [
@@ -1012,7 +962,15 @@ class _NewsTile extends StatelessWidget {
                               value: _Fmt.compact(likes, lang),
                               color: AppColors.primary,
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                tr(timeAgo),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 10.5, color: subColor, fontWeight: FontWeight.w700),
+                              ),
+                            ),
                             Container(
                               width: 26,
                               height: 26,
@@ -1222,6 +1180,48 @@ class _NoNewsCard extends StatelessWidget {
             label: Text(tr(retryLabel), style: const TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// لۆگۆی لایەنی بڵاوکەرەوە (یان یەکەم پیتی ناوەکەی)
+class _PublisherLogo extends StatelessWidget {
+  final String logo;
+  final String name;
+  final double size;
+
+  const _PublisherLogo({required this.logo, required this.name, this.size = 24});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = name.trim();
+    final fallback = Container(
+      color: AppColors.primarySoft,
+      alignment: Alignment.center,
+      child: t.isEmpty
+          ? Icon(Icons.storefront_rounded, color: AppColors.primary, size: size * 0.55)
+          : Text(
+              t.characters.first,
+              style: TextStyle(color: AppColors.primary, fontSize: size * 0.45, fontWeight: FontWeight.w900),
+            ),
+    );
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+      ),
+      child: ClipOval(
+        child: logo.isEmpty
+            ? fallback
+            : CachedNetworkImage(
+                imageUrl: logo,
+                fit: BoxFit.cover,
+                memCacheWidth: 100,
+                errorWidget: (_, __, ___) => fallback,
+              ),
       ),
     );
   }
