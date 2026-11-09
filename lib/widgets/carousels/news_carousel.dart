@@ -396,8 +396,6 @@ class _NewsCarouselState extends State<NewsCarousel>
                   left: 14,
                   child: Row(
                     children: [
-                      if (store != null)
-                        Flexible(child: _buildStoreBadge(store)),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -445,6 +443,7 @@ class _NewsCarouselState extends State<NewsCarousel>
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      if (store != null) _buildStoreBadge(store),
                       Text(
                         tr(title),
                         style: const TextStyle(
@@ -494,61 +493,74 @@ class _NewsCarouselState extends State<NewsCarousel>
     return _buildBadge(name: name, logo: logo);
   }
 
+  /// لایەنی بڵاوکەرەوە: لۆگۆی ڕوون + ناوی تەواو، ڕێک لە سەرووی ناونیشانی هەواڵ
   Widget _buildBadge({required String name, required String logo}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: logo.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: logo,
+                      fit: BoxFit.cover,
+                      memCacheWidth: 140,
+                      errorWidget: (_, __, ___) => _logoFallback(name),
+                    )
+                  : _logoFallback(name),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Flexible(
+            child: Text(
+              tr(name),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Rabar',
+                shadows: [Shadow(offset: Offset(0, 1), blurRadius: 6, color: Colors.black87)],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (logo.isNotEmpty)
-            Container(
-              width: 22,
-              height: 22,
-              decoration: const BoxDecoration(
-                  shape: BoxShape.circle, color: Colors.white),
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: logo,
-                  fit: BoxFit.cover,
-                  memCacheWidth: 100,
-                  errorWidget: (_, __, ___) => const Icon(
-                    Icons.storefront_rounded,
-                    color: AppColors.primary,
-                    size: 14,
-                  ),
-                ),
+    );
+  }
+
+  /// کاتێک لۆگۆ نییە: یەکەم پیتی ناو لەسەر ڕەنگی سەرەکی
+  Widget _logoFallback(String name) {
+    final t = name.trim();
+    return Container(
+      color: AppColors.primarySoft,
+      alignment: Alignment.center,
+      child: t.isEmpty
+          ? const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 18)
+          : Text(
+              t.characters.first,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
               ),
             ),
-          if (name.isNotEmpty) ...[
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                tr(name),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Rabar',
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 

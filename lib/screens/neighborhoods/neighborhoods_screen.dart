@@ -7,6 +7,7 @@ import '../../config/app_colors.dart';
 import '../../models/neighborhood.dart';
 import 'neighborhood_details_screen.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 🏘️ شاشەی گەڕەکان — ULTRA PRO MAX V2
 class NeighborhoodsScreen extends StatefulWidget {
@@ -245,7 +246,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          trf('{0} گەڕەک', [_neighborhoods.length]),
+                          trf('{0} گەڕەک', [PlaceDisplay.digits(_neighborhoods.length)]),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
@@ -293,7 +294,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
             children: [
               _buildStatItem(
                 Icons.landscape_rounded,
-                _totalArea.toStringAsFixed(1),
+                PlaceDisplay.digits(_totalArea.toStringAsFixed(1)),
                 'کم²',
                 AppColors.orange,
                 isDark,
@@ -301,7 +302,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
               _buildVerticalDivider(isDark),
               _buildStatItem(
                 Icons.storefront_rounded,
-                '$_totalStores',
+                PlaceDisplay.digits(_totalStores),
                 'شوێن',
                 AppColors.green,
                 isDark,
@@ -309,7 +310,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
               _buildVerticalDivider(isDark),
               _buildStatItem(
                 Icons.location_city_rounded,
-                '${_neighborhoods.length}',
+                PlaceDisplay.digits(_neighborhoods.length),
                 'گەڕەک',
                 AppColors.primary,
                 isDark,
@@ -606,7 +607,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                trf('{0} شوێن', [stores]),
+                                trf('{0} شوێن', [PlaceDisplay.digits(stores)]),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
@@ -626,7 +627,7 @@ class _NeighborhoodsScreenState extends State<NeighborhoodsScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                trf('{0} کم²', [areaStr]),
+                                trf('{0} کم²', [PlaceDisplay.digits(areaStr)]),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
