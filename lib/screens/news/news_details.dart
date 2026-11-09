@@ -7,6 +7,8 @@ import '../../widgets/common/optimized_network_image.dart';
 import '../stores/store_details_dialog.dart';
 import '../../l10n/tr.dart';
 import '../../utils/place_display.dart';
+import '../../widgets/common/auto_translate.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// 📰 وردەکاری هەواڵ — ULTRA PRO MAX V2
 class NewsDetailsScreen extends StatefulWidget {
@@ -275,21 +277,6 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
   // ═══════════════════════════════════════════════════════════
   // 🎨 Helpers
   // ═══════════════════════════════════════════════════════════
-  Color _getTypeColor(String type) {
-    switch (type) {
-      case 'ئاگاداری':
-        return AppColors.orange;
-      case 'هۆشداری':
-        return AppColors.red;
-      case 'ڕووداو':
-        return AppColors.purple;
-      case 'خزمەتگوزاری':
-        return AppColors.primary;
-      default:
-        return AppColors.primary;
-    }
-  }
-
   IconData _getTypeIcon(String type) {
     switch (type) {
       case 'ئاگاداری':
@@ -329,93 +316,382 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     return [];
   }
 
-  String _formatDate(dynamic raw) {
-    if (raw == null) return 'ئەمڕۆ';
-    final s = raw.toString();
-    if (s.length >= 10) return s.substring(0, 10);
-    return s;
-  }
-
   // ═══════════════════════════════════════════════════════════
   // 🏗️ Build
   // ═══════════════════════════════════════════════════════════
+  /// «ئەمڕۆ» / «دوێنێ» / «٢٠٢٦/١١/٠٨»
+  String _niceDate(dynamic raw) {
+    final d = DateTime.tryParse('${raw ?? ''}')?.toLocal();
+    if (d == null) return tr('ئەمڕۆ');
+    final now = DateTime.now();
+    final day = DateTime(d.year, d.month, d.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return tr('ئەمڕۆ');
+    if (diff == 1) return tr('دوێنێ');
+    String two(int n) => n.toString().padLeft(2, '0');
+    return PlaceDisplay.digits('${d.year}/${two(d.month)}/${two(d.day)}');
+  }
+
+  Future<void> _share(String title, String description) async {
+    HapticFeedback.selectionClick();
+    final snippet = description.length > 280
+        ? '${description.substring(0, 280)}…'
+        : description;
+    await Share.share(
+        '${tr(title)}\n\n$snippet\n\n— ${tr('ئەپی ڕێبەری کەلار')}');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.surface;
+    final bgColor = isDark ? AppColors.darkBackground : const Color(0xFFF6F8FB);
+    final card = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final ink = isDark ? Colors.white : const Color(0xFF0F172A);
+    final sub = isDark ? Colors.white60 : const Color(0xFF64748B);
 
     final title = widget.newsItem['title']?.toString() ?? '';
     final description = widget.newsItem['description']?.toString() ?? '';
-    final newsType =
-        widget.newsItem['news_type']?.toString() ?? 'هەواڵ';
-    final date = _formatDate(widget.newsItem['created_at']);
-    final imagesList = _extractAllImages(
-      widget.newsItem['images'] ?? widget.newsItem['img'],
-    );
+    final newsType = widget.newsItem['news_type']?.toString() ?? 'هەواڵ';
+    final date = _niceDate(widget.newsItem['created_at']);
+    final images =
+        _extractAllImages(widget.newsItem['images'] ?? widget.newsItem['img']);
+    final lang = AppLang.code;
+    final topPad = MediaQuery.paddingOf(context).top;
+    final heroHeight = images.isEmpty ? 150.0 + topPad : 360.0;
 
     return Directionality(
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor: bgColor,
-        appBar: AppBar(
-          title: Text(
-            tr('وردەکاری هەواڵ'),
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-          ),
-          backgroundColor:
-          isDark ? AppColors.darkCard : AppColors.surface,
-          foregroundColor:
-          isDark ? Colors.white : AppColors.textPrimary,
-          elevation: 0,
-          centerTitle: true,
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 🏪 Store Info
-              if (_storeInfo != null) _buildStoreCard(isDark),
-
-              // 🎯 Type Badge + Title
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTypeBadge(newsType),
-                    const SizedBox(height: 10),
-                    Text(
-                      tr(title),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                        color: isDark
-                            ? Colors.white
-                            : AppColors.textPrimary,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
+        extendBodyBehindAppBar: true,
+        bottomNavigationBar: _buildActionBar(isDark, card, title, description),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // ── 🖼️ وێنە (بچووک دەبێتەوە لە کاتی سکرۆڵدا) ──
+            SliverAppBar(
+              pinned: true,
+              stretch: true,
+              expandedHeight: heroHeight,
+              backgroundColor:
+                  isDark ? const Color(0xFF0F172A) : AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              leading: Padding(
+                padding: const EdgeInsets.all(8),
+                child: _GlassButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: tr('گەڕانەوە'),
+                  onTap: () => Navigator.maybePop(context),
                 ),
               ),
-              const SizedBox(height: 12),
-
-              // 📊 Stats Row
-              _buildStatsRow(isDark, date),
-
-              const SizedBox(height: 16),
-
-              // 🖼️ Images
-              if (imagesList.isNotEmpty) ...[
-                _buildImageCarousel(imagesList),
-                const SizedBox(height: 20),
+              actions: [
+                _GlassButton(
+                  icon: Icons.ios_share_rounded,
+                  tooltip: tr('هاوبەشکردن'),
+                  onTap: () => _share(title, description),
+                ),
+                const SizedBox(width: 8),
+                _GlassButton(
+                  icon: isFavorite
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
+                  tooltip: tr('دڵخواز'),
+                  active: isFavorite,
+                  onTap: _isFavoriting ? null : _toggleFavorite,
+                ),
+                const SizedBox(width: 12),
               ],
+              // گۆشەی خڕی بەشی ناوەڕۆک بەسەر وێنەکەدا
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(24),
+                child: Container(
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(28)),
+                  ),
+                ),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                stretchModes: const [StretchMode.zoomBackground],
+                background: images.isEmpty
+                    ? _buildNoImageHeader(newsType)
+                    : _buildHeroGallery(images),
+              ),
+            ),
 
-              // 📄 Description
-              _buildDescription(description, isDark),
-            ],
+            // ── 📄 ناوەڕۆک ──
+            SliverToBoxAdapter(
+              child: Transform.translate(
+                offset: const Offset(0, -26),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(28)),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // جۆر + بەروار
+                      Row(
+                        children: [
+                          _Pill(
+                            icon: _getTypeIcon(newsType),
+                            label: tr(newsType),
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          _Pill(
+                              icon: Icons.schedule_rounded,
+                              label: date,
+                              color: AppColors.toneSlate),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // ناونیشان
+                      AutoTranslate(
+                        text: title,
+                        lang: lang,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 25,
+                          height: 1.35,
+                          color: ink,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      // ئامار
+                      Row(
+                        children: [
+                          _Stat(
+                              icon: Icons.visibility_rounded,
+                              value: PlaceDisplay.digits(views),
+                              color: sub),
+                          const SizedBox(width: 16),
+                          _Stat(
+                            icon: Icons.thumb_up_alt_rounded,
+                            value: PlaceDisplay.digits(likes),
+                            color: isLiked ? AppColors.primary : sub,
+                          ),
+                          if (images.length > 1) ...[
+                            const SizedBox(width: 16),
+                            _Stat(
+                              icon: Icons.photo_library_rounded,
+                              value: PlaceDisplay.digits(images.length),
+                              color: sub,
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      // 🏪 بڵاوکەرەوە
+                      if (_storeInfo != null) _buildStoreCard(isDark),
+                      if (_storeInfo != null) const SizedBox(height: 18),
+                      // دەق
+                      if (description.trim().isNotEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+                          decoration: BoxDecoration(
+                            color: card,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : const Color(0xFFE8EDF3),
+                            ),
+                          ),
+                          child: AutoTranslate(
+                            text: description,
+                            lang: lang,
+                            style: TextStyle(
+                                fontSize: 16,
+                                height: 1.9,
+                                color: ink.withValues(alpha: 0.88)),
+                          ),
+                        ),
+                      // وێنەکانی تر
+                      if (images.length > 1) ...[
+                        const SizedBox(height: 22),
+                        Text(
+                          tr('وێنەکان'),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              color: ink),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 92,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: images.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 10),
+                            itemBuilder: (_, i) => GestureDetector(
+                              onTap: () => _openFullScreen(images[i], i),
+                              child: OptimizedNetworkImage(
+                                imageUrl: images[i],
+                                width: 120,
+                                height: 92,
+                                fit: BoxFit.cover,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// وێنەکان: PageView + ڕەنگی تاریک لە خوارەوە + ژمارەی وێنە
+  Widget _buildHeroGallery(List<String> images) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        PageView.builder(
+          itemCount: images.length,
+          onPageChanged: (i) => setState(() => _currentImageIndex = i),
+          itemBuilder: (_, i) => GestureDetector(
+            onTap: () => _openFullScreen(images[i], i),
+            child: Hero(
+              tag: 'news_img_$i',
+              child:
+                  OptimizedNetworkImage(imageUrl: images[i], fit: BoxFit.cover),
+            ),
           ),
+        ),
+        const IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0, 0.25, 0.6, 1],
+                colors: [
+                  Color(0x66000000),
+                  Color(0x00000000),
+                  Color(0x00000000),
+                  Color(0x80000000)
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (images.length > 1)
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < images.length; i++)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: i == _currentImageIndex ? 22 : 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(
+                          alpha: i == _currentImageIndex ? 1 : 0.55),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildNoImageHeader(String newsType) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0D47A1), Color(0xFF1E88E5)],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Icon(_getTypeIcon(newsType),
+          size: 56, color: Colors.white.withValues(alpha: 0.35)),
+    );
+  }
+
+  /// خوارەوە: لایک (گەورە) + هاوبەشکردن
+  Widget _buildActionBar(
+      bool isDark, Color card, String title, String description) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        decoration: BoxDecoration(
+          color: card,
+          border: Border(
+            top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : const Color(0xFFE8EDF3)),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                  backgroundColor: isLiked
+                      ? AppColors.primary
+                      : AppColors.primary
+                          .withValues(alpha: isDark ? 0.18 : 0.10),
+                  foregroundColor: isLiked ? Colors.white : AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: _isLiking || _loading ? null : _toggleLike,
+                icon: Icon(isLiked
+                    ? Icons.thumb_up_alt_rounded
+                    : Icons.thumb_up_off_alt_rounded),
+                label: Text(
+                  '${tr(isLiked ? 'بەدڵم بوو' : 'بەدڵمە')}  ${PlaceDisplay.digits(likes)}',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              height: 50,
+              width: 56,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  side: BorderSide(
+                      color: isDark ? Colors.white24 : const Color(0xFFE2E8F0)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: () => _share(title, description),
+                child: Icon(Icons.ios_share_rounded,
+                    color: isDark ? Colors.white : AppColors.textPrimary),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -432,9 +708,9 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       child: Material(
-        color: isDark ? AppColors.darkCard : AppColors.surface,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           onTap: () => StoreDetailsDialog.show(context, store),
@@ -465,19 +741,19 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                   child: ClipOval(
                     child: (profileImg != null && profileImg.isNotEmpty)
                         ? OptimizedNetworkImage(
-                      imageUrl: profileImg,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                    )
+                            imageUrl: profileImg,
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                          )
                         : Container(
-                      color: AppColors.primarySoft,
-                      child: const Icon(
-                        Icons.storefront,
-                        color: AppColors.primary,
-                        size: 28,
-                      ),
-                    ),
+                            color: AppColors.primarySoft,
+                            child: const Icon(
+                              Icons.storefront,
+                              color: AppColors.primary,
+                              size: 28,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -555,217 +831,11 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
   // ═══════════════════════════════════════════════════════════
   // 🎯 Type Badge
   // ═══════════════════════════════════════════════════════════
-  Widget _buildTypeBadge(String newsType) {
-    final color = _getTypeColor(newsType);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(_getTypeIcon(newsType), color: color, size: 16),
-          const SizedBox(width: 6),
-          Text(
-            tr(newsType),
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 📊 Stats Row
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildStatsRow(bool isDark, String date) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : AppColors.backgroundGrey,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              tr(date),
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white54 : AppColors.textSecondary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Row(
-              children: [
-                _buildStatItem(
-                  icon: Icons.visibility_rounded,
-                  value: PlaceDisplay.digits(views),
-                  color: isDark
-                      ? Colors.white70
-                      : AppColors.textSecondary,
-                ),
-                const SizedBox(width: 16),
-                _loading
-                    ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : GestureDetector(
-                  onTap: _isLiking ? null : _toggleLike,
-                  child: _buildStatItem(
-                    icon: isLiked
-                        ? Icons.thumb_up_rounded
-                        : Icons.thumb_up_off_alt_rounded,
-                    value: PlaceDisplay.digits(likes),
-                    color: isLiked
-                        ? AppColors.primary
-                        : (isDark
-                        ? Colors.white70
-                        : AppColors.textSecondary),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                _loading
-                    ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : GestureDetector(
-                  onTap: _isFavoriting ? null : _toggleFavorite,
-                  child: Icon(
-                    isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    size: 20,
-                    color: isFavorite
-                        ? AppColors.pink
-                        : (isDark
-                        ? Colors.white70
-                        : AppColors.textSecondary),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Text(
-          tr(value),
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w900,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 🖼️ Image Carousel
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildImageCarousel(List<String> imagesList) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Stack(
-        alignment: Alignment.topRight,
-        children: [
-          SizedBox(
-            height: 250,
-            child: PageView.builder(
-              itemCount: imagesList.length,
-              onPageChanged: (index) {
-                setState(() => _currentImageIndex = index);
-              },
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () => _openFullScreen(imagesList[index], index),
-                  child: Hero(
-                    tag: 'news_img_$index',
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: OptimizedNetworkImage(
-                          imageUrl: imagesList[index],
-                          width: double.infinity,
-                          height: 250,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          if (imagesList.length > 1)
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.photo_library_rounded,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${_currentImageIndex + 1} / ${imagesList.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   void _openFullScreen(String imageUrl, int index) {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
-        pageBuilder: (_, __, ___) =>
-            _buildFullScreenImage(imageUrl, index),
+        pageBuilder: (_, __, ___) => _buildFullScreenImage(imageUrl, index),
       ),
     );
   }
@@ -809,35 +879,82 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
       ),
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════
-  // 📄 Description
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildDescription(String description, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color:
-          isDark ? AppColors.darkCard : AppColors.backgroundGrey,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : AppColors.border,
-          ),
-        ),
-        child: Text(
-          tr(description),
-          style: TextStyle(
-            fontSize: 15,
-            color: isDark ? Colors.white70 : AppColors.textPrimary,
-            height: 1.7,
+/// دوگمەی شووشەیی سەر وێنە
+class _GlassButton extends StatelessWidget {
+  const _GlassButton(
+      {required this.icon,
+      required this.onTap,
+      this.tooltip,
+      this.active = false});
+  final IconData icon;
+  final VoidCallback? onTap;
+  final String? tooltip;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip ?? '',
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.32),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(icon,
+                color: active ? const Color(0xFFFFD54F) : Colors.white,
+                size: 21),
           ),
         ),
       ),
     );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({required this.icon, required this.label, required this.color});
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 5),
+        Text(label,
+            style: TextStyle(
+                fontSize: 12.5, fontWeight: FontWeight.w800, color: color)),
+      ]),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.icon, required this.value, required this.color});
+  final IconData icon;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, size: 18, color: color),
+      const SizedBox(width: 5),
+      Text(value,
+          style: TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w800, color: color)),
+    ]);
   }
 }

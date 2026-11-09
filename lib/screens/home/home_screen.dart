@@ -20,6 +20,8 @@ import 'package:kalar_guide_new/screens/news/news_details.dart';
 import 'package:kalar_guide_new/screens/news/all_news_screen.dart';
 import 'package:kalar_guide_new/screens/gallery/gallery_screen.dart';
 import '../../l10n/tr.dart';
+import '../../widgets/home/today_card.dart';
+import '../daily/prayer_times_screen.dart';
 
 const double _kBackToTopOffset = 600;
 const int _kCarouselCount = 5;
@@ -173,6 +175,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             retryLabel: t('retry', 'دووبارە'),
                             onRetry: _onRefresh,
                           ),
+              ),
+            ),
+
+            // ☀️ ئەمڕۆ: سڵاو، بەروار، بانگی داهاتوو
+            SliverToBoxAdapter(
+              child: TodayCard(
+                onTap: () => _openScreen(const PrayerTimesScreen(), analyticsName: 'prayer_from_home'),
               ),
             ),
 
@@ -1105,7 +1114,7 @@ class _NoNewsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 180,
+      constraints: const BoxConstraints(minHeight: 180),
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1114,6 +1123,7 @@ class _NoNewsCard extends StatelessWidget {
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.newspaper_rounded, size: 36, color: AppColors.textTertiary),

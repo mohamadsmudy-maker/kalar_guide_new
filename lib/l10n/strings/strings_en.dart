@@ -1761,4 +1761,13 @@ const Map<String, String> stringsEn = {
   'دەستپێکردن': 'Start',
   'ناوی هەموو شوێن، ناونیشان، بەش و هەواڵەکان بۆ ئینگلیزی و عەرەبی وەردەگێڕدرێن. چەند خولەکێک دەخایەنێت؛ تا تەواو دەبێت ئەم شاشەیە دامەخە.': 'All place names, addresses, categories and news will be translated to English and Arabic. It takes a few minutes; keep this screen open until it finishes.',
   'وەرگێڕانی هەموو شوێنەکان': 'Translate all places',
+  '{0} خولەکی ماوە': '{0} min left',
+  '{0} کاتژمێر و {1} خولەک': '{0} h {1} min',
+  'ئێوارەت باش': 'Good evening',
+  'بەیانیت باش': 'Good morning',
+  'دوێنێ': 'Yesterday',
+  'شەوت باش': 'Good night',
+  'نیوەڕۆت باش': 'Good afternoon',
+  'بەدڵمە': 'Like',
+  'بەدڵم بوو': 'Liked',
 };
