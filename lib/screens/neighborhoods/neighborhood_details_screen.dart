@@ -9,6 +9,7 @@ import '../../models/neighborhood.dart';
 import '../../utils/app_logger.dart';
 import '../stores/store_details_dialog.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 🏘️ شاشەی وردەکاری گەڕەک — ULTRA PRO MAX V2
 class NeighborhoodDetailsScreen extends StatefulWidget {
@@ -20,12 +21,10 @@ class NeighborhoodDetailsScreen extends StatefulWidget {
   });
 
   @override
-  State<NeighborhoodDetailsScreen> createState() =>
-      _NeighborhoodDetailsScreenState();
+  State<NeighborhoodDetailsScreen> createState() => _NeighborhoodDetailsScreenState();
 }
 
-class _NeighborhoodDetailsScreenState
-    extends State<NeighborhoodDetailsScreen> {
+class _NeighborhoodDetailsScreenState extends State<NeighborhoodDetailsScreen> {
   bool _loading = true;
   List<Map<String, dynamic>> _stores = [];
   String? _errorMessage;
@@ -149,8 +148,7 @@ class _NeighborhoodDetailsScreenState
     final n = widget.neighborhood;
     final color = _color;
 
-    final bgColor =
-    isDark ? AppColors.darkBackground : AppColors.background;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
 
     return Directionality(
       textDirection: lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
@@ -169,14 +167,11 @@ class _NeighborhoodDetailsScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTitle(n, isDark),
-                      if (n.descriptionKu != null &&
-                          n.descriptionKu!.isNotEmpty) ...[
-                        const SizedBox(height: 10),
+                      _buildStatsCard(n, color, isDark),
+                      if (n.descriptionKu != null && n.descriptionKu!.isNotEmpty) ...[
+                        const SizedBox(height: 14),
                         _buildDescription(n.descriptionKu!, isDark),
                       ],
-                      const SizedBox(height: 16),
-                      _buildStatsCard(n, color, isDark),
                       if (n.hasCenter) ...[
                         const SizedBox(height: 20),
                         _buildMapSection(n, color, isDark),
@@ -203,19 +198,19 @@ class _NeighborhoodDetailsScreenState
                   child: _buildErrorState(isDark, _errorMessage!, color),
                 )
               else if (_stores.isEmpty)
-                  SliverToBoxAdapter(
-                    child: _buildEmptyState(isDark, n.nameKu),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                            (ctx, i) => _buildStoreCard(_stores[i], isDark, color),
-                        childCount: _stores.length,
-                      ),
+                SliverToBoxAdapter(
+                  child: _buildEmptyState(isDark, n.nameKu),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (ctx, i) => _buildStoreCard(_stores[i], isDark, color),
+                      childCount: _stores.length,
                     ),
                   ),
+                ),
             ],
           ),
         ),
@@ -227,17 +222,34 @@ class _NeighborhoodDetailsScreenState
   // 🎨 Header
   // ═══════════════════════════════════════════════════════════
   Widget _buildHeader(Neighborhood n, Color color, bool isDark) {
+    final hasCover = n.coverUrl != null && n.coverUrl!.isNotEmpty;
     return SliverAppBar(
-      expandedHeight: 220,
+      expandedHeight: 230,
       pinned: true,
+      stretch: true,
       backgroundColor: color,
       foregroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        expandedTitleScale: 1.5,
+        titlePadding: const EdgeInsetsDirectional.only(start: 56, end: 56, bottom: 16),
+        title: Text(
+          tr(n.nameKu),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            shadows: [Shadow(offset: Offset(0, 1), blurRadius: 8, color: Colors.black38)],
+          ),
+        ),
         background: Stack(
           fit: StackFit.expand,
           children: [
-            if (n.coverUrl != null && n.coverUrl!.isNotEmpty)
+            if (hasCover)
               Image.network(
                 n.coverUrl!,
                 fit: BoxFit.cover,
@@ -245,18 +257,16 @@ class _NeighborhoodDetailsScreenState
               )
             else
               _buildGradientBg(color),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.6),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+            if (hasCover)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.55)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -266,25 +276,22 @@ class _NeighborhoodDetailsScreenState
   // ═══════════════════════════════════════════════════════════
   // 📝 Title + Description
   // ═══════════════════════════════════════════════════════════
-  Widget _buildTitle(Neighborhood n, bool isDark) {
-    return Text(
-      tr(n.nameKu),
-      style: TextStyle(
-        fontSize: 26,
-        fontWeight: FontWeight.w900,
-        color: isDark ? Colors.white : AppColors.textPrimary,
-        height: 1.2,
-      ),
-    );
-  }
-
   Widget _buildDescription(String description, bool isDark) {
-    return Text(
-      tr(description),
-      style: TextStyle(
-        fontSize: 13,
-        height: 1.7,
-        color: isDark ? Colors.white70 : AppColors.textSecondary,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFEEF1F6)),
+      ),
+      child: Text(
+        tr(description),
+        style: TextStyle(
+          fontSize: 13.5,
+          height: 1.8,
+          color: isDark ? Colors.white70 : AppColors.textSecondary,
+        ),
       ),
     );
   }
@@ -293,40 +300,112 @@ class _NeighborhoodDetailsScreenState
   // 📊 Stats Card
   // ═══════════════════════════════════════════════════════════
   Widget _buildStatsCard(Neighborhood n, Color color, bool isDark) {
+    final items = <Widget>[
+      _buildStatItem(
+        Icons.storefront_rounded,
+        _loading ? '…' : PlaceDisplay.digits(_stores.length),
+        'شوێن',
+        color,
+        isDark,
+      ),
+      if (n.population > 0)
+        _buildStatItem(
+          Icons.people_rounded,
+          PlaceDisplay.digits(n.population),
+          'دانیشتوو',
+          AppColors.toneTeal,
+          isDark,
+        ),
+      if (n.areaKm2 > 0)
+        _buildStatItem(
+          Icons.landscape_rounded,
+          PlaceDisplay.digits(n.areaKm2.toStringAsFixed(2)),
+          'کم²',
+          AppColors.toneAmber,
+          isDark,
+        ),
+    ];
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          _buildStatItem(
-            Icons.storefront_rounded,
-            '${_stores.length}',
-            'شوێن',
-            color,
-            isDark,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white10 : color.withValues(alpha: 0.10)),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : color.withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
-          if (n.population > 0)
-            _buildStatItem(
-              Icons.people_rounded,
-              '${n.population}',
-              'دانیشتوو',
-              AppColors.green,
-              isDark,
-            ),
-          if (n.areaKm2 > 0)
-            _buildStatItem(
-              Icons.landscape_rounded,
-              n.areaKm2.toStringAsFixed(1),
-              'کم²',
-              AppColors.orange,
-              isDark,
-            ),
         ],
       ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              if (i > 0)
+                VerticalDivider(
+                  width: 1,
+                  indent: 6,
+                  endIndent: 6,
+                  color: isDark ? Colors.white10 : const Color(0xFFEEF1F6),
+                ),
+              items[i],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// ناونیشانی بەش: ئایکۆنی ڕەنگاوڕەنگ + ناو + (ژمارە)
+  Widget _sectionTitle(IconData icon, String title, Color color, bool isDark, {String? count}) {
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.lerp(color, Colors.white, 0.18)!,
+                Color.lerp(color, Colors.black, 0.10)!
+              ],
+            ),
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: [
+              BoxShadow(
+                  color: color.withValues(alpha: 0.30), blurRadius: 8, offset: const Offset(0, 3)),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            tr(title),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
+        ),
+        if (count != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: isDark ? 0.22 : 0.10),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              count,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: color),
+            ),
+          ),
+      ],
     );
   }
 
@@ -337,39 +416,23 @@ class _NeighborhoodDetailsScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.map_rounded, color: color, size: 16),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              tr('شوێن لەسەر نەخشە'),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
+        _sectionTitle(Icons.map_rounded, 'شوێن لەسەر نەخشە', color, isDark),
+        const SizedBox(height: 12),
         Container(
           height: 200,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: color.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isDark ? Colors.white10 : Colors.white, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: isDark ? Colors.black26 : color.withValues(alpha: 0.10),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(17),
             child: gmaps.GoogleMap(
               initialCameraPosition: gmaps.CameraPosition(
                 target: gmaps.LatLng(
@@ -407,49 +470,12 @@ class _NeighborhoodDetailsScreenState
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.storefront_rounded,
-                color: color,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              tr('شوێنەکانی ئەم گەڕەک'),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : AppColors.textPrimary,
-              ),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 4,
-              ),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '${_stores.length}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: color,
-                ),
-              ),
-            ),
-          ],
+        child: _sectionTitle(
+          Icons.storefront_rounded,
+          'شوێنەکانی ئەم گەڕەک',
+          color,
+          isDark,
+          count: _loading ? null : PlaceDisplay.digits(_stores.length),
         ),
       ),
     );
@@ -459,100 +485,146 @@ class _NeighborhoodDetailsScreenState
   // 🎴 Store Card
   // ═══════════════════════════════════════════════════════════
   Widget _buildStoreCard(
-      Map<String, dynamic> store,
-      bool isDark,
-      Color color,
-      ) {
+    Map<String, dynamic> store,
+    bool isDark,
+    Color color,
+  ) {
     final name = store['name']?.toString() ?? '';
-    final address = store['address']?.toString() ?? '';
+    final rawAddress = store['address']?.toString().trim() ?? '';
+    final address = rawAddress.isEmpty ? '' : PlaceDisplay.address(rawAddress);
+    final category = store['category']?.toString().trim() ?? '';
     final image = store['image']?.toString() ?? '';
 
-    return GestureDetector(
-      onTap: () => StoreDetailsDialog.show(context, store),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: image.isNotEmpty
-                  ? Image.network(
-                image,
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildStorePlaceholder(
-                  color,
-                ),
-              )
-                  : _buildStorePlaceholder(color),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black26 : color.withValues(alpha: 0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+          ],
+        ),
+        child: Material(
+          color: isDark ? AppColors.darkCard : AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () => StoreDetailsDialog.show(context, store),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: isDark ? Colors.white10 : const Color(0xFFEEF1F6),
+                ),
+              ),
+              child: Row(
                 children: [
-                  Text(
-                    tr(name),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.white : AppColors.textPrimary,
+                  Container(
+                    width: 62,
+                    height: 62,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: isDark ? 0.18 : 0.08),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: image.isNotEmpty
+                          ? Image.network(
+                              image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _buildStorePlaceholder(color),
+                            )
+                          : _buildStorePlaceholder(color),
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  if (address.isNotEmpty)
-                    Row(
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.location_on_rounded,
-                          size: 11,
-                          color: isDark
-                              ? Colors.white54
-                              : AppColors.textTertiary,
-                        ),
-                        const SizedBox(width: 3),
-                        Expanded(
-                          child: Text(
-                            tr(address),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark
-                                  ? Colors.white54
-                                  : AppColors.textSecondary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Text(
+                          tr(name),
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w900,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            if (category.isNotEmpty) ...[
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: color.withValues(alpha: isDark ? 0.20 : 0.09),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    tr(category),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 10.5, fontWeight: FontWeight.w800, color: color),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            if (address.isNotEmpty) ...[
+                              Icon(
+                                Icons.location_on_rounded,
+                                size: 12,
+                                color: isDark ? Colors.white54 : AppColors.textTertiary,
+                              ),
+                              const SizedBox(width: 2),
+                              Flexible(
+                                child: Text(
+                                  tr(address),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? Colors.white54 : AppColors.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: isDark ? 0.22 : 0.10),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.arrow_forward_ios_rounded, color: color, size: 12),
+                  ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: color, size: 20),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildStorePlaceholder(Color color) {
-    return Container(
-      width: 60,
-      height: 60,
-      color: color.withValues(alpha: 0.15),
-      child: Icon(Icons.storefront_rounded, color: color),
-    );
+    return Center(child: Icon(Icons.storefront_rounded, color: color, size: 26));
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -567,9 +639,7 @@ class _NeighborhoodDetailsScreenState
             Icon(
               Icons.storefront_outlined,
               size: 60,
-              color: isDark
-                  ? Colors.white24
-                  : AppColors.backgroundGrey,
+              color: isDark ? Colors.white24 : AppColors.backgroundGrey,
             ),
             const SizedBox(height: 12),
             Text(
@@ -616,9 +686,7 @@ class _NeighborhoodDetailsScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              tr(error.length > 100
-                  ? '${error.substring(0, 100)}...'
-                  : error),
+              tr(error.length > 100 ? '${error.substring(0, 100)}...' : error),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
@@ -648,32 +716,40 @@ class _NeighborhoodDetailsScreenState
   // 🔢 Helpers
   // ═══════════════════════════════════════════════════════════
   Widget _buildStatItem(
-      IconData icon,
-      String value,
-      String label,
-      Color color,
-      bool isDark,
-      ) {
+    IconData icon,
+    String value,
+    String label,
+    Color color,
+    bool isDark,
+  ) {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 4),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: isDark ? 0.20 : 0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 8),
           Text(
-            tr(value),
+            value,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 19,
               fontWeight: FontWeight.w900,
-              color: color,
+              color: isDark ? Colors.white : AppColors.textPrimary,
               height: 1.0,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             tr(label),
             style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
               color: isDark ? Colors.white54 : AppColors.textSecondary,
             ),
           ),
@@ -683,23 +759,48 @@ class _NeighborhoodDetailsScreenState
   }
 
   Widget _buildGradientBg(Color color) {
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withValues(alpha: 0.7)],
+          colors: [
+            Color.lerp(color, Colors.black, 0.22)!,
+            color,
+            Color.lerp(color, Colors.white, 0.18)!,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: const Center(
-        child: Icon(
-          Icons.location_city_rounded,
-          color: Colors.white,
-          size: 80,
-        ),
+      child: Stack(
+        children: [
+          Positioned(top: -50, right: -40, child: _bubble(190, 0.10)),
+          Positioned(bottom: -60, left: -30, child: _bubble(170, 0.08)),
+          Align(
+            alignment: const Alignment(0, -0.15),
+            child: Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.32), width: 1.5),
+              ),
+              child: const Icon(Icons.location_city_rounded, color: Colors.white, size: 42),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  static Widget _bubble(double size, double alpha) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: alpha),
+        ),
+      );
 
   double _getHueFromColor(Color color) {
     final r = (color.r * 255).toInt();
