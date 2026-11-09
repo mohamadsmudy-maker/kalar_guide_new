@@ -41,8 +41,7 @@ class ProBottomNav extends StatefulWidget {
   State<ProBottomNav> createState() => _ProBottomNavState();
 }
 
-class _ProBottomNavState extends State<ProBottomNav>
-    with SingleTickerProviderStateMixin {
+class _ProBottomNavState extends State<ProBottomNav> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 420),
@@ -56,8 +55,7 @@ class _ProBottomNavState extends State<ProBottomNav>
   late double _from = widget.currentIndex.toDouble();
   late double _to = _from;
 
-  double get _pos =>
-      _from + (_to - _from) * Curves.easeOutCubic.transform(_c.value);
+  double get _pos => _from + (_to - _from) * Curves.easeOutCubic.transform(_c.value);
 
   @override
   void didUpdateWidget(ProBottomNav old) {
@@ -90,10 +88,12 @@ class _ProBottomNavState extends State<ProBottomNav>
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
-    final active = widget.activeColor ??
-        (isDark ? const Color(0xFF8B5CF6) : const Color(0xFF1E88E5));
-    final barColor = isDark ? const Color(0xFF16161E) : Colors.white;
-    final inactive = isDark ? const Color(0xFF7A7A8C) : const Color(0xFF9E9EA8);
+    final active =
+        widget.activeColor ?? (isDark ? const Color(0xFF8B5CF6) : const Color(0xFF1E88E5));
+    // ڕەنگێکی جیاواز لە پاشبنەمای شاشە بۆ ئەوەی شریتەکە دیار بێت
+    final barColor = isDark ? const Color(0xFF1E2233) : const Color(0xFFEDF4FE);
+    final barColorBottom = isDark ? const Color(0xFF171A27) : const Color(0xFFDCE9FB);
+    final inactive = isDark ? const Color(0xFF8A90A8) : const Color(0xFF6B7A93);
 
     final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.4);
     final barHeight = ProBottomNav._baseBarHeight + (scale - 1) * 24;
@@ -107,8 +107,7 @@ class _ProBottomNavState extends State<ProBottomNav>
       height: bump + barHeight + bottomPadding,
       child: LayoutBuilder(builder: (context, box) {
         final slot = box.maxWidth / n;
-        double xOf(double i) =>
-            rtl ? box.maxWidth - (i + 0.5) * slot : (i + 0.5) * slot;
+        double xOf(double i) => rtl ? box.maxWidth - (i + 0.5) * slot : (i + 0.5) * slot;
 
         return AnimatedBuilder(
           animation: _c,
@@ -124,11 +123,11 @@ class _ProBottomNavState extends State<ProBottomNav>
                       cx: cx,
                       top: bump,
                       color: barColor,
-                      shadow:
-                          Colors.black.withValues(alpha: isDark ? 0.55 : 0.10),
+                      colorBottom: barColorBottom,
+                      shadow: Colors.black.withValues(alpha: isDark ? 0.55 : 0.10),
                       border: isDark
-                          ? Colors.white.withValues(alpha: 0.06)
-                          : Colors.black.withValues(alpha: 0.04),
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : const Color(0xFF1E88E5).withValues(alpha: 0.18),
                     ),
                   ),
                 ),
@@ -148,9 +147,7 @@ class _ProBottomNavState extends State<ProBottomNav>
                             index: i,
                             total: n,
                             // ئایکۆن کاڵ دەبێتەوە کاتێک بازنەکە لێی نزیک دەبێتەوە
-                            closeness: (1 - (_pos - i).abs())
-                                .clamp(0.0, 1.0)
-                                .toDouble(),
+                            closeness: (1 - (_pos - i).abs()).clamp(0.0, 1.0).toDouble(),
                             isActive: i == widget.currentIndex,
                             activeColor: active,
                             inactiveColor: inactive,
@@ -224,12 +221,10 @@ class _ProBottomNavState extends State<ProBottomNav>
                               ),
                               AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 280),
-                                transitionBuilder: (child, a) =>
-                                    ScaleTransition(
+                                transitionBuilder: (child, a) => ScaleTransition(
                                   scale: a,
                                   child: RotationTransition(
-                                    turns: Tween(begin: -0.12, end: 0.0)
-                                        .animate(a),
+                                    turns: Tween(begin: -0.12, end: 0.0).animate(a),
                                     child: child,
                                   ),
                                 ),
@@ -262,6 +257,7 @@ class _BarPainter extends CustomPainter {
     required this.cx,
     required this.top,
     required this.color,
+    required this.colorBottom,
     required this.shadow,
     required this.border,
   });
@@ -269,6 +265,7 @@ class _BarPainter extends CustomPainter {
   final double cx;
   final double top;
   final Color color;
+  final Color colorBottom;
   final Color shadow;
   final Color border;
 
@@ -297,7 +294,15 @@ class _BarPainter extends CustomPainter {
     _size = size;
     final path = _path(size);
     canvas.drawShadow(path.shift(const Offset(0, -2)), shadow, 10, true);
-    canvas.drawPath(path, Paint()..color = color);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color, colorBottom],
+        ).createShader(Offset.zero & size),
+    );
     canvas.drawPath(
       path,
       Paint()
@@ -313,7 +318,7 @@ class _BarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BarPainter old) =>
-      old.cx != cx || old.color != color || old.top != top;
+      old.cx != cx || old.color != color || old.colorBottom != colorBottom || old.top != top;
 }
 
 class _NavTile extends StatelessWidget {
@@ -367,8 +372,7 @@ class _NavTile extends StatelessWidget {
                         top: -4,
                         end: -8,
                         child: Container(
-                          constraints:
-                              const BoxConstraints(minWidth: 16, minHeight: 16),
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFFE53935),
@@ -397,9 +401,7 @@ class _NavTile extends StatelessWidget {
               opacity: 1 - closeness,
               child: AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 300),
-                style: (Theme.of(context).textTheme.labelSmall ??
-                        const TextStyle())
-                    .copyWith(
+                style: (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(
                   fontSize: 10.5,
                   fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
                   color: isActive ? activeColor : inactiveColor,
