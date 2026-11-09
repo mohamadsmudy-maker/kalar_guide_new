@@ -142,8 +142,8 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                   children: [
                     Flexible(
                       child: Text(
-                        tr(_hijriDate),
-                        maxLines: 1,
+                        _digits(tr(_hijriDate)),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: AppColors.orange,
@@ -161,7 +161,7 @@ extension _PrayerTimesScreenStateUi on _PrayerTimesScreenState {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  tr(_gregorianDate),
+                  _digits(_gregorianDate),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 11,
