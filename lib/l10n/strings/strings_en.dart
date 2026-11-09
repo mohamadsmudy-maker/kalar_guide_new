@@ -1762,4 +1762,5 @@ const Map<String, String> stringsEn = {
   'ناوی هەموو شوێن، ناونیشان، بەش و هەواڵەکان بۆ ئینگلیزی و عەرەبی وەردەگێڕدرێن. چەند خولەکێک دەخایەنێت؛ تا تەواو دەبێت ئەم شاشەیە دامەخە.': 'All place names, addresses, categories and news will be translated to English and Arabic. It takes a few minutes; keep this screen open until it finishes.',
   'وەرگێڕانی هەموو شوێنەکان': 'Translate all places',
   'داخستن': 'Close',
+  'کرتە بکە بۆ وردەکاری': 'Tap for details',
 };

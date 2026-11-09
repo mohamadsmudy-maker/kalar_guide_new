@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:provider/provider.dart';
@@ -172,7 +174,7 @@ class _NeighborhoodDetailsScreenState extends State<NeighborhoodDetailsScreen> {
                         const SizedBox(height: 14),
                         _buildDescription(n.descriptionKu!, isDark),
                       ],
-                      if (n.hasCenter) ...[
+                      if (n.hasCenter || _mappedStores.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         _buildMapSection(n, color, isDark),
                       ],
@@ -412,14 +414,82 @@ class _NeighborhoodDetailsScreenState extends State<NeighborhoodDetailsScreen> {
   // ═══════════════════════════════════════════════════════════
   // 🗺️ Map Section
   // ═══════════════════════════════════════════════════════════
+  /// شوێنەکانی ئەم گەڕەک کە لۆکەیشنیان هەیە
+  List<(Map<String, dynamic>, gmaps.LatLng)> get _mappedStores {
+    final out = <(Map<String, dynamic>, gmaps.LatLng)>[];
+    for (final s in _stores) {
+      final lat = double.tryParse(s['latitude']?.toString() ?? '');
+      final lng = double.tryParse(s['longitude']?.toString() ?? '');
+      if (lat == null || lng == null || lat == 0 || lng == 0) continue;
+      out.add((s, gmaps.LatLng(lat, lng)));
+    }
+    return out;
+  }
+
+  /// نەخشە بە شێوەیەک دەجووڵێت کە هەموو شوێنەکان دیار بن
+  void _fitMap(gmaps.GoogleMapController c, List<gmaps.LatLng> pts) {
+    if (pts.length < 2) return;
+    var minLat = pts.first.latitude, maxLat = minLat;
+    var minLng = pts.first.longitude, maxLng = minLng;
+    for (final p in pts) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      c.animateCamera(gmaps.CameraUpdate.newLatLngBounds(
+        gmaps.LatLngBounds(
+          southwest: gmaps.LatLng(minLat, minLng),
+          northeast: gmaps.LatLng(maxLat, maxLng),
+        ),
+        48,
+      ));
+    });
+  }
+
   Widget _buildMapSection(Neighborhood n, Color color, bool isDark) {
+    final mapped = _mappedStores;
+    final center = n.hasCenter
+        ? gmaps.LatLng(n.centerLatitude!, n.centerLongitude!)
+        : mapped.first.$2;
+    final points = [if (n.hasCenter) center, ...mapped.map((e) => e.$2)];
+
+    final markers = <gmaps.Marker>{
+      if (n.hasCenter)
+        gmaps.Marker(
+          markerId: const gmaps.MarkerId('center'),
+          position: center,
+          icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(_getHueFromColor(color)),
+          infoWindow: gmaps.InfoWindow(title: tr(n.nameKu)),
+        ),
+      for (final (store, pos) in mapped)
+        gmaps.Marker(
+          markerId: gmaps.MarkerId('s${store['id']}'),
+          position: pos,
+          icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(gmaps.BitmapDescriptor.hueAzure),
+          infoWindow: gmaps.InfoWindow(
+            title: tr(store['name']?.toString() ?? ''),
+            snippet: tr('کرتە بکە بۆ وردەکاری'),
+            onTap: () => StoreDetailsDialog.show(context, store),
+          ),
+        ),
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle(Icons.map_rounded, 'شوێن لەسەر نەخشە', color, isDark),
+        _sectionTitle(
+          Icons.map_rounded,
+          'شوێن لەسەر نەخشە',
+          color,
+          isDark,
+          count: mapped.isEmpty ? null : trf('{0} شوێن', [PlaceDisplay.digits(mapped.length)]),
+        ),
         const SizedBox(height: 12),
         Container(
-          height: 200,
+          height: 240,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: isDark ? Colors.white10 : Colors.white, width: 3),
@@ -434,28 +504,17 @@ class _NeighborhoodDetailsScreenState extends State<NeighborhoodDetailsScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(17),
             child: gmaps.GoogleMap(
-              initialCameraPosition: gmaps.CameraPosition(
-                target: gmaps.LatLng(
-                  n.centerLatitude!,
-                  n.centerLongitude!,
-                ),
-                zoom: 14,
-              ),
-              markers: {
-                gmaps.Marker(
-                  markerId: const gmaps.MarkerId('center'),
-                  position: gmaps.LatLng(
-                    n.centerLatitude!,
-                    n.centerLongitude!,
-                  ),
-                  icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(
-                    _getHueFromColor(color),
-                  ),
-                  infoWindow: gmaps.InfoWindow(title: n.nameKu),
-                ),
-              },
+              key: ValueKey('map-${mapped.length}'),
+              initialCameraPosition: gmaps.CameraPosition(target: center, zoom: 15),
+              markers: markers,
+              onMapCreated: (c) => _fitMap(c, points),
               zoomControlsEnabled: false,
-              scrollGesturesEnabled: false,
+              mapToolbarEnabled: false,
+              myLocationButtonEnabled: false,
+              // نەخشەکە دەجووڵێت بێ ئەوەی شاشەکە سکڕۆڵ بکات
+              gestureRecognizers: {
+                Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
+              },
             ),
           ),
         ),
