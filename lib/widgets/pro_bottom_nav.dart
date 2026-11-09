@@ -271,18 +271,25 @@ class _BarPainter extends CustomPainter {
 
   Size _size = Size.zero;
 
-  static const double _halfWidth = 76; // نیوەی پانی چەماوە
+  static const double _halfWidth = 84; // نیوەی پانی چەماوە
 
   Path _path(Size size) {
     final w = size.width;
     const h = _halfWidth;
+    const steps = 40;
+    // شێوەی زەنگ (raised cosine): لە لێوارەکان و لە لووتکە لێژی سفرە،
+    // بۆیە بە نەرمی لە شریتەکەوە بەرز دەبێتەوە و بێ گۆشە دەگەڕێتەوە
+    final path = Path()
+      ..moveTo(math.min(0, cx - h), top)
+      ..lineTo(cx - h, top);
+    for (var i = 1; i <= steps; i++) {
+      final t = -1 + 2 * i / steps;
+      final bell = (1 + math.cos(math.pi * t)) / 2;
+      path.lineTo(cx + t * h, top * (1 - bell));
+    }
     // چەماوەکە دەتوانێت لە لێوارەکان دەربچێت؛ پڕکردنەوە خۆی دەیبڕێت،
     // بۆیە بازنە و چەماوە هەمیشە ڕێک لەسەر یەکن
-    return Path()
-      ..moveTo(math.min(0, cx - h), top)
-      ..lineTo(cx - h, top)
-      ..cubicTo(cx - h * 0.50, top, cx - h * 0.60, 0, cx, 0)
-      ..cubicTo(cx + h * 0.60, 0, cx + h * 0.50, top, cx + h, top)
+    return path
       ..lineTo(math.max(w, cx + h), top)
       ..lineTo(math.max(w, cx + h), size.height)
       ..lineTo(math.min(0, cx - h), size.height)
