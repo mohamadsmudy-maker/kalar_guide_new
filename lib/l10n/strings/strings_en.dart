@@ -1763,4 +1763,7 @@ const Map<String, String> stringsEn = {
   'وەرگێڕانی هەموو شوێنەکان': 'Translate all places',
   'داخستن': 'Close',
   'کرتە بکە بۆ وردەکاری': 'Tap for details',
+  'بانگ لە کاتی خۆیدا نایەت': 'The adhan will not arrive on time',
+  'مۆڵەت بدە': 'Allow',
+  'مۆڵەتی «Alarms and reminders» بدە بە ئەپەکە بۆ ئەوەی بانگ ڕێک لە کاتی خۆیدا بێت.': 'Allow «Alarms and reminders» for the app so the adhan arrives exactly on time.',
 };

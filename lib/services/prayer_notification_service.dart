@@ -54,13 +54,36 @@ class PrayerNotificationService {
         ),
       );
 
-      // ✅ داواکردنی مۆڵەتی exact alarm
-      await _requestExactAlarmPermission();
+      // تەنها پشکنین — داواکردن (کردنەوەی ڕێکخستنی ئەندرۆید) تەنها بە دوگمە دەبێت
+      await checkExactAlarm();
 
       debugPrint('✅ Prayer Notifications initialized');
     } catch (e) {
       debugPrint('❌ Prayer Notification error: $e');
     }
+  }
+
+  /// ئایا ئەپەکە دەتوانێت بانگ ڕێک لە کاتی خۆیدا ڕابگەیەنێت؟ (بێ کردنەوەی هیچ شاشەیەک)
+  static Future<bool> checkExactAlarm() async {
+    try {
+      final androidImpl = _notifications
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImpl == null) {
+        _exactAlarmGranted = true;
+        return true;
+      }
+      _exactAlarmGranted = await androidImpl.canScheduleExactNotifications() ?? false;
+    } catch (e) {
+      debugPrint('⚠️ Exact alarm check error: $e');
+    }
+    return _exactAlarmGranted;
+  }
+
+  /// شاشەی «Alarms and reminders» ی ئەندرۆید دەکاتەوە (تەنها کاتێک بەکارهێنەر داوای دەکات)
+  static Future<bool> openExactAlarmSettings() async {
+    await _requestExactAlarmPermission();
+    return checkExactAlarm();
   }
 
   /// ✅ داواکردنی مۆڵەتی exact alarm
@@ -88,8 +111,8 @@ class PrayerNotificationService {
 
       if (androidImpl != null) {
         final granted = await androidImpl.requestNotificationsPermission();
-        // ✅ هەروەها exact alarm
-        await _requestExactAlarmPermission();
+        // exact alarm تەنها پشکنین؛ بە هەر کردنەوەیەکی شاشەکە ناچێتە ڕێکخستنەکان
+        await checkExactAlarm();
         return granted ?? false;
       }
 
@@ -125,7 +148,7 @@ class PrayerNotificationService {
 
     // ✅ دڵنیابوونەوە لە مۆڵەتی exact alarm
     if (!_exactAlarmGranted) {
-      await _requestExactAlarmPermission();
+      await checkExactAlarm();
     }
 
     // ✅ هەڵبژاردنی Schedule Mode بەپێی مۆڵەت

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/prayer/kalar_prayer_times.dart';
+import '../../services/prayer_notification_service.dart';
 import '../../services/prayer/prayer_reminders.dart';
 import 'adhan_settings_screen.dart';
 import 'notification_test_screen.dart';
@@ -18,7 +19,8 @@ class PrayerSettingsScreen extends StatefulWidget {
   State<PrayerSettingsScreen> createState() => _PrayerSettingsScreenState();
 }
 
-class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
+class _PrayerSettingsScreenState extends State<PrayerSettingsScreen>
+    with WidgetsBindingObserver {
   static const _gold = Color(0xFFFFD700);
   static const _minuteChoices = [10, 15, 20, 30, 45, 60];
 
@@ -30,10 +32,32 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
   int _ramadanMinutes = 30;
   bool _kurdishDigits = false;
 
+  /// null = هێشتا نەپشکنراوە
+  bool? _exactAlarm;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+    _checkAlarm();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// کاتێک بەکارهێنەر لە ڕێکخستنەکانی ئەندرۆید دەگەڕێتەوە، دووبارە دەپشکنرێت
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _checkAlarm();
+  }
+
+  Future<void> _checkAlarm() async {
+    final ok = await PrayerNotificationService.checkExactAlarm();
+    if (mounted) setState(() => _exactAlarm = ok);
   }
 
   Future<void> _load() async {
@@ -84,6 +108,7 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _section(tr('🔔 ئاگادارکردنەوە')),
+                  if (_notifications && _exactAlarm == false) _alarmPermissionCard(),
                   _switchTile(
                     icon: Icons.notifications_active_rounded,
                     title: tr('ئاگادارکردنەوەی بانگ'),
@@ -141,6 +166,57 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
       ),
     );
   }
+
+  /// ئەندرۆید ١٢+: بێ مۆڵەتی «Alarms and reminders» بانگ دوا دەکەوێت
+  Widget _alarmPermissionCard() => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF3A2A12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _gold.withValues(alpha: 0.45)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.alarm_off_rounded, color: _gold, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    tr('بانگ لە کاتی خۆیدا نایەت'),
+                    style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              tr('مۆڵەتی «Alarms and reminders» بدە بە ئەپەکە بۆ ئەوەی بانگ ڕێک لە کاتی خۆیدا بێت.'),
+              style: const TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.6),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _gold,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () async {
+                  HapticFeedback.selectionClick();
+                  final ok = await PrayerNotificationService.openExactAlarmSettings();
+                  if (mounted) setState(() => _exactAlarm = ok);
+                },
+                icon: const Icon(Icons.alarm_on_rounded, size: 18),
+                label: Text(tr('مۆڵەت بدە'), style: const TextStyle(fontWeight: FontWeight.w900)),
+              ),
+            ),
+          ],
+        ),
+      );
 
   void _push(Widget screen) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
@@ -233,27 +309,37 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen> {
                 style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             Wrap(
-              runSpacing: 6,
-              spacing: 6,
+              runSpacing: 8,
+              spacing: 8,
               children: [
                 for (final m in _minuteChoices)
-                  ChoiceChip(
-                    label: Text('$m'),
-                    selected: value == m,
-                    onSelected: (_) => onChanged(m),
-                    selectedColor: _gold,
-                    backgroundColor: Colors.white.withValues(alpha: 0.06),
-                    labelStyle: TextStyle(
-                      color: value == m ? Colors.black : Colors.white70,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                    showCheckmark: false,
-                  ),
+                  _minuteChip(m, value == m, () => onChanged(m)),
               ],
             ),
           ],
+        ),
+      );
+
+  /// دوگمەی خولەک — ڕەنگەکانی خۆی هەیە بۆ ئەوەی theme ی گشتی سپی نەیکات
+  Widget _minuteChip(int m, bool selected, VoidCallback onTap) => Material(
+        color: selected ? _gold : Colors.white.withValues(alpha: 0.06),
+        shape: StadiumBorder(
+          side: BorderSide(color: selected ? _gold : Colors.white.withValues(alpha: 0.14)),
+        ),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Text(
+              trf('{0} خولەک', [_kurdishDigits ? KalarPrayerTimes.toKurdishDigits('$m') : '$m']),
+              style: TextStyle(
+                color: selected ? Colors.black : Colors.white70,
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+              ),
+            ),
+          ),
         ),
       );
 }
