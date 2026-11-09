@@ -549,44 +549,72 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(9),
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color.lerp(color, Colors.white, 0.18)!, Color.lerp(color, Colors.black, 0.10)!],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: 0.30), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
           ),
-          child: Icon(icon, size: 18, color: color),
+          child: Icon(icon, size: 19, color: Colors.white),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(
-            tr(title),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : AppColors.textPrimary,
-              letterSpacing: 0.2,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                tr(title),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Container(
+                width: 26,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
         ),
         if (onMoreTap != null && moreLabel.isNotEmpty)
           Material(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            color: isDark ? color.withValues(alpha: 0.16) : color.withValues(alpha: 0.08),
+            shape: StadiumBorder(side: BorderSide(color: color.withValues(alpha: 0.22))),
             child: InkWell(
-              borderRadius: BorderRadius.circular(10),
+              customBorder: const StadiumBorder(),
               onTap: () {
                 HapticFeedback.selectionClick();
                 onMoreTap!();
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsetsDirectional.fromSTEB(12, 5, 5, 5),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(tr(moreLabel), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
-                    const SizedBox(width: 4),
-                    Icon(_forwardIcon(context, small: true), size: 10, color: color),
+                    Text(tr(moreLabel), style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: color)),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                      child: Icon(_forwardIcon(context, small: true), size: 10, color: Colors.white),
+                    ),
                   ],
                 ),
               ),
@@ -609,41 +637,68 @@ class _QuickTile extends StatelessWidget {
     return Semantics(
       button: true,
       label: a.title,
-      child: Material(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            a.onTap();
-          },
-          excludeFromSemantics: true,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8EDF3),
-              ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black.withValues(alpha: 0.25) : a.color.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(11),
-                  decoration: BoxDecoration(
-                    color: a.color.withValues(alpha: isDark ? 0.18 : 0.10),
-                    borderRadius: BorderRadius.circular(14),
+          ],
+        ),
+        child: Material(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              a.onTap();
+            },
+            excludeFromSemantics: true,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(6, 14, 6, 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.06) : a.color.withValues(alpha: 0.10),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color.lerp(a.color, Colors.white, 0.22)!,
+                          Color.lerp(a.color, Colors.black, 0.08)!,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: a.color.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Icon(a.icon, color: Colors.white, size: 23),
                   ),
-                  child: Icon(a.icon, color: a.color, size: 22),
-                ),
-                const SizedBox(height: 8),
-                _TileLabel(
-                  text: tr(a.title),
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  _TileLabel(
+                    text: tr(a.title),
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -662,24 +717,13 @@ class _TileLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = TextStyle(
-      fontSize: 11,
-      fontWeight: FontWeight.w800,
-      height: 1.25,
-      color: color,
-    );
-    if (!text.trim().contains(' ')) {
-      return FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(text, maxLines: 1, style: style),
-      );
-    }
-    return Text(
-      text,
-      textAlign: TextAlign.center,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: style,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        text,
+        maxLines: 1,
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, height: 1.25, color: color),
+      ),
     );
   }
 }
@@ -694,44 +738,53 @@ class _ViewAllButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12),
+      margin: const EdgeInsets.only(top: 6, bottom: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.centerStart,
+          end: AlignmentDirectional.centerEnd,
+          colors: [
+            Color.lerp(AppColors.primary, Colors.black, 0.12)!,
+            AppColors.primary,
+            Color.lerp(AppColors.primary, Colors.white, 0.18)!,
+          ],
+        ),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.28), blurRadius: 14, offset: const Offset(0, 5)),
         ],
       ),
       child: Material(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: () {
             HapticFeedback.lightImpact();
             onTap();
           },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.newspaper_rounded, color: AppColors.primary, size: 20),
+                const Icon(Icons.newspaper_rounded, color: Colors.white, size: 21),
                 const SizedBox(width: 10),
-                Text(
-                  tr(label),
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 14,
-                    letterSpacing: 0.3,
+                Expanded(
+                  child: Text(
+                    tr(label),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.5),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(icon, color: AppColors.primary, size: 18),
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 17),
+                ),
               ],
             ),
           ),
@@ -813,26 +866,36 @@ class _NewsTile extends StatelessWidget {
       child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: isDark ? Colors.black.withValues(alpha: 0.3) : AppColors.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Material(
         color: isDark ? AppColors.darkCard : AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           onTap: onTap,
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFEEF2F8),
+              ),
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       child: firstImg.isNotEmpty
                           ? CachedNetworkImage(
                         imageUrl: firstImg,
@@ -886,9 +949,9 @@ class _NewsTile extends StatelessWidget {
                           tr(title),
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            fontSize: 13,
+                            fontSize: 14,
                             color: isDark ? Colors.white : AppColors.textPrimary,
-                            height: 1.4,
+                            height: 1.45,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -943,11 +1006,21 @@ class _NewsTile extends StatelessWidget {
                               value: _Fmt.compact(views, lang),
                               color: statColor,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             _Stat(
                               icon: Icons.thumb_up_rounded,
                               value: _Fmt.compact(likes, lang),
                               color: AppColors.primary,
+                            ),
+                            const Spacer(),
+                            Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white10 : AppColors.primarySoft,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(forwardIcon, size: 12, color: AppColors.primary),
                             ),
                           ],
                         ),
@@ -974,13 +1047,20 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 12, color: color),
-        const SizedBox(width: 4),
-        Text(tr(value), style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w800)),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(tr(value), style: TextStyle(fontSize: 10.5, color: color, fontWeight: FontWeight.w800)),
+        ],
+      ),
     );
   }
 }
