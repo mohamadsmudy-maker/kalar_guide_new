@@ -1835,4 +1835,9 @@ const Map<String, String> stringsEn = {
   'سنووری بەخۆڕایی Gemini تەواو بووە. سبەی دووبارە هەوڵ بدەرەوە، یان لە Google AI Studio بیلینگ چالاک بکە.': 'Gemini\'s free quota is used up. Try again tomorrow, or enable billing in Google AI Studio.',
   'کلیلی GEMINI_API_KEY لە Supabase هەڵەیە یان دانەنراوە.': 'The GEMINI_API_KEY in Supabase is wrong or missing.',
   'سێرڤەری وەرگێڕان وەڵامی نەدایەوە. لۆگی فەنکشنی translate-text بپشکنە.': 'The translation server did not respond. Check the translate-text function logs.',
+  '{0} دەق ماوە — کرتە لە هەر یەکێک بکە و وەرگێڕانەکەی بنووسە': '{0} texts left — tap one and type its translation',
+  'وەرنەگێڕدراو': 'Untranslated',
+  'وەرگێڕدراو': 'Translated',
+  'کرتە بکە بۆ نووسینی وەرگێڕان': 'Tap to type a translation',
+  'هەموو دەقەکان وەرگێڕدراون ✅': 'All texts are translated ✅',
 };
