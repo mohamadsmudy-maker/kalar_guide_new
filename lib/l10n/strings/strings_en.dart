@@ -1814,4 +1814,10 @@ const Map<String, String> stringsEn = {
   'بڵاوکردنەوەی هەواڵی نوێ': 'Publish new news',
   'وێنە زیاد بکە': 'Add photos',
   'یەکەم وێنە دەبێتە وێنەی سەرەکی هەواڵەکە': 'The first photo becomes the main photo of the news',
+  '{0} هەواڵ': '{0} news',
+  'هەواڵ و ئاگادارییەکان': 'News & announcements',
+  'هەواڵی نوێ': 'New post',
+  'یەکەم هەواڵ بڵاو بکەرەوە': 'Publish the first news',
+  'هێشتا هیچ هەواڵێک بڵاو نەکراوەتەوە': 'No news published yet',
+  'هیچ ئەنجامێک نییە': 'No results',
 };
