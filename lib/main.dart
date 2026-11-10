@@ -32,6 +32,7 @@ import 'services/translation_service.dart';
 // ═══════════════════════════════════════════════════════════
 import 'screens/about/about_screen.dart';
 import 'screens/admin/admin_dashboard.dart';
+import 'screens/vendor/vendor_panel_screen.dart';
 import 'screens/admin/admin_fuel_stations.dart';
 import 'screens/admin/admin_gallery.dart';
 import 'screens/auth/auth_screen.dart';
@@ -997,18 +998,28 @@ class _AppDrawer extends StatelessWidget {
                         if (isVendor) ...[
                           const SizedBox(height: 8),
                           _section(_t('drawer_sec_manage', 'بەڕێوەبردن')),
-                          _item(
-                            context,
-                            icon: Icons.admin_panel_settings_rounded,
-                            color: Colors.blueGrey,
-                            title: isAdmin
-                                ? _t('drawer_admin', 'پانێڵی ئەدمین 👑')
-                                : _t('drawer_vendor', 'پانێڵی بەڕێوەبردن 🏪'),
-                            onTap: () => _go(
+                          // ڤێندەری شوێن ڕاستەوخۆ دەچێتە «پانێڵەکەم»
+                          if (role == 'vendor')
+                            _item(
                               context,
-                              screen: const AdminDashboardScreen(),
+                              icon: Icons.storefront_rounded,
+                              color: AppColors.toneTeal,
+                              title: tr('پانێڵەکەم 🏪'),
+                              onTap: () => _go(context, screen: const VendorPanelScreen()),
+                            )
+                          else
+                            _item(
+                              context,
+                              icon: Icons.admin_panel_settings_rounded,
+                              color: Colors.blueGrey,
+                              title: isAdmin
+                                  ? _t('drawer_admin', 'پانێڵی ئەدمین 👑')
+                                  : _t('drawer_vendor', 'پانێڵی بەڕێوەبردن 🏪'),
+                              onTap: () => _go(
+                                context,
+                                screen: const AdminDashboardScreen(),
+                              ),
                             ),
-                          ),
                           if (isAdmin)
                             _item(
                               context,
