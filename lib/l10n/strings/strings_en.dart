@@ -1790,4 +1790,7 @@ const Map<String, String> stringsEn = {
   'گۆڕینی نرخ': 'Change price',
   'هێشتا هیچ مێژوویەکی نرخ نییە': 'No price history yet',
   'ڕاپۆرتی نرخەکانی {0}': '{0} price report',
+  'هەواڵ و ئاگادارییەکانم': 'My news and announcements',
+  'نرخ، هەواڵ و زانیاری شوێنەکەت لێرەوە بەڕێوەببە': 'Manage prices, news and details of your place here',
+  'هەموو ئامرازەکانی بەڕێوەبردن': 'All management tools',
 };

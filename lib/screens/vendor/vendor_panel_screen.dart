@@ -16,6 +16,7 @@ import '../../utils/place_display.dart';
 import '../admin/admin_dashboard.dart';
 import '../currency/currency_station_details_screen.dart';
 import '../fuel/station_details_screen.dart';
+import '../stores/store_news_screen.dart';
 
 /// 🏪 «پانێڵەکەم» — ڤێندەری بەنزینخانە یان نوسینگەی دراو
 ///
@@ -269,7 +270,7 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    tr('نرخەکانت بگۆڕە و مێژووی نرخەکانت ببینە'),
+                    tr('نرخ، هەواڵ و زانیاری شوێنەکەت لێرەوە بەڕێوەببە'),
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12),
                   ),
                 ],
@@ -413,6 +414,20 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
               ],
             ),
           ],
+          const SizedBox(height: 10),
+          // 📰 هەواڵ و ئاگادارییەکانی شوێنەکە (هەموو جۆرە ڤێندەرێک)
+          _smallAction(
+            Icons.campaign_rounded,
+            tr('هەواڵ و ئاگادارییەکانم'),
+            AppColors.primary,
+            () async {
+              HapticFeedback.selectionClick();
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => StoreNewsScreen(store: p)),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -475,7 +490,7 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           leading: const Icon(Icons.dashboard_customize_rounded, color: AppColors.toneSlate),
           title: Text(tr('بەڕێوەبردنی زیاتر'), style: const TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text(tr('هەواڵ و زانیاری شوێنەکەت')),
+          subtitle: Text(tr('هەموو ئامرازەکانی بەڕێوەبردن')),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
           onTap: () => Navigator.push(
             context,
