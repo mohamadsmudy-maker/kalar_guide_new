@@ -399,8 +399,10 @@ class _AuthScreenState extends State<AuthScreen> {
     final bgColor = isDark ? AppColors.darkBackground : Colors.white;
     final titleColor = isDark ? Colors.white : AppColors.textPrimary;
     final subColor = isDark ? Colors.white54 : const Color(0xFF94A3B8);
-    final showGoogle = GoogleAuthService.isAvailable &&
-        (!_isSignUp || _selectedRole == 'customer');
+    final showGoogle = GoogleAuthService.isAvailable && (!_isSignUp || _selectedRole == 'customer');
+    // 👤 بەکارهێنەری نوێ تەنها بە Google ئەکاونت دروست دەکات (ئەگەر ڕێکخرابێت)؛
+    // خاوەن شوێن وەک پێشوو بە ژمارە و کۆد. چوونەژوورەوەی کۆن بە ژمارە دەمێنێتەوە.
+    final googleOnlySignUp = _isSignUp && _selectedRole == 'customer' && GoogleAuthService.isAvailable;
 
     return Directionality(
       textDirection: AppLang.direction,
@@ -455,72 +457,76 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        tr(_isSignUp
-                            ? 'چەند زانیارییەکی کەم، پاشان ئامادەیت'
-                            : 'بۆ بەردەوامبوون بچۆ ژوورەوە'),
+                        tr(_isSignUp ? 'چەند زانیارییەکی کەم، پاشان ئامادەیت' : 'بۆ بەردەوامبوون بچۆ ژوورەوە'),
                         style: TextStyle(fontSize: 14, color: subColor, height: 1.5),
                       ),
                       const SizedBox(height: 26),
 
+                      // 🎭 جۆری ئەکاونت
+                      if (_isSignUp) ...[
+                        _buildRoleCards(isDark),
+                        const SizedBox(height: 18),
+                      ],
+
                       // ── Google ──
-                      if (showGoogle) ...[
+                      if (googleOnlySignUp) ...[
+                        _buildGoogleOnlyCard(isDark, subColor),
+                        const SizedBox(height: 14),
+                        _buildPrivacyNote(subColor),
+                      ] else if (showGoogle) ...[
                         _buildGoogleButton(isDark),
                         const SizedBox(height: 18),
                         _buildOrDivider(subColor),
                         const SizedBox(height: 18),
                       ],
 
-                      // 🎭 جۆری ئەکاونت
-                      if (_isSignUp) ...[
-                        _buildRoleCards(isDark),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // 📱 Phone
-                      _buildTextField(
-                        controller: _phoneCtrl,
-                        label: tr('ژمارەی مۆبایل'),
-                        hint: '0770 000 0000',
-                        icon: Icons.phone_iphone_rounded,
-                        keyboardType: TextInputType.phone,
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 14),
-
-                      // 🏪 خاوەن شوێن
-                      if (_isSignUp && _selectedRole == 'admin') ...[
-                        _buildStoreSelector(isDark),
-                        const SizedBox(height: 14),
-                        if (_selectedStore != null) ...[
-                          _buildStoreCodeField(isDark),
-                          const SizedBox(height: 6),
-                          _buildVerifyCodeButton(),
-                        ],
-                      ]
-                      // 👤 بەکارهێنەر
-                      else if (_isSignUp && _selectedRole == 'customer') ...[
+                      if (!googleOnlySignUp) ...[
+                        // 📱 Phone
                         _buildTextField(
-                          controller: _nameCtrl,
-                          label: tr('ناوی تەواو'),
-                          icon: Icons.person_outline_rounded,
+                          controller: _phoneCtrl,
+                          label: tr('ژمارەی مۆبایل'),
+                          hint: '0770 000 0000',
+                          icon: Icons.phone_iphone_rounded,
+                          keyboardType: TextInputType.phone,
                           isDark: isDark,
                         ),
                         const SizedBox(height: 14),
-                      ],
 
-                      // 🔐 Password
-                      _buildPasswordField(isDark),
-                      if (_isSignUp) ...[
-                        const SizedBox(height: 14),
-                        _buildPasswordField(isDark, confirm: true),
-                      ],
-                      const SizedBox(height: 26),
+                        // 🏪 خاوەن شوێن
+                        if (_isSignUp && _selectedRole == 'admin') ...[
+                          _buildStoreSelector(isDark),
+                          const SizedBox(height: 14),
+                          if (_selectedStore != null) ...[
+                            _buildStoreCodeField(isDark),
+                            const SizedBox(height: 6),
+                            _buildVerifyCodeButton(),
+                          ],
+                        ]
+                        // 👤 بەکارهێنەر
+                        else if (_isSignUp && _selectedRole == 'customer') ...[
+                          _buildTextField(
+                            controller: _nameCtrl,
+                            label: tr('ناوی تەواو'),
+                            icon: Icons.person_outline_rounded,
+                            isDark: isDark,
+                          ),
+                          const SizedBox(height: 14),
+                        ],
 
-                      // 🚀 Submit
-                      _buildSubmitButton(isDark),
-                      if (_isSignUp || showGoogle) ...[
-                        const SizedBox(height: 14),
-                        _buildPrivacyNote(subColor),
+                        // 🔐 Password
+                        _buildPasswordField(isDark),
+                        if (_isSignUp) ...[
+                          const SizedBox(height: 14),
+                          _buildPasswordField(isDark, confirm: true),
+                        ],
+                        const SizedBox(height: 26),
+
+                        // 🚀 Submit
+                        _buildSubmitButton(isDark),
+                        if (_isSignUp || showGoogle) ...[
+                          const SizedBox(height: 14),
+                          _buildPrivacyNote(subColor),
+                        ],
                       ],
                     ],
                   ),
@@ -567,7 +573,39 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildGoogleButton(bool isDark) {
+  /// دروستکردنی ئەکاونتی بەکارهێنەر: تەنها Google — بێ ژمارە و پاسۆرد
+  Widget _buildGoogleOnlyCard(bool isDark, Color subColor) {
+    Widget point(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.toneTeal),
+              const SizedBox(width: 8),
+              Expanded(child: Text(tr(text), style: TextStyle(fontSize: 13, color: subColor, height: 1.4))),
+            ],
+          ),
+        );
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.05),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildGoogleButton(isDark, label: 'دروستکردنی ئەکاونت بە Google'),
+          const SizedBox(height: 6),
+          point(Icons.bolt_rounded, 'بە یەک کرتە — بێ ژمارە و پاسۆرد'),
+          point(Icons.lock_rounded, 'پاسۆردەکەت لای Google دەمێنێتەوە، ئێمە نایبینین'),
+          point(Icons.devices_rounded, 'لە هەر مۆبایلێک بە هەمان ئەکاونت بچۆ ژوورەوە'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton(bool isDark, {String label = 'بەردەوامبوون بە Google'}) {
     return SizedBox(
       height: 54,
       child: OutlinedButton(
@@ -579,15 +617,14 @@ class _AuthScreenState extends State<AuthScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         child: _googleLoading
-            ? const SizedBox(
-                width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5))
+            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5))
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const _GoogleMark(),
                   const SizedBox(width: 12),
                   Text(
-                    tr('بەردەوامبوون بە Google'),
+                    tr(label),
                     style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                   ),
                 ],
@@ -786,9 +823,7 @@ class _AuthScreenState extends State<AuthScreen> {
       child: TextButton.icon(
         onPressed: _verifyStoreCode,
         icon: Icon(
-          _storeCodeVerified
-              ? Icons.check_circle_rounded
-              : Icons.verified_rounded,
+          _storeCodeVerified ? Icons.check_circle_rounded : Icons.verified_rounded,
           color: _storeCodeVerified ? AppColors.green : AppColors.primary,
           size: 18,
         ),
@@ -804,8 +839,7 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Color _hairline(bool isDark) =>
-      isDark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE2E8F0);
+  Color _hairline(bool isDark) => isDark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE2E8F0);
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -839,9 +873,7 @@ class _AuthScreenState extends State<AuthScreen> {
       decoration: _inputDecoration(
         label: confirm
             ? tr('دووبارەکردنەوەی پاسۆرد')
-            : (_isSignUp
-                ? trf('پاسۆرد (لانیکەم {0} پیت)', [PlaceDisplay.digits(_minPasswordLength)])
-                : tr('پاسۆرد')),
+            : (_isSignUp ? trf('پاسۆرد (لانیکەم {0} پیت)', [PlaceDisplay.digits(_minPasswordLength)]) : tr('پاسۆرد')),
         icon: Icons.lock_outline_rounded,
         isDark: isDark,
       ).copyWith(
@@ -872,20 +904,20 @@ class _AuthScreenState extends State<AuthScreen> {
         onPressed: _loading ? null : _submit,
         child: _loading
             ? const SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            color: Colors.white,
-          ),
-        )
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
             : Text(
-          tr(_isSignUp ? 'دروستکردنی ئەکاونت' : 'چوونەژوورەوە'),
-          style: const TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-          ),
-        ),
+                tr(_isSignUp ? 'دروستکردنی ئەکاونت' : 'چوونەژوورەوە'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
       ),
     );
   }

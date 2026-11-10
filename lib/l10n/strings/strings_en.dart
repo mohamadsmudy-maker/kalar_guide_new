@@ -1827,4 +1827,8 @@ const Map<String, String> stringsEn = {
   'هەموو بەشەکان': 'All categories',
   'شاردنەوەی شوێنەکان': 'Hide places',
   'پیشاندانی شوێنەکان': 'Show places',
+  'دروستکردنی ئەکاونت بە Google': 'Create account with Google',
+  'بە یەک کرتە — بێ ژمارە و پاسۆرد': 'One tap — no phone number or password',
+  'پاسۆردەکەت لای Google دەمێنێتەوە، ئێمە نایبینین': 'Your password stays with Google; we never see it',
+  'لە هەر مۆبایلێک بە هەمان ئەکاونت بچۆ ژوورەوە': 'Sign in with the same account on any phone',
 };
