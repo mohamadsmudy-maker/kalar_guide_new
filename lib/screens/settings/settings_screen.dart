@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../widgets/common/language_flag.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -168,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         return _SelectTile(
           pal: pal,
           selected: selected,
-          leading: Text(tr(lang.flag), style: const TextStyle(fontSize: 26)),
+          leading: LanguageFlag(languageId: lang.id, emoji: lang.flag),
           title: lang.name,
           subtitle: lang.native,
           trailing: _RadioDot(selected: selected, isDark: pal.isDark),
