@@ -28,7 +28,10 @@ part 'map_screen_ui.dart';
 ///    مارکەری ناوی ڕوون (devicePixelRatio)، شێوازی شەوی باشتر
 ///  • خێرایی: دروستکردنی مارکەر بە batch، cache ی زیرەک، بێ setState ی زیادە
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  const MapScreen({super.key, this.onMenuTap});
+
+  /// کاتێک وەک تابی ناڤیگەیشن دەکرێتەوە: دوگمەی مێنیو لەبری «گەڕانەوە»
+  final VoidCallback? onMenuTap;
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -1002,14 +1005,20 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             elevation: 0,
             scrolledUnderElevation: 0,
             centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_rounded, color: fg),
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                Navigator.of(context).pop();
-              },
-              tooltip: _t('گەڕانەوە', 'Back'),
-            ),
+            leading: widget.onMenuTap != null
+                ? IconButton(
+                    icon: Icon(Icons.menu_rounded, color: fg),
+                    onPressed: widget.onMenuTap,
+                    tooltip: tr('مێنیو'),
+                  )
+                : IconButton(
+                    icon: Icon(Icons.arrow_back_rounded, color: fg),
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      Navigator.of(context).pop();
+                    },
+                    tooltip: _t('گەڕانەوە', 'Back'),
+                  ),
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               child: Text(

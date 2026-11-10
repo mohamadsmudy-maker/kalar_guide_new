@@ -13,6 +13,7 @@ import '../../widgets/common/auto_translate.dart';
 import 'full_map_screen.dart';
 import 'store_details_dialog.dart';
 import '../../l10n/tr.dart';
+import '../categories/categories_screen.dart';
 import '../../utils/place_display.dart';
 import '../../services/app_settings_service.dart';
 import 'suggest_place_screen.dart';
@@ -710,90 +711,134 @@ class _StoresScreenState extends State<StoresScreen>
   // 🏷️ بەشەکان — ڕیزی ئاسۆیی، یەک کرتە بۆ فلتەرکردن
   // ═══════════════════════════════════════════════════════════
   Widget _buildQuickCategories(bool isDark) {
-    final names = <String>[
-      'هەموو',
+    // هەموو بەشەکان (بەتاڵەکان لە کۆتایی و کاڵتر) — لەبری تابی «بەشەکان»
+    final cats = <String>[
       for (final c in _allCategories)
-        if ((c['name'] ?? '').toString().trim().isNotEmpty &&
-            _countFor(c['name'].toString()) > 0)
-          c['name'].toString(),
-    ];
-    if (names.length <= 1) return const SizedBox(height: 4);
+        if ((c['name'] ?? '').toString().trim().isNotEmpty) c['name'].toString(),
+    ]..sort((a, b) => (_countFor(a) == 0 ? 1 : 0).compareTo(_countFor(b) == 0 ? 1 : 0));
+    if (cats.isEmpty) return const SizedBox(height: 4);
+    final names = ['هەموو', ...cats];
     return SizedBox(
-      height: 46,
+      height: 128,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
-        itemCount: names.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        itemCount: names.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, i) {
+          // کۆتا: بینینی هەموو بەشەکان بە شێوەی گرید
+          if (i == names.length) {
+            return _categoryTile(
+              isDark: isDark,
+              icon: Icons.grid_view_rounded,
+              label: tr('هەموو بەشەکان'),
+              color: AppColors.toneSlate,
+              count: null,
+              selected: false,
+              dim: false,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriesScreen()));
+              },
+            );
+          }
           final name = names[i];
           final selected = _selectedCategory == name;
-          final color =
-              name == 'هەموو' ? AppColors.primary : PlaceDisplay.color(name);
-          return GestureDetector(
+          final count = _countFor(name);
+          return _categoryTile(
+            isDark: isDark,
+            icon: name == 'هەموو' ? Icons.apps_rounded : PlaceDisplay.icon(name),
+            label: name,
+            color: name == 'هەموو' ? AppColors.primary : PlaceDisplay.color(name),
+            count: count,
+            selected: selected,
+            dim: count == 0 && name != 'هەموو',
             onTap: () {
               HapticFeedback.selectionClick();
-              setState(() => _selectedCategory =
-                  selected && name != 'هەموو' ? 'هەموو' : name);
+              setState(() => _selectedCategory = selected && name != 'هەموو' ? 'هەموو' : name);
               _applyFilters();
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: selected
-                    ? color
-                    : (isDark ? const Color(0xFF1A1A22) : Colors.white),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                    color: selected ? color : color.withValues(alpha: 0.25)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    name == 'هەموو'
-                        ? Icons.apps_rounded
-                        : PlaceDisplay.icon(name),
-                    size: 15,
-                    color: selected ? Colors.white : color,
-                  ),
-                  const SizedBox(width: 6),
-                  AutoTranslate(
-                    text: tr(name),
-                    lang: AppLang.code,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: selected
-                          ? Colors.white
-                          : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? Colors.white.withValues(alpha: 0.25)
-                          : color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      PlaceDisplay.digits(_countFor(name)),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        color: selected ? Colors.white : color,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _categoryTile({
+    required bool isDark,
+    required IconData icon,
+    required String label,
+    required Color color,
+    required int? count,
+    required bool selected,
+    required bool dim,
+    required VoidCallback onTap,
+  }) {
+    return Opacity(
+      opacity: dim ? 0.5 : 1,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          width: 92,
+          padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
+          decoration: BoxDecoration(
+            color: selected ? color : (isDark ? const Color(0xFF1A1A22) : Colors.white),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: selected ? color : color.withValues(alpha: 0.18)),
+            boxShadow: [
+              BoxShadow(
+                color: selected ? color.withValues(alpha: 0.35) : Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: selected ? 12 : 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white.withValues(alpha: 0.22) : null,
+                  gradient: selected
+                      ? null
+                      : LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color.lerp(color, Colors.white, 0.2)!, Color.lerp(color, Colors.black, 0.08)!],
+                        ),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(icon, color: Colors.white, size: 21),
+              ),
+              const SizedBox(height: 6),
+              Expanded(
+                child: AutoTranslate(
+                  text: tr(label),
+                  lang: AppLang.code,
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    height: 1.25,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                  ),
+                ),
+              ),
+              if (count != null)
+                Text(
+                  PlaceDisplay.digits(count),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: selected ? Colors.white : color,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -703,7 +703,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
     _builders = [
           () => HomeScreen(onMenuTap: _openDrawer, onSearchTap: () => _goTo(1)),
           () => StoresScreen(onMenuTap: _openDrawer),
-          () => CategoriesScreen(onMenuTap: _openDrawer),
+          () => MapScreen(onMenuTap: _openDrawer),
           () => DailyScreen(onMenuTap: _openDrawer),
           () => const ProfileScreen(),
     ];
@@ -777,10 +777,11 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
         icon: Icons.location_on_outlined,
         activeIcon: Icons.location_on_rounded,
       ),
+      // 🗺️ نەخشە — بەشەکان چوونە ناو «شوێنەکان» (ڕیزی ئاسۆیی)
       ProNavItem(
-        label: t('nav_categories', 'بەشەکان'),
-        icon: Icons.grid_view_outlined,
-        activeIcon: Icons.grid_view_rounded,
+        label: tr('نەخشە'),
+        icon: Icons.map_outlined,
+        activeIcon: Icons.map_rounded,
       ),
       ProNavItem(
         label: t('nav_daily', 'ڕۆژانە'),
