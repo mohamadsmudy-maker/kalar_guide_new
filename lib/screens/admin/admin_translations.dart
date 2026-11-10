@@ -30,6 +30,9 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
   String? _error;
   List<Map<String, dynamic>> _rows = [];
 
+  /// true = لیستی ئەو دەقانەی هێشتا وەرنەگێڕدراون (بۆ نووسینی بە دەست)
+  bool _missingMode = false;
+
   SupabaseClient get _db => Supabase.instance.client;
 
   @override
@@ -51,6 +54,33 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
       _error = null;
     });
     try {
+      if (_missingMode) {
+        final all = await _collectTexts();
+        final have = <String>{};
+        for (var from = 0; ; from += 1000) {
+          final page = await _db
+              .from('text_translations')
+              .select('source')
+              .eq('lang', _lang)
+              .range(from, from + 999);
+          for (final r in page) {
+            have.add('${r['source']}'.trim());
+          }
+          if (page.length < 1000) break;
+        }
+        final needle = _search.text.trim();
+        final missing = all
+            .where((t) => !have.contains(t) && AppLang.lookup(_lang, t) == null)
+            .where((t) => needle.isEmpty || t.contains(needle))
+            .toList()
+          ..sort();
+        if (!mounted) return;
+        setState(() {
+          _rows = [for (final t in missing) {'source': t, 'translation': '', '_new': true}];
+          _loading = false;
+        });
+        return;
+      }
       final q = _search.text.trim().replaceAll(RegExp(r'[%,()]'), ' ');
       var query = _db
           .from('text_translations')
@@ -142,6 +172,29 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     ctrl.dispose();
     if (saved == null || saved.isEmpty || saved == row['translation']) return;
 
+    // ➕ وەرگێڕانی نوێ بە دەست (بێ Gemini)
+    if (row['_new'] == true) {
+      try {
+        await _db.from('text_translations').upsert(
+          {
+            'lang': _lang,
+            'source': '${row['source']}',
+            'translation': saved,
+            'edited': true,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          },
+          onConflict: 'lang,source_hash',
+        );
+        unawaited(TranslationService.syncShared(_lang));
+        if (!mounted) return;
+        setState(() => _rows.remove(row));
+        _snack(tr('پاشەکەوت کرا'));
+      } catch (e) {
+        _snack('${tr('هەڵەیەک ڕوویدا')}\n$e', ok: false);
+      }
+      return;
+    }
+
     try {
       final res = await _db
           .from('text_translations')
@@ -165,6 +218,28 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     }
   }
 
+  /// هەموو ئەو دەقانەی لە داتابەیسەوە دێن و پێویستیان بە وەرگێڕانە
+  Future<Set<String>> _collectTexts() async {
+    final texts = <String>{};
+    Future<void> collect(String table, List<String> cols) async {
+      try {
+        final rows = await _db.from(table).select(cols.join(', ')).limit(5000);
+        for (final r in rows) {
+          for (final c in cols) {
+            final v = '${r[c] ?? ''}'.trim();
+            if (v.isNotEmpty && v != 'null') texts.add(v);
+          }
+        }
+      } catch (_) {}
+    }
+
+    await collect('dukan', ['name', 'address', 'category', 'sub_category']);
+    await collect('main_categories', ['name']);
+    await collect('sub_categories', ['name']);
+    await collect('news', ['title']);
+    return texts;
+  }
+
   /// هەموو ناوی شوێن، بەش و هەواڵەکان یەکجار وەردەگێڕێت (بە کۆمەڵ، بە
   /// پشوو لە نێوان داواکارییەکاندا بۆ سنووری Gemini ـی بەخۆڕایی). دواتر
   /// هیچ بەکارهێنەرێک چاوەڕێی Gemini ناکات.
@@ -186,23 +261,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     );
     if (go != true || !mounted) return;
 
-    final texts = <String>{};
-    Future<void> collect(String table, List<String> cols) async {
-      try {
-        final rows = await _db.from(table).select(cols.join(', ')).limit(5000);
-        for (final r in rows) {
-          for (final c in cols) {
-            final v = '${r[c] ?? ''}'.trim();
-            if (v.isNotEmpty && v != 'null') texts.add(v);
-          }
-        }
-      } catch (_) {}
-    }
-
-    await collect('dukan', ['name', 'address', 'category', 'sub_category']);
-    await collect('main_categories', ['name']);
-    await collect('sub_categories', ['name']);
-    await collect('news', ['title']);
+    final texts = await _collectTexts();
     texts.removeWhere((t) => AppLang.lookup('en', t) != null); // پێشتر لە ناو ئەپدا وەرگێڕدراون
     if (!mounted) return;
 
@@ -332,6 +391,31 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
                 },
               ),
             ),
+            // وەرگێڕدراو / وەرنەگێڕدراو
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(value: false, label: Text(tr('وەرگێڕدراو')), icon: const Icon(Icons.check_rounded)),
+                  ButtonSegment(
+                      value: true, label: Text(tr('وەرنەگێڕدراو')), icon: const Icon(Icons.edit_note_rounded)),
+                ],
+                showSelectedIcon: false,
+                selected: {_missingMode},
+                onSelectionChanged: (v) {
+                  setState(() => _missingMode = v.first);
+                  _load();
+                },
+              ),
+            ),
+            if (_missingMode && !_loading)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(
+                  trf('{0} دەق ماوە — کرتە لە هەر یەکێک بکە و وەرگێڕانەکەی بنووسە', [_rows.length]),
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
               child: TextField(
@@ -374,7 +458,8 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
       );
     }
     if (_rows.isEmpty) {
-      return Center(child: Text(tr('هێشتا هیچ وەرگێڕانێک نییە')));
+      return Center(
+          child: Text(tr(_missingMode ? 'هەموو دەقەکان وەرگێڕدراون ✅' : 'هێشتا هیچ وەرگێڕانێک نییە')));
     }
     return RefreshIndicator(
       onRefresh: _load,
@@ -391,7 +476,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
               onTap: () => _edit(r),
-              onLongPress: () => _delete(r),
+              onLongPress: r['_new'] == true ? null : () => _delete(r),
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -413,7 +498,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${r['translation']}',
+                            r['_new'] == true ? tr('کرتە بکە بۆ نووسینی وەرگێڕان') : '${r['translation']}',
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             textDirection:
