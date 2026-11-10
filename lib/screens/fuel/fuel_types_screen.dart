@@ -9,7 +9,6 @@ import '../../config/settings_provider.dart';
 import '../../services/currency_service.dart';
 import '../../services/fuel_pdf_service.dart';
 import '../../services/fuel_service.dart';
-import '../../widgets/fuel_cost_calculator_card.dart';
 import '../../widgets/multi_fuel_chart_widget.dart';
 import '../currency/currency_strings.dart';
 import 'fuel_comparison_screen.dart';
@@ -164,18 +163,16 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   sliver: SliverToBoxAdapter(child: _buildQuickActions(isDark, lang)),
                 ),
+                SliverToBoxAdapter(child: _sectionHeader(t('fuel_types'), isDark)),
+                // فلتەر لە دێڕی خۆیدا — ناونیشانەکە چیتر دوو دێڕ نابێت
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(10, 0, 16, 12),
                   sliver: SliverToBoxAdapter(
-                    child: FuelCostCalculatorCard(
-                      markets: _snapshot?.markets ?? const {},
-                      lang: lang,
-                      isDark: isDark,
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: _buildGroupFilter(isDark, lang),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: _sectionHeader(t('fuel_types'), isDark, trailing: _buildGroupFilter(isDark, lang)),
                 ),
                 ..._buildMarketList(isDark, lang),
                 SliverToBoxAdapter(child: _sectionHeader(FuelStrings.of(lang, 'chart'), isDark)),
@@ -221,7 +218,8 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
         IconButton(
           tooltip: t('pdf'),
           icon: _generatingPdf
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              ? const SizedBox(
+                  width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : const Icon(Icons.picture_as_pdf_rounded),
           onPressed: _generatingPdf ? null : () => _generatePdf(lang),
         ),
@@ -263,7 +261,8 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
                             child: Text(
                               tr(fmt(m?.minPrice)),
                               key: ValueKey(m?.minPrice),
-                              style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, height: 1),
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 40, fontWeight: FontWeight.w900, height: 1),
                             ),
                           ),
                         ),
@@ -283,8 +282,11 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      _heroStat(t('expensive'), fmt(m?.maxPrice)),
-                      _heroStat(t('avg'), fmt(m?.avg)),
+                      // کاتێک هەموو نرخەکان یەکن، گرانترین و تێکڕا دووبارەی هەمان ژمارەن
+                      if (m != null && m.minPrice != m.maxPrice) ...[
+                        _heroStat(t('expensive'), fmt(m.maxPrice)),
+                        _heroStat(t('avg'), fmt(m.avg)),
+                      ],
                       _heroStat(t('stations'), CurrencyService.localizeDigits('${m?.stationCount ?? 0}', lang)),
                     ],
                   ),
@@ -325,7 +327,8 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
             const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(tr(value), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
+              child: Text(tr(value),
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
             ),
           ],
         ),
@@ -363,7 +366,10 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(tr(label),
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF1E293B))),
                 ],
               ),
             ),
@@ -374,7 +380,8 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
 
     return Row(
       children: [
-        action(Icons.map_rounded, t('map'), const Color(0xFF0F9D7A), () => _open(const FuelStationsMapScreen(fuelType: 'normal'))),
+        action(Icons.map_rounded, t('map'), const Color(0xFF0F9D7A),
+            () => _open(const FuelStationsMapScreen(fuelType: 'normal'))),
         const SizedBox(width: 8),
         action(Icons.compare_arrows_rounded, t('compare'), const Color(0xFF4F5BD5),
             () => _open(FuelComparisonScreen(fuelTypes: FuelService.getFuelTypesForLang(lang)))),
@@ -461,11 +468,13 @@ class _FuelTypesScreenState extends State<FuelTypesScreen> {
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
       child: Row(
         children: [
-          Container(width: 4, height: 20, decoration: BoxDecoration(color: _amber, borderRadius: BorderRadius.circular(4))),
+          Container(
+              width: 4, height: 20, decoration: BoxDecoration(color: _amber, borderRadius: BorderRadius.circular(4))),
           const SizedBox(width: 8),
           Expanded(
             child: Text(tr(title),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF1E293B))),
           ),
           if (trailing != null) trailing,
         ],
@@ -565,18 +574,40 @@ class _FuelCard extends StatelessWidget {
                                   : t('no_prices')),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 11, color: stale ? const Color(0xFFD9822B) : sub, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: stale ? const Color(0xFFD9822B) : sub,
+                                  fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
                       ),
                       if (m?.lastChange != null) _ChangeChip(change: m!.lastChange!, lang: lang),
                       const SizedBox(width: 4),
-                      Icon(Icons.chevron_right_rounded,
-                          color: isDark ? Colors.white38 : Colors.grey.shade400),
+                      Icon(Icons.chevron_right_rounded, color: isDark ? Colors.white38 : Colors.grey.shade400),
                     ],
                   ),
-                  if (hasData) ...[
+                  if (hasData && m!.minPrice == m.maxPrice) ...[
+                    // تەنها یەک نرخ (یان هەموو بەنزینخانەکان هەمان نرخ) — دووبارە نەکرێتەوە
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _PriceBox(
+                        label: m.stationCount > 1 ? tr('هەموو بەنزینخانەکان') : tr('نرخ'),
+                        value: fmt(m.minPrice),
+                        station: m.stationCount > 1 ? null : m.cheapest?['station_name']?.toString(),
+                        color: color,
+                        isDark: isDark,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text('${t('iqd')} / ${type['unit']}',
+                            style: TextStyle(fontSize: 10, color: sub, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ] else if (hasData) ...[
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -609,7 +640,8 @@ class _FuelCard extends StatelessWidget {
                         const Spacer(),
                         if (m.saving != null)
                           Text('💰 ${t('saving')} ${fmt(m.saving)}',
-                              style: const TextStyle(fontSize: 10, color: Color(0xFF0F9D7A), fontWeight: FontWeight.w800)),
+                              style:
+                                  const TextStyle(fontSize: 10, color: Color(0xFF0F9D7A), fontWeight: FontWeight.w800)),
                       ],
                     ),
                   ],
@@ -630,13 +662,15 @@ class _PriceBox extends StatelessWidget {
   final Color color;
   final bool isDark;
 
-  const _PriceBox({required this.label, required this.value, required this.station, required this.color, required this.isDark});
+  const _PriceBox(
+      {required this.label, required this.value, required this.station, required this.color, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(color: color.withValues(alpha: isDark ? 0.15 : 0.08), borderRadius: BorderRadius.circular(12)),
+      decoration:
+          BoxDecoration(color: color.withValues(alpha: isDark ? 0.15 : 0.08), borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -671,11 +705,13 @@ class _ChangeChip extends StatelessWidget {
     final color = up ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: onDark ? 0.25 : 0.12), borderRadius: BorderRadius.circular(10)),
+      decoration:
+          BoxDecoration(color: color.withValues(alpha: onDark ? 0.25 : 0.12), borderRadius: BorderRadius.circular(10)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 12, color: onDark ? Colors.white : color),
+          Icon(up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+              size: 12, color: onDark ? Colors.white : color),
           const SizedBox(width: 2),
           Text(tr(CurrencyService.formatPrice(change.abs(), lang)),
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: onDark ? Colors.white : color)),
@@ -727,11 +763,13 @@ class _Skeleton extends StatelessWidget {
       height: 130,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: isDark ? const Color(0xFF1E293B) : Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white, borderRadius: BorderRadius.circular(20)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(width: 50, height: 50, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(15))),
+          Container(
+              width: 50, height: 50, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(15))),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
