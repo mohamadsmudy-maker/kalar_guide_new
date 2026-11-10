@@ -16,6 +16,7 @@ import 'fuel_stations_map_screen.dart';
 import 'fuel_strings.dart';
 import 'station_details_screen.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// ⛽ بەنزینخانەکانی یەک جۆر — ULTRA PRO MAX
 ///   ڕیزکردن (هەرزان / گران / نوێترین) • گەڕان • جیاوازی لە هەرزانترین
@@ -316,7 +317,8 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
   Widget _buildCard(Map<String, dynamic> s, int index, bool isDark, String lang, Color color) {
     String t(String k) => FuelStrings.of(lang, k);
     final name = s['station_name']?.toString() ?? '';
-    final address = s['station_address']?.toString() ?? '';
+    final rawAddress = s['station_address']?.toString().trim() ?? '';
+    final address = rawAddress.isEmpty ? '' : PlaceDisplay.address(rawAddress);
     final logo = s['station_logo']?.toString() ?? '';
     final image = s['station_image']?.toString() ?? '';
     final phone = s['station_phone']?.toString() ?? '';
@@ -474,7 +476,7 @@ class _FuelStationsByTypeScreenState extends State<FuelStationsByTypeScreen> {
                     Expanded(child: _actionBtn(Icons.share_rounded, t('share'), const Color(0xFF4F5BD5), () => _share(s, lang))),
                     if (canEdit) ...[
                       const SizedBox(width: 6),
-                      Expanded(child: _actionBtn(Icons.edit_rounded, t('edit_price'), color, () => _edit(s))),
+                      Expanded(child: _actionBtn(Icons.edit_rounded, tr('نرخ'), color, () => _edit(s))),
                     ],
                   ],
                 ),

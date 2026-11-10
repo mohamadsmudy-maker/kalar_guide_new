@@ -1773,4 +1773,6 @@ const Map<String, String> stringsEn = {
   'لادان لە قیبلە': 'Off from Qibla',
   'لادانی موگناتیسی (WMM)': 'Magnetic declination (WMM)',
   'هێشتا بەتاڵە': 'Empty for now',
+  'نرخ': 'Price',
+  'هەموو بەنزینخانەکان': 'All stations',
 };
