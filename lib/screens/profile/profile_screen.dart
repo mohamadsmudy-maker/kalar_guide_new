@@ -262,7 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         icon: Icons.favorite_rounded,
                         color: const Color(0xFFC2557A),
                         title: tr('دڵخوازەکانم'),
-                        subtitle: tr('شوێن و هەواڵەکان'),
+                        subtitle: tr('شوێن، هەواڵ، ڤیدیۆ و وێنە'),
                         badge: _favoritesCount > 0 ? _favoritesCount : null,
                         onTap: () => _push(const FavoritesScreen()),
                         itemIndex: 2,

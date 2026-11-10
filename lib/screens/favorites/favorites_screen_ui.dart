@@ -73,9 +73,14 @@ extension _FavoritesScreenStateUi on _FavoritesScreenState {
           const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
           unselectedLabelStyle:
           const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 14),
           tabs: [
             tab(Icons.place_rounded, 'شوێنەکان', _items[_Kind.stores]!.length),
             tab(Icons.article_rounded, 'هەواڵەکان', _items[_Kind.news]!.length),
+            tab(Icons.smart_display_rounded, 'ڤیدیۆکان', LocalFavorites.items(LocalFavorites.videos).length),
+            tab(Icons.photo_library_rounded, 'وێنەکان', LocalFavorites.items(LocalFavorites.gallery).length),
           ],
         ),
       ),
