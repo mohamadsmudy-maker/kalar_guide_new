@@ -59,10 +59,7 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
           newsList = [];
         }
       } else {
-        final res = await Supabase.instance.client
-            .from('news')
-            .select()
-            .order('created_at', ascending: false);
+        final res = await Supabase.instance.client.from('news').select().order('created_at', ascending: false);
         newsList = List<Map<String, dynamic>>.from(res as List);
       }
 
@@ -188,18 +185,18 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                   : filteredNews.isEmpty
-                  ? _buildEmptyState(isDark, isVendor)
-                  : RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: _fetchNews,
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: filteredNews.length,
-                  itemBuilder: (context, index) {
-                    return _buildNewsCard(filteredNews[index], isDark);
-                  },
-                ),
-              ),
+                      ? _buildEmptyState(isDark, isVendor)
+                      : RefreshIndicator(
+                          color: AppColors.primary,
+                          onRefresh: _fetchNews,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            itemCount: filteredNews.length,
+                            itemBuilder: (context, index) {
+                              return _buildNewsCard(filteredNews[index], isDark);
+                            },
+                          ),
+                        ),
             ),
           ],
         ),
@@ -231,7 +228,11 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
           borderRadius: BorderRadius.circular(14),
           child: firstImg.isNotEmpty
               ? OptimizedNetworkImage(imageUrl: firstImg, width: 60, height: 60, fit: BoxFit.cover)
-              : Container(width: 60, height: 60, color: Colors.grey.shade100, child: const Icon(Icons.article_rounded, color: Colors.grey)),
+              : Container(
+                  width: 60,
+                  height: 60,
+                  color: Colors.grey.shade100,
+                  child: const Icon(Icons.article_rounded, color: Colors.grey)),
         ),
         title: Text(
           tr(news['title'] ?? ''),
@@ -300,6 +301,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final List<XFile> _newsImages = [];
+
   /// وێنە بارکراوەکانی هەواڵێک کە دەستکاری دەکرێت (دەتوانرێت لاببرێن)
   final List<String> _existingUrls = [];
   bool _loading = false;
@@ -374,11 +376,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       if (role == 'vendor') {
         final storeId = AuthSessionManager.storeId;
         if (storeId != null) {
-          final res = await Supabase.instance.client
-              .from('dukan')
-              .select('id, name')
-              .eq('id', storeId)
-              .maybeSingle();
+          final res = await Supabase.instance.client.from('dukan').select('id, name').eq('id', storeId).maybeSingle();
 
           if (res != null) {
             setState(() {
@@ -458,7 +456,9 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr(isEditing ? "✅ دەستکاری کرا" : "✅ بڵاوکرایەوە")), backgroundColor: const Color(0xFF0F9D7A)),
+          SnackBar(
+              content: Text(tr(isEditing ? "✅ دەستکاری کرا" : "✅ بڵاوکرایەوە")),
+              backgroundColor: const Color(0xFF0F9D7A)),
         );
       }
     } catch (e) {
@@ -479,10 +479,8 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
     final text = isDark ? Colors.white : AppColors.textPrimary;
     final sub = isDark ? Colors.white54 : AppColors.textSecondary;
     final line = isDark ? Colors.white12 : const Color(0xFFE6EAF0);
-    final storeName = _stores
-        .where((st) => st['id'].toString() == _selectedStoreId)
-        .map((st) => '${st['name'] ?? ''}')
-        .firstOrNull;
+    final storeName =
+        _stores.where((st) => st['id'].toString() == _selectedStoreId).map((st) => '${st['name'] ?? ''}').firstOrNull;
     final storeLocked = widget.forcedStoreId != null || _stores.length == 1;
 
     InputDecoration field(String hint, {String? error}) => InputDecoration(
@@ -491,7 +489,8 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
           filled: true,
           fillColor: card,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: line)),
+          enabledBorder:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: line)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
@@ -528,7 +527,8 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: url != null
-                    ? Image.network(url, fit: BoxFit.cover,
+                    ? Image.network(url,
+                        fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(color: line, child: const Icon(Icons.broken_image)))
                     : Image.file(File(file!.path), fit: BoxFit.cover),
               ),
@@ -563,6 +563,83 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
         body: ListView(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
           children: [
+            // ─── وێنەکان ───
+            label(
+              Icons.photo_library_rounded,
+              'وێنەکان',
+              trailing: Text(
+                '${PlaceDisplay.digits(_imageCount)} / ${PlaceDisplay.digits(_maxImages)}',
+                style: TextStyle(color: sub, fontWeight: FontWeight.w800),
+              ),
+            ),
+            if (_imageCount == 0)
+              InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: _pickImages,
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.05),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 1.4),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary, size: 32),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(tr('وێنە زیاد بکە'),
+                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 15)),
+                      const SizedBox(height: 2),
+                      Text(tr('یەکەم وێنە دەبێتە وێنەی سەرەکی هەواڵەکە'), style: TextStyle(color: sub, fontSize: 11.5)),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 92,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final u in _existingUrls)
+                      thumb(url: u, onRemove: () => setState(() => _existingUrls.remove(u))),
+                    for (var i = 0; i < _newsImages.length; i++)
+                      thumb(file: _newsImages[i], onRemove: () => setState(() => _newsImages.removeAt(i))),
+                    if (_imageCount < _maxImages)
+                      InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: _pickImages,
+                        child: Container(
+                          width: 92,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 1.4),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_a_photo_rounded, color: AppColors.primary, size: 26),
+                              const SizedBox(height: 4),
+                              Text(tr('زیادکردن'),
+                                  style: const TextStyle(
+                                      color: AppColors.primary, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 18),
             // ─── بڵاوکەرەوە ───
             if (_loadingStores)
               const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator()))
@@ -610,8 +687,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                       .map((store) => DropdownMenuItem<String>(
                             value: store['id'].toString(),
                             child: Text(tr(store['name'] ?? 'بێ ناو'),
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.bold)),
+                                overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
                           ))
                       .toList(),
                   onChanged: (val) => setState(() => _selectedStoreId = val),
@@ -683,49 +759,6 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                   error: _triedSave && _descCtrl.text.trim().isEmpty ? tr('دەقی هەواڵ پێویستە') : null),
             ),
             const SizedBox(height: 8),
-
-            // ─── وێنەکان ───
-            label(
-              Icons.photo_library_rounded,
-              'وێنەکان',
-              trailing: Text(
-                '${PlaceDisplay.digits(_imageCount)} / ${PlaceDisplay.digits(_maxImages)}',
-                style: TextStyle(color: sub, fontWeight: FontWeight.w800),
-              ),
-            ),
-            SizedBox(
-              height: 92,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (final u in _existingUrls) thumb(url: u, onRemove: () => setState(() => _existingUrls.remove(u))),
-                  for (var i = 0; i < _newsImages.length; i++)
-                    thumb(file: _newsImages[i], onRemove: () => setState(() => _newsImages.removeAt(i))),
-                  if (_imageCount < _maxImages)
-                    InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: _pickImages,
-                      child: Container(
-                        width: 92,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.05),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 1.4),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.add_a_photo_rounded, color: AppColors.primary, size: 26),
-                            const SizedBox(height: 4),
-                            Text(tr('زیادکردن'),
-                                style: const TextStyle(color: AppColors.primary, fontSize: 11.5, fontWeight: FontWeight.w800)),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
           ],
         ),
         bottomNavigationBar: SafeArea(
@@ -740,7 +773,8 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
               ),
               onPressed: _loading ? null : _save,
               icon: _loading
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : Icon(isEditing ? Icons.check_rounded : Icons.send_rounded),
               label: Text(
                 tr(isEditing ? 'پاشەکەوتکردن' : 'بڵاوکردنەوە'),

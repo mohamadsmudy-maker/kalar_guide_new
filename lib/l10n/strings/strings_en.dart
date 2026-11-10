@@ -1812,4 +1812,6 @@ const Map<String, String> stringsEn = {
   'وردەکاری هەواڵەکە بنووسە...': 'Write the details of the news...',
   'دەستکاریکردنی هەواڵ': 'Edit news',
   'بڵاوکردنەوەی هەواڵی نوێ': 'Publish new news',
+  'وێنە زیاد بکە': 'Add photos',
+  'یەکەم وێنە دەبێتە وێنەی سەرەکی هەواڵەکە': 'The first photo becomes the main photo of the news',
 };
