@@ -1766,4 +1766,10 @@ const Map<String, String> stringsEn = {
   'بانگ لە کاتی خۆیدا نایەت': 'The adhan will not arrive on time',
   'مۆڵەت بدە': 'Allow',
   'مۆڵەتی «Alarms and reminders» بدە بە ئەپەکە بۆ ئەوەی بانگ ڕێک لە کاتی خۆیدا بێت.': 'Allow «Alarms and reminders» for the app so the adhan arrives exactly on time.',
+  'خۆکار': 'Auto',
+  'ڕێک ✓': 'Exact ✓',
+  '{0}° بەرەو ڕاست': '{0}° to the right',
+  '{0}° بەرەو چەپ': '{0}° to the left',
+  'لادان لە قیبلە': 'Off from Qibla',
+  'لادانی موگناتیسی (WMM)': 'Magnetic declination (WMM)',
 };
