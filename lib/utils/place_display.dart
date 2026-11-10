@@ -77,6 +77,17 @@ class PlaceDisplay {
     ),
     (['مزگەوت', 'ئاینی', 'ئایینی'], Icons.mosque_rounded, Color(0xFF0D9488)),
     (
+      ['پارک', 'باخچە', 'گەشت', 'شوێنەگشتی', 'شوێنە گشتی'],
+      Icons.park_rounded,
+      Color(0xFF16A34A)
+    ),
+    (['گۆڕستان'], Icons.yard_rounded, Color(0xFF64748B)),
+    (
+      ['ئیدارە', 'ئیدارەی گەرمیان', 'حکومەت'],
+      Icons.account_balance_rounded,
+      Color(0xFF2563EB)
+    ),
+    (
       ['شارەوانی', 'قایمقام', 'سەرۆکایەتی', 'پارێزگا'],
       Icons.account_balance_rounded,
       Color(0xFF2563EB)

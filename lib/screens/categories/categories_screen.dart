@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../widgets/common/auto_translate.dart';
-import '../../widgets/common/optimized_network_image.dart';
 import 'category_details.dart';
 import '../../l10n/tr.dart';
 import '../../utils/place_display.dart';
@@ -168,7 +167,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                       crossAxisCount: 2,
                       mainAxisSpacing: 14,
                       crossAxisSpacing: 14,
-                      childAspectRatio: 0.92,
+                      childAspectRatio: 1.0,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -506,24 +505,13 @@ class _CategoriesScreenState extends State<CategoriesScreen>
   // ═══════════════════════════════════════════════════════════
   Widget _buildCategoryTile(Map<String, dynamic> cat, bool isDark, String lang) {
     final name = '${cat['name'] ?? ''}';
-    final image = '${cat['image'] ?? ''}';
-    final hasImage = image.startsWith('http');
     final color = PlaceDisplay.color(name);
+    final icon = PlaceDisplay.icon(name);
     final count = _counts[name];
+    final empty = count == 0;
 
-    Widget iconBubble({double size = 54}) => Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: hasImage ? Colors.white.withValues(alpha: 0.22) : color.withValues(alpha: 0.10),
-            shape: BoxShape.circle,
-            border: hasImage ? Border.all(color: Colors.white54) : null,
-          ),
-          child: Icon(PlaceDisplay.icon(name), color: hasImage ? Colors.white : color, size: size * 0.5),
-        );
-
-    final fg = hasImage ? Colors.white : (isDark ? Colors.white : const Color(0xFF1A1A2E));
-    final sub = hasImage ? Colors.white70 : (isDark ? Colors.white54 : const Color(0xFF64748B));
+    final fg = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final sub = isDark ? Colors.white54 : const Color(0xFF64748B);
 
     return Semantics(
       button: true,
@@ -532,7 +520,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           onTap: () {
             HapticFeedback.mediumImpact();
             Navigator.push(
@@ -542,73 +530,105 @@ class _CategoriesScreenState extends State<CategoriesScreen>
           },
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [Color.lerp(const Color(0xFF1A1A22), color, 0.16)!, const Color(0xFF1A1A22)]
+                    : [Color.lerp(Colors.white, color, 0.10)!, Colors.white],
+              ),
               border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8EDF3),
+                color: isDark ? color.withValues(alpha: 0.22) : color.withValues(alpha: 0.16),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.045),
+                  color: isDark ? Colors.black.withValues(alpha: 0.25) : color.withValues(alpha: 0.12),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(21),
+              borderRadius: BorderRadius.circular(23),
               child: Stack(
-                fit: StackFit.expand,
                 children: [
-                  if (hasImage) ...[
-                    OptimizedNetworkImage(imageUrl: image, fit: BoxFit.cover, fallback: Container(color: color)),
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0x14000000), Color(0xB3000000)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                  ],
+                  // ئایکۆنی گەورەی کاڵ لە گۆشەدا (watermark)
+                  PositionedDirectional(
+                    bottom: -18,
+                    start: -14,
+                    child: Icon(icon, size: 110, color: color.withValues(alpha: isDark ? 0.10 : 0.07)),
+                  ),
                   Padding(
                     padding: const EdgeInsets.all(14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        iconBubble(),
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color.lerp(color, Colors.white, 0.22)!,
+                                Color.lerp(color, Colors.black, 0.10)!,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.38),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Icon(icon, color: Colors.white, size: 27),
+                        ),
                         const Spacer(),
                         AutoTranslate(
                           text: name,
                           lang: lang,
                           maxLines: 2,
-                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900, color: fg, height: 1.3),
+                          style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900, color: fg, height: 1.35),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              child: Text(
-                                count == null
-                                    ? ''
-                                    : count == 0
-                                        ? tr('هێشتا شوێنی تێدا نییە')
-                                        : trf('{0} شوێن', [PlaceDisplay.digits(count)]),
-                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: sub),
+                            if (count != null)
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: empty
+                                        ? (isDark ? Colors.white10 : const Color(0xFFF1F5F9))
+                                        : color.withValues(alpha: isDark ? 0.22 : 0.10),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    empty ? tr('هێشتا بەتاڵە') : trf('{0} شوێن', [PlaceDisplay.digits(count)]),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: empty ? sub : (isDark ? Colors.white : color),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                            const SizedBox(width: 8),
                             Container(
                               width: 28,
                               height: 28,
                               decoration: BoxDecoration(
-                                color: hasImage ? Colors.white.withValues(alpha: 0.25) : color,
+                                color: color.withValues(alpha: isDark ? 0.25 : 0.12),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.arrow_forward_rounded,
-                                size: 15,
-                                color: Colors.white,
-                              ),
+                              child: Icon(Icons.arrow_forward_rounded, size: 15, color: color),
                             ),
                           ],
                         ),
@@ -623,8 +643,6 @@ class _CategoriesScreenState extends State<CategoriesScreen>
       ),
     );
   }
-
-
 
   Widget _buildLoadingSkeleton(bool isDark) {
     return ListView.builder(
