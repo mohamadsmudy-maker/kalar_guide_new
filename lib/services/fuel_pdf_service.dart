@@ -28,9 +28,13 @@ class FuelPdfService {
     required DateTime fromDate,
     required DateTime toDate,
     String? fuelType,
+    /// ئەگەر درا (بۆ نموونە مێژووی تەنها یەک بەنزینخانە)، لەبری هەموو شار
+    List<Map<String, dynamic>>? history,
+    /// ناونیشانی ڕاپۆرت (بۆ نموونە ناوی بەنزینخانە)
+    String? title,
   }) async {
     try {
-      final history = await FuelService.getMonthlyHistory(monthsBack: 12);
+      history ??= await FuelService.getMonthlyHistory(monthsBack: 12);
 
       final filtered = history.where((item) {
         final createdAt = DateTime.tryParse(item['created_at']?.toString() ?? '');
@@ -94,6 +98,7 @@ class FuelPdfService {
             fromDate: fromDate,
             toDate: toDate,
             fuelType: fuelType,
+            title: title,
           ),
           footer: (ctx) => _buildFooter(font: font, fontBold: fontBold, context: ctx),
           build: (ctx) => [
@@ -154,6 +159,7 @@ class FuelPdfService {
     required DateTime fromDate,
     required DateTime toDate,
     String? fuelType,
+    String? title,
   }) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 16),
@@ -178,7 +184,7 @@ class FuelPdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('ڕاپۆرتی نرخی سووتەمەنی', style: pw.TextStyle(font: fontBold, fontSize: 20, color: PdfColors.white)),
+                pw.Text(title ?? 'ڕاپۆرتی نرخی سووتەمەنی', style: pw.TextStyle(font: fontBold, fontSize: 20, color: PdfColors.white)),
                 pw.SizedBox(height: 4),
                 pw.Text(fuelType != null ? 'جۆری: ${FuelService.getNameKu(fuelType)}' : 'هەموو جۆرەکان', style: pw.TextStyle(font: font, fontSize: 11, color: _white70)),
                 pw.SizedBox(height: 2),

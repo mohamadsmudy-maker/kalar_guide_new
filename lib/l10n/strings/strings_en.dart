@@ -1788,4 +1788,6 @@ const Map<String, String> stringsEn = {
   'پانێڵەکەم': 'My panel',
   'پانێڵەکەم 🏪': 'My panel 🏪',
   'گۆڕینی نرخ': 'Change price',
+  'هێشتا هیچ مێژوویەکی نرخ نییە': 'No price history yet',
+  'ڕاپۆرتی نرخەکانی {0}': '{0} price report',
 };

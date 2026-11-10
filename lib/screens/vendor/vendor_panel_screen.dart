@@ -6,7 +6,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
 import '../../services/auth_service.dart';
+import '../../services/currency_pdf_service.dart';
+import '../../services/currency_service.dart';
+import '../../services/fuel_pdf_service.dart';
 import '../../services/fuel_service.dart';
+import '../../widgets/multi_currency_chart_widget.dart';
+import '../../widgets/multi_fuel_chart_widget.dart';
 import '../../utils/place_display.dart';
 import '../admin/admin_dashboard.dart';
 import '../currency/currency_station_details_screen.dart';
@@ -105,6 +110,66 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
       ),
     );
     if (mounted) _load();
+  }
+
+  Future<List<Map<String, dynamic>>> _history(Map<String, dynamic> p, _Kind k) async {
+    final id = int.tryParse('${p['id']}');
+    if (id == null) return [];
+    return k == _Kind.currency
+        ? CurrencyService.getStationPriceHistory(stationId: id)
+        : FuelService.getStationPriceHistory(stationId: id);
+  }
+
+  /// 📈 چارتی نرخەکانی تەنها ئەم شوێنە
+  Future<void> _openChart(Map<String, dynamic> p, _Kind k) async {
+    HapticFeedback.selectionClick();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _VendorChartScreen(
+          title: tr(p['name']?.toString() ?? ''),
+          load: () => _history(p, k),
+          isCurrency: k == _Kind.currency,
+        ),
+      ),
+    );
+  }
+
+  /// 📄 ڕاپۆرتی PDF ی مێژووی نرخەکانی ئەم شوێنە
+  bool _pdfBusy = false;
+  Future<void> _pdf(Map<String, dynamic> p, _Kind k) async {
+    if (_pdfBusy) return;
+    HapticFeedback.selectionClick();
+    setState(() => _pdfBusy = true);
+    try {
+      final history = await _history(p, k);
+      if (!mounted) return;
+      if (history.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('هێشتا هیچ مێژوویەکی نرخ نییە'))),
+        );
+        return;
+      }
+      final title = trf('ڕاپۆرتی نرخەکانی {0}', [p['name']?.toString() ?? '']);
+      if (k == _Kind.currency) {
+        await CurrencyPdfService.generateMultiReport(context: context, allHistory: history, title: title);
+      } else {
+        DateTime oldest = DateTime.now();
+        for (final h in history) {
+          final t = DateTime.tryParse('${h['created_at'] ?? ''}');
+          if (t != null && t.isBefore(oldest)) oldest = t;
+        }
+        await FuelPdfService.generateDateRangeReport(
+          context: context,
+          fromDate: oldest,
+          toDate: DateTime.now(),
+          history: history,
+          title: title,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pdfBusy = false);
+    }
   }
 
   @override
@@ -331,11 +396,50 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: _smallAction(Icons.show_chart_rounded, tr('چارت'), AppColors.toneIndigo, () => _openChart(p, k))),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _smallAction(
+                    Icons.picture_as_pdf_rounded,
+                    'PDF',
+                    AppColors.toneRed,
+                    _pdfBusy ? null : () => _pdf(p, k),
+                    busy: _pdfBusy,
+                  ),
+                ),
+              ],
+            ),
           ],
         ],
       ),
     );
   }
+
+  Widget _smallAction(IconData icon, String label, Color color, VoidCallback? onTap, {bool busy = false}) =>
+      Material(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                busy
+                    ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: color))
+                    : Icon(icon, color: color, size: 18),
+                const SizedBox(width: 6),
+                Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w800)),
+              ],
+            ),
+          ),
+        ),
+      );
 
   Widget _note(bool isDark, IconData icon, String text, Color color) => Container(
         padding: const EdgeInsets.all(16),
@@ -379,4 +483,54 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
           ),
         ),
       );
+}
+
+/// 📈 چارتی نرخەکانی یەک شوێن
+class _VendorChartScreen extends StatelessWidget {
+  const _VendorChartScreen({required this.title, required this.load, required this.isCurrency});
+
+  final String title;
+  final Future<List<Map<String, dynamic>>> Function() load;
+  final bool isCurrency;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Directionality(
+      textDirection: AppLang.direction,
+      child: Scaffold(
+        backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF2F5FA),
+        appBar: AppBar(
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+          backgroundColor: const Color(0xFF111827),
+          foregroundColor: Colors.white,
+        ),
+        body: FutureBuilder<List<Map<String, dynamic>>>(
+          future: load(),
+          builder: (context, snap) {
+            if (snap.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final history = snap.data ?? const [];
+            if (history.isEmpty) {
+              return Center(
+                child: Text(
+                  tr('هێشتا هیچ مێژوویەکی نرخ نییە'),
+                  style: TextStyle(color: isDark ? Colors.white60 : AppColors.textSecondary),
+                ),
+              );
+            }
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                isCurrency
+                    ? MultiCurrencyChartWidget(history: history, isDark: isDark)
+                    : MultiFuelChartWidget(history: history, isDark: isDark),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
 }

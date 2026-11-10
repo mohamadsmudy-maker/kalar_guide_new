@@ -150,6 +150,8 @@ class CurrencyPdfService {
   static Future<void> generateMultiReport({
     required BuildContext context,
     required List<Map<String, dynamic>> allHistory,
+    /// ناونیشانی ڕاپۆرت (بۆ نموونە ناوی نوسینگە)
+    String? title,
   }) async {
     try {
       if (allHistory.isEmpty) {
@@ -185,7 +187,7 @@ class CurrencyPdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('ڕاپۆرتی گشتی نرخی دراوەکان', style: pw.TextStyle(font: fontBold, fontSize: 16, color: PdfColors.indigo900)),
+                pw.Text(title ?? 'ڕاپۆرتی گشتی نرخی دراوەکان', style: pw.TextStyle(font: fontBold, fontSize: 16, color: PdfColors.indigo900)),
                 pw.SizedBox(height: 5),
                 pw.Divider(color: PdfColors.grey400),
               ],
