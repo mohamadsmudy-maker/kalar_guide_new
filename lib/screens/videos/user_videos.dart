@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/local_favorites.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
@@ -201,6 +202,36 @@ class _UserVideosScreenState extends State<UserVideosScreen> {
                           end: Alignment.bottomCenter,
                           colors: [Colors.transparent, Color(0x66000000)],
                         ),
+                      ),
+                    ),
+                    // ❤️ دڵخواز
+                    PositionedDirectional(
+                      top: 8,
+                      end: 8,
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: LocalFavorites.changes,
+                        builder: (context, _, __) {
+                          final fav = LocalFavorites.contains(LocalFavorites.videos, url);
+                          return Material(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              tooltip: tr('دڵخواز'),
+                              onPressed: url.isEmpty
+                                  ? null
+                                  : () => LocalFavorites.toggle(LocalFavorites.videos, {
+                                        'key': url,
+                                        'title': title,
+                                        'description': desc,
+                                        'thumb': thumb,
+                                      }),
+                              icon: Icon(
+                                fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                color: fav ? const Color(0xFFFF4D67) : Colors.white,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Center(

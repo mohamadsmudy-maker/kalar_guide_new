@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../common/language_flag.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -463,8 +464,8 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
 
   Widget _buildLanguageSwitcher(BuildContext context, SettingsProvider settings, bool isDark, {required int itemIndex}) {
     final languages = [
-      {'id': 'ku', 'name': 'کوردی', 'flag': '🇮🇶'},
-      {'id': 'ar', 'name': 'عەرەبی', 'flag': '🇸🇦'},
+      {'id': 'ku', 'name': 'کوردی', 'flag': '☀️'},
+      {'id': 'ar', 'name': 'عەرەبی', 'flag': '🇮🇶'},
       {'id': 'en', 'name': 'ئینگلیزی', 'flag': '🇬🇧'},
     ];
 
@@ -550,7 +551,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                             width: 1.5,
                           ),
                         ),
-                        child: Text(tr(lang['flag']!), style: const TextStyle(fontSize: 18)),
+                        child: LanguageFlag(languageId: lang['id']!, emoji: lang['flag']!, width: 24),
                       ),
                     ),
                   );

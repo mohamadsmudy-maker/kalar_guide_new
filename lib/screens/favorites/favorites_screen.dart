@@ -14,6 +14,9 @@ import '../news/news_details.dart';
 import '../../l10n/tr.dart';
 import '../../utils/place_display.dart';
 
+import '../../services/local_favorites.dart';
+import 'local_favorites_tab.dart';
+
 part 'favorites_screen_ui.dart';
 
 const Color _kPink = Color(0xFFC2557A);
@@ -76,6 +79,9 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   _Kind get _currentKind =>
       _tabController.index == 0 ? _Kind.stores : _Kind.news;
 
+  /// تابی ڤیدیۆ یان گەلەری (دڵخوازی ناوخۆیی)
+  bool get _onLocalTab => _tabController.index >= 2;
+
   String? get _userId {
     final user = AuthSessionManager.currentUser;
     if (user == null || user['id'] == null) return null;
@@ -90,7 +96,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _tabController = TabController(length: 2, vsync: this)
+    _tabController = TabController(length: 4, vsync: this)
       ..addListener(_onTabChanged);
 
     _entryController = AnimationController(
@@ -135,6 +141,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
 
   void _onTabChanged() {
     if (_tabController.indexIsChanging) return;
+    if (_onLocalTab && _batchMode) _batchMode = false;
     // Selection is per-tab; leaving a tab clears the other tab's picks.
     final other = _currentKind == _Kind.stores ? _Kind.news : _Kind.stores;
     if (_selected[other]!.isNotEmpty) _selected[other]!.clear();
@@ -517,6 +524,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                   children: [
                     _buildTab(_Kind.stores, isDark),
                     _buildTab(_Kind.news, isDark),
+                    const LocalFavoritesTab(kind: LocalFavorites.videos),
+                    const LocalFavoritesTab(kind: LocalFavorites.gallery),
                   ],
                 ),
               ),
@@ -600,6 +609,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
             _showSnack(tr('داتاکان نوێکرانەوە ✅'), const Color(0xFF0F9D7A));
           },
         ),
+        if (!_onLocalTab)
         IconButton(
           icon: Icon(
             _batchMode ? Icons.close_rounded : Icons.checklist_rounded,

@@ -57,6 +57,7 @@ import 'screens/videos/user_videos.dart';
 // ✅ Services & Utils
 // ═══════════════════════════════════════════════════════════
 import 'services/auth_service.dart';
+import 'services/local_favorites.dart';
 import 'services/cache_service.dart';
 import 'services/notification_service.dart';
 import 'utils/app_logger.dart';
@@ -193,6 +194,7 @@ Future<void> _start() async {
   // ✅ ئاگادارکردنەوە و تۆکنی push دوای دەرکەوتنی ئەپ — نەک پێشی
   // (پێشتر تا ١٠ چرکە زیاتر شاشەی سپلاش دەمایەوە لە ئینتەرنێتی خراپدا)
   unawaited(_initPushLate());
+  unawaited(LocalFavorites.ensureLoaded());
 
   runApp(
     ProviderScope(
@@ -701,9 +703,9 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
     _builders = [
           () => HomeScreen(onMenuTap: _openDrawer, onSearchTap: () => _goTo(1)),
           () => StoresScreen(onMenuTap: _openDrawer),
-          () => CategoriesScreen(onMenuTap: _openDrawer),
-          () => FavoritesScreen(onMenuTap: _openDrawer),
+          () => MapScreen(onMenuTap: _openDrawer),
           () => DailyScreen(onMenuTap: _openDrawer),
+          () => const ProfileScreen(),
     ];
   }
 
@@ -775,20 +777,22 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
         icon: Icons.location_on_outlined,
         activeIcon: Icons.location_on_rounded,
       ),
+      // 🗺️ نەخشە — بەشەکان چوونە ناو «شوێنەکان» (ڕیزی ئاسۆیی)
       ProNavItem(
-        label: t('nav_categories', 'بەشەکان'),
-        icon: Icons.grid_view_outlined,
-        activeIcon: Icons.grid_view_rounded,
-      ),
-      ProNavItem(
-        label: t('nav_favorites', 'دڵخواز'),
-        icon: Icons.favorite_border_rounded,
-        activeIcon: Icons.favorite_rounded,
+        label: tr('نەخشە'),
+        icon: Icons.map_outlined,
+        activeIcon: Icons.map_rounded,
       ),
       ProNavItem(
         label: t('nav_daily', 'ڕۆژانە'),
         icon: Icons.calendar_today_outlined,
         activeIcon: Icons.calendar_today_rounded,
+      ),
+      // 👤 پرۆفایل (دڵخوازەکان لە ناویدان) — کۆتا دوگمە
+      ProNavItem(
+        label: tr('پرۆفایل'),
+        icon: Icons.person_outline_rounded,
+        activeIcon: Icons.person_rounded,
       ),
     ];
 

@@ -1820,4 +1820,9 @@ const Map<String, String> stringsEn = {
   'یەکەم هەواڵ بڵاو بکەرەوە': 'Publish the first news',
   'هێشتا هیچ هەواڵێک بڵاو نەکراوەتەوە': 'No news published yet',
   'هیچ ئەنجامێک نییە': 'No results',
+  'شوێن، هەواڵ، ڤیدیۆ و وێنە': 'Places, news, videos and photos',
+  'کرتە لە ❤️ بکە بۆ پاشەکەوتکردن': 'Tap ❤️ to save',
+  'هێشتا هیچ ڤیدیۆیەکت دڵخواز نەکردووە': 'You haven\'t saved any video yet',
+  'هێشتا هیچ وێنەیەکت دڵخواز نەکردووە': 'You haven\'t saved any photo yet',
+  'هەموو بەشەکان': 'All categories',
 };

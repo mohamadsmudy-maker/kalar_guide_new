@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/local_favorites.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:photo_view/photo_view.dart';
@@ -174,6 +175,27 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                           ),
+                        ),
+                        ValueListenableBuilder<int>(
+                          valueListenable: LocalFavorites.changes,
+                          builder: (context, _, __) {
+                            final fav = LocalFavorites.contains(LocalFavorites.gallery, widget.imageUrl);
+                            return IconButton(
+                              tooltip: tr('دڵخواز'),
+                              icon: Icon(
+                                fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                color: fav ? const Color(0xFFFF4D67) : Colors.white,
+                              ),
+                              onPressed: () {
+                                HapticFeedback.selectionClick();
+                                LocalFavorites.toggle(LocalFavorites.gallery, {
+                                  'key': widget.imageUrl,
+                                  'title': widget.imageTitle,
+                                  'category': widget.category,
+                                });
+                              },
+                            );
+                          },
                         ),
                         IconButton(
                           icon: const Icon(Icons.share_rounded, color: Colors.white),
