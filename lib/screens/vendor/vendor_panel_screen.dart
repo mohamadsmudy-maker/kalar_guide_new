@@ -16,7 +16,7 @@ import '../../utils/place_display.dart';
 import '../admin/admin_dashboard.dart';
 import '../currency/currency_station_details_screen.dart';
 import '../fuel/station_details_screen.dart';
-import '../stores/store_news_screen.dart';
+import 'vendor_place_dashboard.dart';
 
 /// 🏪 «پانێڵەکەم» — ڤێندەری بەنزینخانە یان نوسینگەی دراو
 ///
@@ -60,7 +60,7 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
       if (filters.isNotEmpty) {
         final res = await Supabase.instance.client
             .from('dukan')
-            .select('id, name, phone, address, logo, image, category, sub_category, '
+            .select('id, name, phone, address, description, logo, image, category, sub_category, '
                 'fuel_prices, currency_prices')
             .or(filters.join(','))
             .order('name');
@@ -105,9 +105,8 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => k == _Kind.currency
-            ? CurrencyStationDetailsScreen(stationId: id)
-            : StationDetailsScreen(stationId: id),
+        builder: (_) =>
+            k == _Kind.currency ? CurrencyStationDetailsScreen(stationId: id) : StationDetailsScreen(stationId: id),
       ),
     );
     if (mounted) _load();
@@ -202,14 +201,15 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
             children: [
               _welcome(name),
               const SizedBox(height: 18),
-              Text(
-                tr('شوێنەکانم'),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
+              if (_places.length != 1)
+                Text(
+                  tr('شوێنەکانم'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
                 ),
-              ),
               const SizedBox(height: 10),
               if (_loading)
                 const Padding(
@@ -225,6 +225,9 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
                   tr('هیچ شوێنێک بە ئەکاونتەکەتەوە نەبەستراوە. ژمارەی تەلەفۆنی شوێنەکەت دەبێت وەک ژمارەی ئەکاونتەکەت بێت، یان پەیوەندی بە ئەدمینەوە بکە.'),
                   AppColors.toneAmber,
                 )
+              else if (_places.length == 1)
+                // یەک شوێن: داشبۆردەکە ڕاستەوخۆ
+                _dashboard(_places.first)
               else
                 for (final p in _places) _placeCard(p, isDark),
               const SizedBox(height: 18),
@@ -280,181 +283,88 @@ class _VendorPanelScreenState extends State<VendorPanelScreen> {
         ),
       );
 
-  Widget _placeCard(Map<String, dynamic> p, bool isDark) {
-    final k = _kindOf(p);
-    final color = switch (k) {
-      _Kind.fuel => AppColors.toneAmber,
-      _Kind.currency => AppColors.toneTeal,
-      _Kind.other => AppColors.toneBlue,
-    };
-    final icon = switch (k) {
-      _Kind.fuel => Icons.local_gas_station_rounded,
-      _Kind.currency => Icons.currency_exchange_rounded,
-      _Kind.other => Icons.storefront_rounded,
-    };
-    final kindLabel = switch (k) {
-      _Kind.fuel => tr('بەنزینخانە'),
-      _Kind.currency => tr('نوسینگەی دراو'),
-      _Kind.other => tr('شوێن'),
-    };
-    final count = _priceCount(p, k);
-    final canPrice = k != _Kind.other;
+  (Color, IconData, String) _style(_Kind k) => switch (k) {
+        _Kind.fuel => (AppColors.toneAmber, Icons.local_gas_station_rounded, tr('بەنزینخانە')),
+        _Kind.currency => (AppColors.toneTeal, Icons.currency_exchange_rounded, tr('نوسینگەی دراو')),
+        _Kind.other => (AppColors.toneBlue, Icons.storefront_rounded, tr('شوێن')),
+      };
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: isDark ? 0.22 : 0.12),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(icon, color: color, size: 26),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tr(p['name']?.toString() ?? ''),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$kindLabel • ${tr(PlaceDisplay.address(p['address']))}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white54 : AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              if (canPrice)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    trf('{0} نرخ', [PlaceDisplay.digits(count)]),
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
-                  ),
-                ),
-            ],
-          ),
-          if (canPrice) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: color,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: () => _open(p, k),
-                    icon: const Icon(Icons.edit_rounded, size: 18),
-                    label: Text(tr('گۆڕینی نرخ'), style: const TextStyle(fontWeight: FontWeight.w900)),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: color,
-                      side: BorderSide(color: color.withValues(alpha: 0.5)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: () => _open(p, k),
-                    icon: const Icon(Icons.history_rounded, size: 18),
-                    label: Text(tr('مێژووی نرخەکان'), style: const TextStyle(fontWeight: FontWeight.w800)),
-                  ),
-                ),
-              ],
+  Widget _dashboard(Map<String, dynamic> p) {
+    final k = _kindOf(p);
+    final (color, icon, label) = _style(k);
+    return VendorPlaceDashboard(
+      key: ValueKey('dash-${p['id']}'),
+      place: p,
+      kindLabel: label,
+      icon: icon,
+      color: color,
+      prices: k == _Kind.other
+          ? null
+          : VendorPriceActions(
+              onPrices: () => _open(p, k),
+              onChart: () => _openChart(p, k),
+              onPdf: _pdfBusy ? null : () => _pdf(p, k),
+              pdfBusy: _pdfBusy,
             ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(child: _smallAction(Icons.show_chart_rounded, tr('چارت'), AppColors.toneIndigo, () => _openChart(p, k))),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _smallAction(
-                    Icons.picture_as_pdf_rounded,
-                    'PDF',
-                    AppColors.toneRed,
-                    _pdfBusy ? null : () => _pdf(p, k),
-                    busy: _pdfBusy,
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 10),
-          // 📰 هەواڵ و ئاگادارییەکانی شوێنەکە (هەموو جۆرە ڤێندەرێک)
-          _smallAction(
-            Icons.campaign_rounded,
-            tr('هەواڵ و ئاگادارییەکانم'),
-            AppColors.primary,
-            () async {
-              HapticFeedback.selectionClick();
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => StoreNewsScreen(store: p)),
-              );
-            },
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _smallAction(IconData icon, String label, Color color, VoidCallback? onTap, {bool busy = false}) =>
-      Material(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 11),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                busy
-                    ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: color))
-                    : Icon(icon, color: color, size: 18),
-                const SizedBox(width: 6),
-                Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w800)),
-              ],
+  /// چەند شوێن: کارتێکی کورت؛ کرتە → داشبۆردی ئەو شوێنە
+  Widget _placeCard(Map<String, dynamic> p, bool isDark) {
+    final k = _kindOf(p);
+    final (color, icon, label) = _style(k);
+    final count = _priceCount(p, k);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: ListTile(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          leading: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
             ),
+            child: Icon(icon, color: color),
           ),
+          title: Text(tr(p['name']?.toString() ?? ''),
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900)),
+          subtitle: Text(
+            k == _Kind.other ? label : '$label • ${trf('{0} نرخ', [PlaceDisplay.digits(count)])}',
+            style: const TextStyle(fontSize: 12),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+          onTap: () async {
+            HapticFeedback.selectionClick();
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => Directionality(
+                  textDirection: AppLang.direction,
+                  child: Scaffold(
+                    appBar: AppBar(
+                      title: Text(tr(p['name']?.toString() ?? ''), style: const TextStyle(fontWeight: FontWeight.w900)),
+                      backgroundColor: const Color(0xFF111827),
+                      foregroundColor: Colors.white,
+                    ),
+                    body: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [_dashboard(p)],
+                    ),
+                  ),
+                ),
+              ),
+            );
+            if (mounted) _load();
+          },
         ),
-      );
+      ),
+    );
+  }
 
   Widget _note(bool isDark, IconData icon, String text, Color color) => Container(
         padding: const EdgeInsets.all(16),
