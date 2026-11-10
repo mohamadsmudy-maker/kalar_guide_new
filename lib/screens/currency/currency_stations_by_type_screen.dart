@@ -13,6 +13,7 @@ import '../admin/admin_currency_prices.dart';
 import 'currency_station_details_screen.dart';
 import 'currency_strings.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 /// 💱 نوسینگەکانی یەک دراو — ULTRA PRO MAX
 ///   ڕیزکردن (بۆ کڕین / بۆ فرۆشتن / نوێترین) • گەڕان • جیاوازی لە باشترین نرخ
@@ -304,7 +305,8 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
   Widget _buildStationCard(Map<String, dynamic> s, int index, bool isDark, String lang, Color color) {
     String t(String k) => CurrencyStrings.of(lang, k);
     final name = s['station_name']?.toString() ?? '';
-    final address = s['station_address']?.toString() ?? '';
+    final rawAddress = s['station_address']?.toString().trim() ?? '';
+    final address = rawAddress.isEmpty ? '' : PlaceDisplay.address(rawAddress);
     final logo = s['station_logo']?.toString() ?? '';
     final image = s['station_image']?.toString() ?? '';
     final phone = s['station_phone']?.toString() ?? '';
@@ -458,7 +460,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                     Expanded(child: _actionBtn(Icons.share_rounded, t('share'), const Color(0xFF4F5BD5), () => _share(s, lang))),
                     if (canEdit) ...[
                       const SizedBox(width: 8),
-                      Expanded(child: _actionBtn(Icons.edit_rounded, t('edit_price'), color, () => _edit(s))),
+                      Expanded(child: _actionBtn(Icons.edit_rounded, tr('نرخ'), color, () => _edit(s))),
                     ],
                   ],
                 ),

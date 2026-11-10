@@ -42,6 +42,7 @@ grant execute on all functions in schema t to anon, authenticated;
 insert into dukan(id, name, vendor_code) values (1, 'A', '111'), (2, 'B', '222');
 -- station 3 belongs to the vendor only through its phone number
 insert into dukan(id, name, phone, currency_prices) values (3, 'C', '07500000002', '{"USD": {"buy": 150000, "sell": 151000}}');
+insert into dukan(id, name, phone) values (4, 'D', '+964 750 000 0002'), (5, 'E', '0750 000 0009');
 insert into app_users(name, phone, password, role, is_approved, store_id) values
   ('admin', '07500000001', 'adminpass', 'admin', true, null),
   ('vend',  '07500000002', 'vendpass1', 'vendor', true, 1),
@@ -95,6 +96,8 @@ select t.check(app_update_fuel_price(2, 'normal', 1500) = 'forbidden', 'vendor c
 select t.check(app_update_fuel_price(1, 'normal', 0) = 'invalid', 'zero fuel price rejected');
 select t.check(app_update_fuel_price(99, 'normal', 1500) = 'not_found', 'unknown station');
 select t.check(app_update_currency_price(3, 'USD', 157000, 158000) = 'ok', 'vendor saves currency for station linked by phone');
+select t.check(app_update_currency_price(4, 'USD', 157000, 158000) = 'ok', 'phone match ignores +964 / spaces');
+select t.check(app_update_currency_price(5, 'USD', 157000, 158000) = 'forbidden', 'other vendor phone is forbidden');
 select t.check((select (currency_prices->'USD'->>'sell')::numeric from dukan where id = 3) = 158000, 'currency price stored');
 select t.check((select old_buy_price = 150000 and new_sell_price = 158000 and updated_by_name = 'vend'
                   from currency_price_history where station_id = 3), 'currency history row written');
