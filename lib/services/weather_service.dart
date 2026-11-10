@@ -338,10 +338,11 @@ class WeatherService {
         'https://api.open-meteo.com/v1/forecast'
             '?latitude=$lat&longitude=$lon'
             '&current=temperature_2m,relative_humidity_2m,apparent_temperature,'
-            'is_day,weather_code,cloud_cover,surface_pressure,wind_speed_10m,'
+            'is_day,weather_code,cloud_cover,cloud_cover_low,cloud_cover_mid,'
+            'cloud_cover_high,pressure_msl,wind_speed_10m,'
             'wind_direction_10m,wind_gusts_10m'
             '&hourly=temperature_2m,weather_code,precipitation_probability,'
-            'is_day,visibility,uv_index'
+            'is_day,visibility,uv_index,cloud_cover_low,cloud_cover_mid,cloud_cover_high'
             '&daily=weather_code,temperature_2m_max,temperature_2m_min,'
             'precipitation_probability_max,sunrise,sunset,uv_index_max,'
             'precipitation_sum,wind_speed_10m_max'
@@ -373,6 +374,15 @@ class WeatherService {
       final hDay = _listOf(h, 'is_day');
       final hVis = _listOf(h, 'visibility');
       final hUv = _listOf(h, 'uv_index');
+      final hLow = _listOf(h, 'cloud_cover_low');
+      final hMid = _listOf(h, 'cloud_cover_mid');
+      final hHigh = _listOf(h, 'cloud_cover_high');
+      int? hourCode(int i) => skyCode(
+            _toInt(_at(hCodes, i)),
+            low: _toInt(_at(hLow, i)),
+            mid: _toInt(_at(hMid, i)),
+            high: _toInt(_at(hHigh, i)),
+          );
 
       int start = 0;
       for (int i = 0; i < hTimes.length; i++) {
@@ -392,7 +402,7 @@ class WeatherService {
         hours.add(WeatherHour(
           time: t,
           temp: ht,
-          code: _toInt(_at(hCodes, i)),
+          code: hourCode(i),
           rainChance: _toInt(_at(hRain, i)),
           isDay: (_toInt(_at(hDay, i)) ?? 1) == 1,
         ));
@@ -408,8 +418,14 @@ class WeatherService {
         wind: _toInt(c['wind_speed_10m']),
         windDir: _toInt(c['wind_direction_10m']),
         gust: _toInt(c['wind_gusts_10m']),
-        pressure: _toInt(c['surface_pressure']),
-        code: _toInt(c['weather_code']),
+        // پەستانی ئاستی دەریا (وەک وێستگە و ڕاپۆرتە فەرمییەکان)، نەک پەستانی ڕووی زەوی
+        pressure: _toInt(c['pressure_msl'] ?? c['surface_pressure']),
+        code: skyCode(
+          _toInt(c['weather_code']),
+          low: _toInt(c['cloud_cover_low']),
+          mid: _toInt(c['cloud_cover_mid']),
+          high: _toInt(c['cloud_cover_high']),
+        ),
         cloud: _toInt(c['cloud_cover']),
         visibilityKm: visM == null ? null : visM / 1000,
         uv: uvNow,
@@ -439,7 +455,7 @@ class WeatherService {
           date: date,
           max: mx,
           min: mn,
-          code: _toInt(_at(codes, i)),
+          code: _dayCode(_toInt(_at(codes, i)), date, hTimes, hDay, hourCode),
           rainChance: _toInt(_at(rains, i)),
           rainMm: _toDouble(_at(rainSum, i)),
           uvMax: _toDouble(_at(uvs, i)),
@@ -454,6 +470,46 @@ class WeatherService {
       debugPrint('⚠️ Open-Meteo error: $e');
       return null;
     }
+  }
+
+  /// کۆدی ئاسمان (0–3) لە ڕێژەی هەورەکانەوە.
+  ///
+  /// Open-Meteo هەوری بەرزی تەنک (cirrus) وەک هەوری تەواو دەژمێرێت، بۆیە
+  /// ڕۆژێکی ڕوون دەبێت «هەور». لێرە هەوری بەرز تەنها ٣٥٪ کاریگەری هەیە.
+  /// کۆدی باران، بەفر، تەم و ... وەک خۆی دەمێنێتەوە.
+  static int? skyCode(int? code, {int? low, int? mid, int? high}) {
+    if (code != null && code > 3) return code;
+    if (low == null && mid == null && high == null) return code;
+    final eff = [low ?? 0, mid ?? 0, ((high ?? 0) * 0.35).round()]
+        .reduce((a, b) => a > b ? a : b);
+    if (eff < 15) return 0;
+    if (eff < 40) return 1;
+    if (eff < 70) return 2;
+    return 3;
+  }
+
+  /// کۆدی ڕۆژ: ئەگەر باران/بەفر/تەم نەبێت، ناوەندی کۆدی کاتژمێرەکانی ڕۆژ
+  static int? _dayCode(
+    int? apiCode,
+    DateTime date,
+    List<dynamic> hTimes,
+    List<dynamic>? hDay,
+    int? Function(int) hourCode,
+  ) {
+    if (apiCode != null && apiCode > 3) return apiCode;
+    final codes = <int>[];
+    for (var i = 0; i < hTimes.length; i++) {
+      final t = _toTime(hTimes[i]);
+      if (t == null || t.year != date.year || t.month != date.month || t.day != date.day) {
+        continue;
+      }
+      if ((_toInt(_at(hDay, i)) ?? 1) != 1) continue;
+      final c = hourCode(i);
+      if (c != null && c <= 3) codes.add(c);
+    }
+    if (codes.isEmpty) return apiCode;
+    codes.sort();
+    return codes[codes.length ~/ 2];
   }
 
   // ─── 🌫️ کوالیتی هەوا ───
