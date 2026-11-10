@@ -1825,4 +1825,6 @@ const Map<String, String> stringsEn = {
   'هێشتا هیچ ڤیدیۆیەکت دڵخواز نەکردووە': 'You haven\'t saved any video yet',
   'هێشتا هیچ وێنەیەکت دڵخواز نەکردووە': 'You haven\'t saved any photo yet',
   'هەموو بەشەکان': 'All categories',
+  'شاردنەوەی شوێنەکان': 'Hide places',
+  'پیشاندانی شوێنەکان': 'Show places',
 };
