@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
@@ -8,6 +9,7 @@ import '../../services/image_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../l10n/tr.dart';
+import '../../utils/place_display.dart';
 
 class AdminNewsScreen extends StatefulWidget {
   const AdminNewsScreen({super.key});
@@ -57,10 +59,7 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
           newsList = [];
         }
       } else {
-        final res = await Supabase.instance.client
-            .from('news')
-            .select()
-            .order('created_at', ascending: false);
+        final res = await Supabase.instance.client.from('news').select().order('created_at', ascending: false);
         newsList = List<Map<String, dynamic>>.from(res as List);
       }
 
@@ -186,18 +185,18 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                   : filteredNews.isEmpty
-                  ? _buildEmptyState(isDark, isVendor)
-                  : RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: _fetchNews,
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: filteredNews.length,
-                  itemBuilder: (context, index) {
-                    return _buildNewsCard(filteredNews[index], isDark);
-                  },
-                ),
-              ),
+                      ? _buildEmptyState(isDark, isVendor)
+                      : RefreshIndicator(
+                          color: AppColors.primary,
+                          onRefresh: _fetchNews,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            itemCount: filteredNews.length,
+                            itemBuilder: (context, index) {
+                              return _buildNewsCard(filteredNews[index], isDark);
+                            },
+                          ),
+                        ),
             ),
           ],
         ),
@@ -229,7 +228,11 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
           borderRadius: BorderRadius.circular(14),
           child: firstImg.isNotEmpty
               ? OptimizedNetworkImage(imageUrl: firstImg, width: 60, height: 60, fit: BoxFit.cover)
-              : Container(width: 60, height: 60, color: Colors.grey.shade100, child: const Icon(Icons.article_rounded, color: Colors.grey)),
+              : Container(
+                  width: 60,
+                  height: 60,
+                  color: Colors.grey.shade100,
+                  child: const Icon(Icons.article_rounded, color: Colors.grey)),
         ),
         title: Text(
           tr(news['title'] ?? ''),
@@ -298,7 +301,23 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final List<XFile> _newsImages = [];
+
+  /// وێنە بارکراوەکانی هەواڵێک کە دەستکاری دەکرێت (دەتوانرێت لاببرێن)
+  final List<String> _existingUrls = [];
   bool _loading = false;
+  bool _triedSave = false;
+
+  static const int _maxImages = 4;
+  int get _imageCount => _existingUrls.length + _newsImages.length;
+
+  /// جۆرەکانی هەواڵ: (ناو، ئایکۆن، ڕەنگ)
+  static const List<(String, IconData, Color)> _types = [
+    ('هەواڵ', Icons.newspaper_rounded, AppColors.toneBlue),
+    ('ئاگاداری', Icons.campaign_rounded, AppColors.toneAmber),
+    ('هۆشداری', Icons.warning_amber_rounded, AppColors.toneRed),
+    ('ڕووداو', Icons.event_rounded, AppColors.toneIndigo),
+    ('خزمەتگوزاری', Icons.volunteer_activism_rounded, AppColors.toneTeal),
+  ];
 
   List<Map<String, dynamic>> _stores = [];
   String? _selectedStoreId;
@@ -315,6 +334,10 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       _descCtrl.text = widget.newsToEdit!['description'] ?? '';
       _selectedStoreId = widget.newsToEdit!['store_id']?.toString();
       _selectedNewsType = widget.newsToEdit!['news_type']?.toString() ?? 'هەواڵ';
+      final imgs = widget.newsToEdit!['images'];
+      if (imgs is List) {
+        _existingUrls.addAll(imgs.map((e) => '$e').where((u) => u.startsWith('http')));
+      }
     } else {
       _selectedNewsType = 'هەواڵ';
     }
@@ -353,11 +376,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       if (role == 'vendor') {
         final storeId = AuthSessionManager.storeId;
         if (storeId != null) {
-          final res = await Supabase.instance.client
-              .from('dukan')
-              .select('id, name')
-              .eq('id', storeId)
-              .maybeSingle();
+          final res = await Supabase.instance.client.from('dukan').select('id, name').eq('id', storeId).maybeSingle();
 
           if (res != null) {
             setState(() {
@@ -384,14 +403,18 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
     final pickedList = await picker.pickMultiImage(imageQuality: 70);
     if (pickedList.isNotEmpty) {
       setState(() {
-        int remainingSlots = 4 - _newsImages.length;
+        final remainingSlots = _maxImages - _imageCount;
         _newsImages.addAll(pickedList.take(remainingSlots));
       });
     }
   }
 
   Future<void> _save() async {
-    if (_titleCtrl.text.trim().isEmpty || _selectedStoreId == null || _selectedNewsType == null) {
+    setState(() => _triedSave = true);
+    if (_titleCtrl.text.trim().isEmpty ||
+        _descCtrl.text.trim().isEmpty ||
+        _selectedStoreId == null ||
+        _selectedNewsType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr("تکایە هەموو خانەکان پڕ بکەرەوە ⚠")), backgroundColor: const Color(0xFFD9822B)),
       );
@@ -406,9 +429,8 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
         uploadedUrls.add(url);
       }
 
-      if (isEditing && uploadedUrls.isEmpty) {
-        uploadedUrls = List<String>.from(widget.newsToEdit!['images'] ?? []);
-      }
+      // وێنە کۆنەکان (ئەوانەی نەسڕاونەتەوە) + وێنە نوێیەکان
+      uploadedUrls = [..._existingUrls, ...uploadedUrls];
 
       if (isEditing) {
         await Supabase.instance.client.from('news').update({
@@ -434,7 +456,9 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr(isEditing ? "✅ دەستکاری کرا" : "✅ بڵاوکرایەوە")), backgroundColor: const Color(0xFF0F9D7A)),
+          SnackBar(
+              content: Text(tr(isEditing ? "✅ دەستکاری کرا" : "✅ بڵاوکرایەوە")),
+              backgroundColor: const Color(0xFF0F9D7A)),
         );
       }
     } catch (e) {
@@ -451,160 +475,312 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final card = isDark ? const Color(0xFF1A1A22) : Colors.white;
+    final text = isDark ? Colors.white : AppColors.textPrimary;
+    final sub = isDark ? Colors.white54 : AppColors.textSecondary;
+    final line = isDark ? Colors.white12 : const Color(0xFFE6EAF0);
+    final storeName =
+        _stores.where((st) => st['id'].toString() == _selectedStoreId).map((st) => '${st['name'] ?? ''}').firstOrNull;
+    final storeLocked = widget.forcedStoreId != null || _stores.length == 1;
 
-    return Directionality(
-      textDirection: AppLang.direction,
-      child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F0F14) : const Color(0xFFF7F5F8),
-        appBar: AppBar(
-          title: Text(tr(isEditing ? "دەستکاریکردنی هەواڵ ✏️" : "بڵاوکردنەوەی هەواڵی نوێ 📢")),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    InputDecoration field(String hint, {String? error}) => InputDecoration(
+          hintText: tr(hint),
+          errorText: error,
+          filled: true,
+          fillColor: card,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          enabledBorder:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: line)),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppColors.toneRed),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppColors.toneRed, width: 1.6),
+          ),
+        );
+
+    Widget label(IconData icon, String t, {Widget? trailing}) => Padding(
+          padding: const EdgeInsets.only(bottom: 10, top: 4),
+          child: Row(
             children: [
-              GestureDetector(
-                onTap: _newsImages.length < 4 ? _pickImages : null,
-                child: Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1A1A22) : Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.5),
-                  ),
-                  child: _newsImages.isEmpty
-                      ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add_a_photo_rounded, size: 36, color: AppColors.primary),
-                      const SizedBox(height: 6),
-                      Text(tr("وێنەکان (تا 4 وێنە) 📸"), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                    ],
-                  )
-                      : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.all(8),
-                    itemCount: _newsImages.length,
-                    itemBuilder: (ctx, i) => Container(
-                      width: 90,
-                      margin: const EdgeInsets.only(right: 8),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(File(_newsImages[i].path), fit: BoxFit.cover)),
-                          Positioned(
-                            top: 4, right: 4,
-                            child: GestureDetector(
-                              onTap: () => setState(() => _newsImages.removeAt(i)),
-                              child: Container(
-                                decoration: const BoxDecoration(color: Color(0xFFDC3545), shape: BoxShape.circle),
-                                padding: const EdgeInsets.all(4),
-                                child: const Icon(Icons.close, size: 12, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              Icon(icon, size: 18, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Expanded(child: Text(tr(t), style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: text))),
+              if (trailing != null) trailing,
+            ],
+          ),
+        );
+
+    Widget thumb({String? url, XFile? file, required VoidCallback onRemove}) => Container(
+          width: 92,
+          height: 92,
+          margin: const EdgeInsetsDirectional.only(end: 10),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: url != null
+                    ? Image.network(url,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(color: line, child: const Icon(Icons.broken_image)))
+                    : Image.file(File(file!.path), fit: BoxFit.cover),
               ),
-              const SizedBox(height: 18),
-
-              if (_loadingStores)
-                const Center(child: CircularProgressIndicator())
-              else if (_stores.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1A1A22) : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedStoreId,
-                      isExpanded: true,
-                      icon: const Icon(Icons.storefront_rounded, color: AppColors.primary),
-                      items: _stores.map((store) {
-                        return DropdownMenuItem<String>(
-                          value: store['id'].toString(),
-                          child: Text(
-                            tr(store['name'] ?? 'بێ ناو'),
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        setState(() => _selectedStoreId = val);
-                      },
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-
-              DropdownButtonFormField<String>(
-                initialValue: _selectedNewsType,
-                decoration: InputDecoration(
-                  labelText: tr("جۆری هەواڵ *"),
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                items: ['هەواڵ', 'ئاگاداری', 'هۆشداری', 'ڕووداو', 'خزمەتگوزاری'].map((type) => DropdownMenuItem(
-                  value: type,
-                  child: Text(tr(type)),
-                )).toList(),
-                onChanged: (val) => setState(() => _selectedNewsType = val),
-              ),
-              const SizedBox(height: 16),
-
-              TextField(
-                controller: _titleCtrl,
-                decoration: InputDecoration(
-                  labelText: tr("ناونیشانی هەواڵ *"),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              TextField(
-                controller: _descCtrl,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  labelText: tr("وەسف *"),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF1A1A22) : Colors.white,
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                  : SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: _save,
-                  child: Text(
-                    tr(isEditing ? "پاشەکەوتکردن ✅" : "بڵاوکردنەوە ✅"),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              PositionedDirectional(
+                top: 4,
+                end: 4,
+                child: GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                    child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
                   ),
                 ),
               ),
             ],
+          ),
+        );
+
+    return Directionality(
+      textDirection: AppLang.direction,
+      child: Scaffold(
+        backgroundColor: isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6FA),
+        appBar: AppBar(
+          title: Text(
+            tr(isEditing ? 'دەستکاریکردنی هەواڵ' : 'بڵاوکردنەوەی هەواڵی نوێ'),
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+          children: [
+            // ─── وێنەکان ───
+            label(
+              Icons.photo_library_rounded,
+              'وێنەکان',
+              trailing: Text(
+                '${PlaceDisplay.digits(_imageCount)} / ${PlaceDisplay.digits(_maxImages)}',
+                style: TextStyle(color: sub, fontWeight: FontWeight.w800),
+              ),
+            ),
+            if (_imageCount == 0)
+              InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: _pickImages,
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.05),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 1.4),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary, size: 32),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(tr('وێنە زیاد بکە'),
+                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 15)),
+                      const SizedBox(height: 2),
+                      Text(tr('یەکەم وێنە دەبێتە وێنەی سەرەکی هەواڵەکە'), style: TextStyle(color: sub, fontSize: 11.5)),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 92,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final u in _existingUrls)
+                      thumb(url: u, onRemove: () => setState(() => _existingUrls.remove(u))),
+                    for (var i = 0; i < _newsImages.length; i++)
+                      thumb(file: _newsImages[i], onRemove: () => setState(() => _newsImages.removeAt(i))),
+                    if (_imageCount < _maxImages)
+                      InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: _pickImages,
+                        child: Container(
+                          width: 92,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.35), width: 1.4),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_a_photo_rounded, color: AppColors.primary, size: 26),
+                              const SizedBox(height: 4),
+                              Text(tr('زیادکردن'),
+                                  style: const TextStyle(
+                                      color: AppColors.primary, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 18),
+            // ─── بڵاوکەرەوە ───
+            if (_loadingStores)
+              const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator()))
+            else if (_stores.isNotEmpty) ...[
+              label(Icons.storefront_rounded, 'بڵاوکەرەوە'),
+              if (storeLocked)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.06),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          tr(storeName ?? ''),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontWeight: FontWeight.w900, color: text, fontSize: 15),
+                        ),
+                      ),
+                      Icon(Icons.verified_rounded, color: AppColors.primary.withValues(alpha: 0.8), size: 20),
+                    ],
+                  ),
+                )
+              else
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedStoreId,
+                  isExpanded: true,
+                  decoration: field('شوێنێک هەڵبژێرە',
+                      error: _triedSave && _selectedStoreId == null ? tr('شوێنێک هەڵبژێرە') : null),
+                  items: _stores
+                      .map((store) => DropdownMenuItem<String>(
+                            value: store['id'].toString(),
+                            child: Text(tr(store['name'] ?? 'بێ ناو'),
+                                overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ))
+                      .toList(),
+                  onChanged: (val) => setState(() => _selectedStoreId = val),
+                ),
+              const SizedBox(height: 18),
+            ],
+
+            // ─── جۆر ───
+            label(Icons.category_rounded, 'جۆری بڵاوکراوە'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final (name, icon, color) in _types)
+                  ChoiceChip(
+                    selected: _selectedNewsType == name,
+                    onSelected: (_) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedNewsType = name);
+                    },
+                    showCheckmark: false,
+                    avatar: Icon(icon, size: 18, color: _selectedNewsType == name ? Colors.white : color),
+                    label: Text(tr(name)),
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: _selectedNewsType == name ? Colors.white : color,
+                    ),
+                    selectedColor: color,
+                    backgroundColor: color.withValues(alpha: isDark ? 0.18 : 0.08),
+                    side: BorderSide(color: color.withValues(alpha: 0.35)),
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // ─── ناونیشان ───
+            label(Icons.title_rounded, 'ناونیشان'),
+            TextField(
+              controller: _titleCtrl,
+              maxLength: 120,
+              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => Text(
+                PlaceDisplay.digits('$currentLength / $maxLength'),
+                style: TextStyle(fontSize: 11, color: sub),
+              ),
+              textInputAction: TextInputAction.next,
+              onChanged: (_) => setState(() {}),
+              style: TextStyle(fontWeight: FontWeight.w800, color: text, fontSize: 15.5),
+              decoration: field('ناونیشانێکی کورت و ڕوون...',
+                  error: _triedSave && _titleCtrl.text.trim().isEmpty ? tr('ناونیشان پێویستە') : null),
+            ),
+            const SizedBox(height: 8),
+
+            // ─── دەق ───
+            label(Icons.notes_rounded, 'دەقی هەواڵ'),
+            TextField(
+              controller: _descCtrl,
+              minLines: 5,
+              maxLines: 12,
+              maxLength: 2000,
+              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => Text(
+                PlaceDisplay.digits('$currentLength / $maxLength'),
+                style: TextStyle(fontSize: 11, color: sub),
+              ),
+              onChanged: (_) => setState(() {}),
+              style: TextStyle(color: text, height: 1.6),
+              decoration: field('وردەکاری هەواڵەکە بنووسە...',
+                  error: _triedSave && _descCtrl.text.trim().isEmpty ? tr('دەقی هەواڵ پێویستە') : null),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+        bottomNavigationBar: SafeArea(
+          minimum: const EdgeInsets.fromLTRB(18, 8, 18, 12),
+          child: SizedBox(
+            height: 54,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: _loading ? null : _save,
+              icon: _loading
+                  ? const SizedBox(
+                      width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Icon(isEditing ? Icons.check_rounded : Icons.send_rounded),
+              label: Text(
+                tr(isEditing ? 'پاشەکەوتکردن' : 'بڵاوکردنەوە'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+              ),
+            ),
           ),
         ),
       ),
