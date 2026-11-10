@@ -198,16 +198,9 @@ class FuelService {
   // ═══════════════════════════════════════════════════════════
   // 🔐 دەسەڵات — ئەدمین هەموو، ڤێندەر تەنها هی خۆی
   // ═══════════════════════════════════════════════════════════
-  static bool canEditStation({dynamic stationId, String? stationPhone}) {
-    if (AuthSessionManager.isAdmin) return true;
-    if (AuthSessionManager.userRole != 'vendor') return false;
+  static bool canEditStation({dynamic stationId, String? stationPhone}) =>
+      AuthSessionManager.canEditStation(stationId: stationId, stationPhone: stationPhone);
 
-    final storeId = AuthSessionManager.storeId?.toString();
-    if (storeId != null && storeId.isNotEmpty && storeId == stationId?.toString()) return true;
-
-    final phone = AuthSessionManager.currentUser?['phone']?.toString() ?? '';
-    return phone.isNotEmpty && phone == (stationPhone ?? '');
-  }
 
   // ═══════════════════════════════════════════════════════════
   // 💰 نرخەکان

@@ -31,6 +31,24 @@ class AuthSessionManager {
   static bool get isLoggedIn => _cachedPhone != null || _currentId != null;
   static bool get canEditPrices => isAdmin || isVendor;
 
+  /// ١٠ ژمارەی کۆتایی — «0750 000 0002»، «+9647500000002» و «07500000002» یەکن
+  /// (هەمان یاسای app_phone_key لە Supabase)
+  static String phoneKey(Object? phone) {
+    final d = '${phone ?? ''}'.replaceAll(RegExp(r'\D'), '');
+    return d.length <= 10 ? d : d.substring(d.length - 10);
+  }
+
+  /// گۆڕینی نرخی شوێنێک: ئەدمین هەموو، ڤێندەر تەنها شوێنی خۆی
+  /// (بە store_id یان ژمارەی تەلەفۆن). Supabase هەمان پشکنین دووبارە دەکاتەوە.
+  static bool canEditStation({dynamic stationId, Object? stationPhone}) {
+    if (isAdmin) return true;
+    if (_userRole != 'vendor') return false;
+    final sid = _storeId?.toString() ?? '';
+    if (sid.isNotEmpty && sid == stationId?.toString()) return true;
+    final mine = phoneKey(currentUser?['phone']);
+    return mine.length == 10 && mine == phoneKey(stationPhone);
+  }
+
   static Map<String, dynamic>? get currentUser {
     if (!isLoggedIn) return null;
     return {

@@ -237,18 +237,9 @@ class CurrencyService {
   // ═══════════════════════════════════════════════════════════
 
   /// ئەدمین هەموو نوسینگەیەک، ڤێندەر تەنها نوسینگەی خۆی
-  static bool canEditStation({dynamic stationId, String? stationPhone}) {
-    if (AuthSessionManager.isAdmin) return true;
-    if (AuthSessionManager.userRole != 'vendor') return false;
+  static bool canEditStation({dynamic stationId, String? stationPhone}) =>
+      AuthSessionManager.canEditStation(stationId: stationId, stationPhone: stationPhone);
 
-    final user = AuthSessionManager.currentUser;
-    final storeId = AuthSessionManager.storeId?.toString();
-    if (storeId != null && storeId.isNotEmpty && storeId == stationId?.toString()) {
-      return true;
-    }
-    final phone = user?['phone']?.toString() ?? '';
-    return phone.isNotEmpty && phone == (stationPhone ?? '');
-  }
 
   // ═══════════════════════════════════════════════════════════
   // 💰 نرخەکان

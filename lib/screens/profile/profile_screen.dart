@@ -12,6 +12,7 @@ import '../videos/user_videos.dart';
 import '../settings/settings_screen.dart';
 import '../about/about_screen.dart';
 import '../admin/admin_dashboard.dart';
+import '../vendor/vendor_panel_screen.dart';
 import '../admin/admin_gallery.dart';
 import '../gallery/gallery_screen.dart';
 import '../../l10n/tr.dart';
@@ -294,10 +295,12 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                           isDark: isDark,
                           icon: Icons.admin_panel_settings_rounded,
                           color: const Color(0xFF1E88E5),
-                          title: isAdmin ? tr('پانێڵی ئەدمین') : tr('پانێڵی بەڕێوەبردن'),
-                          subtitle: isAdmin ? tr('دەستڕاگەیشتنی تەواو') : tr('دەستکاری شوێنەکان'),
+                          title: isAdmin ? tr('پانێڵی ئەدمین') : tr('پانێڵەکەم'),
+                          subtitle: isAdmin ? tr('دەستڕاگەیشتنی تەواو') : tr('نرخ و مێژووی نرخەکانم'),
                           isImportant: true,
-                          onTap: () => _push(const AdminDashboardScreen()),
+                          onTap: () => _push(isAdmin || AuthSessionManager.userRole != 'vendor'
+                              ? const AdminDashboardScreen()
+                              : const VendorPanelScreen()),
                           itemIndex: 5,
                         ),
                         if (isAdmin)

@@ -8,7 +8,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/settings_provider.dart';
 import '../../services/currency_pdf_service.dart';
 import '../../services/currency_service.dart';
-import '../../widgets/currency_converter_card.dart';
 import '../../widgets/multi_currency_chart_widget.dart';
 import 'currency_stations_by_type_screen.dart';
 import 'currency_strings.dart';
@@ -151,16 +150,6 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
                   ),
                 )
               else ...[
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  sliver: SliverToBoxAdapter(
-                    child: CurrencyConverterCard(
-                      markets: _snapshot?.markets ?? const {},
-                      lang: lang,
-                      isDark: isDark,
-                    ),
-                  ),
-                ),
                 SliverToBoxAdapter(child: _buildSectionHeader(t('markets'), isDark, trailing: _buildGroupFilter(isDark, lang))),
                 ..._buildMarketList(isDark, lang),
                 SliverToBoxAdapter(child: _buildSectionHeader(t('chart'), isDark)),
@@ -559,7 +548,8 @@ class _MarketCard extends StatelessWidget {
                           style: TextStyle(fontSize: 10, color: sub, fontWeight: FontWeight.w600),
                         ),
                         const Spacer(),
-                        if (m.spread != null)
+                        // جیاوازی نەرێنی (کڕین > فرۆشتن لە دوو نوسینگەی جیاواز) تێکەڵکەرە
+                        if (m.spread != null && m.spread! > 0)
                           Text(
                             '${t('spread')}: ${CurrencyService.formatPrice(m.spread, lang)}',
                             style: TextStyle(fontSize: 10, color: sub, fontWeight: FontWeight.w700),
