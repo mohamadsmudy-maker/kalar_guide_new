@@ -23,8 +23,9 @@ const json = (body: unknown, status = 200) =>
   });
 
 // gemini-1.5-* لەلایەن Google ەوە لابراون (404). GEMINI_MODEL دەتوانێت
-// مۆدێلێکی تر دیاری بکات؛ ئەگەر نەبوو یان 404 بوو، دانەی دواتر تاقی دەکرێتەوە.
-const MODELS = [Deno.env.get('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest']
+// مۆدێلێکی تر دیاری بکات؛ ئەگەر نەبوو، 404 بوو یان سنووری تەواو بوو (429)،
+// دانەی دواتر تاقی دەکرێتەوە. flash-lite یەکەمە: سنووری بەخۆڕایی زیاترە.
+const MODELS = [Deno.env.get('GEMINI_MODEL'), 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest']
   .filter((m): m is string => !!m && !m.startsWith('gemini-1.5'));
 
 async function callGemini(apiKey: string, apiVersion: string, prompt: string, jsonMode = false): Promise<Response> {
@@ -47,7 +48,9 @@ async function callGemini(apiKey: string, apiVersion: string, prompt: string, js
         }),
       },
     );
-    if (res.status !== 404 && res.status !== 400) return res;
+    // 404/400 = مۆدێلەکە نییە؛ 429/403/503 = سنوور یان قەرەباڵغی ئەو مۆدێلە —
+    // هەر مۆدێلێک سنووری جیاوازی هەیە، بۆیە دانەی دواتر تاقی دەکرێتەوە
+    if (![400, 403, 404, 429, 503].includes(res.status)) return res;
     console.error(`model ${model}: ${res.status}`, await res.clone().text());
     last = res;
   }

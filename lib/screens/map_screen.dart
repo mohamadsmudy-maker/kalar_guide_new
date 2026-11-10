@@ -9,7 +9,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import '../config/settings_provider.dart';
+import '../utils/place_display.dart';
+import 'stores/store_details_dialog.dart';
 import '../models/neighborhood.dart';
 import '../services/neighborhood_service.dart';
 import '../widgets/neighborhood_info_sheet.dart';
@@ -59,6 +63,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   MapType _mapType = MapType.normal;
   bool? _darkOverride; // null = بەپێی تیمی ئەپ
   bool _showLabels = true;
+
+  // ─── 📍 چینی شوێنەکان (شوێنە تۆمارکراوەکانی ئەپ) ───
+  bool _showPlaces = true;
+  List<Map<String, dynamic>> _places = [];
+  final Map<String, BitmapDescriptor> _placeIcons = {};
+  int _placesVersion = 0;
+  static const _kShowPlaces = 'map_show_places';
   bool _labelsZoomOk = true;
   bool _isMenuOpen = false;
   bool _favoritesOnly = false;
@@ -169,6 +180,86 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     });
 
     _init();
+    _initPlaces();
+  }
+
+  /// شوێنەکان + ڕێکخستنی چالاک/ناچالاک (لەسەر مۆبایل هەڵدەگیرێت)
+  Future<void> _initPlaces() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      final on = p.getBool(_kShowPlaces) ?? true;
+      if (mounted && on != _showPlaces) setState(() => _showPlaces = on);
+    } catch (_) {}
+    try {
+      final res = await Supabase.instance.client
+          .from('dukan')
+          .select()
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null);
+      final rows = List<Map<String, dynamic>>.from(res as List).where((r) {
+        final lat = double.tryParse('${r['latitude']}');
+        final lng = double.tryParse('${r['longitude']}');
+        return lat != null && lng != null && lat != 0 && lng != 0;
+      }).toList();
+      if (!mounted) return;
+      final dpr = MediaQuery.of(context).devicePixelRatio;
+      for (final r in rows) {
+        final (icon, color) = (PlaceDisplay.iconForPlace(r), PlaceDisplay.colorForPlace(r));
+        final k = '${icon.codePoint}_${color.toARGB32()}';
+        if (_placeIcons.containsKey(k)) continue;
+        try {
+          _placeIcons[k] = await _createPlaceMarker(icon, color, dpr);
+        } catch (e) {
+          debugPrint('❌ place marker: $e');
+        }
+        if (!mounted) return;
+      }
+      setState(() {
+        _places = rows;
+        _placesVersion++;
+      });
+    } catch (e) {
+      debugPrint('⚠️ map places: $e');
+    }
+  }
+
+  Future<void> _togglePlaces() async {
+    HapticFeedback.selectionClick();
+    setState(() => _showPlaces = !_showPlaces);
+    try {
+      final p = await SharedPreferences.getInstance();
+      await p.setBool(_kShowPlaces, _showPlaces);
+    } catch (_) {}
+  }
+
+  /// مارکەری شوێن: بازنەی سپی + ڕەنگی بەش + ئایکۆنی سپی
+  Future<BitmapDescriptor> _createPlaceMarker(IconData icon, Color color, double dpr) async {
+    const size = 30.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder)..scale(dpr, dpr);
+    const c = Offset(size / 2, size / 2);
+    canvas.drawCircle(c + const Offset(0, 1), size / 2 - 0.5, Paint()..color = const Color(0x33000000));
+    canvas.drawCircle(c, size / 2 - 1, Paint()..color = Colors.white);
+    canvas.drawCircle(c, size / 2 - 3.2, Paint()..color = color);
+    final tp = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+          fontSize: 15,
+          fontFamily: icon.fontFamily,
+          package: icon.fontPackage,
+          color: Colors.white,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, c - Offset(tp.width / 2, tp.height / 2));
+    final picture = recorder.endRecording();
+    final img = await picture.toImage((size * dpr).ceil(), (size * dpr).ceil());
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    img.dispose();
+    picture.dispose();
+    return BitmapDescriptor.bytes(data!.buffer.asUint8List(), imagePixelRatio: dpr);
   }
 
   @override
@@ -599,7 +690,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   Set<Marker> get _visibleMarkers {
-    final key = '$_showLabels|$_labelsZoomOk|$_markersVersion|$_userLatLng|'
+    final key = '$_showLabels|$_labelsZoomOk|$_markersVersion|$_userLatLng|$_showPlaces|$_placesVersion|'
         '$_favoritesOnly|${_all.length}|'
         '${_selected == null ? '-' : _keyOf(_selected!)}';
     if (_markerCache != null && _markerCacheKey == key) return _markerCache!;
@@ -630,6 +721,29 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             HapticFeedback.selectionClick();
             _selectNeighborhood(n);
           },
+        ));
+      }
+    }
+
+    if (_showPlaces) {
+      for (final p in _places) {
+        final lat = double.tryParse('${p['latitude']}');
+        final lng = double.tryParse('${p['longitude']}');
+        if (lat == null || lng == null) continue;
+        final k = '${PlaceDisplay.iconForPlace(p).codePoint}_${PlaceDisplay.colorForPlace(p).toARGB32()}';
+        final icon = _placeIcons[k];
+        if (icon == null) continue;
+        markers.add(Marker(
+          markerId: MarkerId('place_${p['id']}'),
+          position: LatLng(lat, lng),
+          icon: icon,
+          anchor: const Offset(0.5, 0.5),
+          zIndexInt: 4,
+          infoWindow: InfoWindow(
+            title: tr(p['name']?.toString() ?? ''),
+            snippet: tr('کرتە بکە بۆ وردەکاری'),
+            onTap: () => StoreDetailsDialog.show(context, p),
+          ),
         ));
       }
     }
@@ -1029,6 +1143,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
             ),
             actions: [
+              // 📍 پیشاندان/شاردنەوەی شوێنەکان
+              IconButton(
+                icon: Icon(
+                  _showPlaces ? Icons.storefront_rounded : Icons.storefront_outlined,
+                  color: _showPlaces
+                      ? const Color(0xFFD9822B)
+                      : (isDark ? Colors.white54 : Colors.grey),
+                ),
+                onPressed: _togglePlaces,
+                tooltip: _showPlaces ? tr('شاردنەوەی شوێنەکان') : tr('پیشاندانی شوێنەکان'),
+              ),
               IconButton(
                 icon: Icon(
                   _showLabels ? Icons.label_rounded : Icons.label_off_rounded,
@@ -1045,7 +1170,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     : _t('پیشاندانی ناوەکان', 'Show labels'),
               ),
               IconButton(
-                icon: Icon(Icons.menu_rounded,
+                icon: Icon(Icons.format_list_bulleted_rounded,
                     color: isDark ? Colors.white : _blue),
                 onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                 tooltip: _t('لیستی گەڕەکان', 'Neighborhoods'),

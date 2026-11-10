@@ -33,7 +33,7 @@ serve(async (req) => {
 
     const apiVersion = Deno.env.get('GEMINI_API_VERSION') ?? 'v1beta';
     // gemini-1.5-* لەلایەن Google ەوە لابراون (404)؛ یەک لە دوای یەک تاقی دەکرێنەوە
-    const models = [Deno.env.get('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest']
+    const models = [Deno.env.get('GEMINI_MODEL'), 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest']
       .filter((m): m is string => !!m && !m.startsWith('gemini-1.5'));
 
     // ✅ پێکهاتەکانی دەق
@@ -70,7 +70,8 @@ serve(async (req) => {
           }),
         },
       );
-      if (response.status !== 404 && response.status !== 400) break;
+      // 429/403/503: سنووری ئەو مۆدێلە — دانەی دواتر
+      if (![400, 403, 404, 429, 503].includes(response.status)) break;
       console.error(`model ${model}:`, response.status, await response.clone().text());
     }
 
