@@ -1831,4 +1831,8 @@ const Map<String, String> stringsEn = {
   'بە یەک کرتە — بێ ژمارە و پاسۆرد': 'One tap — no phone number or password',
   'پاسۆردەکەت لای Google دەمێنێتەوە، ئێمە نایبینین': 'Your password stays with Google; we never see it',
   'لە هەر مۆبایلێک بە هەمان ئەکاونت بچۆ ژوورەوە': 'Sign in with the same account on any phone',
+  'وەرگێڕان سەرکەوتوو نەبوو': 'Translation failed',
+  'سنووری بەخۆڕایی Gemini تەواو بووە. سبەی دووبارە هەوڵ بدەرەوە، یان لە Google AI Studio بیلینگ چالاک بکە.': 'Gemini\'s free quota is used up. Try again tomorrow, or enable billing in Google AI Studio.',
+  'کلیلی GEMINI_API_KEY لە Supabase هەڵەیە یان دانەنراوە.': 'The GEMINI_API_KEY in Supabase is wrong or missing.',
+  'سێرڤەری وەرگێڕان وەڵامی نەدایەوە. لۆگی فەنکشنی translate-text بپشکنە.': 'The translation server did not respond. Check the translate-text function logs.',
 };

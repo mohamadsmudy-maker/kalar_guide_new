@@ -239,7 +239,25 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     progress.dispose();
-    _snack(trf('{0} وەرگێڕانی نوێ پاشەکەوت کرا', [done]));
+    final err = TranslationService.lastError;
+    if (done == 0 && err != null) {
+      // هۆکاری ڕاستەقینە پیشان بدە (بۆ نموونە 429 = سنووری Gemini)
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => Directionality(
+          textDirection: AppLang.direction,
+          child: AlertDialog(
+            title: Text(tr('وەرگێڕان سەرکەوتوو نەبوو')),
+            content: Text(
+              '${tr(err.contains('429') ? 'سنووری بەخۆڕایی Gemini تەواو بووە. سبەی دووبارە هەوڵ بدەرەوە، یان لە Google AI Studio بیلینگ چالاک بکە.' : err.contains('GEMINI_API_KEY') || err.contains('API key') ? 'کلیلی GEMINI_API_KEY لە Supabase هەڵەیە یان دانەنراوە.' : 'سێرڤەری وەرگێڕان وەڵامی نەدایەوە. لۆگی فەنکشنی translate-text بپشکنە.')}\n\n$err',
+            ),
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('باشە')))],
+          ),
+        ),
+      );
+    } else {
+      _snack(trf('{0} وەرگێڕانی نوێ پاشەکەوت کرا', [done]));
+    }
     _load();
   }
 

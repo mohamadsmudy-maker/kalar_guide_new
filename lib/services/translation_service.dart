@@ -95,6 +95,9 @@ class TranslationService {
   /// false = فەنکشنەکە هێشتا وەشانی کۆنە (texts نازانێت) → یەک یەک
   static bool _batchSupported = true;
 
+  /// دوایین هەڵەی سێرڤەر (بۆ پیشاندان بە ئەدمین — بۆچی وەرگێڕان نەکرا)
+  static String? lastError;
+
   static Future<String?> _enqueue(String text, String lang) {
     final c = Completer<String?>();
     ((_pending[lang] ??= {})[text] ??= []).add(c);
@@ -186,10 +189,13 @@ class TranslationService {
         return null;
       }
       debugPrint('❌ translate batch ${e.status}: ${e.details}');
+      final d = e.details;
+      lastError = 'HTTP ${e.status}: ${d is Map ? (d['error'] ?? d) : d}';
       // 429/502: ئەوانەی پێشتر هەبوون دەگەڕێنەوە
       return _readBatch(e.details, chunk.length);
     } catch (e) {
       debugPrint('❌ translate batch: $e');
+      lastError = '$e';
       return null;
     }
   }
@@ -203,6 +209,7 @@ class TranslationService {
     void Function(int done, int total)? onProgress,
     Duration pause = const Duration(seconds: 7),
   }) async {
+    lastError = null;
     final todo = {
       for (final t in texts)
         if (t.trim().isNotEmpty &&
