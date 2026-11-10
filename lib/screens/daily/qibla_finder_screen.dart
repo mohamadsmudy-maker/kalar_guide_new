@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
+import '../../services/qibla/qibla_math.dart';
 
 /// 🕋 شاشەی قیبلە دۆزەرەوە — ULTRA PRO MAX V4
 ///
@@ -33,13 +35,16 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   // ═══════════════════════════════════════════════════════════
   // 📍 Constants
   // ═══════════════════════════════════════════════════════════
-  static const double _kaabaLat = 21.4225;
-  static const double _kaabaLng = 39.8262;
+  static const double _kaabaLat = QiblaMath.kaabaLat;
+  static const double _kaabaLng = QiblaMath.kaabaLng;
   static const double _fallbackLat = 34.6178; // کەلار
   static const double _fallbackLng = 45.3325;
 
-  static const double _enterFacingDeg = 5; // hysteresis: بچۆ ناو
-  static const double _exitFacingDeg = 8; //  بچۆ دەرەوە
+  static const double _enterFacingDeg = 2; // hysteresis: بچۆ ناو
+  static const double _exitFacingDeg = 3.5; //  بچۆ دەرەوە
+
+  /// کۆمپاسی ئەندرۆید باکووری موگناتیسی دەدات؛ iOS خۆی trueHeading دەدات
+  static bool get _needsDeclination => defaultTargetPlatform == TargetPlatform.android;
 
   // ═══════════════════════════════════════════════════════════
   // 📊 State
@@ -52,6 +57,9 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   double? _targetHeading;
 
   double? _qiblaAngle;
+
+  /// لادانی موگناتیسی (WMM‑2025) بۆ شوێنی ئێستا — سەرەتا بۆ کەلار
+  double _declination = QiblaMath.magneticDeclination(_fallbackLat, _fallbackLng);
   double? _distanceKm;
   double? _lat;
   double? _lng;
@@ -206,7 +214,8 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   void _onCompass(CompassEvent event) {
     final raw = event.heading;
     if (raw == null || !mounted) return;
-    final heading = _norm(raw);
+    // باکووری ڕاستەقینە = باکووری موگناتیسی + لادان
+    final heading = _norm(raw + (_needsDeclination ? _declination : 0));
 
     _recent.add(heading);
     if (_recent.length > 12) _recent.removeAt(0);
@@ -215,7 +224,9 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
     _targetHeading = _filter.filter(heading);
 
     final quality = _circularQuality(_recent);
-    final needsCalib = quality < 0.6;
+    // iOS هەڵەی ڕاستەقینەی سێنسەر دەدات (پلە)؛ زیاتر لە ٢٥° = پێویستی بە ڕێکخستنە
+    final acc = event.accuracy;
+    final needsCalib = quality < 0.6 || (acc != null && acc > 25);
     final confidence = _computeConfidence(quality, needsCalib);
 
     // تەنها کاتێک گۆڕانکاری دیار هەیە setState
@@ -313,6 +324,12 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
       _lng = lng;
       _usingFallback = fallback;
       _loc = state;
+      final decl = QiblaMath.magneticDeclination(lat, lng);
+      if ((decl - _declination).abs() > 0.01) {
+        _declination = decl;
+        _filter.reset(); // ئاراستە بە لادانی نوێ دەست پێدەکاتەوە
+        _recent.clear();
+      }
       _qiblaAngle = _calculateQiblaAngle(lat, lng);
       _distanceKm = Geolocator.distanceBetween(lat, lng, _kaabaLat, _kaabaLng) / 1000;
       _confidence = _computeConfidence(_quality, _needsCalibration);
@@ -333,16 +350,8 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
   // ═══════════════════════════════════════════════════════════
   // 📐 Calculations
   // ═══════════════════════════════════════════════════════════
-  static double _calculateQiblaAngle(double lat, double lng) {
-    final latRad = lat * math.pi / 180;
-    const kaabaLatRad = _kaabaLat * math.pi / 180;
-    final dLng = (_kaabaLng - lng) * math.pi / 180;
-
-    final y = math.sin(dLng);
-    final x = math.cos(latRad) * math.tan(kaabaLatRad) -
-        math.sin(latRad) * math.cos(dLng);
-    return _norm(math.atan2(y, x) * 180 / math.pi);
-  }
+  /// ئێلیپسۆیدی WGS‑84 (Vincenty) — بڕوانە [QiblaMath]
+  static double _calculateQiblaAngle(double lat, double lng) => QiblaMath.qiblaBearing(lat, lng);
 
   // ═══════════════════════════════════════════════════════════
   // 🎨 Build
@@ -814,19 +823,44 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen>
             _infoRow(
               Icons.explore_rounded,
               'گۆشەی قیبلە (لە باکوورەوە)',
-              '${_toLocalDigits(_qiblaAngle!.toStringAsFixed(1))}°',
+              '${_toLocalDigits(_qiblaAngle!.toStringAsFixed(2))}°',
               AppColors.orange,
             ),
           ValueListenableBuilder<double?>(
             valueListenable: _heading,
-            builder: (context, h, _) => h == null
-                ? const SizedBox.shrink()
-                : _infoRow(
+            builder: (context, h, _) {
+              if (h == null) return const SizedBox.shrink();
+              final q = _qiblaAngle;
+              final off = q == null ? null : _shortestDiff(h, q);
+              return Column(
+                children: [
+                  _infoRow(
                     Icons.phone_android_rounded,
                     'ئاراستەی مۆبایل',
-                    '${_toLocalDigits(h.toStringAsFixed(0))}°',
+                    '${_toLocalDigits(h.toStringAsFixed(1))}°',
                     confColor,
                   ),
+                  if (off != null)
+                    _infoRow(
+                      off >= 0 ? Icons.rotate_right_rounded : Icons.rotate_left_rounded,
+                      'لادان لە قیبلە',
+                      off.abs() < 0.5
+                          ? tr('ڕێک ✓')
+                          : trf(off >= 0 ? '{0}° بەرەو ڕاست' : '{0}° بەرەو چەپ',
+                              [_toLocalDigits(off.abs().toStringAsFixed(1))]),
+                      off.abs() < _enterFacingDeg ? AppColors.green : AppColors.orange,
+                    ),
+                ],
+              );
+            },
+          ),
+          _infoRow(
+            Icons.explore_off_rounded,
+            'لادانی موگناتیسی (WMM)',
+            _needsDeclination
+                ? '${_declination >= 0 ? '+' : '−'}${_toLocalDigits(_declination.abs().toStringAsFixed(2))}°'
+                : tr('خۆکار'),
+            AppColors.toneIndigo,
           ),
           if (_distanceKm != null)
             _infoRow(
