@@ -102,7 +102,7 @@ extension _MapScreenStateUi on _MapScreenState {
   Widget _buildDistanceChip(bool isDark) {
     final d = _distanceToSelected();
     return Positioned(
-      top: 76,
+      top: 76 + _placeFilterHeight,
       left: 0,
       right: 0,
       child: IgnorePointer(
@@ -111,41 +111,41 @@ extension _MapScreenStateUi on _MapScreenState {
           child: d == null
               ? const SizedBox.shrink()
               : Center(
-            key: ValueKey(d.round()),
-            child: Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2A2A35) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black
-                        .withValues(alpha: isDark ? 0.35 : 0.14),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.straighten_rounded,
-                      size: 16, color: _color(_selected!)),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${_formatDistance(d)} ${_t('دوورە لە تۆوە', 'away')}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color:
-                      isDark ? Colors.white : const Color(0xFF1A1A2E),
+                  key: ValueKey(d.round()),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2A2A35) : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black
+                              .withValues(alpha: isDark ? 0.35 : 0.14),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.straighten_rounded,
+                            size: 16, color: _color(_selected!)),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${_formatDistance(d)} ${_t('دوورە لە تۆوە', 'away')}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color:
+                                isDark ? Colors.white : const Color(0xFF1A1A2E),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                ),
         ),
       ),
     );
@@ -173,30 +173,32 @@ extension _MapScreenStateUi on _MapScreenState {
                     duration: const Duration(milliseconds: 200),
                     child: rotated
                         ? Padding(
-                      key: const ValueKey('compass'),
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _miniButton(
-                        isDark: isDark,
-                        onTap: _resetNorth,
-                        child: Transform.rotate(
-                          angle: -cam.bearing * math.pi / 180,
-                          child: const Icon(Icons.navigation_rounded,
-                              color: Color(0xFFDC3545), size: 22),
-                        ),
-                      ),
-                    )
+                            key: const ValueKey('compass'),
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _miniButton(
+                              isDark: isDark,
+                              onTap: _resetNorth,
+                              child: Transform.rotate(
+                                angle: -cam.bearing * math.pi / 180,
+                                child: const Icon(Icons.navigation_rounded,
+                                    color: Color(0xFFDC3545), size: 22),
+                              ),
+                            ),
+                          )
                         : const SizedBox.shrink(key: ValueKey('none')),
                   ),
                   _miniButton(
                     isDark: isDark,
                     onTap: () => _zoomBy(1),
-                    child: const Icon(Icons.add_rounded, color: _MapScreenState._blue),
+                    child: const Icon(Icons.add_rounded,
+                        color: _MapScreenState._blue),
                   ),
                   const SizedBox(height: 8),
                   _miniButton(
                     isDark: isDark,
                     onTap: () => _zoomBy(-1),
-                    child: const Icon(Icons.remove_rounded, color: _MapScreenState._blue),
+                    child: const Icon(Icons.remove_rounded,
+                        color: _MapScreenState._blue),
                   ),
                 ],
               );
@@ -258,8 +260,9 @@ extension _MapScreenStateUi on _MapScreenState {
                 Text(
                   tr(failed
                       ? _t('کێشە لە بارکردنی گەڕەکەکان',
-                      'Problem loading neighborhoods')
-                      : _t('هیچ گەڕەکێک نەدۆزرایەوە', 'No neighborhoods found')),
+                          'Problem loading neighborhoods')
+                      : _t(
+                          'هیچ گەڕەکێک نەدۆزرایەوە', 'No neighborhoods found')),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -271,9 +274,9 @@ extension _MapScreenStateUi on _MapScreenState {
                 Text(
                   tr(failed
                       ? _t('ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵبدەوە',
-                      'Check your connection and try again')
+                          'Check your connection and try again')
                       : _t('داتای گەڕەکان لە Supabase نەهاتووە',
-                      'No data was returned from Supabase')),
+                          'No data was returned from Supabase')),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
