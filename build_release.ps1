@@ -10,9 +10,18 @@ $GOOGLE_WEB_CLIENT_ID = ""
 flutter clean
 flutter pub get
 
+# 🔒 --obfuscate: ناوی کلاس و فەنکشنەکان دەگۆڕێت بۆ ناوی بێ مانا، بۆ ئەوەی ئەگەر
+#    کەسێک APK ـەکە بکاتەوە، خوێندنەوەی کۆدەکە قورس بێت.
+#    --split-debug-info: فایلی symbols لە پۆشەی symbols/<وەشان> هەڵدەگیرێت
+#    (دەرەوەی build/ چونکە flutter clean دەیسڕێتەوە). بۆ خوێندنەوەی Crash
+#    ـەکان پێویستە — هەر وەشانێک بەخۆی symbols ـی خۆی هەڵبگرە.
+$stamp = Get-Date -Format "yyyyMMdd-HHmm"
+$SYMBOLS_DIR = "symbols/$stamp"
+
 flutter build apk --release --split-per-abi `
+    --obfuscate --split-debug-info="$SYMBOLS_DIR" `
     --dart-define=SUPABASE_URL="$SUPABASE_URL" `
     --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" `
     --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
 
-Write-Host "✅ تەواو بوو" -ForegroundColor Green
+Write-Host "✅ تەواو بوو — symbols: $SYMBOLS_DIR (هەڵیبگرە)" -ForegroundColor Green

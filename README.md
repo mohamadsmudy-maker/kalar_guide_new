@@ -81,13 +81,15 @@ flutter pub get
 flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
 
 # Release APK — یان لە Windows: ./build_release.ps1
-flutter build apk --release --split-per-abi --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+flutter build apk --release --split-per-abi --obfuscate --split-debug-info=symbols/v1 --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
 
 # بۆ Play Store
-flutter build appbundle --release --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+flutter build appbundle --release --obfuscate --split-debug-info=symbols/v1 --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
 ```
 
 بۆ ئیمزاکردنی Release، `android/key.properties` و فایلی keystore پێویستن (لە git دا نین).
+
+> **Obfuscation:** `--obfuscate` ناوی کلاس و فەنکشنەکان دەشارێتەوە. فایلەکانی `symbols/<وەشان>` (لە git دا نین) هەڵبگرە — بۆ خوێندنەوەی Crash ـەکان پێویستن (`flutter symbolize`). دەقەکان (URL، کلیلی anon) هەر دەردەکەون، بۆیە هیچ نهێنییەک نەخەیتە ناو ئەپەکە.
 
 ---
 
