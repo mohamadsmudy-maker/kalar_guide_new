@@ -70,6 +70,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   final Map<String, BitmapDescriptor> _placeIcons = {};
   int _placesVersion = 0;
   static const _kShowPlaces = 'map_show_places';
+
+  // 🔎 فلتەری شوێنەکان: بەشی سەرەکی ← لقی بەش
+  String? _placeCategory;
+  String? _placeSubCategory;
   bool _labelsZoomOk = true;
   bool _isMenuOpen = false;
   bool _favoritesOnly = false;
@@ -120,12 +124,30 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // 🎨 ڕەنگ و شێواز
   // ═══════════════════════════════════════════════════════════
   static const List<Color> _vibrantPalette = [
-    Color(0xFFDC3545), Color(0xFFC2557A), Color(0xFF4F5BD5), Color(0xFF4F5BD5),
-    Color(0xFF4F5BD5), Color(0xFF1E88E5), Color(0xFF1E88E5), Color(0xFF1E88E5),
-    Color(0xFF0F9D7A), Color(0xFF0F9D7A), Color(0xFF0F9D7A), Color(0xFF0F9D7A),
-    Color(0xFFD9822B), Color(0xFFD9822B), Color(0xFFD9822B), Color(0xFFD9822B),
-    Color(0xFF6D4C41), Color(0xFF546E7A), Color(0xFF0F9D7A), Color(0xFF0F9D7A),
-    Color(0xFF4F5BD5), Color(0xFFC2557A), Color(0xFF1E88E5), Color(0xFFD9822B),
+    Color(0xFFDC3545),
+    Color(0xFFC2557A),
+    Color(0xFF4F5BD5),
+    Color(0xFF4F5BD5),
+    Color(0xFF4F5BD5),
+    Color(0xFF1E88E5),
+    Color(0xFF1E88E5),
+    Color(0xFF1E88E5),
+    Color(0xFF0F9D7A),
+    Color(0xFF0F9D7A),
+    Color(0xFF0F9D7A),
+    Color(0xFF0F9D7A),
+    Color(0xFFD9822B),
+    Color(0xFFD9822B),
+    Color(0xFFD9822B),
+    Color(0xFFD9822B),
+    Color(0xFF6D4C41),
+    Color(0xFF546E7A),
+    Color(0xFF0F9D7A),
+    Color(0xFF0F9D7A),
+    Color(0xFF4F5BD5),
+    Color(0xFFC2557A),
+    Color(0xFF1E88E5),
+    Color(0xFFD9822B),
     Color(0xFF0F9D7A),
   ];
 
@@ -173,11 +195,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 450),
       value: 1,
     )..addListener(() {
-      final step = (_selectController.value * 10).round();
-      if (step != _selectStep && mounted) {
-        setState(() => _selectStep = step);
-      }
-    });
+        final step = (_selectController.value * 10).round();
+        if (step != _selectStep && mounted) {
+          setState(() => _selectStep = step);
+        }
+      });
 
     _init();
     _initPlaces();
@@ -204,7 +226,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       if (!mounted) return;
       final dpr = MediaQuery.of(context).devicePixelRatio;
       for (final r in rows) {
-        final (icon, color) = (PlaceDisplay.iconForPlace(r), PlaceDisplay.colorForPlace(r));
+        final (icon, color) =
+            (PlaceDisplay.iconForPlace(r), PlaceDisplay.colorForPlace(r));
         final k = '${icon.codePoint}_${color.toARGB32()}';
         if (_placeIcons.containsKey(k)) continue;
         try {
@@ -233,12 +256,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   /// مارکەری شوێن: بازنەی سپی + ڕەنگی بەش + ئایکۆنی سپی
-  Future<BitmapDescriptor> _createPlaceMarker(IconData icon, Color color, double dpr) async {
+  Future<BitmapDescriptor> _createPlaceMarker(
+      IconData icon, Color color, double dpr) async {
     const size = 30.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder)..scale(dpr, dpr);
     const c = Offset(size / 2, size / 2);
-    canvas.drawCircle(c + const Offset(0, 1), size / 2 - 0.5, Paint()..color = const Color(0x33000000));
+    canvas.drawCircle(c + const Offset(0, 1), size / 2 - 0.5,
+        Paint()..color = const Color(0x33000000));
     canvas.drawCircle(c, size / 2 - 1, Paint()..color = Colors.white);
     canvas.drawCircle(c, size / 2 - 3.2, Paint()..color = color);
     final tp = TextPainter(
@@ -259,7 +284,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final data = await img.toByteData(format: ui.ImageByteFormat.png);
     img.dispose();
     picture.dispose();
-    return BitmapDescriptor.bytes(data!.buffer.asUint8List(), imagePixelRatio: dpr);
+    return BitmapDescriptor.bytes(data!.buffer.asUint8List(),
+        imagePixelRatio: dpr);
   }
 
   @override
@@ -333,9 +359,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   bool _isFav(Neighborhood n) => _favorites.contains(_keyOf(n));
 
-  List<Neighborhood> get _visibleNeighborhoods => _favoritesOnly
-      ? _all.where(_isFav).toList(growable: false)
-      : _all;
+  List<Neighborhood> get _visibleNeighborhoods =>
+      _favoritesOnly ? _all.where(_isFav).toList(growable: false) : _all;
 
   Color _colorFor(Neighborhood n, int index) {
     final name = n.nameKu;
@@ -399,8 +424,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       final crosses = (a.latitude > p.latitude) != (b.latitude > p.latitude) &&
           p.longitude <
               (b.longitude - a.longitude) *
-                  (p.latitude - a.latitude) /
-                  (b.latitude - a.latitude) +
+                      (p.latitude - a.latitude) /
+                      (b.latitude - a.latitude) +
                   a.longitude;
       if (crosses) inside = !inside;
     }
@@ -439,8 +464,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
     final pending = _all
         .where((n) =>
-    (n.hasCenter || n.hasBoundary) &&
-        !_labelIcons.containsKey(_keyOf(n)))
+            (n.hasCenter || n.hasBoundary) &&
+            !_labelIcons.containsKey(_keyOf(n)))
         .toList();
     if (pending.isEmpty) return;
 
@@ -545,7 +570,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       if (c == null || !_labelSizes.containsKey(_keyOf(n))) continue;
       final p = _project(c, zoom);
       // سووڕاندن بەپێی bearing (ناوەکان هەمیشە ڕاستن لەسەر شاشە)
-      candidates.add((n, Offset(p.dx * cosA - p.dy * sinA, p.dx * sinA + p.dy * cosA)));
+      candidates.add(
+          (n, Offset(p.dx * cosA - p.dy * sinA, p.dx * sinA + p.dy * cosA)));
     }
 
     int rank(Neighborhood n) => _isSelected(n) ? 0 : (_isFav(n) ? 1 : 2);
@@ -585,10 +611,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   Future<({BitmapDescriptor icon, Size size})> _createLabelMarker(
-      String name,
-      Color color,
-      double dpr,
-      ) async {
+    String name,
+    Color color,
+    double dpr,
+  ) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder)..scale(dpr, dpr);
 
@@ -640,11 +666,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     picture.dispose();
 
     return (
-    icon: BitmapDescriptor.bytes(
-      data!.buffer.asUint8List(),
-      imagePixelRatio: dpr,
-    ),
-    size: Size(totalW, totalH),
+      icon: BitmapDescriptor.bytes(
+        data!.buffer.asUint8List(),
+        imagePixelRatio: dpr,
+      ),
+      size: Size(totalW, totalH),
     );
   }
 
@@ -673,8 +699,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         points: n.boundaryPoints,
         strokeColor: base.withValues(alpha: sel ? 1.0 : (dim ? 0.35 : 0.6)),
         strokeWidth: sel ? (2 + 3 * t).round() : (_isFav(n) ? 3 : 2),
-        fillColor: base.withValues(
-            alpha: sel ? 0.15 + 0.35 * t : (dim ? 0.07 : 0.15)),
+        fillColor:
+            base.withValues(alpha: sel ? 0.15 + 0.35 * t : (dim ? 0.07 : 0.15)),
         consumeTapEvents: true,
         geodesic: true,
         zIndex: sel ? 2 : (_isFav(n) ? 1 : 0),
@@ -689,8 +715,142 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return _polygonCache = polygons;
   }
 
+  static String _catOf(Map<String, dynamic> p, String field) =>
+      (p[field] ?? '').toString().trim();
+
+  /// شوێنەکان دوای فلتەر
+  List<Map<String, dynamic>> get _filteredPlaces {
+    final c = _placeCategory, sc = _placeSubCategory;
+    if (c == null) return _places;
+    return _places.where((p) {
+      if (_catOf(p, 'category') != c) return false;
+      return sc == null || _catOf(p, 'sub_category') == sc;
+    }).toList(growable: false);
+  }
+
+  /// [ناو، ژمارە] ڕیزکراو بەپێی ژمارە
+  List<MapEntry<String, int>> _groupCounts(
+      Iterable<Map<String, dynamic>> rows, String field) {
+    final m = <String, int>{};
+    for (final p in rows) {
+      final v = _catOf(p, field);
+      if (v.isNotEmpty) m[v] = (m[v] ?? 0) + 1;
+    }
+    return m.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+  }
+
+  double get _placeFilterHeight {
+    if (_loading || !_showPlaces || _places.isEmpty) return 0;
+    return _placeCategory == null ? 48 : 92;
+  }
+
+  void _setPlaceFilter(String? category, String? sub) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _placeCategory = category;
+      _placeSubCategory = category == null ? null : sub;
+    });
+    if (category != null) _fitPlaces(_filteredPlaces);
+  }
+
+  Future<void> _fitPlaces(List<Map<String, dynamic>> rows) async {
+    final pts = <LatLng>[];
+    for (final p in rows) {
+      final lat = double.tryParse('${p['latitude']}');
+      final lng = double.tryParse('${p['longitude']}');
+      if (lat != null && lng != null) pts.add(LatLng(lat, lng));
+    }
+    if (pts.isEmpty) return;
+    if (pts.length == 1) {
+      await _safeAnimate(CameraUpdate.newLatLngZoom(pts.first, 16));
+      return;
+    }
+    final b = _boundsOf(pts);
+    if (b != null) await _safeAnimate(CameraUpdate.newLatLngBounds(b, 70));
+  }
+
+  /// ڕیزی چیپەکانی فلتەر لە ژێر گەڕان
+  Widget _buildPlaceFilter(bool isDark) {
+    final cats = _groupCounts(_places, 'category');
+    final sel = _placeCategory;
+    final subs = sel == null
+        ? const <MapEntry<String, int>>[]
+        : _groupCounts(
+            _places.where((p) => _catOf(p, 'category') == sel), 'sub_category');
+
+    Widget row(List<Widget> chips) => SizedBox(
+          height: 40,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: chips,
+          ),
+        );
+
+    return Positioned(
+      top: 74,
+      left: 0,
+      right: 0,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          row([
+            _PlaceChip(
+              label: tr('هەموو'),
+              count: _places.length,
+              icon: Icons.apps_rounded,
+              color: _blue,
+              selected: sel == null,
+              isDark: isDark,
+              onTap: () => _setPlaceFilter(null, null),
+            ),
+            for (final e in cats)
+              _PlaceChip(
+                label: tr(e.key),
+                count: e.value,
+                icon: PlaceDisplay.icon(e.key),
+                color: PlaceDisplay.color(e.key),
+                selected: sel == e.key,
+                isDark: isDark,
+                onTap: () => _setPlaceFilter(sel == e.key ? null : e.key, null),
+              ),
+          ]),
+          if (sel != null && subs.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            row([
+              _PlaceChip(
+                label: tr('هەمووی'),
+                count: subs.fold<int>(0, (a, e) => a + e.value),
+                icon: Icons.done_all_rounded,
+                color: PlaceDisplay.color(sel),
+                selected: _placeSubCategory == null,
+                small: true,
+                isDark: isDark,
+                onTap: () => _setPlaceFilter(sel, null),
+              ),
+              for (final e in subs)
+                _PlaceChip(
+                  label: tr(e.key),
+                  count: e.value,
+                  icon: PlaceDisplay.icon(e.key),
+                  color: PlaceDisplay.color(sel),
+                  selected: _placeSubCategory == e.key,
+                  small: true,
+                  isDark: isDark,
+                  onTap: () => _setPlaceFilter(
+                      sel, _placeSubCategory == e.key ? null : e.key),
+                ),
+            ]),
+          ],
+        ],
+      ),
+    );
+  }
+
   Set<Marker> get _visibleMarkers {
-    final key = '$_showLabels|$_labelsZoomOk|$_markersVersion|$_userLatLng|$_showPlaces|$_placesVersion|'
+    final key =
+        '$_showLabels|$_labelsZoomOk|$_markersVersion|$_userLatLng|$_showPlaces|$_placesVersion|'
+        '$_placeCategory|$_placeSubCategory|'
         '$_favoritesOnly|${_all.length}|'
         '${_selected == null ? '-' : _keyOf(_selected!)}';
     if (_markerCache != null && _markerCacheKey == key) return _markerCache!;
@@ -705,9 +865,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
         // ناو ئەگەر جێی دەبێتەوە، دەنا خاڵێکی بچووک
         final showLabel = _labelVisible.contains(k);
-        final icon = showLabel
-            ? _labelIcons[k]
-            : _dotIcons[_color(n).toARGB32()];
+        final icon =
+            showLabel ? _labelIcons[k] : _dotIcons[_color(n).toARGB32()];
         if (icon == null) continue;
 
         markers.add(Marker(
@@ -726,11 +885,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
 
     if (_showPlaces) {
-      for (final p in _places) {
+      for (final p in _filteredPlaces) {
         final lat = double.tryParse('${p['latitude']}');
         final lng = double.tryParse('${p['longitude']}');
         if (lat == null || lng == null) continue;
-        final k = '${PlaceDisplay.iconForPlace(p).codePoint}_${PlaceDisplay.colorForPlace(p).toARGB32()}';
+        final k =
+            '${PlaceDisplay.iconForPlace(p).codePoint}_${PlaceDisplay.colorForPlace(p).toARGB32()}';
         final icon = _placeIcons[k];
         if (icon == null) continue;
         markers.add(Marker(
@@ -833,7 +993,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         LatLngBounds(
           southwest: b.southwest,
           northeast:
-          LatLng(b.northeast.latitude + extraNorth, b.northeast.longitude),
+              LatLng(b.northeast.latitude + extraNorth, b.northeast.longitude),
         ),
         40,
       ),
@@ -848,7 +1008,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       await _safeAnimate(CameraUpdate.newLatLngBounds(
         LatLngBounds(
           southwest:
-          LatLng(b.southwest.latitude - extraSouth, b.southwest.longitude),
+              LatLng(b.southwest.latitude - extraSouth, b.southwest.longitude),
           northeast: b.northeast,
         ),
         48,
@@ -917,7 +1077,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       _showSnackBar(
         perm == LocationPermission.deniedForever
             ? _t('مۆڵەتی شوێن لە ڕێکخستنەکانی مۆبایل بکەرەوە',
-            'Enable location permission in settings')
+                'Enable location permission in settings')
             : _t('مۆڵەتی شوێن نەدرا', 'Location permission denied'),
         const Color(0xFFDC3545),
         Icons.location_disabled_rounded,
@@ -1136,7 +1296,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               child: Text(
-                tr(_selected?.nameKu ?? _t('نەخشەی گەڕەکان 🗺️', 'Neighborhoods 🗺️')),
+                tr(_selected?.nameKu ??
+                    _t('نەخشەی گەڕەکان 🗺️', 'Neighborhoods 🗺️')),
                 key: ValueKey(_selected?.nameKu),
                 style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w900, color: fg),
@@ -1146,13 +1307,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               // 📍 پیشاندان/شاردنەوەی شوێنەکان
               IconButton(
                 icon: Icon(
-                  _showPlaces ? Icons.storefront_rounded : Icons.storefront_outlined,
+                  _showPlaces
+                      ? Icons.storefront_rounded
+                      : Icons.storefront_outlined,
                   color: _showPlaces
                       ? const Color(0xFFD9822B)
                       : (isDark ? Colors.white54 : Colors.grey),
                 ),
                 onPressed: _togglePlaces,
-                tooltip: _showPlaces ? tr('شاردنەوەی شوێنەکان') : tr('پیشاندانی شوێنەکان'),
+                tooltip: _showPlaces
+                    ? tr('شاردنەوەی شوێنەکان')
+                    : tr('پیشاندانی شوێنەکان'),
               ),
               IconButton(
                 icon: Icon(
@@ -1192,7 +1357,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   opacity: _fadeAnimation,
                   child: GoogleMap(
                     initialCameraPosition:
-                    const CameraPosition(target: _kalarCenter, zoom: 13),
+                        const CameraPosition(target: _kalarCenter, zoom: 13),
                     mapType: _mapType,
                     style: (_mapType == MapType.normal && mapDark)
                         ? _darkMapStyle
@@ -1240,6 +1405,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   ),
                 ),
               if (!_loading) _buildSearchBar(isDark),
+              if (_placeFilterHeight > 0) _buildPlaceFilter(isDark),
               if (!_loading) _buildDistanceChip(isDark),
               if (!_loading) _buildLeftControls(isDark),
               if (!_loading) _buildRightSideMenu(isDark),
@@ -1297,9 +1463,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         icon: (_darkOverride ?? Theme.of(context).brightness == Brightness.dark)
             ? Icons.light_mode_rounded
             : Icons.dark_mode_rounded,
-        label: (_darkOverride ?? Theme.of(context).brightness == Brightness.dark)
-            ? _t('شێوازی ڕۆژ', 'Day style')
-            : _t('شێوازی شەو', 'Night style'),
+        label:
+            (_darkOverride ?? Theme.of(context).brightness == Brightness.dark)
+                ? _t('شێوازی ڕۆژ', 'Day style')
+                : _t('شێوازی شەو', 'Night style'),
         color: const Color(0xFF4F5BD5),
         onTap: () {
           final cur =
@@ -1309,7 +1476,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       ),
       _MenuAction(
         icon: Icons.view_in_ar_rounded,
-        label: is3d ? _t('دوو ڕەهەند', '2D view') : _t('سێ ڕەهەند (3D)', '3D view'),
+        label: is3d
+            ? _t('دوو ڕەهەند', '2D view')
+            : _t('سێ ڕەهەند (3D)', '3D view'),
         color: const Color(0xFF1E88E5),
         active: is3d,
         onTap: _toggleTilt,
@@ -1374,8 +1543,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       child: LayoutBuilder(
         builder: (context, constraints) {
           // بەرزی بەردەست = بەرزی نەخشە - ژێرەوە - FAB - خانەی گەڕان
-          final maxMenuHeight = math.max(
-              0.0, constraints.maxHeight - _bottomOffset - 40 - 130);
+          final maxMenuHeight =
+              math.max(0.0, constraints.maxHeight - _bottomOffset - 40 - 130);
 
           return Stack(
             children: [
@@ -1404,7 +1573,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                               ignoring: !_isMenuOpen,
                               child: ConstrainedBox(
                                 constraints:
-                                BoxConstraints(maxHeight: maxMenuHeight),
+                                    BoxConstraints(maxHeight: maxMenuHeight),
                                 child: SingleChildScrollView(
                                   reverse: true,
                                   child: Column(
@@ -1430,7 +1599,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                             setState(() => _isMenuOpen = !_isMenuOpen);
                           },
                           backgroundColor:
-                          isDark ? const Color(0xFF1A1A22) : Colors.white,
+                              isDark ? const Color(0xFF1A1A22) : Colors.white,
                           elevation: 6,
                           mini: true,
                           shape: const CircleBorder(),
@@ -1439,9 +1608,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                             duration: const Duration(milliseconds: 300),
                             child: Icon(
                               Icons.add_rounded,
-                              color: _isMenuOpen
-                                  ? const Color(0xFFDC3545)
-                                  : _blue,
+                              color:
+                                  _isMenuOpen ? const Color(0xFFDC3545) : _blue,
                               size: 28,
                             ),
                           ),
@@ -1491,7 +1659,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         Material(
           color: a.active
               ? Color.alphaBlend(a.color.withValues(alpha: 0.16),
-              isDark ? const Color(0xFF1A1A22) : Colors.white)
+                  isDark ? const Color(0xFF1A1A22) : Colors.white)
               : (isDark ? const Color(0xFF1A1A22) : Colors.white),
           elevation: 4,
           shadowColor: a.color.withValues(alpha: 0.3),
@@ -1515,13 +1683,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
               child: a.pulsing
                   ? AnimatedBuilder(
-                animation: _pulseAnimation,
-                builder: (context, child) => Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: child,
-                ),
-                child: icon,
-              )
+                      animation: _pulseAnimation,
+                      builder: (context, child) => Transform.scale(
+                        scale: _pulseAnimation.value,
+                        child: child,
+                      ),
+                      child: icon,
+                    )
                   : icon,
             ),
           ),
@@ -1529,7 +1697,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       ],
     );
   }
-
 }
 
 /// داتای یەک دوگمەی مێنیو
@@ -1549,4 +1716,95 @@ class _MenuAction {
     this.pulsing = false,
     this.active = false,
   });
+}
+
+/// چیپی فلتەری شوێن: ئایکۆن + ناو + ژمارە
+class _PlaceChip extends StatelessWidget {
+  final String label;
+  final int count;
+  final IconData icon;
+  final Color color;
+  final bool selected;
+  final bool small;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _PlaceChip({
+    required this.label,
+    required this.count,
+    required this.icon,
+    required this.color,
+    required this.selected,
+    required this.isDark,
+    required this.onTap,
+    this.small = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg =
+        selected ? color : (isDark ? const Color(0xFF1F1F29) : Colors.white);
+    final fg = selected
+        ? Colors.white
+        : (isDark ? Colors.white : const Color(0xFF1A1A2E));
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 6, top: 3, bottom: 3),
+      child: Material(
+        color: bg,
+        elevation: selected ? 3 : 1.5,
+        shadowColor: selected ? color.withValues(alpha: 0.5) : Colors.black26,
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: selected
+                ? Colors.white.withValues(alpha: 0.6)
+                : color.withValues(alpha: 0.35),
+          ),
+        ),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsetsDirectional.fromSTEB(
+                small ? 8 : 10, 0, small ? 6 : 8, 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon,
+                    size: small ? 14 : 16,
+                    color: selected ? Colors.white : color),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: small ? 11.5 : 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: fg,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.25)
+                        : color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    PlaceDisplay.digits(count),
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w900,
+                      color: selected ? Colors.white : color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
