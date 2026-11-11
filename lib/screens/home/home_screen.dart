@@ -1,5 +1,6 @@
 // lib/screens/home/home_screen.dart
 import 'dart:async';
+import 'dart:ui' show PathMetric;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -185,8 +186,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
                 child: _ComplaintBanner(
                   title: t('send_complaint', 'ناردنی سکاڵا'),
-                  subtitle: t('complaint_banner_sub',
-                      'کێشە و تێبینییەکانت ڕاستەوخۆ بۆ شارەوانی بنێرە'),
                   onTap: () {
                     if (!mounted) return;
                     ComplaintInstructionDialog.show(context);
@@ -1153,25 +1152,50 @@ class _PublisherLogo extends StatelessWidget {
   }
 }
 
-/// 📣 بانەری ناردنی سکاڵا — سەوزی گرادیێنت، بە پانی تەواو
-class _ComplaintBanner extends StatelessWidget {
+/// 📣 دوگمەی ناردنی سکاڵا — سەوزی گرادیێنت، یەک ڕێز، لەگەڵ بیمێکی ڕووناک
+/// کە بە دەوری لێوارەکەدا دەخولێتەوە (Border Beam).
+class _ComplaintBanner extends StatefulWidget {
   final String title;
-  final String subtitle;
   final VoidCallback onTap;
 
-  const _ComplaintBanner({
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+  const _ComplaintBanner({required this.title, required this.onTap});
+
+  @override
+  State<_ComplaintBanner> createState() => _ComplaintBannerState();
+}
+
+class _ComplaintBannerState extends State<_ComplaintBanner>
+    with SingleTickerProviderStateMixin {
+  static const _radius = 22.0;
+  late final AnimationController _beam = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 3600),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ♿ کەمکردنەوەی جووڵە → بیمەکە نەخولێتەوە
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _beam.stop();
+    } else if (!_beam.isAnimating) {
+      _beam.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _beam.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: title,
+      label: widget.title,
       child: Material(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(_radius),
         clipBehavior: Clip.antiAlias,
         elevation: 6,
         shadowColor: const Color(0xFF0F9D7A).withValues(alpha: 0.45),
@@ -1186,93 +1210,142 @@ class _ComplaintBanner extends StatelessWidget {
           child: InkWell(
             onTap: () {
               HapticFeedback.selectionClick();
-              onTap();
+              widget.onTap();
             },
             splashColor: Colors.white24,
-            child: Stack(
-              children: [
-                // بڵندگۆی گەورەی کاڵ لە پشتەوە
-                PositionedDirectional(
-                  end: -18,
-                  bottom: -22,
-                  child: Icon(
-                    Icons.campaign_rounded,
-                    size: 110,
-                    color: Colors.white.withValues(alpha: 0.12),
-                  ),
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.35)),
-                        ),
-                        child: const Icon(Icons.campaign_rounded,
-                            color: Colors.white, size: 28),
+            child: CustomPaint(
+              foregroundPainter: _BeamPainter(_beam, _radius),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.35)),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              subtitle,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.88),
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
+                      child: const Icon(Icons.campaign_rounded,
+                          color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 6),
-                          ],
-                        ),
-                        child: Icon(
-                          AppLang.isRtl
-                              ? Icons.arrow_back_rounded
-                              : Icons.arrow_forward_rounded,
-                          color: const Color(0xFF0B8C6C),
-                          size: 19,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black26, blurRadius: 6),
+                        ],
+                      ),
+                      child: Icon(
+                        AppLang.isRtl
+                            ? Icons.arrow_back_rounded
+                            : Icons.arrow_forward_rounded,
+                        color: const Color(0xFF0B8C6C),
+                        size: 18,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// بیمێکی ڕووناک (کلکەکەی ڕوون و سەرەکەی ڕووناک) کە بە دەوری لێوارەکەدا دەگەڕێت
+class _BeamPainter extends CustomPainter {
+  final Animation<double> progress;
+  final double radius;
+
+  _BeamPainter(this.progress, this.radius) : super(repaint: progress);
+
+  static const _slices = 40;
+  static const _beamFraction = 0.26; // درێژی بیمەکە لە کۆی دەوروبەر
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = (Offset.zero & size).deflate(1.6);
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(rect, Radius.circular(radius)));
+    final metric = path.computeMetrics().first;
+    final total = metric.length;
+    final beamLen = total * _beamFraction;
+    final head = progress.value * total;
+
+    // 1) درەوشانەوەی نەرم لە ژێر بیمەکە (تەنها نیوەی سەرەوەی)
+    for (var i = _slices ~/ 2; i < _slices; i++) {
+      final t0 = i / _slices, t1 = (i + 1) / _slices;
+      final glow = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 7
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
+        ..color = const Color(0xFFBFFFE8).withValues(alpha: 0.22 * t1);
+      _drawWrapped(canvas, metric, total, head - beamLen * (1 - t0),
+          head - beamLen * (1 - t1) + 0.5, glow);
+    }
+
+    // 2) خۆی بیمەکە: کلکەکەی ڕوون، سەرەکەی سپی
+    for (var i = 0; i < _slices; i++) {
+      final t0 = i / _slices, t1 = (i + 1) / _slices;
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = Color.lerp(const Color(0xFFA8FFDD), Colors.white, t1)!
+            .withValues(alpha: (t1 * t1 * 1.1).clamp(0.0, 1.0));
+      // +0.5 بۆ ئەوەی پارچەکان یەک ببنەوە و خاڵ دروست نەبێت
+      _drawWrapped(canvas, metric, total, head - beamLen * (1 - t0),
+          head - beamLen * (1 - t1) + 0.5, paint);
+    }
+
+    // 3) پۆینتی درەوشاوەی سەری بیمەکە
+    final tangent = metric.getTangentForOffset(head % total);
+    if (tangent != null) {
+      canvas.drawCircle(
+        tangent.position,
+        6,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.7)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+    }
+  }
+
+  void _drawWrapped(Canvas canvas, PathMetric m, double total, double a,
+      double b, Paint paint) {
+    if (b <= a) return;
+    double norm(double v) => ((v % total) + total) % total;
+    final na = norm(a), nb = norm(b);
+    if (na <= nb) {
+      canvas.drawPath(m.extractPath(na, nb), paint);
+    } else {
+      canvas.drawPath(m.extractPath(na, total), paint);
+      canvas.drawPath(m.extractPath(0, nb), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BeamPainter old) => old.radius != radius;
 }
