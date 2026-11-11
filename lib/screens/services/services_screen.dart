@@ -13,7 +13,9 @@ import '../neighborhoods/neighborhoods_screen.dart';
 import '../stores/suggest_place_screen.dart';
 import '../videos/user_videos.dart';
 
-/// 🧰 ناوەندی خزمەتگوزارییەکان — هەموو بەشەکان لە یەک شوێن
+/// 🧰 ناوەندی خزمەتگوزارییەکان — هەموو بەشەکان لە یەک شوێن.
+/// دیزاینی ئارام: هەر بەش لە یەک کارتدایە، ئایکۆنەکان بە یەک ڕەنگی سەرەکین
+/// (تەنها فریاکەوتن سوورە چونکە مانای تایبەتی هەیە).
 class ServicesScreen extends StatelessWidget {
   final VoidCallback? onMenuTap;
 
@@ -30,74 +32,68 @@ class ServicesScreen extends StatelessWidget {
     final bg = isDark ? AppColors.darkBackground : const Color(0xFFF4F6FA);
     final fg = isDark ? Colors.white : const Color(0xFF1A1A2E);
 
-    final city = [
-      _Service(
-        title: tr('نەخشە'),
-        subtitle: tr('گەڕەک و شوێنەکان لەسەر نەخشە'),
-        icon: Icons.map_rounded,
-        colors: const [Color(0xFF0F9D7A), Color(0xFF16C79A)],
-        onTap: (c) => _open(c, const MapScreen()),
-      ),
-      _Service(
-        title: tr('گەڕەکان'),
-        subtitle: tr('زانیاری گەڕەکەکانی کەلار'),
-        icon: Icons.location_city_rounded,
-        colors: const [Color(0xFF1E88E5), Color(0xFF42A5F5)],
-        onTap: (c) => _open(c, const NeighborhoodsScreen()),
-      ),
-      _Service(
-        title: tr('بەشەکان'),
-        subtitle: tr('خزمەتگوزارییەکانی شار'),
-        icon: Icons.account_balance_rounded,
-        colors: const [Color(0xFF00897B), Color(0xFF26B5A6)],
-        onTap: (c) => _open(c, const DepartmentsScreen()),
-      ),
-      _Service(
-        title: tr('ڕووداو و بۆنەکان'),
-        subtitle: tr('چالاکییەکانی شارەکەمان'),
-        icon: Icons.event_rounded,
-        colors: const [Color(0xFF8E24AA), Color(0xFFB85FD0)],
-        onTap: (c) => _open(c, const EventsScreen()),
-      ),
-    ];
-    final content = [
-      _Service(
-        title: tr('گەلەری'),
-        subtitle: tr('جوانترین وێنەکانی شار'),
-        icon: Icons.photo_library_rounded,
-        colors: const [Color(0xFFD9822B), Color(0xFFF2A65A)],
-        onTap: (c) => _open(c, const GalleryScreen()),
-      ),
-      _Service(
-        title: tr('ڤیدیۆکان'),
-        subtitle: tr('ڤیدیۆ و ڕێنماییەکان'),
-        icon: Icons.play_circle_fill_rounded,
-        colors: const [Color(0xFFE53E6B), Color(0xFFFF6B9A)],
-        onTap: (c) => _open(c, const UserVideosScreen()),
-      ),
-    ];
-    final help = [
-      _Service(
-        title: tr('فریاکەوتن'),
-        subtitle: tr('ژمارە گرنگەکانی کەلار'),
-        icon: Icons.emergency_rounded,
-        colors: const [Color(0xFFDC3545), Color(0xFFFF6B6B)],
-        onTap: (c) => _open(c, const EmergencyScreen()),
-      ),
-      _Service(
-        title: tr('ناردنی سکاڵا'),
-        subtitle: tr('سکاڵا بۆ شارەوانی بنێرە'),
-        icon: Icons.campaign_rounded,
-        colors: const [Color(0xFF4F5BD5), Color(0xFF7986F2)],
-        onTap: (c) => ComplaintInstructionDialog.show(c),
-      ),
-      _Service(
-        title: tr('پێشنیاری شوێن'),
-        subtitle: tr('شوێنێکی نوێمان پێ بناسێنە'),
-        icon: Icons.add_location_alt_rounded,
-        colors: const [Color(0xFF546E7A), Color(0xFF78909C)],
-        onTap: (c) => _open(c, const SuggestPlaceScreen()),
-      ),
+    final sections = <_Section>[
+      _Section(tr('شار و شوێن'), [
+        _Service(
+          title: tr('نەخشە'),
+          subtitle: tr('گەڕەک و شوێنەکان لەسەر نەخشە'),
+          icon: Icons.map_rounded,
+          onTap: (c) => _open(c, const MapScreen()),
+        ),
+        _Service(
+          title: tr('گەڕەکان'),
+          subtitle: tr('زانیاری گەڕەکەکانی کەلار'),
+          icon: Icons.location_city_rounded,
+          onTap: (c) => _open(c, const NeighborhoodsScreen()),
+        ),
+        _Service(
+          title: tr('بەشەکان'),
+          subtitle: tr('خزمەتگوزارییەکانی شار'),
+          icon: Icons.account_balance_rounded,
+          onTap: (c) => _open(c, const DepartmentsScreen()),
+        ),
+        _Service(
+          title: tr('ڕووداو و بۆنەکان'),
+          subtitle: tr('چالاکییەکانی شارەکەمان'),
+          icon: Icons.event_rounded,
+          onTap: (c) => _open(c, const EventsScreen()),
+        ),
+      ]),
+      _Section(tr('وێنە و ڤیدیۆ'), [
+        _Service(
+          title: tr('گەلەری'),
+          subtitle: tr('جوانترین وێنەکانی شار'),
+          icon: Icons.photo_library_rounded,
+          onTap: (c) => _open(c, const GalleryScreen()),
+        ),
+        _Service(
+          title: tr('ڤیدیۆکان'),
+          subtitle: tr('ڤیدیۆ و ڕێنماییەکان'),
+          icon: Icons.play_circle_rounded,
+          onTap: (c) => _open(c, const UserVideosScreen()),
+        ),
+      ]),
+      _Section(tr('هاوکاری و پەیوەندی'), [
+        _Service(
+          title: tr('فریاکەوتن'),
+          subtitle: tr('ژمارە گرنگەکانی کەلار'),
+          icon: Icons.emergency_rounded,
+          color: AppColors.red,
+          onTap: (c) => _open(c, const EmergencyScreen()),
+        ),
+        _Service(
+          title: tr('ناردنی سکاڵا'),
+          subtitle: tr('سکاڵا بۆ شارەوانی بنێرە'),
+          icon: Icons.campaign_rounded,
+          onTap: (c) => ComplaintInstructionDialog.show(c),
+        ),
+        _Service(
+          title: tr('پێشنیاری شوێن'),
+          subtitle: tr('شوێنێکی نوێمان پێ بناسێنە'),
+          icon: Icons.add_location_alt_rounded,
+          onTap: (c) => _open(c, const SuggestPlaceScreen()),
+        ),
+      ]),
     ];
 
     return Directionality(
@@ -123,98 +119,103 @@ class ServicesScreen extends StatelessWidget {
           ),
         ),
         body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
+          padding: EdgeInsets.fromLTRB(
+              16, 8, 16, 110 + MediaQuery.paddingOf(context).bottom),
           children: [
-            _header(tr('شار و شوێن'), Icons.explore_rounded,
-                const Color(0xFF1E88E5), isDark),
-            _grid(city),
-            _header(tr('وێنە و ڤیدیۆ'), Icons.perm_media_rounded,
-                const Color(0xFFD9822B), isDark),
-            _grid(content),
-            _header(tr('هاوکاری و پەیوەندی'), Icons.support_agent_rounded,
-                const Color(0xFFDC3545), isDark),
-            _grid(help),
+            for (final s in sections) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(6, 16, 6, 8),
+                child: Text(
+                  s.title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white60 : const Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+              _SectionCard(items: s.items, isDark: isDark),
+            ],
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _header(String title, IconData icon, Color color, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color, color.withValues(alpha: 0.72)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(11),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.35),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _grid(List<_Service> items) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.42,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, i) => _ServiceCard(service: items[i]),
-    );
-  }
+class _Section {
+  final String title;
+  final List<_Service> items;
+  const _Section(this.title, this.items);
 }
 
 class _Service {
   final String title;
   final String subtitle;
   final IconData icon;
-  final List<Color> colors;
+  final Color color;
   final void Function(BuildContext) onTap;
 
   const _Service({
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.colors,
     required this.onTap,
+    this.color = AppColors.primary,
   });
 }
 
-class _ServiceCard extends StatelessWidget {
-  final _Service service;
+/// کارتێکی سپی کە چەند ڕیزێکی تێدایە، بە هێڵی جیاکەرەوە
+class _SectionCard extends StatelessWidget {
+  final List<_Service> items;
+  final bool isDark;
 
-  const _ServiceCard({required this.service});
+  const _SectionCard({required this.items, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final card = isDark ? AppColors.darkCard : Colors.white;
+    return Container(
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              if (i > 0)
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  indent: 70,
+                  endIndent: 16,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.07)
+                      : const Color(0xFFEEF0F4),
+                ),
+              _ServiceRow(service: items[i], isDark: isDark),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ServiceRow extends StatelessWidget {
+  final _Service service;
+  final bool isDark;
+
+  const _ServiceRow({required this.service, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -222,73 +223,57 @@ class _ServiceCard extends StatelessWidget {
     return Semantics(
       button: true,
       label: s.title,
-      child: Material(
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: Ink(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: s.colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: InkWell(
-            onTap: () => s.onTap(context),
-            splashColor: Colors.white24,
-            child: Stack(
-              children: [
-                // ئایکۆنی گەورەی کاڵ لە پشتەوە
-                PositionedDirectional(
-                  bottom: -16,
-                  start: -12,
-                  child: Icon(
-                    s.icon,
-                    size: 86,
-                    color: Colors.white.withValues(alpha: 0.14),
-                  ),
+      child: InkWell(
+        onTap: () => s.onTap(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: s.color.withValues(alpha: isDark ? 0.2 : 0.1),
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(13),
-                          border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3)),
-                        ),
-                        child: Icon(s.icon, color: Colors.white, size: 22),
+                child: Icon(s.icon, color: s.color, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.title,
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                       ),
-                      const Spacer(),
-                      Text(
-                        s.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w900,
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      s.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color:
+                            isDark ? Colors.white54 : const Color(0xFF8A90A0),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        s.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              Icon(
+                AppLang.isRtl
+                    ? Icons.chevron_left_rounded
+                    : Icons.chevron_right_rounded,
+                color: isDark ? Colors.white30 : const Color(0xFFB4B9C6),
+                size: 22,
+              ),
+            ],
           ),
         ),
       ),
