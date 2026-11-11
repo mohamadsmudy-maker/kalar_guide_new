@@ -950,17 +950,8 @@ class _AppDrawer extends StatelessWidget {
                                   _go(context, screen: const ProfileScreen())
                               : null,
                         ),
-                        const SizedBox(height: 6),
-                        // ئەوانەی لە ناڤیگەیشن/خزمەتگوزارییەکانن لێرە دووبارە ناکرێنەوە
-                        _section(_t('drawer_sec_activity', 'چالاکییەکان')),
-                        _item(
-                          context,
-                          icon: Icons.event_rounded,
-                          color: AppColors.secondary,
-                          title: _t('drawer_events', 'ڕووداو و بۆنەکان'),
-                          onTap: () =>
-                              _go(context, screen: const EventsScreen()),
-                        ),
+                        // هەموو بەشە گشتییەکان لە ناڤیگەیشن و تابی
+                        // «خزمەتگوزاری»دان — لێرە تەنها بەڕێوەبردن و ڕێکخستن
                         if (isVendor) ...[
                           const SizedBox(height: 8),
                           _section(_t('drawer_sec_manage', 'بەڕێوەبردن')),
