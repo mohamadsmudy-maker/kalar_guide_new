@@ -46,6 +46,7 @@ import 'screens/fuel/fuel_chart_screen.dart';
 import 'screens/gallery/gallery_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/map_screen.dart';
+import 'screens/services/services_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -83,7 +84,7 @@ const double _kMaxFontScale = 1.6;
 // ═══════════════════════════════════════════════════════════
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-GlobalKey<ScaffoldMessengerState>();
+    GlobalKey<ScaffoldMessengerState>();
 
 // ═══════════════════════════════════════════════════════════
 // 🔑 Startup state
@@ -114,7 +115,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 // ═══════════════════════════════════════════════════════════
 Future<void> main() async {
   await runZonedGuarded<Future<void>>(
-        () async {
+    () async {
       WidgetsFlutterBinding.ensureInitialized();
 
       try {
@@ -128,7 +129,7 @@ Future<void> main() async {
 
       await _start();
     },
-        (error, stack) {
+    (error, stack) {
       AppLogger.e('🔥 Uncaught zone error', error);
       AppLogger.d('$stack');
     },
@@ -452,13 +453,13 @@ class _BootErrorAppState extends State<_BootErrorApp> {
                     ),
                     icon: _retrying
                         ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Icon(Icons.refresh_rounded),
                     label: Text(
                       tr('دووبارە هەوڵبدەرەوە'),
@@ -484,7 +485,7 @@ class KalarGuideApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeMode =
-    context.select<ThemeProvider, ThemeMode>((p) => p.themeMode);
+        context.select<ThemeProvider, ThemeMode>((p) => p.themeMode);
     final settingsProvider = context.watch<SettingsProvider>();
 
     // ✅ چارەسەرکرا: بانگکردنی فەنکشنەکانی theme بە دروستی
@@ -520,7 +521,7 @@ class KalarGuideApp extends StatelessWidget {
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final overlay =
-        isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
+            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: overlay.copyWith(
@@ -553,9 +554,9 @@ class KalarGuideApp extends StatelessWidget {
   }
 
   static MaterialPageRoute<T> _page<T>(
-      RouteSettings settings,
-      WidgetBuilder builder,
-      ) {
+    RouteSettings settings,
+    WidgetBuilder builder,
+  ) {
     return MaterialPageRoute<T>(settings: settings, builder: builder);
   }
 
@@ -582,7 +583,7 @@ class KalarGuideApp extends StatelessWidget {
         }
         return _page(
           settings,
-              (_) => CategoryDetailsScreen(categoryName: catName),
+          (_) => CategoryDetailsScreen(categoryName: catName),
         );
       case '/fuel':
         if (!AuthSessionManager.isAdmin) return _unauthorizedRoute();
@@ -602,7 +603,7 @@ class KalarGuideApp extends StatelessWidget {
         }
         return _page(
           settings,
-              (_) => FuelChartScreen(
+          (_) => FuelChartScreen(
             history: history.cast<Map<String, dynamic>>(),
             fuelType: fuelType,
           ),
@@ -621,7 +622,7 @@ class KalarGuideApp extends StatelessWidget {
       case '/onboarding':
         return _page(
           settings,
-              (context) => OnboardingScreen(
+          (context) => OnboardingScreen(
             onComplete: () {
               Navigator.pushReplacementNamed(context, '/main');
             },
@@ -701,11 +702,11 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
     _currentIndex = widget.initialIndex.clamp(0, _tabCount - 1);
 
     _builders = [
-          () => HomeScreen(onMenuTap: _openDrawer, onSearchTap: () => _goTo(1)),
-          () => StoresScreen(onMenuTap: _openDrawer),
-          () => MapScreen(onMenuTap: _openDrawer),
-          () => DailyScreen(onMenuTap: _openDrawer),
-          () => const ProfileScreen(),
+      () => HomeScreen(onMenuTap: _openDrawer, onSearchTap: () => _goTo(1)),
+      () => StoresScreen(onMenuTap: _openDrawer),
+      () => ServicesScreen(onMenuTap: _openDrawer),
+      () => DailyScreen(onMenuTap: _openDrawer),
+      () => const ProfileScreen(),
     ];
   }
 
@@ -777,11 +778,11 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
         icon: Icons.location_on_outlined,
         activeIcon: Icons.location_on_rounded,
       ),
-      // 🗺️ نەخشە — بەشەکان چوونە ناو «شوێنەکان» (ڕیزی ئاسۆیی)
+      // 🧰 خزمەتگوزارییەکان — نەخشە، گەلەری، ڤیدیۆ، فریاکەوتن...
       ProNavItem(
-        label: tr('نەخشە'),
-        icon: Icons.map_outlined,
-        activeIcon: Icons.map_rounded,
+        label: tr('خزمەتگوزاری'),
+        icon: Icons.grid_view_outlined,
+        activeIcon: Icons.grid_view_rounded,
       ),
       ProNavItem(
         label: t('nav_daily', 'ڕۆژانە'),
@@ -922,15 +923,14 @@ class _AppDrawer extends StatelessWidget {
                   final isLogged = userProfile != null;
                   final displayName = isLogged
                       ? (userProfile['name']?.toString() ??
-                      _t('user', 'بەکارهێنەر'))
+                          _t('user', 'بەکارهێنەر'))
                       : _t('welcome_guest', 'میوانی خۆشەویست');
                   final displayPhone = isLogged
                       ? (userProfile['phone']?.toString() ?? '')
                       : _t('app_name', 'ڕێبەری کەلار');
 
-                  final role =
-                      userProfile?['role']?.toString().toLowerCase() ??
-                          'customer';
+                  final role = userProfile?['role']?.toString().toLowerCase() ??
+                      'customer';
                   final isAdmin = role == 'admin';
                   final isVendor =
                       role == 'vendor' || role == 'department' || isAdmin;
@@ -946,7 +946,8 @@ class _AppDrawer extends StatelessWidget {
                           role,
                           isLogged,
                           onTap: isLogged
-                              ? () => _go(context, screen: const ProfileScreen())
+                              ? () =>
+                                  _go(context, screen: const ProfileScreen())
                               : null,
                         ),
                         const SizedBox(height: 6),
@@ -1009,7 +1010,8 @@ class _AppDrawer extends StatelessWidget {
                               icon: Icons.storefront_rounded,
                               color: AppColors.toneTeal,
                               title: tr('پانێڵەکەم 🏪'),
-                              onTap: () => _go(context, screen: const VendorPanelScreen()),
+                              onTap: () => _go(context,
+                                  screen: const VendorPanelScreen()),
                             )
                           else
                             _item(
@@ -1029,8 +1031,8 @@ class _AppDrawer extends StatelessWidget {
                               context,
                               icon: Icons.photo_library_rounded,
                               color: AppColors.orange,
-                              title: _t(
-                                  'drawer_admin_gallery', 'بەڕێوەبردنی گەلەری 📸'),
+                              title: _t('drawer_admin_gallery',
+                                  'بەڕێوەبردنی گەلەری 📸'),
                               onTap: () =>
                                   _go(context, route: '/admin-gallery'),
                             ),
@@ -1099,12 +1101,12 @@ class _AppDrawer extends StatelessWidget {
   }
 
   Widget _header(
-      String name,
-      String phone,
-      String role,
-      bool isLogged, {
-        VoidCallback? onTap,
-      }) {
+    String name,
+    String phone,
+    String role,
+    bool isLogged, {
+    VoidCallback? onTap,
+  }) {
     String? roleLabel;
     switch (role) {
       case 'admin':
@@ -1128,9 +1130,9 @@ class _AppDrawer extends StatelessWidget {
         onTap: onTap == null
             ? null
             : () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
+                HapticFeedback.selectionClick();
+                onTap();
+              },
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
@@ -1151,18 +1153,18 @@ class _AppDrawer extends StatelessWidget {
                 backgroundColor: Colors.white,
                 child: initial != null
                     ? Text(
-                  tr(initial),
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                  ),
-                )
+                        tr(initial),
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary,
+                        ),
+                      )
                     : const Icon(
-                  Icons.person,
-                  size: 34,
-                  color: AppColors.primary,
-                ),
+                        Icons.person,
+                        size: 34,
+                        color: AppColors.primary,
+                      ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1238,14 +1240,13 @@ class _AppDrawer extends StatelessWidget {
   }
 
   Widget _item(
-      BuildContext context, {
-        required IconData icon,
-        required Color color,
-        required String title,
-        required VoidCallback onTap,
-        Color? textColor,
-      }) {
-
+    BuildContext context, {
+    required IconData icon,
+    required Color color,
+    required String title,
+    required VoidCallback onTap,
+    Color? textColor,
+  }) {
     return Material(
       color: _bg,
       child: ListTile(
