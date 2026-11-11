@@ -74,7 +74,8 @@ class _AdminGalleryState extends State<AdminGallery> {
   List<GalleryImage> get _filtered {
     final q = _search.text.trim().toLowerCase();
     return _all.where((img) {
-      final cat = _selectedCategory == null || img.categoryId == _selectedCategory;
+      final cat =
+          _selectedCategory == null || img.categoryId == _selectedCategory;
       final matchTitle = q.isEmpty || img.title.toLowerCase().contains(q);
       return cat && matchTitle;
     }).toList();
@@ -119,7 +120,9 @@ class _AdminGalleryState extends State<AdminGallery> {
       _snack(tr('وێنە زیادکرا'));
       await _load();
     } catch (e) {
-      _snack(tr('هەڵە لە ئەپلۆدکردن'), error: true);
+      _snack(
+          '${tr('هەڵە لە ئەپلۆدکردن')}\n${GalleryService.uploadErrorText(e)}',
+          error: true);
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -130,8 +133,7 @@ class _AdminGalleryState extends State<AdminGallery> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final action = await showModalBottomSheet<AdminAction>(
       context: context,
-      backgroundColor:
-      isDark ? AppColors.darkCard : AppColors.surface,
+      backgroundColor: isDark ? AppColors.darkCard : AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
@@ -196,13 +198,13 @@ class _AdminGalleryState extends State<AdminGallery> {
             mainAxisSize: MainAxisSize.min,
             children: GalleryCategoryRegistry.all
                 .map((c) => ListTile(
-              leading: Icon(c.icon, color: c.color),
-              title: Text(tr(c.label)),
-              trailing: img.categoryId == c.id
-                  ? const Icon(Icons.check_rounded)
-                  : null,
-              onTap: () => Navigator.pop(ctx, c.id),
-            ))
+                      leading: Icon(c.icon, color: c.color),
+                      title: Text(tr(c.label)),
+                      trailing: img.categoryId == c.id
+                          ? const Icon(Icons.check_rounded)
+                          : null,
+                      onTap: () => Navigator.pop(ctx, c.id),
+                    ))
                 .toList(),
           ),
         ),
@@ -254,11 +256,11 @@ class _AdminGalleryState extends State<AdminGallery> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
-        content: Text(tr(m), style: const TextStyle(fontWeight: FontWeight.w700)),
+        content:
+            Text(tr(m), style: const TextStyle(fontWeight: FontWeight.w700)),
         backgroundColor: error ? AppColors.red : AppColors.green,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ));
   }
 
@@ -274,7 +276,8 @@ class _AdminGalleryState extends State<AdminGallery> {
         backgroundColor: bg,
         appBar: AppBar(
           title: Text(tr('بەڕێوەبردنی گەلەری'),
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              style:
+                  const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           centerTitle: true,
           backgroundColor: isDark ? AppColors.darkCard : AppColors.primary,
           foregroundColor: Colors.white,
@@ -291,16 +294,15 @@ class _AdminGalleryState extends State<AdminGallery> {
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _search.text.isNotEmpty
                       ? IconButton(
-                    icon: const Icon(Icons.clear_rounded),
-                    onPressed: () {
-                      _search.clear();
-                      setState(() {});
-                    },
-                  )
+                          icon: const Icon(Icons.clear_rounded),
+                          onPressed: () {
+                            _search.clear();
+                            setState(() {});
+                          },
+                        )
                       : null,
                   filled: true,
-                  fillColor:
-                  isDark ? AppColors.darkCard : AppColors.surface,
+                  fillColor: isDark ? AppColors.darkCard : AppColors.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
@@ -381,8 +383,10 @@ class _AdminGalleryState extends State<AdminGallery> {
               builder: (_) => FullScreenImageViewer(
                 imageUrl: items[i].imageUrl,
                 imageTitle: items[i].title,
-                category: GalleryCategoryRegistry.byId(items[i].categoryId).label,
-                categoryIcon: GalleryCategoryRegistry.byId(items[i].categoryId).icon,
+                category:
+                    GalleryCategoryRegistry.byId(items[i].categoryId).label,
+                categoryIcon:
+                    GalleryCategoryRegistry.byId(items[i].categoryId).icon,
                 views: items[i].views,
                 date: items[i].createdAt,
               ),

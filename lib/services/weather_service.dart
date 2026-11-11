@@ -198,7 +198,7 @@ class WeatherService {
 
   /// هەموو ئەو ValueNotifier ـانە پێکەوە — بۆ ListenableBuilder.
   late final Listenable listenable =
-  Listenable.merge([snapshot, refreshing, lastFailed]);
+      Listenable.merge([snapshot, refreshing, lastFailed]);
 
   final http.Client _http = http.Client();
   Future<void>? _running;
@@ -336,18 +336,19 @@ class WeatherService {
     try {
       final url = Uri.parse(
         'https://api.open-meteo.com/v1/forecast'
-            '?latitude=$lat&longitude=$lon'
-            '&current=temperature_2m,relative_humidity_2m,apparent_temperature,'
-            'is_day,weather_code,cloud_cover,cloud_cover_low,cloud_cover_mid,'
-            'cloud_cover_high,pressure_msl,wind_speed_10m,'
-            'wind_direction_10m,wind_gusts_10m'
-            '&hourly=temperature_2m,weather_code,precipitation_probability,'
-            'is_day,visibility,uv_index,cloud_cover_low,cloud_cover_mid,cloud_cover_high'
-            '&daily=weather_code,temperature_2m_max,temperature_2m_min,'
-            'precipitation_probability_max,sunrise,sunset,uv_index_max,'
-            'precipitation_sum,wind_speed_10m_max'
-            '&timezone=Asia%2FBaghdad'
-            '&forecast_days=7',
+        '?latitude=$lat&longitude=$lon'
+        '&current=temperature_2m,relative_humidity_2m,apparent_temperature,'
+        'is_day,weather_code,cloud_cover,cloud_cover_low,cloud_cover_mid,'
+        'cloud_cover_high,pressure_msl,wind_speed_10m,'
+        'wind_direction_10m,wind_gusts_10m'
+        '&hourly=temperature_2m,weather_code,precipitation_probability,'
+        'is_day,visibility,uv_index,cloud_cover_low,cloud_cover_mid,'
+        'cloud_cover_high,sunshine_duration,direct_radiation'
+        '&daily=weather_code,temperature_2m_max,temperature_2m_min,'
+        'precipitation_probability_max,sunrise,sunset,uv_index_max,'
+        'precipitation_sum,wind_speed_10m_max'
+        '&timezone=Asia%2FBaghdad'
+        '&forecast_days=7',
       );
 
       final response = await _http.get(url).timeout(_timeout);
@@ -364,7 +365,7 @@ class WeatherService {
 
       final nowLocal = _toTime(c['time']) ?? DateTime.now();
       final hourFloor =
-      DateTime(nowLocal.year, nowLocal.month, nowLocal.day, nowLocal.hour);
+          DateTime(nowLocal.year, nowLocal.month, nowLocal.day, nowLocal.hour);
 
       // ─── کاتژمێرەکان ───
       final hTimes = _listOf(h, 'time') ?? const [];
@@ -377,12 +378,20 @@ class WeatherService {
       final hLow = _listOf(h, 'cloud_cover_low');
       final hMid = _listOf(h, 'cloud_cover_mid');
       final hHigh = _listOf(h, 'cloud_cover_high');
-      int? hourCode(int i) => skyCode(
-            _toInt(_at(hCodes, i)),
-            low: _toInt(_at(hLow, i)),
-            mid: _toInt(_at(hMid, i)),
-            high: _toInt(_at(hHigh, i)),
-          );
+      final hSun = _listOf(h, 'sunshine_duration');
+      final hDir = _listOf(h, 'direct_radiation');
+      int? hourCode(int i) {
+        final sunS = _toDouble(_at(hSun, i));
+        return skyCode(
+          _toInt(_at(hCodes, i)),
+          low: _toInt(_at(hLow, i)),
+          mid: _toInt(_at(hMid, i)),
+          high: _toInt(_at(hHigh, i)),
+          sunFrac: sunS == null ? null : sunS / 3600,
+          direct: _toDouble(_at(hDir, i)),
+          isDay: (_toInt(_at(hDay, i)) ?? 1) == 1,
+        );
+      }
 
       int start = 0;
       for (int i = 0; i < hTimes.length; i++) {
@@ -420,12 +429,18 @@ class WeatherService {
         gust: _toInt(c['wind_gusts_10m']),
         // پەستانی ئاستی دەریا (وەک وێستگە و ڕاپۆرتە فەرمییەکان)، نەک پەستانی ڕووی زەوی
         pressure: _toInt(c['pressure_msl'] ?? c['surface_pressure']),
-        code: skyCode(
-          _toInt(c['weather_code']),
-          low: _toInt(c['cloud_cover_low']),
-          mid: _toInt(c['cloud_cover_mid']),
-          high: _toInt(c['cloud_cover_high']),
-        ),
+        code: () {
+          final sunS = _toDouble(_at(hSun, start));
+          return skyCode(
+            _toInt(c['weather_code']),
+            low: _toInt(c['cloud_cover_low']),
+            mid: _toInt(c['cloud_cover_mid']),
+            high: _toInt(c['cloud_cover_high']),
+            sunFrac: sunS == null ? null : sunS / 3600,
+            direct: _toDouble(_at(hDir, start)),
+            isDay: (_toInt(c['is_day']) ?? 1) == 1,
+          );
+        }(),
         cloud: _toInt(c['cloud_cover']),
         visibilityKm: visM == null ? null : visM / 1000,
         uv: uvNow,
@@ -472,20 +487,52 @@ class WeatherService {
     }
   }
 
-  /// کۆدی ئاسمان (0–3) لە ڕێژەی هەورەکانەوە.
+  /// کۆدی ئاسمان (0–3) لە ڕێژەی هەورەکان + تیشکی خۆرەوە.
   ///
   /// Open-Meteo هەوری بەرزی تەنک (cirrus) وەک هەوری تەواو دەژمێرێت، بۆیە
   /// ڕۆژێکی ڕوون دەبێت «هەور». لێرە هەوری بەرز تەنها ٣٥٪ کاریگەری هەیە.
-  /// کۆدی باران، بەفر، تەم و ... وەک خۆی دەمێنێتەوە.
-  static int? skyCode(int? code, {int? low, int? mid, int? high}) {
+  ///
+  /// گرنگتر: ئەگەر خۆر بە ڕاستی بدرەوشێتەوە (sunshine_duration یان
+  /// direct_radiation بەرز بێت)، هەرگیز ناڵێین «هەور» — چونکە چاوی
+  /// بەکارهێنەر خۆر دەبینێت نەک هەور. تیشک تەنها هەور *کەم دەکاتەوە*،
+  /// زیادی ناکات، بۆیە بەیانی زوو و ئێوارە (کە تیشک سروشتی نزمە)
+  /// هیچ تێکناچێت. کۆدی باران، بەفر، تەم و ... وەک خۆی دەمێنێتەوە.
+  static int? skyCode(
+    int? code, {
+    int? low,
+    int? mid,
+    int? high,
+    double? sunFrac,
+    double? direct,
+    bool isDay = true,
+  }) {
     if (code != null && code > 3) return code;
-    if (low == null && mid == null && high == null) return code;
-    final eff = [low ?? 0, mid ?? 0, ((high ?? 0) * 0.35).round()]
-        .reduce((a, b) => a > b ? a : b);
-    if (eff < 15) return 0;
-    if (eff < 40) return 1;
-    if (eff < 70) return 2;
-    return 3;
+    int? base;
+    if (low == null && mid == null && high == null) {
+      base = code;
+    } else {
+      final eff = [low ?? 0, mid ?? 0, ((high ?? 0) * 0.35).round()]
+          .reduce((a, b) => a > b ? a : b);
+      base = eff < 15
+          ? 0
+          : eff < 40
+              ? 1
+              : eff < 70
+                  ? 2
+                  : 3;
+    }
+    if (isDay && base != null && base > 1) {
+      // خۆر زیاتر لە ٧٠٪ی کاتژمێرەکە دەدرەوشێتەوە، یان تیشکی ڕاستەوخۆ بەهێزە
+      if ((sunFrac != null && sunFrac >= 0.7) ||
+          (direct != null && direct >= 350)) {
+        return 1;
+      }
+      if ((sunFrac != null && sunFrac >= 0.3) ||
+          (direct != null && direct >= 150)) {
+        return base >= 3 ? 2 : base;
+      }
+    }
+    return base;
   }
 
   /// کۆدی ڕۆژ: ئەگەر باران/بەفر/تەم نەبێت، ناوەندی کۆدی کاتژمێرەکانی ڕۆژ
@@ -500,7 +547,10 @@ class WeatherService {
     final codes = <int>[];
     for (var i = 0; i < hTimes.length; i++) {
       final t = _toTime(hTimes[i]);
-      if (t == null || t.year != date.year || t.month != date.month || t.day != date.day) {
+      if (t == null ||
+          t.year != date.year ||
+          t.month != date.month ||
+          t.day != date.day) {
         continue;
       }
       if ((_toInt(_at(hDay, i)) ?? 1) != 1) continue;
@@ -517,9 +567,9 @@ class WeatherService {
     try {
       final url = Uri.parse(
         'https://air-quality-api.open-meteo.com/v1/air-quality'
-            '?latitude=$lat&longitude=$lon'
-            '&current=us_aqi,pm10,pm2_5,dust'
-            '&timezone=Asia%2FBaghdad',
+        '?latitude=$lat&longitude=$lon'
+        '&current=us_aqi,pm10,pm2_5,dust'
+        '&timezone=Asia%2FBaghdad',
       );
       final response = await _http.get(url).timeout(_timeout);
       if (response.statusCode != 200) return null;

@@ -19,5 +19,39 @@ void main() {
     test('no layer data → API code', () {
       expect(WeatherService.skyCode(2), 2);
     });
+    test('strong sunshine never reads as overcast', () {
+      // ١٠:٣٠ ـی کەلار: مۆدێل دەڵێت هەور، بەڵام خۆر سەر دەسووتێنێت
+      expect(
+        WeatherService.skyCode(3,
+            low: 10, mid: 80, high: 90, sunFrac: 0.9, direct: 600),
+        1,
+      );
+      expect(
+        WeatherService.skyCode(3, low: 0, mid: 75, high: 0, direct: 400),
+        1,
+      );
+      // خۆری ناوەند → هەوراوی (2) نەک هەوری تەواو (3)
+      expect(
+        WeatherService.skyCode(3, low: 90, mid: 0, high: 0, sunFrac: 0.4),
+        2,
+      );
+    });
+    test('sunshine does not override at night or real overcast', () {
+      expect(
+        WeatherService.skyCode(3,
+            low: 90, mid: 0, high: 0, sunFrac: 0.9, isDay: false),
+        3,
+      );
+      expect(
+        WeatherService.skyCode(3,
+            low: 95, mid: 60, high: 0, sunFrac: 0.05, direct: 40),
+        3,
+      );
+      // تیشک هەور زیاد ناکات: ئاسمانی ساماڵ هەر ساماڵە
+      expect(
+        WeatherService.skyCode(0, low: 0, mid: 0, high: 0, sunFrac: 0.0),
+        0,
+      );
+    });
   });
 }

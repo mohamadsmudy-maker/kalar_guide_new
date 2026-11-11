@@ -4,7 +4,8 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide ChangeNotifierProvider;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    hide ChangeNotifierProvider;
 import 'package:provider/provider.dart';
 
 import 'package:kalar_guide_new/config/app_colors.dart';
@@ -14,11 +15,8 @@ import 'package:kalar_guide_new/providers/news_providers.dart';
 import 'package:kalar_guide_new/services/analytics_service.dart';
 import 'package:kalar_guide_new/widgets/carousels/news_carousel.dart';
 import 'package:kalar_guide_new/screens/complaints/complaint_instruction_dialog.dart';
-import 'package:kalar_guide_new/screens/neighborhoods/neighborhoods_screen.dart';
-import 'package:kalar_guide_new/screens/map_screen.dart';
 import 'package:kalar_guide_new/screens/news/news_details.dart';
 import 'package:kalar_guide_new/screens/news/all_news_screen.dart';
-import 'package:kalar_guide_new/screens/gallery/gallery_screen.dart';
 import '../../l10n/tr.dart';
 
 const double _kBackToTopOffset = 600;
@@ -128,7 +126,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     final news = ref.watch(newsProvider.select((s) => s.news));
-    final isLoading = ref.watch(newsProvider.select((s) => s.isLoading)) == true;
+    final isLoading =
+        ref.watch(newsProvider.select((s) => s.isLoading)) == true;
 
     ref.listen(newsProvider.select((s) => s.news), (prev, next) {
       final had = prev?.isNotEmpty ?? false;
@@ -139,14 +138,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final surfaceColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
-    final carouselItems = news.take(_kCarouselCount).map((n) => n.toDisplayMap()).toList();
+    final carouselItems =
+        news.take(_kCarouselCount).map((n) => n.toDisplayMap()).toList();
     final List<dynamic> otherNews = news.length > _kCarouselCount
         ? news.skip(_kCarouselCount).take(_kListCount).toList()
         : const <dynamic>[];
 
     // ✅ چاککرا: پێشتر لە کاتی بارکردندا ئەم بەشە شاردرابووەوە، بۆیە skeleton هەرگیز دەرنەدەکەوت
     // ئەگەر هەموو هەواڵەکان لە سلایدەرەکەدان، بەشی «هەواڵەکانی تر» بەتاڵ پیشان نادرێت
-    final showOtherSection = (news.isEmpty && isLoading) || otherNews.isNotEmpty;
+    final showOtherSection =
+        (news.isEmpty && isLoading) || otherNews.isNotEmpty;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -163,36 +164,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 4),
                 child: news.isNotEmpty
-                    ? NewsCarousel(newsList: carouselItems, onTap: _openNewsDetails)
+                    ? NewsCarousel(
+                        newsList: carouselItems, onTap: _openNewsDetails)
                     : isLoading
                         ? const _CarouselSkeleton()
                         : _NoNewsCard(
                             isDark: isDark,
                             title: t('no_news', 'هیچ هەواڵێک نییە'),
-                            subtitle: t('pull_to_refresh', 'بۆ نوێکردنەوە ڕایبکێشە خوارەوە'),
+                            subtitle: t('pull_to_refresh',
+                                'بۆ نوێکردنەوە ڕایبکێشە خوارەوە'),
                             retryLabel: t('retry', 'دووبارە'),
                             onRetry: _onRefresh,
                           ),
               ),
             ),
 
-            // 📂 خزمەتگوزارییەکانی تر
+            // 📣 ناردنی سکاڵا — دوگمەی سەوزی بەرچاو
             SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-                    child: _SectionHeader(
-                      title: t('other_services', 'خزمەتگوزارییەکانی تر'),
-                      moreLabel: '',
-                      icon: Icons.apps_rounded,
-                      color: AppColors.secondary,
-                      isDark: isDark,
-                    ),
-                  ),
-                  _buildQuickActions(isDark, t),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+                child: _ComplaintBanner(
+                  title: t('send_complaint', 'ناردنی سکاڵا'),
+                  subtitle: t('complaint_banner_sub',
+                      'کێشە و تێبینییەکانت ڕاستەوخۆ بۆ شارەوانی بنێرە'),
+                  onTap: () {
+                    if (!mounted) return;
+                    ComplaintInstructionDialog.show(context);
+                  },
+                ),
               ),
             ),
 
@@ -216,7 +215,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
             // بۆشایی بۆ ناڤیگەیشنی خوارەوە (بازنە بەرزەکەشی)
             SliverToBoxAdapter(
-              child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom),
+              child:
+                  SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom),
             ),
           ],
         ),
@@ -224,7 +224,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildAppBar(bool isDark, Color surfaceColor, Color iconColor, String Function(String, String) t) {
+  Widget _buildAppBar(bool isDark, Color surfaceColor, Color iconColor,
+      String Function(String, String) t) {
     return SliverAppBar(
       floating: true,
       pinned: true,
@@ -232,7 +233,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       elevation: 0,
       scrolledUnderElevation: 3,
       surfaceTintColor: Colors.transparent,
-      shadowColor: isDark ? Colors.black.withValues(alpha: 0.35) : AppColors.primary.withValues(alpha: 0.08),
+      shadowColor: isDark
+          ? Colors.black.withValues(alpha: 0.35)
+          : AppColors.primary.withValues(alpha: 0.08),
       leading: Builder(
         builder: (ctx) => IconButton(
           tooltip: t('menu', 'مێنیو'),
@@ -257,7 +260,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               gradient: AppColors.newsGradient,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.explore_rounded, color: Colors.white, size: 18),
+            child: const Icon(Icons.explore_rounded,
+                color: Colors.white, size: 18),
           ),
           const SizedBox(width: 8),
           Flexible(
@@ -265,7 +269,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               t('app_name', 'ڕێبەری کەلار'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: iconColor),
+              style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.w900, color: iconColor),
             ),
           ),
         ],
@@ -289,92 +294,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return IgnorePointer(
           ignoring: !show,
           child: AnimatedScale(
-          scale: show ? 1 : 0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutBack,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 70 + bottom),
-            child: FloatingActionButton.small(
-              heroTag: 'home_back_to_top',
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              tooltip: t('back_to_top', 'سەرەوە'),
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                _scroll.animateTo(0, duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
-              },
-              child: const Icon(Icons.keyboard_arrow_up_rounded),
+            scale: show ? 1 : 0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutBack,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 70 + bottom),
+              child: FloatingActionButton.small(
+                heroTag: 'home_back_to_top',
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                tooltip: t('back_to_top', 'سەرەوە'),
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  _scroll.animateTo(0,
+                      duration: const Duration(milliseconds: 450),
+                      curve: Curves.easeOutCubic);
+                },
+                child: const Icon(Icons.keyboard_arrow_up_rounded),
+              ),
             ),
-          ),
           ),
         );
       },
     );
   }
 
-  Widget _buildQuickActions(bool isDark, String Function(String, String) t) {
-    final actions = <_QuickAction>[
-      _QuickAction(
-        title: t('neighborhoods', 'گەڕەکان'),
-        icon: Icons.location_city_rounded,
-        color: AppColors.primary,
-        onTap: () => _openScreen(const NeighborhoodsScreen(), analyticsName: 'neighborhoods'),
-      ),
-      _QuickAction(
-        title: t('map', 'نەخشە'),
-        icon: Icons.map_rounded,
-        color: AppColors.green,
-        onTap: () => _openScreen(const MapScreen(), analyticsName: 'map'),
-      ),
-      _QuickAction(
-        title: t('gallery', 'گەلەری'),
-        icon: Icons.photo_library_rounded,
-        color: AppColors.orange,
-        onTap: () => _openScreen(const GalleryScreen(), analyticsName: 'gallery'),
-      ),
-      _QuickAction(
-        title: t('send_complaint', 'ناردنی سکاڵا'),
-        icon: Icons.campaign_rounded,
-        color: AppColors.toneIndigo,
-        onTap: () {
-          if (!mounted) return;
-          ComplaintInstructionDialog.show(context);
-        },
-      ),
-    ];
-
-    // ✅ هەر چوار دوگمە بەبێ سکڕۆڵ لە هەموو قەبارەیەکی شاشەدا جێدەبنەوە
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < actions.length; i++) ...[
-              if (i > 0) const SizedBox(width: 10),
-              Expanded(child: _QuickTile(action: actions[i], isDark: isDark)),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildNewsListSliver(
-      List<dynamic> allNews,
-      List<dynamic> list,
-      bool isLoading,
-      bool isDark,
-      String Function(String, String) t,
-      String lang,
-      ) {
+    List<dynamic> allNews,
+    List<dynamic> list,
+    bool isLoading,
+    bool isDark,
+    String Function(String, String) t,
+    String lang,
+  ) {
     if (allNews.isEmpty && isLoading) {
       return SliverToBoxAdapter(child: _NewsSkeleton(isDark: isDark));
     }
 
     if (list.isEmpty && !isLoading) {
       return SliverToBoxAdapter(
-        child: _EmptyNews(isDark: isDark, label: t('no_more_news', 'هیچ هەواڵێکی تر نییە')),
+        child: _EmptyNews(
+            isDark: isDark, label: t('no_more_news', 'هیچ هەواڵێکی تر نییە')),
       );
     }
 
@@ -382,7 +342,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
-            (context, index) {
+        (context, index) {
           if (index == list.length) {
             if (!hasMore) return const SizedBox.shrink();
             return Padding(
@@ -459,9 +419,13 @@ class _Fmt {
 
     final String out;
     if (n >= 1000000) {
-      out = lang == 'en' ? '${trim(n / 1000000)}M' : '${trim(n / 1000000)} ${lang == 'ar' ? 'مليون' : 'ملیۆن'}';
+      out = lang == 'en'
+          ? '${trim(n / 1000000)}M'
+          : '${trim(n / 1000000)} ${lang == 'ar' ? 'مليون' : 'ملیۆن'}';
     } else if (n >= 1000) {
-      out = lang == 'en' ? '${trim(n / 1000)}K' : '${trim(n / 1000)} ${lang == 'ar' ? 'ألف' : 'هەزار'}';
+      out = lang == 'en'
+          ? '${trim(n / 1000)}K'
+          : '${trim(n / 1000)} ${lang == 'ar' ? 'ألف' : 'هەزار'}';
     } else {
       out = '$n';
     }
@@ -470,7 +434,15 @@ class _Fmt {
 
   static const Map<String, List<String>> _ago = {
     //        now,                  min,      hour,     day,     month,    year,    suffix/prefix
-    'ku': ['چەند چرکەیەک پێش ئێستا', 'دەقیقە', 'سەعات', 'ڕۆژ', 'مانگ', 'ساڵ', 'لەمەوبەر'],
+    'ku': [
+      'چەند چرکەیەک پێش ئێستا',
+      'دەقیقە',
+      'سەعات',
+      'ڕۆژ',
+      'مانگ',
+      'ساڵ',
+      'لەمەوبەر'
+    ],
     'ar': ['منذ لحظات', 'دقيقة', 'ساعة', 'يوم', 'شهر', 'سنة', 'منذ'],
     'en': ['just now', 'min', 'h', 'd', 'mo', 'y', 'ago'],
   };
@@ -480,7 +452,8 @@ class _Fmt {
     if (dateTimeStr == null || dateTimeStr.isEmpty) return w[0];
     try {
       var diff = DateTime.now().difference(DateTime.parse(dateTimeStr));
-      if (diff.isNegative) diff = Duration.zero; // کاتی ئامێر لەوانەیە کەمێک پێش بێت
+      if (diff.isNegative)
+        diff = Duration.zero; // کاتی ئامێر لەوانەیە کەمێک پێش بێت
 
       String fmt(int n, String unit) {
         final v = digits('$n', lang);
@@ -496,7 +469,9 @@ class _Fmt {
       if (diff.inDays < 365) return fmt(diff.inDays ~/ 30, w[4]);
       return fmt(diff.inDays ~/ 365, w[5]);
     } catch (_) {
-      return dateTimeStr.length > 10 ? dateTimeStr.substring(0, 10) : dateTimeStr;
+      return dateTimeStr.length > 10
+          ? dateTimeStr.substring(0, 10)
+          : dateTimeStr;
     }
   }
 
@@ -518,15 +493,6 @@ class _Fmt {
 // ═══════════════════════════════════════════════════════════
 // 🧱 Widgets
 // ═══════════════════════════════════════════════════════════
-class _QuickAction {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickAction({required this.title, required this.icon, required this.color, required this.onTap});
-}
-
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String moreLabel;
@@ -555,11 +521,17 @@ class _SectionHeader extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color.lerp(color, Colors.white, 0.18)!, Color.lerp(color, Colors.black, 0.10)!],
+              colors: [
+                Color.lerp(color, Colors.white, 0.18)!,
+                Color.lerp(color, Colors.black, 0.10)!
+              ],
             ),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
-              BoxShadow(color: color.withValues(alpha: 0.30), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(
+                  color: color.withValues(alpha: 0.30),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4)),
             ],
           ),
           child: Icon(icon, size: 19, color: Colors.white),
@@ -594,8 +566,11 @@ class _SectionHeader extends StatelessWidget {
         ),
         if (onMoreTap != null && moreLabel.isNotEmpty)
           Material(
-            color: isDark ? color.withValues(alpha: 0.16) : color.withValues(alpha: 0.08),
-            shape: StadiumBorder(side: BorderSide(color: color.withValues(alpha: 0.22))),
+            color: isDark
+                ? color.withValues(alpha: 0.16)
+                : color.withValues(alpha: 0.08),
+            shape: StadiumBorder(
+                side: BorderSide(color: color.withValues(alpha: 0.22))),
             child: InkWell(
               customBorder: const StadiumBorder(),
               onTap: () {
@@ -607,13 +582,19 @@ class _SectionHeader extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(tr(moreLabel), style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: color)),
+                    Text(tr(moreLabel),
+                        style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: color)),
                     const SizedBox(width: 6),
                     Container(
                       width: 20,
                       height: 20,
-                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                      child: Icon(_forwardIcon(context, small: true), size: 10, color: Colors.white),
+                      decoration:
+                          BoxDecoration(color: color, shape: BoxShape.circle),
+                      child: Icon(_forwardIcon(context, small: true),
+                          size: 10, color: Colors.white),
                     ),
                   ],
                 ),
@@ -625,115 +606,13 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _QuickTile extends StatelessWidget {
-  final _QuickAction action;
-  final bool isDark;
-
-  const _QuickTile({required this.action, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final a = action;
-    return Semantics(
-      button: true,
-      label: a.title,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black.withValues(alpha: 0.25) : a.color.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Material(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: () {
-              HapticFeedback.lightImpact();
-              a.onTap();
-            },
-            excludeFromSemantics: true,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(6, 14, 6, 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.06) : a.color.withValues(alpha: 0.10),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color.lerp(a.color, Colors.white, 0.22)!,
-                          Color.lerp(a.color, Colors.black, 0.08)!,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: a.color.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Icon(a.icon, color: Colors.white, size: 23),
-                  ),
-                  const SizedBox(height: 10),
-                  _TileLabel(
-                    text: tr(a.title),
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// ناوی دوگمە: وشەیەکی درێژ (Neighborhoods) لە ناوەڕاستدا نابڕدرێت،
-/// بەڵکو کەمێک بچووک دەکرێتەوە؛ دەقی چەند وشەیی تا دوو دێڕ دەڕوات.
-class _TileLabel extends StatelessWidget {
-  final String text;
-  final Color color;
-
-  const _TileLabel({required this.text, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Text(
-        text,
-        maxLines: 1,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, height: 1.25, color: color),
-      ),
-    );
-  }
-}
-
 class _ViewAllButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
 
-  const _ViewAllButton({required this.label, required this.icon, required this.onTap});
+  const _ViewAllButton(
+      {required this.label, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -751,7 +630,10 @@ class _ViewAllButton extends StatelessWidget {
           ],
         ),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withValues(alpha: 0.28), blurRadius: 14, offset: const Offset(0, 5)),
+          BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.28),
+              blurRadius: 14,
+              offset: const Offset(0, 5)),
         ],
       ),
       child: Material(
@@ -766,14 +648,18 @@ class _ViewAllButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                const Icon(Icons.newspaper_rounded, color: Colors.white, size: 21),
+                const Icon(Icons.newspaper_rounded,
+                    color: Colors.white, size: 21),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     tr(label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.5),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14.5),
                   ),
                 ),
                 Container(
@@ -813,12 +699,15 @@ class _EmptyNews extends StatelessWidget {
                 color: isDark ? AppColors.darkCard : AppColors.backgroundGrey,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.article_outlined, size: 40, color: AppColors.textTertiary),
+              child: const Icon(Icons.article_outlined,
+                  size: 40, color: AppColors.textTertiary),
             ),
             const SizedBox(height: 12),
             Text(
               tr(label),
-              style: TextStyle(color: isDark ? Colors.white54 : AppColors.textSecondary, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: isDark ? Colors.white54 : AppColors.textSecondary,
+                  fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -852,145 +741,168 @@ class _NewsTile extends StatelessWidget {
 
     final store = news['dukan'];
     final storeName = store is Map ? (store['name']?.toString() ?? '') : '';
-    final storeLogo = store is Map ? (store['logo']?.toString() ?? store['image']?.toString() ?? '') : '';
+    final storeLogo = store is Map
+        ? (store['logo']?.toString() ?? store['image']?.toString() ?? '')
+        : '';
 
-    final placeholder = isDark ? AppColors.darkBorder : AppColors.backgroundGrey;
+    final placeholder =
+        isDark ? AppColors.darkBorder : AppColors.backgroundGrey;
     final subColor = isDark ? Colors.white54 : AppColors.textTertiary;
     final statColor = isDark ? Colors.white54 : AppColors.textSecondary;
 
-    Widget box({Widget? child}) => Container(width: 112, height: 100, color: placeholder, child: child);
+    Widget box({Widget? child}) =>
+        Container(width: 112, height: 100, color: placeholder, child: child);
 
     return Semantics(
       button: true,
       label: title,
       child: Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.3) : AppColors.primary.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: isDark ? AppColors.darkCard : AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFEEF2F8),
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : AppColors.primary.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: firstImg.isNotEmpty
-                          ? CachedNetworkImage(
-                        imageUrl: firstImg,
-                        width: 112,
-                        height: 100,
-                        fit: BoxFit.cover,
-                        memCacheWidth: 300,
-                        fadeInDuration: const Duration(milliseconds: 180),
-                        placeholder: (_, __) => box(),
-                        errorWidget: (_, __, ___) => box(child: const Icon(Icons.broken_image, color: Colors.grey)),
-                      )
-                          : box(child: const Icon(Icons.image, color: AppColors.textTertiary)),
-                    ),
-                  ],
+          ],
+        ),
+        child: Material(
+          color: isDark ? AppColors.darkCard : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : const Color(0xFFEEF2F8),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 100,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (storeName.isNotEmpty)
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: firstImg.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: firstImg,
+                                width: 112,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                memCacheWidth: 300,
+                                fadeInDuration:
+                                    const Duration(milliseconds: 180),
+                                placeholder: (_, __) => box(),
+                                errorWidget: (_, __, ___) => box(
+                                    child: const Icon(Icons.broken_image,
+                                        color: Colors.grey)),
+                              )
+                            : box(
+                                child: const Icon(Icons.image,
+                                    color: AppColors.textTertiary)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 100,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (storeName.isNotEmpty)
+                            Row(
+                              children: [
+                                _PublisherLogo(
+                                    logo: storeLogo, name: storeName, size: 24),
+                                const SizedBox(width: 7),
+                                Flexible(
+                                  child: Text(
+                                    tr(storeName),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : const Color(0xFF1565C0),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          Text(
+                            tr(title),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              color:
+                                  isDark ? Colors.white : AppColors.textPrimary,
+                              height: 1.45,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           Row(
                             children: [
-                              _PublisherLogo(logo: storeLogo, name: storeName, size: 24),
-                              const SizedBox(width: 7),
-                              Flexible(
+                              _Stat(
+                                icon: Icons.visibility_rounded,
+                                value: _Fmt.compact(views, lang),
+                                color: statColor,
+                              ),
+                              const SizedBox(width: 6),
+                              _Stat(
+                                icon: Icons.thumb_up_rounded,
+                                value: _Fmt.compact(likes, lang),
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
                                 child: Text(
-                                  tr(storeName),
+                                  tr(timeAgo),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white70 : const Color(0xFF1565C0),
-                                  ),
+                                      fontSize: 10.5,
+                                      color: subColor,
+                                      fontWeight: FontWeight.w700),
                                 ),
+                              ),
+                              Container(
+                                width: 26,
+                                height: 26,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white10
+                                      : AppColors.primarySoft,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(forwardIcon,
+                                    size: 12, color: AppColors.primary),
                               ),
                             ],
                           ),
-                        Text(
-                          tr(title),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                            color: isDark ? Colors.white : AppColors.textPrimary,
-                            height: 1.45,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Row(
-                          children: [
-                            _Stat(
-                              icon: Icons.visibility_rounded,
-                              value: _Fmt.compact(views, lang),
-                              color: statColor,
-                            ),
-                            const SizedBox(width: 6),
-                            _Stat(
-                              icon: Icons.thumb_up_rounded,
-                              value: _Fmt.compact(likes, lang),
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                tr(timeAgo),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 10.5, color: subColor, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                            Container(
-                              width: 26,
-                              height: 26,
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.white10 : AppColors.primarySoft,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(forwardIcon, size: 12, color: AppColors.primary),
-                            ),
-                          ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -1016,7 +928,9 @@ class _Stat extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(tr(value), style: TextStyle(fontSize: 10.5, color: color, fontWeight: FontWeight.w800)),
+          Text(tr(value),
+              style: TextStyle(
+                  fontSize: 10.5, color: color, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -1037,8 +951,8 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
     duration: const Duration(milliseconds: 1100),
   )..repeat(reverse: true);
 
-  late final Animation<double> _opacity =
-  Tween<double>(begin: 0.45, end: 1).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
+  late final Animation<double> _opacity = Tween<double>(begin: 0.45, end: 1)
+      .animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
 
   @override
   void dispose() {
@@ -1047,7 +961,8 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => FadeTransition(opacity: _opacity, child: widget.child);
+  Widget build(BuildContext context) =>
+      FadeTransition(opacity: _opacity, child: widget.child);
 }
 
 class _Bone extends StatelessWidget {
@@ -1078,7 +993,8 @@ class _CarouselSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
-      child: _Pulse(child: _Bone(width: double.infinity, height: 180, radius: 22)),
+      child:
+          _Pulse(child: _Bone(width: double.infinity, height: 180, radius: 22)),
     );
   }
 }
@@ -1095,7 +1011,7 @@ class _NewsSkeleton extends StatelessWidget {
         child: Column(
           children: List.generate(
             3,
-                (_) => Container(
+            (_) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -1125,6 +1041,7 @@ class _NewsSkeleton extends StatelessWidget {
     );
   }
 }
+
 class _NoNewsCard extends StatelessWidget {
   final bool isDark;
   final String title;
@@ -1154,7 +1071,8 @@ class _NoNewsCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.newspaper_rounded, size: 36, color: AppColors.textTertiary),
+          const Icon(Icons.newspaper_rounded,
+              size: 36, color: AppColors.textTertiary),
           const SizedBox(height: 10),
           Text(
             tr(title),
@@ -1171,13 +1089,16 @@ class _NoNewsCard extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : AppColors.textSecondary),
+            style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.white54 : AppColors.textSecondary),
           ),
           const SizedBox(height: 10),
           TextButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: Text(tr(retryLabel), style: const TextStyle(fontWeight: FontWeight.w900)),
+            label: Text(tr(retryLabel),
+                style: const TextStyle(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -1191,7 +1112,8 @@ class _PublisherLogo extends StatelessWidget {
   final String name;
   final double size;
 
-  const _PublisherLogo({required this.logo, required this.name, this.size = 24});
+  const _PublisherLogo(
+      {required this.logo, required this.name, this.size = 24});
 
   @override
   Widget build(BuildContext context) {
@@ -1200,10 +1122,14 @@ class _PublisherLogo extends StatelessWidget {
       color: AppColors.primarySoft,
       alignment: Alignment.center,
       child: t.isEmpty
-          ? Icon(Icons.storefront_rounded, color: AppColors.primary, size: size * 0.55)
+          ? Icon(Icons.storefront_rounded,
+              color: AppColors.primary, size: size * 0.55)
           : Text(
               t.characters.first,
-              style: TextStyle(color: AppColors.primary, fontSize: size * 0.45, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: size * 0.45,
+                  fontWeight: FontWeight.w900),
             ),
     );
     return Container(
@@ -1222,6 +1148,130 @@ class _PublisherLogo extends StatelessWidget {
                 memCacheWidth: 100,
                 errorWidget: (_, __, ___) => fallback,
               ),
+      ),
+    );
+  }
+}
+
+/// 📣 بانەری ناردنی سکاڵا — سەوزی گرادیێنت، بە پانی تەواو
+class _ComplaintBanner extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ComplaintBanner({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: title,
+      child: Material(
+        borderRadius: BorderRadius.circular(22),
+        clipBehavior: Clip.antiAlias,
+        elevation: 6,
+        shadowColor: const Color(0xFF0F9D7A).withValues(alpha: 0.45),
+        child: Ink(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0B8C6C), Color(0xFF16C79A)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+          ),
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onTap();
+            },
+            splashColor: Colors.white24,
+            child: Stack(
+              children: [
+                // بڵندگۆی گەورەی کاڵ لە پشتەوە
+                PositionedDirectional(
+                  end: -18,
+                  bottom: -22,
+                  child: Icon(
+                    Icons.campaign_rounded,
+                    size: 110,
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35)),
+                        ),
+                        child: const Icon(Icons.campaign_rounded,
+                            color: Colors.white, size: 28),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.88),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 6),
+                          ],
+                        ),
+                        child: Icon(
+                          AppLang.isRtl
+                              ? Icons.arrow_back_rounded
+                              : Icons.arrow_forward_rounded,
+                          color: const Color(0xFF0B8C6C),
+                          size: 19,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
