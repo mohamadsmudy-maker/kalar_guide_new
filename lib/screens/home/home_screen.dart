@@ -15,11 +15,8 @@ import 'package:kalar_guide_new/providers/news_providers.dart';
 import 'package:kalar_guide_new/services/analytics_service.dart';
 import 'package:kalar_guide_new/widgets/carousels/news_carousel.dart';
 import 'package:kalar_guide_new/screens/complaints/complaint_instruction_dialog.dart';
-import 'package:kalar_guide_new/screens/neighborhoods/neighborhoods_screen.dart';
-import 'package:kalar_guide_new/screens/map_screen.dart';
 import 'package:kalar_guide_new/screens/news/news_details.dart';
 import 'package:kalar_guide_new/screens/news/all_news_screen.dart';
-import 'package:kalar_guide_new/screens/emergency/emergency_main_screen.dart';
 import '../../l10n/tr.dart';
 
 const double _kBackToTopOffset = 600;
@@ -182,23 +179,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
 
-            // 📂 خزمەتگوزارییەکانی تر
+            // 📣 ناردنی سکاڵا — دوگمەی سەوزی بەرچاو
             SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-                    child: _SectionHeader(
-                      title: t('other_services', 'خزمەتگوزارییەکانی تر'),
-                      moreLabel: '',
-                      icon: Icons.apps_rounded,
-                      color: AppColors.secondary,
-                      isDark: isDark,
-                    ),
-                  ),
-                  _buildQuickActions(isDark, t),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+                child: _ComplaintBanner(
+                  title: t('send_complaint', 'ناردنی سکاڵا'),
+                  subtitle: t('complaint_banner_sub',
+                      'کێشە و تێبینییەکانت ڕاستەوخۆ بۆ شارەوانی بنێرە'),
+                  onTap: () {
+                    if (!mounted) return;
+                    ComplaintInstructionDialog.show(context);
+                  },
+                ),
               ),
             ),
 
@@ -323,56 +316,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         );
       },
-    );
-  }
-
-  Widget _buildQuickActions(bool isDark, String Function(String, String) t) {
-    final actions = <_QuickAction>[
-      _QuickAction(
-        title: t('neighborhoods', 'گەڕەکان'),
-        icon: Icons.location_city_rounded,
-        color: AppColors.primary,
-        onTap: () => _openScreen(const NeighborhoodsScreen(),
-            analyticsName: 'neighborhoods'),
-      ),
-      _QuickAction(
-        title: t('map', 'نەخشە'),
-        icon: Icons.map_rounded,
-        color: AppColors.green,
-        onTap: () => _openScreen(const MapScreen(), analyticsName: 'map'),
-      ),
-      _QuickAction(
-        title: t('emergency', 'فریاکەوتن'),
-        icon: Icons.emergency_rounded,
-        color: AppColors.red,
-        onTap: () =>
-            _openScreen(const EmergencyScreen(), analyticsName: 'emergency'),
-      ),
-      _QuickAction(
-        title: t('send_complaint', 'ناردنی سکاڵا'),
-        icon: Icons.campaign_rounded,
-        color: AppColors.toneIndigo,
-        onTap: () {
-          if (!mounted) return;
-          ComplaintInstructionDialog.show(context);
-        },
-      ),
-    ];
-
-    // ✅ هەر چوار دوگمە بەبێ سکڕۆڵ لە هەموو قەبارەیەکی شاشەدا جێدەبنەوە
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < actions.length; i++) ...[
-              if (i > 0) const SizedBox(width: 10),
-              Expanded(child: _QuickTile(action: actions[i], isDark: isDark)),
-            ],
-          ],
-        ),
-      ),
     );
   }
 
@@ -550,19 +493,6 @@ class _Fmt {
 // ═══════════════════════════════════════════════════════════
 // 🧱 Widgets
 // ═══════════════════════════════════════════════════════════
-class _QuickAction {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickAction(
-      {required this.title,
-      required this.icon,
-      required this.color,
-      required this.onTap});
-}
-
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String moreLabel;
@@ -672,117 +602,6 @@ class _SectionHeader extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _QuickTile extends StatelessWidget {
-  final _QuickAction action;
-  final bool isDark;
-
-  const _QuickTile({required this.action, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final a = action;
-    return Semantics(
-      button: true,
-      label: a.title,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.25)
-                  : a.color.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Material(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: () {
-              HapticFeedback.lightImpact();
-              a.onTap();
-            },
-            excludeFromSemantics: true,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(6, 14, 6, 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.06)
-                      : a.color.withValues(alpha: 0.10),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color.lerp(a.color, Colors.white, 0.22)!,
-                          Color.lerp(a.color, Colors.black, 0.08)!,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: a.color.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Icon(a.icon, color: Colors.white, size: 23),
-                  ),
-                  const SizedBox(height: 10),
-                  _TileLabel(
-                    text: tr(a.title),
-                    color: isDark ? Colors.white : AppColors.textPrimary,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// ناوی دوگمە: وشەیەکی درێژ (Neighborhoods) لە ناوەڕاستدا نابڕدرێت،
-/// بەڵکو کەمێک بچووک دەکرێتەوە؛ دەقی چەند وشەیی تا دوو دێڕ دەڕوات.
-class _TileLabel extends StatelessWidget {
-  final String text;
-  final Color color;
-
-  const _TileLabel({required this.text, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Text(
-        text,
-        maxLines: 1,
-        style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            height: 1.25,
-            color: color),
-      ),
     );
   }
 }
@@ -1329,6 +1148,130 @@ class _PublisherLogo extends StatelessWidget {
                 memCacheWidth: 100,
                 errorWidget: (_, __, ___) => fallback,
               ),
+      ),
+    );
+  }
+}
+
+/// 📣 بانەری ناردنی سکاڵا — سەوزی گرادیێنت، بە پانی تەواو
+class _ComplaintBanner extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ComplaintBanner({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: title,
+      child: Material(
+        borderRadius: BorderRadius.circular(22),
+        clipBehavior: Clip.antiAlias,
+        elevation: 6,
+        shadowColor: const Color(0xFF0F9D7A).withValues(alpha: 0.45),
+        child: Ink(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0B8C6C), Color(0xFF16C79A)],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+          ),
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onTap();
+            },
+            splashColor: Colors.white24,
+            child: Stack(
+              children: [
+                // بڵندگۆی گەورەی کاڵ لە پشتەوە
+                PositionedDirectional(
+                  end: -18,
+                  bottom: -22,
+                  child: Icon(
+                    Icons.campaign_rounded,
+                    size: 110,
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35)),
+                        ),
+                        child: const Icon(Icons.campaign_rounded,
+                            color: Colors.white, size: 28),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.88),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 6),
+                          ],
+                        ),
+                        child: Icon(
+                          AppLang.isRtl
+                              ? Icons.arrow_back_rounded
+                              : Icons.arrow_forward_rounded,
+                          color: const Color(0xFF0B8C6C),
+                          size: 19,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

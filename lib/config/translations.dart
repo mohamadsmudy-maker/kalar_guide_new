@@ -232,6 +232,7 @@ class AppTranslations {
     'map': 'نەخشە',
     'gallery': 'گەلەری',
     'send_complaint': 'ناردنی سکاڵا',
+    'complaint_banner_sub': 'کێشە و تێبینییەکانت ڕاستەوخۆ بۆ شارەوانی بنێرە',
     'exit_confirm': 'بۆ دەرچوون دووبارە دوگمەی گەڕانەوە دابگرە',
 
     // ─── دراوەر ───
@@ -417,6 +418,7 @@ class AppTranslations {
     'map': 'الخريطة',
     'gallery': 'المعرض',
     'send_complaint': 'إرسال شكوى',
+    'complaint_banner_sub': 'أرسل مشاكلك وملاحظاتك مباشرة إلى البلدية',
     'exit_confirm': 'اضغط رجوع مرة أخرى للخروج',
 
     // ─── القائمة الجانبية ───
@@ -603,6 +605,7 @@ class AppTranslations {
     'map': 'Map',
     'gallery': 'Gallery',
     'send_complaint': 'Send Complaint',
+    'complaint_banner_sub': 'Send your issues and feedback straight to the municipality',
     'exit_confirm': 'Press back again to exit',
 
     // ─── Drawer ───
