@@ -112,3 +112,6 @@ project-tree.txt
 
 # Supabase CLI local state
 supabase/.temp/
+
+# Obfuscation symbol files (build_release.ps1) — keep locally, not in git
+symbols/
