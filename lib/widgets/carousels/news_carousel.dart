@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -65,8 +66,9 @@ class _NewsCarouselState extends State<NewsCarousel>
     super.didUpdateWidget(oldWidget);
 
     // Compare the actual items, not just the length
-    String signature(List<Map<String, dynamic>> l) =>
-        l.map((n) => n['id']?.toString() ?? n['title']?.toString() ?? '').join(',');
+    String signature(List<Map<String, dynamic>> l) => l
+        .map((n) => n['id']?.toString() ?? n['title']?.toString() ?? '')
+        .join(',');
 
     if (signature(oldWidget.newsList) != signature(widget.newsList)) {
       // The list may have shrunk below the page we were on
@@ -103,9 +105,9 @@ class _NewsCarouselState extends State<NewsCarousel>
   // ═══════════════════════════════════════════════════════════
   bool get _canAutoScroll =>
       widget.newsList.length > 1 &&
-          !_userDragging &&
-          _inForeground &&
-          !_reduceMotion;
+      !_userDragging &&
+      _inForeground &&
+      !_reduceMotion;
 
   void _scheduleNext() {
     _autoScrollTimer?.cancel();
@@ -191,17 +193,19 @@ class _NewsCarouselState extends State<NewsCarousel>
   // ═══════════════════════════════════════════════════════════
   // 🧰 Helpers
   // ═══════════════════════════════════════════════════════════
-  String _ku(Object n) => n.toString().replaceAllMapped(
-    RegExp(r'\d'),
-        (m) => '٠١٢٣٤٥٦٧٨٩'[int.parse(m[0]!)],
-  );
+  String _ku(Object n) => AppLang.code == 'en'
+      ? n.toString()
+      : n.toString().replaceAllMapped(
+            RegExp(r'\d'),
+            (m) => '٠١٢٣٤٥٦٧٨٩'[int.parse(m[0]!)],
+          );
 
   /// 1234 → ١٫٢k
   String _compact(dynamic value) {
     final n = value is num ? value.toInt() : (int.tryParse('$value') ?? 0);
     if (n < 1000) return _ku(n);
     final k = (n / 1000).toStringAsFixed(n >= 10000 ? 0 : 1);
-    return '${_ku(k.replaceAll('.', '٫'))}k';
+    return AppLang.code == 'en' ? '${k}k' : '${_ku(k.replaceAll('.', '٫'))}k';
   }
 
   String _extractImage(Map<String, dynamic> news) {
@@ -265,7 +269,7 @@ class _NewsCarouselState extends State<NewsCarousel>
     return Column(
       children: [
         SizedBox(
-          height: 240,
+          height: 250,
           child: NotificationListener<ScrollNotification>(
             onNotification: _onScroll,
             child: PageView.builder(
@@ -286,10 +290,9 @@ class _NewsCarouselState extends State<NewsCarousel>
                     var scale = 1.0;
                     if (_controller.hasClients &&
                         _controller.position.haveDimensions) {
-                      final page =
-                          _controller.page ?? _currentIndex.toDouble();
-                      scale = (1 - ((page - index).abs() * 0.15))
-                          .clamp(0.85, 1.0);
+                      final page = _controller.page ?? _currentIndex.toDouble();
+                      scale =
+                          (1 - ((page - index).abs() * 0.15)).clamp(0.85, 1.0);
                     }
                     return Center(
                       child: Transform.scale(
@@ -371,7 +374,7 @@ class _NewsCarouselState extends State<NewsCarousel>
                 else
                   _buildPlaceholder(),
 
-                // Soft gradient so text stays readable
+                // Gradient: light at the top for the chip, solid under the panel
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
@@ -379,102 +382,83 @@ class _NewsCarouselState extends State<NewsCarousel>
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.4),
+                          Colors.black.withValues(alpha: 0.28),
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.75),
+                          Colors.black.withValues(alpha: 0.55),
                         ],
-                        stops: const [0.0, 0.5, 1.0],
+                        stops: const [0.0, 0.38, 1.0],
                       ),
                     ),
                   ),
                 ),
 
-                // Top row: store badge + type chip
-                Positioned(
-                  top: 14,
-                  right: 14,
-                  left: 14,
-                  child: Row(
-                    children: [
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                // Type chip — always at the reading start corner
+                PositionedDirectional(
+                  top: 12,
+                  start: 12,
+                  child: _buildTypeChip(newsType),
+                ),
+
+                // Frosted info panel: title, then publisher + time + stats
+                PositionedDirectional(
+                  start: 10,
+                  end: 10,
+                  bottom: 10,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                         decoration: BoxDecoration(
-                          color: _getTypeColor(newsType),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _getTypeColor(newsType)
-                                  .withValues(alpha: 0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          color: Colors.black.withValues(alpha: 0.42),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.14)),
                         ),
-                        child: Row(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Icon(_getTypeIcon(newsType),
-                                color: Colors.white, size: 12),
-                            const SizedBox(width: 4),
                             Text(
-                              tr(newsType),
+                              tr(title),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.start,
                               style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
                                 color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                                height: 1.35,
                                 fontFamily: 'Rabar',
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Stats first, title above them → they can never overlap
-                Positioned(
-                  bottom: 14,
-                  right: 16,
-                  left: 16,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (store != null) _buildStoreBadge(store),
-                      Text(
-                        tr(title),
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          height: 1.3,
-                          fontFamily: 'Rabar',
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0, 1),
-                              blurRadius: 6,
-                              color: Colors.black87,
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 1,
+                              color: Colors.white.withValues(alpha: 0.12),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPublisher(
+                                    store,
+                                    _timeAgo(news['created_at']?.toString()),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                _buildStat(
+                                    Icons.visibility_rounded, _compact(views)),
+                                const SizedBox(width: 10),
+                                _buildStat(
+                                    Icons.thumb_up_rounded, _compact(likes)),
+                              ],
                             ),
                           ],
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.right,
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _buildStatChip(
-                              Icons.visibility_rounded, _compact(views)),
-                          const SizedBox(width: 6),
-                          _buildStatChip(
-                              Icons.thumb_up_rounded, _compact(likes)),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -485,64 +469,160 @@ class _NewsCarouselState extends State<NewsCarousel>
     );
   }
 
-  Widget _buildStoreBadge(Map<String, dynamic> store) {
-    final name = store['name']?.toString() ?? '';
-    final logo =
-        store['logo']?.toString() ?? store['image']?.toString() ?? '';
-    if (name.isEmpty && logo.isEmpty) return const SizedBox.shrink();
-    return _buildBadge(name: name, logo: logo);
-  }
-
-  /// لایەنی بڵاوکەرەوە: لۆگۆی ڕوون + ناوی تەواو، ڕێک لە سەرووی ناونیشانی هەواڵ
-  Widget _buildBadge({required String name, required String logo}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipOval(
-              child: logo.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: logo,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 140,
-                      errorWidget: (_, __, ___) => _logoFallback(name),
-                    )
-                  : _logoFallback(name),
-            ),
+  Widget _buildTypeChip(String newsType) {
+    final color = _getTypeColor(newsType);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.45),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(width: 9),
-          Flexible(
-            child: Text(
-              tr(name),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'Rabar',
-                shadows: [Shadow(offset: Offset(0, 1), blurRadius: 6, color: Colors.black87)],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_getTypeIcon(newsType), color: Colors.white, size: 13),
+          const SizedBox(width: 4),
+          Text(
+            tr(newsType),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Rabar',
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// لۆگۆ + ناوی بڵاوکەرەوە + کات — ئەگەر بڵاوکەرەوە نەبوو تەنها کات
+  Widget _buildPublisher(Map<String, dynamic>? store, String ago) {
+    final name = store?['name']?.toString().trim() ?? '';
+    final logo = (store?['logo'] ?? store?['image'])?.toString().trim() ?? '';
+    final timeText = Text(
+      ago,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: Colors.white.withValues(alpha: 0.72),
+        fontSize: 10.5,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+    if (name.isEmpty && logo.isEmpty) {
+      return Row(children: [
+        Icon(Icons.schedule_rounded,
+            size: 13, color: Colors.white.withValues(alpha: 0.72)),
+        const SizedBox(width: 4),
+        Flexible(child: timeText),
+      ]);
+    }
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          padding: const EdgeInsets.all(1.5),
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+          ),
+          child: ClipOval(
+            child: logo.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: logo,
+                    fit: BoxFit.cover,
+                    memCacheWidth: 120,
+                    errorWidget: (_, __, ___) => _logoFallback(name),
+                  )
+                : _logoFallback(name),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      tr(name),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Rabar',
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              timeText,
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStat(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 13),
+        const SizedBox(width: 3),
+        Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+
+  static const Map<String, List<String>> _agoWords = {
+    'ku': ['ئێستا', 'خولەک', 'کاتژمێر', 'ڕۆژ', 'مانگ', 'ساڵ', 'لەمەوبەر'],
+    'ar': ['الآن', 'دقيقة', 'ساعة', 'يوم', 'شهر', 'سنة', 'منذ'],
+    'en': ['just now', 'min', 'h', 'd', 'mo', 'y', 'ago'],
+  };
+
+  String _timeAgo(String? iso) {
+    final lang = AppLang.code;
+    final w = _agoWords[lang] ?? _agoWords['ku']!;
+    final t = iso == null ? null : DateTime.tryParse(iso);
+    if (t == null) return '';
+    var d = DateTime.now().difference(t);
+    if (d.isNegative) d = Duration.zero;
+    String fmt(int n, String unit) {
+      final v = _ku(n);
+      if (lang == 'ar') return '${w[6]} $v $unit';
+      if (lang == 'en') return '$v$unit ${w[6]}';
+      return '$v $unit ${w[6]}';
+    }
+
+    if (d.inMinutes < 1) return w[0];
+    if (d.inMinutes < 60) return fmt(d.inMinutes, w[1]);
+    if (d.inHours < 24) return fmt(d.inHours, w[2]);
+    if (d.inDays < 30) return fmt(d.inDays, w[3]);
+    if (d.inDays < 365) return fmt(d.inDays ~/ 30, w[4]);
+    return fmt(d.inDays ~/ 365, w[5]);
   }
 
   /// کاتێک لۆگۆ نییە: یەکەم پیتی ناو لەسەر ڕەنگی سەرەکی
@@ -552,7 +632,8 @@ class _NewsCarouselState extends State<NewsCarousel>
       color: AppColors.primarySoft,
       alignment: Alignment.center,
       child: t.isEmpty
-          ? const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 18)
+          ? const Icon(Icons.storefront_rounded,
+              color: AppColors.primary, size: 18)
           : Text(
               t.characters.first,
               style: const TextStyle(
@@ -577,34 +658,8 @@ class _NewsCarouselState extends State<NewsCarousel>
         ),
       ),
       child: const Center(
-        child: Icon(Icons.newspaper_rounded,
-            color: AppColors.primary, size: 36),
-      ),
-    );
-  }
-
-  Widget _buildStatChip(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 12),
-          const SizedBox(width: 4),
-          Text(
-            tr(text),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+        child:
+            Icon(Icons.newspaper_rounded, color: AppColors.primary, size: 36),
       ),
     );
   }
