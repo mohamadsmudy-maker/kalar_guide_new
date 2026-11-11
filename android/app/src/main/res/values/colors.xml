@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 🎨 ڕەنگی Icon ی ئەپەکە (بۆ Splash) -->
-    <color name="ic_launcher_background">#0A5FA8</color>
+    <color name="ic_launcher_background">#0A1E46</color>
 
     <!-- 🔔 ڕەنگی Notification (بۆ FCM) -->
     <color name="notification_color">#1E88E5</color>
