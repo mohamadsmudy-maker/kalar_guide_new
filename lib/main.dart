@@ -951,54 +951,15 @@ class _AppDrawer extends StatelessWidget {
                               : null,
                         ),
                         const SizedBox(height: 6),
-                        _section(_t('drawer_sec_emergency', 'فریاکەوتن')),
-                        _item(
-                          context,
-                          icon: Icons.emergency_rounded,
-                          color: AppColors.red,
-                          title: _t('drawer_emergency', 'فریاکەوتن 🚑'),
-                          onTap: () =>
-                              _go(context, screen: const EmergencyScreen()),
-                        ),
+                        // ئەوانەی لە ناڤیگەیشن/خزمەتگوزارییەکانن لێرە دووبارە ناکرێنەوە
+                        _section(_t('drawer_sec_activity', 'چالاکییەکان')),
                         _item(
                           context,
                           icon: Icons.event_rounded,
                           color: AppColors.secondary,
-                          title: _t('drawer_events', 'ڕووداوەکان 📅'),
+                          title: _t('drawer_events', 'ڕووداو و بۆنەکان'),
                           onTap: () =>
                               _go(context, screen: const EventsScreen()),
-                        ),
-                        const SizedBox(height: 6),
-                        _section(_t('drawer_sec_guide', 'ڕێبەر')),
-                        _item(
-                          context,
-                          icon: Icons.map_rounded,
-                          color: AppColors.green,
-                          title: _t('drawer_map', 'نەخشەی گەڕەکان 🗺️'),
-                          onTap: () => _go(context, route: '/map'),
-                        ),
-                        _item(
-                          context,
-                          icon: Icons.person_rounded,
-                          color: AppColors.purple,
-                          title: _t('drawer_profile', 'پرۆفایلم 👤'),
-                          onTap: () =>
-                              _go(context, screen: const ProfileScreen()),
-                        ),
-                        _item(
-                          context,
-                          icon: Icons.video_library_rounded,
-                          color: const Color(0xFF4F5BD5),
-                          title: _t('drawer_videos', 'ڤیدیۆ و ڕێنماییەکان 🎬'),
-                          onTap: () =>
-                              _go(context, screen: const UserVideosScreen()),
-                        ),
-                        _item(
-                          context,
-                          icon: Icons.photo_library_rounded,
-                          color: AppColors.orange,
-                          title: _t('drawer_gallery', 'گەلەری کەلار 📸'),
-                          onTap: () => _go(context, route: '/gallery'),
                         ),
                         if (isVendor) ...[
                           const SizedBox(height: 8),
