@@ -1851,4 +1851,6 @@ const Map<String, String> stringsEn = {
   'پێشنیاری شوێن': 'Suggest a place',
   'ژمارە گرنگەکانی کەلار': 'Kalar emergency numbers',
   'گەڕەک و شوێنەکان لەسەر نەخشە': 'Neighborhoods & places on the map',
+  'چالاکییەکانی شارەکەمان': 'Our city\'s activities',
+  'ڕووداو و بۆنەکان': 'Events & occasions',
 };

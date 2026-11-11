@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
 import '../complaints/complaint_instruction_dialog.dart';
+import '../departments/departments_screen.dart';
 import '../emergency/emergency_main_screen.dart';
+import '../events/events_screen.dart';
 import '../gallery/gallery_screen.dart';
 import '../map_screen.dart';
 import '../neighborhoods/neighborhoods_screen.dart';
@@ -43,6 +45,20 @@ class ServicesScreen extends StatelessWidget {
         colors: const [Color(0xFF1E88E5), Color(0xFF42A5F5)],
         onTap: (c) => _open(c, const NeighborhoodsScreen()),
       ),
+      _Service(
+        title: tr('بەشەکان'),
+        subtitle: tr('خزمەتگوزارییەکانی شار'),
+        icon: Icons.account_balance_rounded,
+        colors: const [Color(0xFF00897B), Color(0xFF26B5A6)],
+        onTap: (c) => _open(c, const DepartmentsScreen()),
+      ),
+      _Service(
+        title: tr('ڕووداو و بۆنەکان'),
+        subtitle: tr('چالاکییەکانی شارەکەمان'),
+        icon: Icons.event_rounded,
+        colors: const [Color(0xFF8E24AA), Color(0xFFB85FD0)],
+        onTap: (c) => _open(c, const EventsScreen()),
+      ),
     ];
     final content = [
       _Service(
@@ -79,7 +95,7 @@ class ServicesScreen extends StatelessWidget {
         title: tr('پێشنیاری شوێن'),
         subtitle: tr('شوێنێکی نوێمان پێ بناسێنە'),
         icon: Icons.add_location_alt_rounded,
-        colors: const [Color(0xFF00897B), Color(0xFF26B5A6)],
+        colors: const [Color(0xFF546E7A), Color(0xFF78909C)],
         onTap: (c) => _open(c, const SuggestPlaceScreen()),
       ),
     ];

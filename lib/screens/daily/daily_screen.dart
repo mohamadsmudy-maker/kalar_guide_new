@@ -17,10 +17,7 @@ import '../../config/settings_provider.dart';
 import '../../services/weather_service.dart';
 
 import '../currency/currency_rates_screen.dart';
-import '../departments/departments_screen.dart';
-import '../emergency/emergency_main_screen.dart';
 import '../fuel/fuel_types_screen.dart';
-import '../videos/user_videos.dart';
 import 'prayer_times_screen.dart';
 import 'qibla_finder_screen.dart';
 import '../weather/weather_screen.dart';
@@ -59,8 +56,16 @@ class _DailyScreenState extends State<DailyScreen>
       'ar': 'تعذر تحديث بيانات الطقس. حاول مرة أخرى.',
       'en': 'Could not refresh weather data. Please try again.',
     },
-    'hub': {'ku': 'ناوەندی ڕۆژانەت', 'ar': 'مركزك اليومي', 'en': 'YOUR DAILY HUB'},
-    'hero': {'ku': 'ڕۆژەکەت ئاسانتر بکە.', 'ar': 'اجعل يومك أسهل.', 'en': 'Make your day easier.'},
+    'hub': {
+      'ku': 'ناوەندی ڕۆژانەت',
+      'ar': 'مركزك اليومي',
+      'en': 'YOUR DAILY HUB'
+    },
+    'hero': {
+      'ku': 'ڕۆژەکەت ئاسانتر بکە.',
+      'ar': 'اجعل يومك أسهل.',
+      'en': 'Make your day easier.'
+    },
     'hero_sub': {
       'ku': 'هەموو ئەو شتانەی پێویستتە لە یەک شوێندا.',
       'ar': 'كل ما تحتاجه في مكان واحد.',
@@ -74,21 +79,53 @@ class _DailyScreenState extends State<DailyScreen>
     },
     'live': {'ku': 'زیندوو', 'ar': 'مباشر', 'en': 'Live'},
     'emergency': {'ku': 'فریاکەوتن', 'ar': 'الطوارئ', 'en': 'Emergency'},
-    'emergency_sub': {'ku': 'ژمارەکانی فریاکەوتن', 'ar': 'أرقام الطوارئ', 'en': 'Emergency numbers'},
+    'emergency_sub': {
+      'ku': 'ژمارەکانی فریاکەوتن',
+      'ar': 'أرقام الطوارئ',
+      'en': 'Emergency numbers'
+    },
     'prayer': {'ku': 'نوێژەکان', 'ar': 'الصلاة', 'en': 'Prayer'},
-    'prayer_sub': {'ku': 'کاتەکانی بانگ', 'ar': 'أوقات الأذان', 'en': 'Prayer times'},
+    'prayer_sub': {
+      'ku': 'کاتەکانی بانگ',
+      'ar': 'أوقات الأذان',
+      'en': 'Prayer times'
+    },
     'currency': {'ku': 'دراوەکان', 'ar': 'العملات', 'en': 'Currency'},
-    'currency_sub': {'ku': 'نرخی دۆلار و دینار', 'ar': 'سعر الدولار والدينار', 'en': 'USD & IQD rates'},
+    'currency_sub': {
+      'ku': 'نرخی دۆلار و دینار',
+      'ar': 'سعر الدولار والدينار',
+      'en': 'USD & IQD rates'
+    },
     'qibla': {'ku': 'قیبلە', 'ar': 'القبلة', 'en': 'Qibla'},
-    'qibla_sub': {'ku': 'ئاراستەی قیبلە', 'ar': 'اتجاه القبلة', 'en': 'Qibla direction'},
+    'qibla_sub': {
+      'ku': 'ئاراستەی قیبلە',
+      'ar': 'اتجاه القبلة',
+      'en': 'Qibla direction'
+    },
     'fuel': {'ku': 'سووتەمەنی', 'ar': 'الوقود', 'en': 'Fuel'},
-    'fuel_sub': {'ku': 'نرخی بەنزین', 'ar': 'أسعار البنزين', 'en': 'Fuel prices'},
+    'fuel_sub': {
+      'ku': 'نرخی بەنزین',
+      'ar': 'أسعار البنزين',
+      'en': 'Fuel prices'
+    },
     'weather': {'ku': 'کەشوهەوا', 'ar': 'الطقس', 'en': 'Weather'},
-    'weather_sub': {'ku': 'پلەی گەرمی', 'ar': 'درجة الحرارة', 'en': 'Temperature'},
+    'weather_sub': {
+      'ku': 'پلەی گەرمی',
+      'ar': 'درجة الحرارة',
+      'en': 'Temperature'
+    },
     'departments': {'ku': 'بەشەکان', 'ar': 'الدوائر', 'en': 'Departments'},
-    'departments_sub': {'ku': 'خزمەتگوزارییەکانی شار', 'ar': 'خدمات المدينة', 'en': 'City services'},
+    'departments_sub': {
+      'ku': 'خزمەتگوزارییەکانی شار',
+      'ar': 'خدمات المدينة',
+      'en': 'City services'
+    },
     'videos': {'ku': 'ڤیدیۆکان', 'ar': 'الفيديوهات', 'en': 'Videos'},
-    'videos_sub': {'ku': 'ڕێنماییەکان و گەشتەکان', 'ar': 'إرشادات وجولات', 'en': 'Guides & tours'},
+    'videos_sub': {
+      'ku': 'ڕێنماییەکان و گەشتەکان',
+      'ar': 'إرشادات وجولات',
+      'en': 'Guides & tours'
+    },
     'footer': {
       'ku': 'دروستکراوە بۆ جوانترکردنی ڕۆژەکەت',
       'ar': 'صُنع ليجعل يومك أجمل',
@@ -107,7 +144,9 @@ class _DailyScreenState extends State<DailyScreen>
       final now = DateTime.now();
       final prev = _now.value;
       // تەنها کاتێک خولەک دەگۆڕێت → ڕیبیلدی کەمتر
-      if (now.minute != prev.minute || now.hour != prev.hour || now.day != prev.day) {
+      if (now.minute != prev.minute ||
+          now.hour != prev.hour ||
+          now.day != prev.day) {
         _now.value = now;
       }
     });
@@ -160,7 +199,8 @@ class _DailyScreenState extends State<DailyScreen>
               content: Text(_t('refresh_error')),
               behavior: SnackBarBehavior.floating,
               margin: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
             ),
           );
       }
@@ -182,12 +222,26 @@ class _DailyScreenState extends State<DailyScreen>
 
   String _dateLabel(DateTime date) {
     const kuWeekdays = [
-      'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە',
-      'هەینی', 'شەممە', 'یەکشەممە',
+      'دووشەممە',
+      'سێشەممە',
+      'چوارشەممە',
+      'پێنجشەممە',
+      'هەینی',
+      'شەممە',
+      'یەکشەممە',
     ];
     const kuMonths = [
-      'کانوونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران',
-      'تەممووز', 'ئاب', 'ئەیلوول', 'تشرینی یەکەم', 'تشرینی دووەم',
+      'کانوونی دووەم',
+      'شوبات',
+      'ئازار',
+      'نیسان',
+      'ئایار',
+      'حوزەیران',
+      'تەممووز',
+      'ئاب',
+      'ئەیلوول',
+      'تشرینی یەکەم',
+      'تشرینی دووەم',
       'کانوونی یەکەم',
     ];
 
@@ -195,25 +249,53 @@ class _DailyScreenState extends State<DailyScreen>
     final month = date.month - 1;
 
     const arWeekdays = [
-      'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد',
+      'الإثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+      'السبت',
+      'الأحد',
     ];
     const arMonths = [
-      'كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران',
-      'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول',
+      'كانون الثاني',
+      'شباط',
+      'آذار',
+      'نيسان',
+      'أيار',
+      'حزيران',
+      'تموز',
+      'آب',
+      'أيلول',
+      'تشرين الأول',
+      'تشرين الثاني',
+      'كانون الأول',
     ];
     const enWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const enMonths = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
 
     if (_isEn) {
       return '${enWeekdays[weekday]}, ${date.day} ${enMonths[month]} ${date.year}';
     }
     if (_isAr) {
-      return _digits('${arWeekdays[weekday]}، ${date.day} ${arMonths[month]} ${date.year}');
+      return _digits(
+          '${arWeekdays[weekday]}، ${date.day} ${arMonths[month]} ${date.year}');
     }
-    return _digits('${tr(kuWeekdays[weekday])}، ${date.day}ی ${tr(kuMonths[month])} ${date.year}');
+    return _digits(
+        '${tr(kuWeekdays[weekday])}، ${date.day}ی ${tr(kuMonths[month])} ${date.year}');
   }
 
   String _timeLabel(DateTime date) {
@@ -232,20 +314,14 @@ class _DailyScreenState extends State<DailyScreen>
   Widget build(BuildContext context) {
     super.build(context);
 
-    _lang = context.select<SettingsProvider, String>((settings) => settings.languageId);
+    _lang = context
+        .select<SettingsProvider, String>((settings) => settings.languageId);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final background =
+        isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
     final services = <_ServiceData>[
-      _ServiceData(
-        title: _t('emergency'),
-        subtitle: _t('emergency_sub'),
-        icon: Icons.emergency_rounded,
-        color: AppColors.toneRed,
-        tag: 'SOS',
-        onTap: () => _open(const EmergencyScreen()),
-      ),
       _ServiceData(
         title: _t('prayer'),
         subtitle: _t('prayer_sub'),
@@ -326,7 +402,11 @@ class _DailyScreenState extends State<DailyScreen>
                 sliver: SliverLayoutBuilder(
                   builder: (context, constraints) {
                     final width = constraints.crossAxisExtent;
-                    final columns = width >= 900 ? 4 : width >= 620 ? 3 : 2;
+                    final columns = width >= 900
+                        ? 4
+                        : width >= 620
+                            ? 3
+                            : 2;
                     // بەرزی کارت لەگەڵ قەبارەی فۆنت گەورە دەبێت
                     final textScale = MediaQuery.textScalerOf(context).scale(1);
                     final extent = 150 + 48 * (textScale - 1).clamp(0.0, 1.0);
@@ -339,7 +419,7 @@ class _DailyScreenState extends State<DailyScreen>
                         mainAxisExtent: extent,
                       ),
                       delegate: SliverChildBuilderDelegate(
-                            (context, index) {
+                        (context, index) {
                           final service = services[index];
                           return _Reveal(
                             index: index + 2,
@@ -357,43 +437,15 @@ class _DailyScreenState extends State<DailyScreen>
                   },
                 ),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _Reveal(
-                    index: 8,
-                    child: _PromoCard(
-                      title: _t('departments'),
-                      subtitle: _t('departments_sub'),
-                      icon: Icons.account_balance_rounded,
-                      colors: const [Color(0xFF0F9D7A), Color(0xFF0B7A60)],
-                      onTap: () => _open(const DepartmentsScreen()),
-                    ),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _Reveal(
-                    index: 9,
-                    child: _PromoCard(
-                      title: _t('videos'),
-                      subtitle: _t('videos_sub'),
-                      icon: Icons.play_circle_fill_rounded,
-                      colors: const [Color(0xFF4F5BD5), Color(0xFF3B47B8)],
-                      onTap: () => _open(const UserVideosScreen()),
-                    ),
-                  ),
-                ),
-              ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
                   child: _buildFooter(isDark),
                 ),
               ),
-              SliverToBoxAdapter(child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom)),
+              SliverToBoxAdapter(
+                  child: SizedBox(
+                      height: 24 + MediaQuery.paddingOf(context).bottom)),
             ],
           ),
         ),
@@ -415,29 +467,30 @@ class _DailyScreenState extends State<DailyScreen>
       leading: widget.onMenuTap == null
           ? null
           : Padding(
-        padding: const EdgeInsetsDirectional.only(start: 12),
-        child: IconButton(
-          tooltip: _t('menu'),
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            widget.onMenuTap?.call();
-          },
-          icon: Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.16)),
+              padding: const EdgeInsetsDirectional.only(start: 12),
+              child: IconButton(
+                tooltip: _t('menu'),
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  widget.onMenuTap?.call();
+                },
+                icon: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.16)),
+                  ),
+                  child: Icon(
+                    Icons.menu_rounded,
+                    color: isDark ? Colors.white : AppColors.primary,
+                    size: 22,
+                  ),
+                ),
+              ),
             ),
-            child: Icon(
-              Icons.menu_rounded,
-              color: isDark ? Colors.white : AppColors.primary,
-              size: 22,
-            ),
-          ),
-        ),
-      ),
       titleSpacing: 8,
       title: Row(
         mainAxisSize: MainAxisSize.min,
@@ -460,7 +513,8 @@ class _DailyScreenState extends State<DailyScreen>
                 ),
               ],
             ),
-            child: const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 21),
+            child: const Icon(Icons.calendar_month_rounded,
+                color: Colors.white, size: 21),
           ),
           const SizedBox(width: 11),
           Flexible(
@@ -486,20 +540,20 @@ class _DailyScreenState extends State<DailyScreen>
               duration: const Duration(milliseconds: 250),
               child: _isRefreshing
                   ? const SizedBox(
-                key: ValueKey('loading'),
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
+                      key: ValueKey('loading'),
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : IconButton(
-                key: const ValueKey('refresh'),
-                tooltip: _t('refresh'),
-                onPressed: _onRefresh,
-                icon: Icon(
-                  Icons.refresh_rounded,
-                  color: isDark ? Colors.white70 : Colors.grey.shade600,
-                ),
-              ),
+                      key: const ValueKey('refresh'),
+                      tooltip: _t('refresh'),
+                      onPressed: _onRefresh,
+                      icon: Icon(
+                        Icons.refresh_rounded,
+                        color: isDark ? Colors.white70 : Colors.grey.shade600,
+                      ),
+                    ),
             ),
           ),
         ),
@@ -532,12 +586,14 @@ class _DailyScreenState extends State<DailyScreen>
           PositionedDirectional(
             top: -55,
             end: -35,
-            child: _GlowCircle(size: 170, color: Colors.white.withValues(alpha: 0.08)),
+            child: _GlowCircle(
+                size: 170, color: Colors.white.withValues(alpha: 0.08)),
           ),
           PositionedDirectional(
             bottom: -85,
             start: 80,
-            child: _GlowCircle(size: 160, color: Colors.white.withValues(alpha: 0.06)),
+            child: _GlowCircle(
+                size: 160, color: Colors.white.withValues(alpha: 0.06)),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -545,16 +601,19 @@ class _DailyScreenState extends State<DailyScreen>
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.18)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFDE68A), size: 14),
+                        const Icon(Icons.auto_awesome_rounded,
+                            color: Color(0xFFFDE68A), size: 14),
                         const SizedBox(width: 6),
                         Text(
                           _t('hub'),
@@ -569,7 +628,8 @@ class _DailyScreenState extends State<DailyScreen>
                     ),
                   ),
                   const Spacer(),
-                  const Icon(Icons.wb_sunny_rounded, color: Color(0xFFFDE68A), size: 26),
+                  const Icon(Icons.wb_sunny_rounded,
+                      color: Color(0xFFFDE68A), size: 26),
                 ],
               ),
               const SizedBox(height: 19),
@@ -598,7 +658,8 @@ class _DailyScreenState extends State<DailyScreen>
                 builder: (context, now, _) {
                   return Row(
                     children: [
-                      const Icon(Icons.calendar_today_rounded, size: 14, color: Colors.white70),
+                      const Icon(Icons.calendar_today_rounded,
+                          size: 14, color: Colors.white70),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -614,7 +675,8 @@ class _DailyScreenState extends State<DailyScreen>
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(12),
@@ -653,9 +715,11 @@ class _DailyScreenState extends State<DailyScreen>
               ],
             ),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+            border:
+                Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
           ),
-          child: const Icon(Icons.grid_view_rounded, color: AppColors.primary, size: 22),
+          child: const Icon(Icons.grid_view_rounded,
+              color: AppColors.primary, size: 22),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -685,7 +749,9 @@ class _DailyScreenState extends State<DailyScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: isDark ? Colors.white.withValues(alpha: 0.07) : AppColors.primary.withValues(alpha: 0.07),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.07)
+                : AppColors.primary.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -706,7 +772,8 @@ class _DailyScreenState extends State<DailyScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.favorite_rounded, size: 12, color: isDark ? Colors.white38 : Colors.grey.shade500),
+          Icon(Icons.favorite_rounded,
+              size: 12, color: isDark ? Colors.white38 : Colors.grey.shade500),
           const SizedBox(width: 6),
           Text(
             _t('footer'),
@@ -733,7 +800,6 @@ class _ServiceData {
   final Color color;
   final VoidCallback onTap;
   final bool isLive;
-  final String? tag;
   final Widget? trailing;
 
   const _ServiceData({
@@ -743,7 +809,6 @@ class _ServiceData {
     required this.color,
     required this.onTap,
     this.isLive = false,
-    this.tag,
     this.trailing,
   });
 }
@@ -845,7 +910,8 @@ class _ServiceCard extends StatelessWidget {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha: isDark ? 0.18 : 0.10),
+                            color:
+                                color.withValues(alpha: isDark ? 0.18 : 0.10),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Icon(service.icon, color: color, size: 25),
@@ -865,9 +931,12 @@ class _ServiceCard extends StatelessWidget {
                                   : const Color(0xFFF1F4F8),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.arrow_forward_rounded,
+                            child: Icon(
+                              Icons.arrow_forward_rounded,
                               size: 16,
-                              color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+                              color: isDark
+                                  ? Colors.white54
+                                  : const Color(0xFF94A3B8),
                             ),
                           ),
                       ],
@@ -911,133 +980,6 @@ class _ServiceCard extends StatelessWidget {
 // Promotional cards
 // -----------------------------------------------------------------------------
 
-class _PromoCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final List<Color> colors;
-  final VoidCallback onTap;
-
-  const _PromoCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.colors,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-
-    return Semantics(
-      button: true,
-      label: '$title. $subtitle',
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: colors.first.withValues(alpha: 0.23),
-              blurRadius: 20,
-              offset: const Offset(0, 9),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              child: Ink(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: colors,
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    PositionedDirectional(
-                      top: -55,
-                      end: -35,
-                      child: _GlowCircle(size: 145, color: Colors.white.withValues(alpha: 0.09)),
-                    ),
-                    Row(
-                      children: [
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.28), width: 1.3),
-                          ),
-                          child: Icon(icon, color: Colors.white, size: 30),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                tr(title),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 17,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                tr(subtitle),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.82),
-                                  fontSize: 12,
-                                  height: 1.35,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.16),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.arrow_forward_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Small reusable decorations
-// -----------------------------------------------------------------------------
-
 class _GlowCircle extends StatelessWidget {
   final double size;
   final Color color;
@@ -1061,7 +1003,8 @@ class _LivePill extends StatelessWidget {
   final String label;
   final double fontSize;
 
-  const _LivePill({required this.color, required this.label, this.fontSize = 9});
+  const _LivePill(
+      {required this.color, required this.label, this.fontSize = 9});
 
   @override
   Widget build(BuildContext context) {
@@ -1082,7 +1025,9 @@ class _LivePill extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: color.withValues(alpha: 0.55), blurRadius: 5)],
+              boxShadow: [
+                BoxShadow(color: color.withValues(alpha: 0.55), blurRadius: 5)
+              ],
             ),
           ),
           const SizedBox(width: 5),
@@ -1145,7 +1090,8 @@ class _WeatherPill extends StatelessWidget {
 
         return _LivePill(
           color: color,
-          label: '$emoji ${current.temp < 0 ? '\u200E' : ''}${_digits('${current.temp}')}°',
+          label:
+              '$emoji ${current.temp < 0 ? '\u200E' : ''}${_digits('${current.temp}')}°',
           fontSize: 11,
         );
       },
