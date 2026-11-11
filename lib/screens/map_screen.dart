@@ -74,6 +74,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // 🔎 فلتەری شوێنەکان: بەشی سەرەکی ← لقی بەش
   String? _placeCategory;
   String? _placeSubCategory;
+
+  // 🚫 شوێنەکانی خودی گوگڵ (POI) — بە بنەڕەت شاراوەن، تەنها هی ئێمە دەمێنێت
+  bool _hideGooglePois = true;
+  static const _kHideGooglePois = 'map_hide_google_pois';
   bool _labelsZoomOk = true;
   bool _isMenuOpen = false;
   bool _favoritesOnly = false;
@@ -151,6 +155,30 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     Color(0xFF0F9D7A),
   ];
 
+  /// ستایلی نەخشە: لە دۆخی ئاساییدا، شوێنەکانی گوگڵ دەشاردرێنەوە
+  /// بەڵام پارکەکان بە سەوزی دەمێننەوە
+  static const String _poiOffRules =
+      '{"featureType": "poi", "stylers": [{"visibility": "off"}]},'
+      '{"featureType": "poi.park", "elementType": "geometry", "stylers": [{"visibility": "on"}]},'
+      '{"featureType": "transit.station", "stylers": [{"visibility": "off"}]},';
+
+  String? _mapStyle(bool mapDark) {
+    if (_mapType != MapType.normal) return null;
+    final base = mapDark ? _darkMapStyle : null;
+    if (!_hideGooglePois) return base;
+    if (base == null) return '[$_poiOffRules]'.replaceFirst(',]', ']');
+    return base.replaceFirst('[', '[$_poiOffRules');
+  }
+
+  Future<void> _toggleGooglePois() async {
+    HapticFeedback.selectionClick();
+    setState(() => _hideGooglePois = !_hideGooglePois);
+    try {
+      final p = await SharedPreferences.getInstance();
+      await p.setBool(_kHideGooglePois, _hideGooglePois);
+    } catch (_) {}
+  }
+
   static const String _darkMapStyle = '''
   [
     {"elementType": "geometry", "stylers": [{"color": "#1d2433"}]},
@@ -210,7 +238,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     try {
       final p = await SharedPreferences.getInstance();
       final on = p.getBool(_kShowPlaces) ?? true;
-      if (mounted && on != _showPlaces) setState(() => _showPlaces = on);
+      final hidePois = p.getBool(_kHideGooglePois) ?? true;
+      if (mounted && (on != _showPlaces || hidePois != _hideGooglePois)) {
+        setState(() {
+          _showPlaces = on;
+          _hideGooglePois = hidePois;
+        });
+      }
     } catch (_) {}
     try {
       final res = await Supabase.instance.client
@@ -1359,9 +1393,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     initialCameraPosition:
                         const CameraPosition(target: _kalarCenter, zoom: 13),
                     mapType: _mapType,
-                    style: (_mapType == MapType.normal && mapDark)
-                        ? _darkMapStyle
-                        : null,
+                    style: _mapStyle(mapDark),
                     polygons: _visiblePolygons,
                     markers: _visibleMarkers,
                     circles: _userCircles,
@@ -1458,6 +1490,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         label: '${_t('جۆری نەخشە', 'Map type')}: ${_mapTypeLabel(_mapType)}',
         color: const Color(0xFFD9822B),
         onTap: _cycleMapType,
+      ),
+      _MenuAction(
+        icon: _hideGooglePois
+            ? Icons.location_off_rounded
+            : Icons.travel_explore_rounded,
+        label: _hideGooglePois
+            ? _t('پیشاندانی شوێنەکانی گوگڵ', 'Show Google places')
+            : _t('شاردنەوەی شوێنەکانی گوگڵ', 'Hide Google places'),
+        color: const Color(0xFF6C63FF),
+        active: !_hideGooglePois,
+        onTap: _toggleGooglePois,
       ),
       _MenuAction(
         icon: (_darkOverride ?? Theme.of(context).brightness == Brightness.dark)
