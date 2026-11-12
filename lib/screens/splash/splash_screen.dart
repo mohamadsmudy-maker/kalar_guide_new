@@ -25,6 +25,7 @@ class _SplashScreenState extends State<SplashScreen>
   static const Duration _minShow = Duration(milliseconds: 1800);
   static const Duration _sessionTimeout = Duration(seconds: 3);
   static const String _logoAsset = 'assets/images/kalar.png';
+  static const double _logoSize = 200;
 
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
@@ -75,8 +76,7 @@ class _SplashScreenState extends State<SplashScreen>
     // 🖼 Load the logo before first paint of the image → no pop-in
     if (!_precached) {
       _precached = true;
-      precacheImage(const AssetImage(_logoAsset), context)
-          .catchError((_) {});
+      precacheImage(const AssetImage(_logoAsset), context).catchError((_) {});
     }
   }
 
@@ -174,20 +174,25 @@ class _SplashScreenState extends State<SplashScreen>
                       child: ScaleTransition(
                         scale: _scaleAnimation,
                         child: Container(
-                          width: 140,
-                          height: 140,
+                          width: _logoSize,
+                          height: _logoSize,
                           decoration: BoxDecoration(
-                            color: Colors.white,
                             shape: BoxShape.circle,
+                            // بازنەی سەوزی باریک
+                            border: Border.all(
+                              color: const Color(0xFF3DD668),
+                              width: 3,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
+                                color: Colors.black.withValues(alpha: 0.25),
                                 blurRadius: 30,
-                                spreadRadius: 5,
+                                spreadRadius: 2,
                               ),
                             ],
                           ),
-                          padding: const EdgeInsets.all(20),
+                          // بۆشاییەکی بچووک لە نێوان بازنەکە و وێنەکە
+                          padding: const EdgeInsets.all(4),
                           child: ClipOval(
                             child: Image.asset(
                               _logoAsset,
@@ -196,7 +201,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 return const Icon(
                                   Icons.explore_rounded,
                                   size: 80,
-                                  color: Color(0xFF1E88E5),
+                                  color: Colors.white,
                                 );
                               },
                             ),
@@ -243,7 +248,7 @@ class _SplashScreenState extends State<SplashScreen>
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
                               valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           ),
                           const SizedBox(height: 14),
