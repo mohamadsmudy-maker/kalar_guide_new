@@ -93,6 +93,14 @@ void main() {
     expect(find.text('چێشتخانە'), findsNothing);
     expect(find.text('زیادکراوە'), findsOneWidget);
 
+    // گەڕان شوێنی ناحکومیش دەدۆزێتەوە بێ گۆڕینی فلتەر
+    await t.enterText(find.byType(TextField), 'چێشت');
+    await t.pumpAndSettle();
+    expect(find.text('چێشتخانە'), findsOneWidget);
+    await t.enterText(find.byType(TextField), '');
+    await t.pumpAndSettle();
+    expect(find.text('چێشتخانە'), findsNothing);
+
     await t.tap(find.text('هەموو شوێنەکان'));
     await t.pumpAndSettle();
     expect(find.text('چێشتخانە'), findsOneWidget);

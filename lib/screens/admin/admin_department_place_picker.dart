@@ -137,8 +137,8 @@ class _DepartmentPlacePickerSheetState
   List<Map<String, dynamic>> get _visible {
     final q = AppLang.normalizeKey(_query);
     return _places.where((p) {
-      if (_onlyGov && !DepartmentPlaces.isGovernment(p)) return false;
-      if (q.isEmpty) return true;
+      // گەڕان هەمیشە بەناو هەموو شوێنەکانی dukan دا دەگەڕێت
+      if (q.isEmpty) return !_onlyGov || DepartmentPlaces.isGovernment(p);
       final text = AppLang.normalizeKey(
         '${p['name'] ?? ''} ${p['category'] ?? ''} ${p['address'] ?? ''}',
       );
