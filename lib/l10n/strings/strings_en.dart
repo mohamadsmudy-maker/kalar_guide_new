@@ -1860,4 +1860,6 @@ const Map<String, String> stringsEn = {
   'خزمەتگوزارییە ڕۆژانەکان': 'Daily services',
   'شوێن و فەرمانگە': 'Places & departments',
   'ناوەڕۆک': 'Content',
+  'تێبینی ئەدمین': 'Admin note',
+  'زیاتر': 'More',
 };

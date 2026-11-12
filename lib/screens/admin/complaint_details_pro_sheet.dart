@@ -132,8 +132,8 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
     try {
       await Supabase.instance.client
           .from('complaints')
-          .update({'admin_notes': _noteCtrl.text.trim()})
-          .eq('id', widget.complaint['id']);
+          .update({'admin_notes': _noteCtrl.text.trim()}).eq(
+              'id', widget.complaint['id']);
 
       widget.complaint['admin_notes'] = _noteCtrl.text.trim();
 
@@ -259,7 +259,8 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
 
     List images = [];
     try {
-      if (c['images'] is List) images = c['images'];
+      if (c['images'] is List)
+        images = c['images'];
       else if (c['images'] is String) images = [c['images']];
     } catch (_) {}
 
@@ -343,9 +344,8 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                           tr(_formatFullDate(c['created_at'])),
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark
-                                ? Colors.white54
-                                : Colors.grey.shade600,
+                            color:
+                                isDark ? Colors.white54 : Colors.grey.shade600,
                           ),
                         ),
                       ],
@@ -378,18 +378,18 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                         ),
                         child: _sendingWhatsApp
                             ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
                             : const Icon(
-                          Icons.chat_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                                Icons.chat_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                       ),
                     ),
                   const SizedBox(width: 6),
@@ -476,20 +476,16 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                     const SizedBox(height: 16),
 
                     // 🗺️ نەخشە
-                    if (lat != null &&
-                        lng != null &&
-                        lat != 0 &&
-                        lng != 0) ...[
-                      _buildSectionTitle(tr('📍 شوێن لەسەر نەخشە'), isDark),
+                    if (lat != null && lng != null && lat != 0 && lng != 0) ...[
+                      _buildSectionTitle(tr('شوێن لەسەر نەخشە'), isDark),
                       const SizedBox(height: 8),
                       Container(
                         height: 180,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isDark
-                                ? Colors.white12
-                                : Colors.grey.shade300,
+                            color:
+                                isDark ? Colors.white12 : Colors.grey.shade300,
                           ),
                         ),
                         child: ClipRRect(
@@ -503,8 +499,8 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                               gmaps.Marker(
                                 markerId: const gmaps.MarkerId('loc'),
                                 position: gmaps.LatLng(lat, lng),
-                                icon: gmaps.BitmapDescriptor
-                                    .defaultMarkerWithHue(
+                                icon:
+                                    gmaps.BitmapDescriptor.defaultMarkerWithHue(
                                   gmaps.BitmapDescriptor.hueRed,
                                 ),
                               ),
@@ -530,12 +526,10 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color:
-                            AppColors.primary.withValues(alpha: 0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppColors.primary
-                                  .withValues(alpha: 0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -563,7 +557,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                     ],
 
                     // 📝 تێبینی ئەدمین
-                    _buildSectionTitle(tr('📝 تێبینی ئەدمین'), isDark),
+                    _buildSectionTitle(tr('تێبینی ئەدمین'), isDark),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
@@ -572,9 +566,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                             : Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark
-                              ? Colors.white12
-                              : Colors.grey.shade300,
+                          color: isDark ? Colors.white12 : Colors.grey.shade300,
                         ),
                       ),
                       child: TextField(
@@ -595,18 +587,18 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                     const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
-                      height: 44,
+                      height: 50,
                       child: ElevatedButton.icon(
                         onPressed: _savingNote ? null : _saveNote,
                         icon: _savingNote
                             ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
                             : const Icon(Icons.save_rounded, size: 18),
                         label: Text(
                           tr('پاشەکەوتکردنی تێبینی'),
@@ -615,6 +607,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -632,14 +625,10 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF0F0F14)
-                    : Colors.grey.shade50,
+                color: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
                 border: Border(
                   top: BorderSide(
-                    color: isDark
-                        ? Colors.white12
-                        : Colors.grey.shade200,
+                    color: isDark ? Colors.white12 : Colors.grey.shade200,
                   ),
                 ),
               ),
@@ -691,19 +680,19 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                   ),
                   child: _isLoadingVoice
                       ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : Icon(
-                    _isPlayingVoice
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 28,
-                  ),
+                          _isPlayingVoice
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -971,7 +960,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
               'پەسەندکردن',
               Icons.check_circle_rounded,
               const Color(0xFF0F9D7A),
-                  () => _updateStatus('in_progress'),
+              () => _updateStatus('in_progress'),
             ),
           ),
           const SizedBox(width: 8),
@@ -980,7 +969,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
               'ڕەتکردنەوە',
               Icons.cancel_rounded,
               const Color(0xFFDC3545),
-                  () => _updateStatus('rejected'),
+              () => _updateStatus('rejected'),
             ),
           ),
         ],
@@ -1021,11 +1010,11 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
   }
 
   Widget _buildActionBtn(
-      String label,
-      IconData icon,
-      Color color,
-      VoidCallback onTap,
-      ) {
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return SizedBox(
       height: 50,
       child: ElevatedButton.icon(

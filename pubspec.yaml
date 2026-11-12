@@ -114,6 +114,9 @@ flutter:
     - assets/icons/
     - assets/data/
     - assets/audio/
+    # فۆنتی PDF ـەکان (بێ ئینتەرنێت کار دەکات)
+    - assets/fonts/NotoNaskhArabic-Regular.ttf
+    - assets/fonts/Roboto-Regular.ttf
 
   fonts:
     - family: Rabar

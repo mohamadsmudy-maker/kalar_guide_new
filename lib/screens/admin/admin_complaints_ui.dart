@@ -15,9 +15,9 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
           labelColor: AppColors.primary,
           unselectedLabelColor: isDark ? Colors.white60 : Colors.grey.shade700,
           labelStyle:
-          const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+              const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
           unselectedLabelStyle:
-          const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           indicatorColor: AppColors.primary,
           indicatorWeight: 3,
           indicatorSize: TabBarIndicatorSize.label,
@@ -50,14 +50,26 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                 _buildMiniStat(tr('کۆی'), _allCount, Icons.assignment_rounded,
                     const Color(0xFF4F5BD5), isDark),
                 const SizedBox(width: 8),
-                _buildMiniStat(tr('چاوەڕوان'), _pendingCount,
-                    Icons.hourglass_top_rounded, const Color(0xFFD9822B), isDark),
+                _buildMiniStat(
+                    tr('چاوەڕوان'),
+                    _pendingCount,
+                    Icons.hourglass_top_rounded,
+                    const Color(0xFFD9822B),
+                    isDark),
                 const SizedBox(width: 8),
-                _buildMiniStat(tr('دواکەوتوو'), _overdueCount,
-                    Icons.warning_amber_rounded, const Color(0xFFDC3545), isDark),
+                _buildMiniStat(
+                    tr('دواکەوتوو'),
+                    _overdueCount,
+                    Icons.warning_amber_rounded,
+                    const Color(0xFFDC3545),
+                    isDark),
                 const SizedBox(width: 8),
-                _buildMiniStat(tr('تەواو'), _completedCount,
-                    Icons.check_circle_rounded, const Color(0xFF1E88E5), isDark),
+                _buildMiniStat(
+                    tr('تەواو'),
+                    _completedCount,
+                    Icons.check_circle_rounded,
+                    const Color(0xFF1E88E5),
+                    isDark),
               ],
             ),
             const SizedBox(height: 12),
@@ -101,7 +113,9 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                                   fontWeight: FontWeight.w900,
                                   color: green)),
                           const Spacer(),
-                          Text(trf('{0} لە {1}', [_ku(_completedCount), _ku(_allCount)]),
+                          Text(
+                              trf('{0} لە {1}',
+                                  [_ku(_completedCount), _ku(_allCount)]),
                               style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.grey.shade600,
@@ -137,11 +151,10 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
         decoration: BoxDecoration(
           color: _surface(isDark),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.08),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -201,8 +214,8 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
           decoration: BoxDecoration(
             gradient: selected
                 ? LinearGradient(
-                colors: selectedGradient ??
-                    [color, Color.lerp(color, Colors.white, 0.2)!])
+                    colors: selectedGradient ??
+                        [color, Color.lerp(color, Colors.white, 0.2)!])
                 : null,
             color: selected ? null : _surface(isDark),
             borderRadius: BorderRadius.circular(20),
@@ -261,10 +274,10 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
               return _nbChip(
                 isDark: isDark,
                 selected: _filterNeighborhood == null,
-                color: const Color(0xFF4F5BD5),
+                color: AppColors.primary,
                 icon: Icons.location_city_rounded,
                 label: tr('هەموو گەڕەکەکان'),
-                selectedGradient: const [Color(0xFF4F5BD5), Color(0xFFC2557A)],
+                selectedGradient: const [AppColors.primary, AppColors.primary],
                 onTap: () {
                   _filterNeighborhood = null;
                   _refilter();
@@ -276,7 +289,7 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
             return _nbChip(
               isDark: isDark,
               selected: selected,
-              color: _neighborhoodColor(name),
+              color: AppColors.primary,
               icon: Icons.place_rounded,
               label: name,
               count: _nbCounts[name] ?? 0,
@@ -303,36 +316,36 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
       child: list.isEmpty
           ? _buildEmpty(isDark)
           : ListView.builder(
-        key: PageStorageKey('complaints_$tabKey'),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: list.length,
-        itemBuilder: (context, i) {
-          final c = list[i];
-          final card = _buildCard(c, isDark);
-          if (i >= 8) return card;
-          return AnimatedBuilder(
-            animation: _staggerController,
-            builder: (context, child) {
-              final delay = (i * 0.07).clamp(0.0, 0.6);
-              final p =
-              ((_staggerController.value - delay) / 0.4).clamp(0.0, 1.0);
-              return Transform.translate(
-                offset: Offset(0, 30 * (1 - p)),
-                child: Opacity(opacity: p, child: child),
-              );
-            },
-            child: card,
-          );
-        },
-      ),
+              key: PageStorageKey('complaints_$tabKey'),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: list.length,
+              itemBuilder: (context, i) {
+                final c = list[i];
+                final card = _buildCard(c, isDark);
+                if (i >= 8) return card;
+                return AnimatedBuilder(
+                  animation: _staggerController,
+                  builder: (context, child) {
+                    final delay = (i * 0.07).clamp(0.0, 0.6);
+                    final p = ((_staggerController.value - delay) / 0.4)
+                        .clamp(0.0, 1.0);
+                    return Transform.translate(
+                      offset: Offset(0, 30 * (1 - p)),
+                      child: Opacity(opacity: p, child: child),
+                    );
+                  },
+                  child: card,
+                );
+              },
+            ),
     );
   }
 
   Widget _chip(String label, IconData icon, Color color, {double? maxWidth}) {
     final text = Text(tr(label),
         style:
-        TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color),
+            TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: color),
         maxLines: 1,
         overflow: TextOverflow.ellipsis);
     return Container(
@@ -348,9 +361,9 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
         maxWidth == null
             ? text
             : Flexible(
-            child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: text)),
+                child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: text)),
       ]),
     );
   }
@@ -392,7 +405,8 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.8)]),
+          gradient:
+              LinearGradient(colors: [color, color.withValues(alpha: 0.8)]),
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
@@ -411,29 +425,6 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
                   fontWeight: FontWeight.w900,
                   color: Colors.white)),
         ]),
-      ),
-    );
-  }
-
-  Widget _buildIconBtn(IconData icon, Color color, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap == null
-          ? null
-          : () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: Opacity(
-        opacity: onTap == null ? 0.4 : 1,
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Icon(icon, color: color, size: 16),
-        ),
       ),
     );
   }
@@ -548,8 +539,8 @@ extension _AdminComplaintsProScreenStateUi on _AdminComplaintsProScreenState {
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       icon: const Icon(Icons.tune_rounded),
-      label:
-      Text(tr('فلتەر'), style: const TextStyle(fontWeight: FontWeight.w900)),
+      label: Text(tr('فلتەر'),
+          style: const TextStyle(fontWeight: FontWeight.w900)),
     );
   }
 

@@ -43,13 +43,6 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
   static const Duration _overdueAfter = Duration(hours: 72);
   static const String _defaultSort = 'priority';
 
-  static const List<Color> _neighborhoodColors = [
-    Color(0xFF1E88E5), Color(0xFF0F9D7A), Color(0xFFD9822B),
-    Color(0xFFC2557A), Color(0xFFDC3545), Color(0xFF0F9D7A),
-    Color(0xFFC2557A), Color(0xFF4F5BD5), Color(0xFFD9822B),
-    Color(0xFF1E88E5), Color(0xFF0F9D7A), Color(0xFFD9822B),
-  ];
-
   late final TabController _tabController;
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
@@ -102,13 +95,13 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
 
   bool get _hasActiveFilters =>
       _q.isNotEmpty ||
-          _sortBy != _defaultSort ||
-          _filterAuthority != null ||
-          _filterStatuses.isNotEmpty ||
-          _onlyWithVoice ||
-          _onlyWithImages ||
-          _filterNeighborhood != null ||
-          _dateFilterActive;
+      _sortBy != _defaultSort ||
+      _filterAuthority != null ||
+      _filterStatuses.isNotEmpty ||
+      _onlyWithVoice ||
+      _onlyWithImages ||
+      _filterNeighborhood != null ||
+      _dateFilterActive;
 
   // ═══════════════════════════════════════════════════════════
   // 🔁 Lifecycle
@@ -173,16 +166,16 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
       _channel = Supabase.instance.client
           .channel('admin-complaints-live')
           .onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: 'public',
-        table: 'complaints',
-        callback: (_) {
-          _realtimeDebounce?.cancel();
-          _realtimeDebounce = Timer(const Duration(milliseconds: 1500), () {
-            if (mounted && !_loading) _fetchComplaints(showLoader: false);
-          });
-        },
-      )
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'complaints',
+            callback: (_) {
+              _realtimeDebounce?.cancel();
+              _realtimeDebounce = Timer(const Duration(milliseconds: 1500), () {
+                if (mounted && !_loading) _fetchComplaints(showLoader: false);
+              });
+            },
+          )
           .subscribe();
     } catch (e) {
       debugPrint('⚠️ realtime unavailable: $e');
@@ -251,7 +244,8 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
         _loadFailed = _complaints.isEmpty;
       });
       if (_complaints.isNotEmpty) {
-        _snack(tr('نوێکردنەوە سەرنەکەوت — ئینتەرنێت بپشکنە'), const Color(0xFFD9822B));
+        _snack(tr('نوێکردنەوە سەرنەکەوت — ئینتەرنێت بپشکنە'),
+            const Color(0xFFD9822B));
       }
     }
   }
@@ -270,7 +264,8 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     final lng = c['longitude'];
     String locationText = 'شوێن تۆمار نەکراوە';
     if (lat != null && lng != null) {
-      locationText = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+      locationText =
+          'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
     }
 
     // 🎙️ ڤۆیس
@@ -280,7 +275,9 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
     // 🖼️ وێنەکان
     final List images = c['images'] is List
         ? c['images'] as List
-        : (c['images'] is String && (c['images'] as String).isNotEmpty ? [c['images']] : []);
+        : (c['images'] is String && (c['images'] as String).isNotEmpty
+            ? [c['images']]
+            : []);
 
     String imagesText = '';
     if (images.isNotEmpty) {
@@ -310,16 +307,16 @@ $imagesText
 ''';
 
     // ✅ چاککردنی لینک بۆ ئەوەی لە هەموو ئامێرەکان کار بکات
-    final Uri whatsappUri = Uri.parse(
-        "https://wa.me/?text=${Uri.encodeComponent(message)}"
-    );
+    final Uri whatsappUri =
+        Uri.parse("https://wa.me/?text=${Uri.encodeComponent(message)}");
 
     try {
       if (!await launchUrl(whatsappUri, mode: LaunchMode.externalApplication)) {
         throw 'Could not launch WhatsApp';
       }
     } catch (e) {
-      _snack(tr('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.'), const Color(0xFFDC3545));
+      _snack(tr('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.'),
+          const Color(0xFFDC3545));
     }
   }
 
@@ -393,14 +390,13 @@ $imagesText
       final d = _created(c);
       if (d == null) return false;
       final from = DateTime(_fromDate.year, _fromDate.month, _fromDate.day);
-      final to =
-      DateTime(_toDate.year, _toDate.month, _toDate.day, 23, 59, 59);
+      final to = DateTime(_toDate.year, _toDate.month, _toDate.day, 23, 59, 59);
       if (d.isBefore(from) || d.isAfter(to)) return false;
     }
     if (_q.isNotEmpty) {
       final text =
-      "${c['title']} ${c['description']} ${c['responsible_authority']} ${c['neighborhood_name']}"
-          .toLowerCase();
+          "${c['title']} ${c['description']} ${c['responsible_authority']} ${c['neighborhood_name']}"
+              .toLowerCase();
       if (!text.contains(_q)) return false;
     }
     return true;
@@ -482,9 +478,9 @@ $imagesText
   // 🎨 Helpers
   // ═══════════════════════════════════════════════════════════
   String _ku(Object n) => n.toString().replaceAllMapped(
-    RegExp(r'\d'),
+        RegExp(r'\d'),
         (m) => '٠١٢٣٤٥٦٧٨٩'[int.parse(m[0]!)],
-  );
+      );
 
   Color _color(String? s) {
     switch (s) {
@@ -535,21 +531,16 @@ $imagesText
     }
   }
 
-  Color _neighborhoodColor(String? name) {
-    if (name == null) return Colors.grey;
-    final idx = _neighborhoods.indexOf(name);
-    if (idx < 0) return Colors.grey;
-    return _neighborhoodColors[idx % _neighborhoodColors.length];
-  }
-
   String _timeAgo(String? dateStr) {
     if (dateStr == null) return '';
     final date = DateTime.tryParse(dateStr)?.toLocal();
     if (date == null) return '';
     final diff = DateTime.now().difference(date);
     if (diff.inMinutes < 1) return 'ئێستا';
-    if (diff.inMinutes < 60) return trf('{0} خولەک لەمەوبەر', [_ku(diff.inMinutes)]);
-    if (diff.inHours < 24) return trf('{0} کاتژمێر لەمەوبەر', [_ku(diff.inHours)]);
+    if (diff.inMinutes < 60)
+      return trf('{0} خولەک لەمەوبەر', [_ku(diff.inMinutes)]);
+    if (diff.inHours < 24)
+      return trf('{0} کاتژمێر لەمەوبەر', [_ku(diff.inHours)]);
     if (diff.inDays < 7) return trf('{0} ڕۆژ لەمەوبەر', [_ku(diff.inDays)]);
     if (diff.inDays < 30) {
       return trf('{0} هەفتە لەمەوبەر', [_ku((diff.inDays / 7).floor())]);
@@ -566,12 +557,12 @@ $imagesText
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content:
-          Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Text(tr(msg),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: color,
           behavior: SnackBarBehavior.floating,
           shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: Duration(seconds: action == null ? 2 : 5),
           action: action,
         ),
@@ -584,9 +575,9 @@ $imagesText
       isDark ? const Color(0xFF1A1A22) : Colors.white;
 
   void _exitSelectMode() => setState(() {
-    _selectMode = false;
-    _selectedIds.clear();
-  });
+        _selectMode = false;
+        _selectedIds.clear();
+      });
 
   // ═══════════════════════════════════════════════════════════
   // 🎨 Build
@@ -639,24 +630,24 @@ $imagesText
   // ═══════════════════════════════════════════════════════════
   Widget _buildSliverAppBar(bool isDark) {
     final list = _currentList;
-    final allSelected =
-        list.isNotEmpty && list.every((c) => _selectedIds.contains('${c['id']}'));
+    final allSelected = list.isNotEmpty &&
+        list.every((c) => _selectedIds.contains('${c['id']}'));
 
     return SliverAppBar(
       expandedHeight: 140,
       pinned: true,
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: isDark ? const Color(0xFF1A1B2E) : AppColors.primary,
       foregroundColor: Colors.white,
       elevation: 0,
       leading: _selectMode
           ? IconButton(
-        icon: const Icon(Icons.close_rounded),
-        onPressed: _exitSelectMode,
-      )
+              icon: const Icon(Icons.close_rounded),
+              onPressed: _exitSelectMode,
+            )
           : null,
       title: _selectMode
           ? Text(trf('{0} هەڵبژێردراو', [_ku(_selectedIds.length)]),
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))
           : null,
       actions: [
         if (!_selectMode) ...[
@@ -671,11 +662,11 @@ $imagesText
           IconButton(
             icon: _generatingPdf
                 ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.white),
-            )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
                 : const Icon(Icons.picture_as_pdf_rounded),
             tooltip: tr('ڕاپۆرتی PDF'),
             onPressed: _generatingPdf ? null : _generatePdf,
@@ -683,7 +674,7 @@ $imagesText
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
             shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             onSelected: (v) {
               switch (v) {
                 case 'select':
@@ -721,9 +712,11 @@ $imagesText
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF0A0A0F), Color(0xFF1E1B2E)],
+              colors: isDark
+                  ? const [Color(0xFF1A1B2E), Color(0xFF232334)]
+                  : const [Color(0xFF1565C0), Color(0xFF1E88E5)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -736,17 +729,10 @@ $imagesText
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFC2557A), Color(0xFFC2557A)],
-                      ),
+                      color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFC2557A).withValues(alpha: 0.5),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.35)),
                     ),
                     child: const Icon(Icons.assignment_late_rounded,
                         color: Colors.white, size: 26),
@@ -778,12 +764,11 @@ $imagesText
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Text(tr('ڕاستەوخۆ • گەڕەک • WHATSAPP'),
+                          Text(trf('{0} سکاڵای چاوەڕوان', [_ku(_pendingCount)]),
                               style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Color(0xFF0F9D7A),
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1)),
+                                  fontSize: 11,
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w700)),
                         ]),
                       ],
                     ),
@@ -876,18 +861,18 @@ $imagesText
                     color: AppColors.primary, size: 22),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 18),
-                  onPressed: () {
-                    _searchDebounce?.cancel();
-                    _searchCtrl.clear();
-                    _q = '';
-                    _refilter();
-                  },
-                )
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        onPressed: () {
+                          _searchDebounce?.cancel();
+                          _searchCtrl.clear();
+                          _q = '';
+                          _refilter();
+                        },
+                      )
                     : null,
                 border: InputBorder.none,
                 contentPadding:
-                const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
               ),
             ),
           ),
@@ -916,7 +901,7 @@ $imagesText
                 onTap: _clearAllFilters,
                 child: Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFFDC3545).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
@@ -975,19 +960,18 @@ $imagesText
     final overdue = _isOverdue(c);
 
     final nbName = c['neighborhood_name']?.toString();
-    final nbColor = _neighborhoodColor(nbName);
 
     final List images = c['images'] is List
         ? c['images'] as List
         : (c['images'] is String && (c['images'] as String).isNotEmpty
-        ? [c['images']]
-        : const []);
+            ? [c['images']]
+            : const []);
 
     final hasVoice = (c['voice_url']?.toString() ?? '').isNotEmpty;
     final userPhone = (c['user_phone']?.toString() ??
-        c['phone']?.toString() ??
-        c['contact_phone']?.toString() ??
-        '')
+            c['phone']?.toString() ??
+            c['contact_phone']?.toString() ??
+            '')
         .trim();
     // تێبینی: ئێمە چیتر پێویستمان بەمە نییە بۆ شاردنەوەی دوگمەکە، بەڵام بۆ پەیوەندی بەکاردێت
     final hasPhone = userPhone.isNotEmpty;
@@ -1014,11 +998,11 @@ $imagesText
           border: isSelected
               ? Border.all(color: AppColors.primary, width: 2.5)
               : isPending
-              ? Border.all(
-              color: (overdue ? const Color(0xFFDC3545) : color)
-                  .withValues(alpha: 0.4),
-              width: 1.5)
-              : null,
+                  ? Border.all(
+                      color: (overdue ? const Color(0xFFDC3545) : color)
+                          .withValues(alpha: 0.4),
+                      width: 1.5)
+                  : null,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.06),
@@ -1034,19 +1018,6 @@ $imagesText
           ],
         ),
         child: Column(children: [
-          if (isPending)
-            Container(
-              height: 4,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [
-                  (overdue ? const Color(0xFFDC3545) : color).withValues(alpha: 0.3),
-                  overdue ? const Color(0xFFDC3545) : color,
-                  (overdue ? const Color(0xFFDC3545) : color).withValues(alpha: 0.3),
-                ]),
-                borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-            ),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(children: [
@@ -1058,7 +1029,8 @@ $imagesText
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : Colors.transparent,
+                      color:
+                          isSelected ? AppColors.primary : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isSelected
@@ -1069,7 +1041,7 @@ $imagesText
                     ),
                     child: isSelected
                         ? const Icon(Icons.check_rounded,
-                        color: Colors.white, size: 16)
+                            color: Colors.white, size: 16)
                         : null,
                   ),
                 ),
@@ -1087,7 +1059,8 @@ $imagesText
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                                color: const Color(0xFFDC3545).withValues(alpha: 0.5),
+                                color: const Color(0xFFDC3545)
+                                    .withValues(alpha: 0.5),
                                 blurRadius: 8),
                           ],
                         ),
@@ -1100,12 +1073,14 @@ $imagesText
               _chip(_statusText(status), icon, color),
               if (overdue) ...[
                 const SizedBox(width: 6),
-                _chip('دواکەوتوو', Icons.warning_amber_rounded, const Color(0xFFDC3545)),
+                _chip('دواکەوتوو', Icons.warning_amber_rounded,
+                    const Color(0xFFDC3545)),
               ],
               if (nbName != null && nbName.isNotEmpty) ...[
                 const SizedBox(width: 6),
                 Flexible(
-                  child: _chip(nbName, Icons.place_rounded, nbColor,
+                  child: _chip(
+                      nbName, Icons.place_rounded, const Color(0xFF64748B),
                       maxWidth: 90),
                 ),
               ],
@@ -1175,8 +1150,9 @@ $imagesText
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 14,
-                              color:
-                              isDark ? Colors.white : const Color(0xFF1A1A2E),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1A1A2E),
                               height: 1.3),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
@@ -1184,13 +1160,15 @@ $imagesText
                       Wrap(spacing: 6, runSpacing: 4, children: [
                         if (hasVoice)
                           _buildTag('دەنگ', Icons.mic_rounded,
-                              const Color(0xFF1E88E5)),
+                              const Color(0xFF64748B)),
                         if (hasPhone)
                           _buildTag(userPhone, Icons.phone_rounded,
-                              const Color(0xFF25D366)),
+                              const Color(0xFF64748B)),
                         if (c['responsible_authority'] != null)
-                          _buildTag(c['responsible_authority'].toString(),
-                              Icons.account_balance_rounded, const Color(0xFF4F5BD5)),
+                          _buildTag(
+                              c['responsible_authority'].toString(),
+                              Icons.account_balance_rounded,
+                              const Color(0xFF64748B)),
                       ]),
                     ],
                   ),
@@ -1203,9 +1181,9 @@ $imagesText
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color:
-                isDark ? const Color(0xFF0F0F14) : const Color(0xFFF8F9FA),
+                    isDark ? const Color(0xFF0F0F14) : const Color(0xFFF8F9FA),
                 borderRadius:
-                const BorderRadius.vertical(bottom: Radius.circular(20)),
+                    const BorderRadius.vertical(bottom: Radius.circular(20)),
               ),
               child: Row(children: [
                 if (isPending) ...[
@@ -1239,31 +1217,54 @@ $imagesText
                   const SizedBox(width: 6),
                 ] else
                   const Spacer(),
-
-                // ✅ دوگمەی شێرکردن (Share) هەمیشە بەردەستە
-                _buildIconBtn(
-                    Icons.share_rounded,
-                    const Color(0xFF25D366),
-                        () => _shareComplaintToWhatsApp(c)
-                ),
-                const SizedBox(width: 6),
-
-                // ✅ دوگمەی چات (تەنها ئەگەر ژمارەی مۆبایل هەبوو)
-                if (hasPhone) ...[
-                  _buildIconBtn(Icons.chat_rounded, const Color(0xFF25D366),
-                          () => _sendWhatsApp(c)),
-                  const SizedBox(width: 6),
-                ],
-
-                _buildIconBtn(Icons.visibility_rounded, AppColors.primary,
-                        () => _showDetails(c)),
-                const SizedBox(width: 6),
-                _buildIconBtn(Icons.delete_rounded, const Color(0xFFDC3545),
-                    _isDeleting ? null : () => _delete(c)),
+                _buildCardMenu(c, hasPhone),
               ]),
             ),
         ]),
       ),
+    );
+  }
+
+  /// مێنیوی کارتی سکاڵا: هاوبەشکردن، چات، وردەکاری، سڕینەوە (پێشتر چوار دوگمەی جیا بوون)
+  Widget _buildCardMenu(Map<String, dynamic> c, bool hasPhone) {
+    return PopupMenuButton<String>(
+      tooltip: tr('زیاتر'),
+      icon: Icon(Icons.more_horiz_rounded, color: Colors.grey.shade600),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      onSelected: (v) {
+        switch (v) {
+          case 'details':
+            _showDetails(c);
+            break;
+          case 'share':
+            _shareComplaintToWhatsApp(c);
+            break;
+          case 'chat':
+            _sendWhatsApp(c);
+            break;
+          case 'delete':
+            if (!_isDeleting) _delete(c);
+            break;
+        }
+      },
+      itemBuilder: (_) => [
+        _popupItem('details', 'وردەکاری', Icons.visibility_rounded),
+        _popupItem('share', 'هاوبەشکردن', Icons.share_rounded),
+        if (hasPhone) _popupItem('chat', 'چات', Icons.chat_rounded),
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(children: [
+            const Icon(Icons.delete_rounded,
+                size: 18, color: Color(0xFFDC3545)),
+            const SizedBox(width: 10),
+            Text(tr('سڕینەوە'),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Color(0xFFDC3545))),
+          ]),
+        ),
+      ],
     );
   }
 
@@ -1344,7 +1345,8 @@ $imagesText
         c['status'] = old;
         _recompute();
       });
-      _snack(tr('گۆڕینی دۆخ سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
+      _snack(tr('گۆڕینی دۆخ سەرنەکەوت، دووبارە هەوڵبدەوە'),
+          const Color(0xFFDC3545));
       return;
     }
 
@@ -1400,7 +1402,8 @@ $imagesText
             child: Icon(icon, color: color, size: 20),
           ),
           title: Text(tr(label),
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+              style:
+                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
           onTap: () => Navigator.pop(context, key),
         );
 
@@ -1439,7 +1442,8 @@ $imagesText
               tile('rejected', 'ڕەتکردنەوە', Icons.cancel_rounded,
                   const Color(0xFFDC3545)),
               const Divider(),
-              tile('delete', 'سڕینەوە', Icons.delete_sweep_rounded, const Color(0xFFDC3545)),
+              tile('delete', 'سڕینەوە', Icons.delete_sweep_rounded,
+                  const Color(0xFFDC3545)),
               const SizedBox(height: 8),
             ],
           ),
@@ -1518,7 +1522,7 @@ $imagesText
         textDirection: AppLang.direction,
         child: AlertDialog(
           shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(children: [
             const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545)),
             const SizedBox(width: 8),
@@ -1532,7 +1536,8 @@ $imagesText
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC3545), foregroundColor: Colors.white),
+                  backgroundColor: const Color(0xFFDC3545),
+                  foregroundColor: Colors.white),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(tr(yes)),
             ),
@@ -1545,7 +1550,8 @@ $imagesText
 
   Future<void> _delete(Map<String, dynamic> c) async {
     if (_isDeleting) return;
-    if (!await _confirm('سڕینەوەی سکاڵا',
+    if (!await _confirm(
+        'سڕینەوەی سکاڵا',
         'ئایا دڵنیایت؟ هەموو وێنە و دەنگەکانیشی دەسڕدرێنەوە و ناگەڕێتەوە.',
         'بەڵێ، بسڕەوە')) {
       return;
@@ -1566,7 +1572,8 @@ $imagesText
 
       if (!mounted) return;
       setState(() {
-        _complaints.removeWhere((x) => x['id'].toString() == c['id'].toString());
+        _complaints
+            .removeWhere((x) => x['id'].toString() == c['id'].toString());
         _selectedIds.remove(c['id'].toString());
         _recompute();
       });
@@ -1574,7 +1581,8 @@ $imagesText
       _snack(tr('✅ سکاڵا سڕایەوە'), const Color(0xFF0F9D7A));
     } catch (e) {
       debugPrint('❌ delete error: $e');
-      _snack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
+      _snack(
+          tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
@@ -1591,9 +1599,8 @@ $imagesText
     setState(() => _isDeleting = true);
     try {
       final ids = _selectedIds.toList();
-      final toDelete = _complaints
-          .where((c) => ids.contains(c['id'].toString()))
-          .toList();
+      final toDelete =
+          _complaints.where((c) => ids.contains(c['id'].toString())).toList();
 
       await Supabase.instance.client
           .from('complaints')
@@ -1616,10 +1623,12 @@ $imagesText
         _recompute();
       });
       HapticFeedback.heavyImpact();
-      _snack(trf('✅ {0} سکاڵا سڕانەوە', [_ku(ids.length)]), const Color(0xFF0F9D7A));
+      _snack(trf('✅ {0} سکاڵا سڕانەوە', [_ku(ids.length)]),
+          const Color(0xFF0F9D7A));
     } catch (e) {
       debugPrint('❌ bulk delete error: $e');
-      _snack(tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
+      _snack(
+          tr('سڕینەوە سەرنەکەوت، دووبارە هەوڵبدەوە'), const Color(0xFFDC3545));
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
