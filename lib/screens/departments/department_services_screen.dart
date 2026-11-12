@@ -97,16 +97,16 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                      padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: Colors.white.withValues(alpha: 0.3),
                               ),
@@ -114,10 +114,10 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
                             child: const Icon(
                               Icons.description_rounded,
                               color: Colors.white,
-                              size: 28,
+                              size: 24,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           AutoTranslate(
                             text: name,
                             lang: lang,
