@@ -703,7 +703,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
     _currentIndex = widget.initialIndex.clamp(0, _tabCount - 1);
 
     _builders = [
-      () => HomeScreen(onMenuTap: _openDrawer, onSearchTap: () => _goTo(1)),
+      () => HomeScreen(onMenuTap: _openDrawer),
       () => StoresScreen(onMenuTap: _openDrawer),
       () => ServicesScreen(onMenuTap: _openDrawer),
       () => DailyScreen(onMenuTap: _openDrawer),
