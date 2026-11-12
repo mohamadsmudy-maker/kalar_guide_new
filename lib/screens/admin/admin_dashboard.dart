@@ -22,7 +22,6 @@ import 'admin_prayer_times.dart';
 import 'admin_translations.dart';
 import 'admin_osm_import.dart';
 import 'admin_place_suggestions.dart';
-import 'admin_weather.dart';
 import 'admin_vendor_requests.dart';
 import 'admin_live_users.dart';
 import 'admin_complaint_instructions.dart';
@@ -595,14 +594,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: tr('دراوەکان'),
           subtitle: tr('نوێکردنەوەی نرخی دۆلار و زێڕ'),
           screen: () => const AdminCurrencyStationsScreen(),
-        ),
-        _DashItem(
-          id: 'weather',
-          icon: Icons.cloud_rounded,
-          color: blue,
-          title: tr('کەشوهەوا'),
-          subtitle: tr('نوێکردنەوەی پلەی گەرما و دۆخ'),
-          screen: () => const AdminWeatherScreen(),
         ),
         _DashItem(
           id: 'prayer_times',
