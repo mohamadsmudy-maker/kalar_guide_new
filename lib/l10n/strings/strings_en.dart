@@ -1891,4 +1891,12 @@ const Map<String, String> stringsEn = {
   'فەرمانگەکان نەهێنران': 'Could not load departments',
   'بەڕێوەبردنی ڕووداوەکان': 'Manage events',
   'ڕووداوی تایبەت': 'Featured event',
+  'بە دوگمەی خوارەوە لینکی ڤیدیۆیەکی یوتیووب زیاد بکە': 'Use the button below to add a YouTube video link',
+  'تکایە ناونیشان و لینکی ڤیدیۆ پڕبکەرەوە': 'Please fill in the title and the video link',
+  'دەستکاریکردنی ڤیدیۆ': 'Edit video',
+  'زیادکردنی ڤیدیۆ': 'Add video',
+  'لینکەکە دروست نییە — دەبێت بە https:// دەست پێبکات': 'The link is not valid — it must start with https://',
+  'هیچ ڤیدیۆیەک زیاد نەکراوە': 'No videos added yet',
+  'ڤیدیۆکان نەهێنران': 'Could not load videos',
+  'ڤیدیۆکە سڕایەوە': 'Video deleted',
 };
