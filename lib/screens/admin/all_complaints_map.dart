@@ -23,6 +23,53 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
   gmaps.MapType _currentMapType = gmaps.MapType.normal;
   String _selectedStatusFilter = 'all';
   String? _selectedComplaintId;
+  String? _error;
+
+  /// شوێنەکانی گووگڵ دەشاردرێنەوە تا تەنها سکاڵاکان دیار بن
+  static const String _mapStyle =
+      '[{"featureType":"poi","stylers":[{"visibility":"off"}]},'
+      '{"featureType":"poi.park","elementType":"geometry","stylers":[{"visibility":"on"}]},'
+      '{"featureType":"transit","stylers":[{"visibility":"off"}]}]';
+
+  int _countOf(String filter) {
+    if (filter == 'all') return _allComplaints.length;
+    if (filter == 'approved') {
+      return _allComplaints
+          .where((c) =>
+              c['status'] == 'approved' || c['status'] == 'in_progress')
+          .length;
+    }
+    return _allComplaints.where((c) => c['status'] == filter).length;
+  }
+
+  /// کامێرا بۆ ئەوەی هەموو پینەکان دیار بن
+  void _fitToMarkers() {
+    final ctrl = _mapController;
+    if (ctrl == null || _markers.isEmpty) return;
+    if (_markers.length == 1) {
+      ctrl.animateCamera(
+        gmaps.CameraUpdate.newLatLngZoom(_markers.first.position, 15),
+      );
+      return;
+    }
+    var minLat = 90.0, maxLat = -90.0, minLng = 180.0, maxLng = -180.0;
+    for (final m in _markers) {
+      final p = m.position;
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+    ctrl.animateCamera(
+      gmaps.CameraUpdate.newLatLngBounds(
+        gmaps.LatLngBounds(
+          southwest: gmaps.LatLng(minLat, minLng),
+          northeast: gmaps.LatLng(maxLat, maxLng),
+        ),
+        60,
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -34,7 +81,10 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
   // 📡 هێنانی سکاڵاکان
   // ═══════════════════════════════════════════════════════════
   Future<void> _fetchComplaints() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final res = await Supabase.instance.client
           .from('complaints')
@@ -56,7 +106,12 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
       }
     } catch (e) {
       debugPrint('❌ Fetch error: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _error = '$e';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -105,7 +160,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
           icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(markerHue),
           infoWindow: gmaps.InfoWindow(
             title: c['title'] ?? tr('سکاڵا'),
-            snippet: "کلیک بکە بۆ وردەکاری",
+            snippet: tr('کلیک بکە بۆ وردەکاری'),
           ),
           onTap: () {
             setState(() => _selectedComplaintId = c['id'].toString());
@@ -117,6 +172,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
 
     if (mounted) {
       setState(() => _markers = markers);
+      _fitToMarkers();
     }
   }
 
@@ -200,7 +256,19 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 myLocationButtonEnabled: false,
                 zoomControlsEnabled: false,
                 compassEnabled: false,
-                onMapCreated: (controller) => _mapController = controller,
+                mapToolbarEnabled: false,
+                style: _currentMapType == gmaps.MapType.normal
+                    ? _mapStyle
+                    : null,
+                // لۆگۆی گووگڵ و پینەکان نەکەونە ژێر بارەکانی سەرەوە و خوارەوە
+                padding: EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top + 130,
+                  bottom: 90,
+                ),
+                onMapCreated: (controller) {
+                  _mapController = controller;
+                  _fitToMarkers();
+                },
               ),
             Positioned(
               top: MediaQuery.of(context).padding.top + 10,
@@ -295,7 +363,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                       'هەموو',
                       'all',
                       Icons.apps_rounded,
-                      Colors.white,
+                      const Color(0xFF1E1B2E),
                     ),
                     _buildFilterChip(
                       'چاوەڕوان',
@@ -327,57 +395,13 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
             ),
             Positioned(
               bottom: _selectedComplaintId != null ? 220 : 100,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tr('ڕەنگەکان:'),
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildLegendItem(
-                      const Color(0xFFD9822B),
-                      'چاوەڕوان',
-                    ),
-                    _buildLegendItem(
-                      const Color(0xFF0F9D7A),
-                      'پەسەندکراو',
-                    ),
-                    _buildLegendItem(
-                      const Color(0xFF1E88E5),
-                      'جێبەجێکرا',
-                    ),
-                    _buildLegendItem(
-                      const Color(0xFFDC3545),
-                      'ڕەتکراو',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: _selectedComplaintId != null ? 220 : 100,
               right: 16,
               child: GestureDetector(
                 onTap: () {
+                  if (_markers.isNotEmpty) {
+                    _fitToMarkers();
+                    return;
+                  }
                   _mapController?.animateCamera(
                     gmaps.CameraUpdate.newLatLngZoom(
                       const gmaps.LatLng(34.6189, 45.3156),
@@ -461,7 +485,9 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            trf('{0} سکاڵا', [_filteredComplaints.length]),
+                            _error != null
+                                ? tr('سکاڵاکان نەهێنران')
+                                : trf('{0} سکاڵا', [_filteredComplaints.length]),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14,
@@ -471,7 +497,14 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                         ],
                       ),
                     ),
-                    if (_selectedStatusFilter != 'all')
+                    if (_error != null)
+                      IconButton(
+                        tooltip: tr('دووبارە هەوڵبدەوە'),
+                        icon: const Icon(Icons.refresh_rounded,
+                            color: Colors.white),
+                        onPressed: _fetchComplaints,
+                      )
+                    else if (_selectedStatusFilter != 'all')
                       GestureDetector(
                         onTap: () {
                           setState(() => _selectedStatusFilter = 'all');
@@ -495,7 +528,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                               ),
                               const SizedBox(width: 3),
                               Text(
-                                tr('سڕینەوە'),
+                                tr('هەموو'),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
@@ -650,7 +683,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
       ) {
     bool isSelected = _selectedStatusFilter == value;
     return Padding(
-      padding: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsetsDirectional.only(end: 8),
       child: GestureDetector(
         onTap: () {
           setState(() => _selectedStatusFilter = value);
@@ -687,7 +720,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
               ),
               const SizedBox(width: 5),
               Text(
-                tr(label),
+                '${tr(label)}  ${_countOf(value)}',
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.black87,
                   fontWeight: FontWeight.w900,
@@ -697,34 +730,6 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(Color color, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: Row(
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1.5),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            tr(label),
-            style: const TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-        ],
       ),
     );
   }

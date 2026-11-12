@@ -1899,4 +1899,5 @@ const Map<String, String> stringsEn = {
   'هیچ ڤیدیۆیەک زیاد نەکراوە': 'No videos added yet',
   'ڤیدیۆکان نەهێنران': 'Could not load videos',
   'ڤیدیۆکە سڕایەوە': 'Video deleted',
+  'سکاڵاکان نەهێنران': 'Could not load complaints',
 };
