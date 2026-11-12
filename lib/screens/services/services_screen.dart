@@ -54,8 +54,8 @@ class ServicesScreen extends StatelessWidget {
           onTap: (c) => _open(c, const NeighborhoodsScreen()),
         ),
         _Service(
-          title: tr('بەشەکان'),
-          subtitle: tr('خزمەتگوزارییەکانی شار'),
+          title: tr('فەرمانگە و مامەڵەکان'),
+          subtitle: tr('پێداویستی و تێچووی مامەڵەکان'),
           icon: Icons.account_balance_rounded,
           color: _kCity,
           onTap: (c) => _open(c, const DepartmentsScreen()),

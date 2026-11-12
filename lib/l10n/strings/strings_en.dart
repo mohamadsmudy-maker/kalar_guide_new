@@ -1885,4 +1885,8 @@ const Map<String, String> stringsEn = {
   'گەڕان بە ناوی شوێن...': 'Search by place name...',
   '✅ فەرمانگە زیادکرا — ئێستا مامەڵەکانی زیاد بکە': '✅ Department added — now add its transactions',
   'مامەڵە و پێداویستییەکان': 'Transactions and requirements',
+  'فەرمانگە و مامەڵەکان': 'Departments and transactions',
+  'فەرمانگە و مامەڵەکانیان بەم زووانە زیاد دەکرێن': 'Departments and their transactions will be added soon',
+  'پێداویستی و تێچووی مامەڵەکان': 'Requirements and cost of transactions',
+  'فەرمانگەکان نەهێنران': 'Could not load departments',
 };
