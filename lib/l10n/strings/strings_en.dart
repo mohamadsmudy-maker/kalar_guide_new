@@ -1884,4 +1884,5 @@ const Map<String, String> stringsEn = {
   'ڕەسم': 'Fee',
   'گەڕان بە ناوی شوێن...': 'Search by place name...',
   '✅ فەرمانگە زیادکرا — ئێستا مامەڵەکانی زیاد بکە': '✅ Department added — now add its transactions',
+  'مامەڵە و پێداویستییەکان': 'Transactions and requirements',
 };

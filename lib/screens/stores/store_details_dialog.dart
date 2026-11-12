@@ -10,6 +10,7 @@ import '../../config/settings_provider.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'store_news_screen.dart';
+import '../departments/department_services_screen.dart';
 import '../../l10n/tr.dart';
 import '../../utils/place_display.dart';
 
@@ -41,11 +42,43 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
   bool _isFav = false;
   bool _loadingFav = false;
   int _currentImageIndex = 0;
+  Map<String, dynamic>? _department;
 
   @override
   void initState() {
     super.initState();
     _checkIsFav();
+    _loadDepartment();
+  }
+
+  /// ئەگەر ئەم شوێنە وەک فەرمانگە زیادکرابێت، مامەڵەکانی لێرەوە دەکرێنەوە
+  Future<void> _loadDepartment() async {
+    final id = widget.store['id'];
+    if (id == null) return;
+    try {
+      final res = await Supabase.instance.client
+          .from('departments')
+          .select()
+          .eq('place_id', '$id')
+          .limit(1);
+      if (mounted && res.isNotEmpty) {
+        setState(() => _department = Map<String, dynamic>.from(res.first));
+      }
+    } catch (_) {
+      // ستوونی place_id هێشتا نییە یان هێڵ نییە — دوگمەکە پیشان نادرێت
+    }
+  }
+
+  void _openDepartmentServices() {
+    final dept = _department;
+    if (dept == null) return;
+    Navigator.pop(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DepartmentServicesScreen(department: dept),
+      ),
+    );
   }
 
   Future<void> _checkIsFav() async {
@@ -623,6 +656,35 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                   ),
                 ),
               ),
+              // 📋 مامەڵەکانی فەرمانگە — تەنها ئەگەر ئەم شوێنە فەرمانگە بێت
+              if (_department != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 6),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: BorderSide(
+                          color: AppColors.primary.withValues(alpha: 0.4),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: _openDepartmentServices,
+                      icon: const Icon(Icons.fact_check_rounded, size: 20),
+                      label: Text(
+                        tr('مامەڵە و پێداویستییەکان'),
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               // ✅ «سەردانی شوێن» — هەمیشە دیارە، شاشەی هەواڵەکانی شوێن دەکاتەوە
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
