@@ -115,3 +115,6 @@ supabase/.temp/
 
 # Obfuscation symbol files (build_release.ps1) — keep locally, not in git
 symbols/
+
+# local DB backups (contain personal data)
+backups/
