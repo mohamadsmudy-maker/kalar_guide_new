@@ -1889,4 +1889,6 @@ const Map<String, String> stringsEn = {
   'فەرمانگە و مامەڵەکانیان بەم زووانە زیاد دەکرێن': 'Departments and their transactions will be added soon',
   'پێداویستی و تێچووی مامەڵەکان': 'Requirements and cost of transactions',
   'فەرمانگەکان نەهێنران': 'Could not load departments',
+  'بەڕێوەبردنی ڕووداوەکان': 'Manage events',
+  'ڕووداوی تایبەت': 'Featured event',
 };

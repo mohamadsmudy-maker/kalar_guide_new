@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../config/app_colors.dart';
 import '../../models/event.dart';
 import '../../services/auth_service.dart';
 import '../../services/event_service.dart';
@@ -77,8 +78,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
   // ➕✏️ زیادکردن / دەستکاریکردن
   // ═══════════════════════════════════════════════════════════
   Future<void> _openEditor({AppEvent? event}) async {
-    final result = await showDialog<Map<String, dynamic>>(
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => _EventEditorDialog(event: event),
     );
 
@@ -153,113 +156,71 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
       child: Scaffold(
         backgroundColor:
         isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
-        body: NestedScrollView(
-          headerSliverBuilder: (context, inner) => [
-            SliverAppBar(
-              expandedHeight: 160,
-              pinned: true,
-              backgroundColor: const Color(0xFF4F5BD5),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF4F5BD5),
-                        Color(0xFFC2557A),
-                      ],
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 60, 20, 16),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.event_rounded,
-                              color: Colors.white,
-                              size: 26,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(
-                                  tr('بەڕێوەبردنی ڕووداوەکان 📅'),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(60),
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: Colors.transparent,
-                    indicator: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    labelColor: const Color(0xFF4F5BD5),
-                    unselectedLabelColor: Colors.white,
-                    labelStyle: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                    ),
-                    tabs: [
-                      Tab(text: trf('داهاتوو ({0})', [_upcoming.length])),
-                      Tab(text: trf('ڕابردوو ({0})', [_past.length])),
-                    ],
-                  ),
-                ),
-              ),
+        appBar: AppBar(
+          backgroundColor: isDark ? const Color(0xFF1A1B2E) : AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: true,
+          title: Text(
+            tr('بەڕێوەبردنی ڕووداوەکان'),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: _loadData,
             ),
           ],
-          body: _loading
-              ? const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF4F5BD5),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(58),
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                indicator: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                labelColor: AppColors.primary,
+                unselectedLabelColor: Colors.white,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
+                tabs: [
+                  Tab(height: 40, text: trf('داهاتوو ({0})', [_upcoming.length])),
+                  Tab(height: 40, text: trf('ڕابردوو ({0})', [_past.length])),
+                ],
+              ),
             ),
-          )
-              : TabBarView(
-            controller: _tabController,
-            children: [
-              _buildList(_upcoming, isUpcoming: true),
-              _buildList(_past, isUpcoming: false),
-            ],
           ),
         ),
+        body: _loading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildList(_upcoming, isUpcoming: true),
+                  _buildList(_past, isUpcoming: false),
+                ],
+              ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(),
-          backgroundColor: const Color(0xFF4F5BD5),
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
           label: Text(
@@ -695,51 +656,72 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.event != null;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : const Color(0xFF1A1A2E);
+
     return Directionality(
       textDirection: AppLang.direction,
-      child: Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(20),
+      child: Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
-          child: SingleChildScrollView(
+          child: Material(
+            color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+            clipBehavior: Clip.antiAlias,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 45,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 8, 0),
+                child: Row(
                   children: [
-                    const Icon(
-                      Icons.event_rounded,
-                      color: Color(0xFF4F5BD5),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      tr(isEditing ? 'دەستکاریکردنی ڕووداو' : 'ڕووداوی نوێ'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
+                    const Icon(Icons.event_rounded, color: AppColors.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        tr(isEditing ? 'دەستکاریکردنی ڕووداو' : 'ڕووداوی نوێ'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 17,
+                          color: fg,
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 // 🏷️ کەرت
                 Text(
                   tr('کەرت'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
+                    color: fg,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -757,21 +739,18 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          gradient: isSelected
-                              ? const LinearGradient(
-                            colors: [
-                              Color(0xFF4F5BD5),
-                              Color(0xFFC2557A),
-                            ],
-                          )
-                              : null,
-                          color:
-                          isSelected ? null : Colors.grey.shade100,
+                          color: isSelected
+                              ? AppColors.primary
+                              : (isDark
+                                  ? const Color(0xFF0F0F14)
+                                  : Colors.grey.shade100),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFF4F5BD5)
-                                : Colors.grey.shade300,
+                                ? AppColors.primary
+                                : (isDark
+                                    ? Colors.white12
+                                    : Colors.grey.shade300),
                           ),
                         ),
                         child: Text(
@@ -781,7 +760,9 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                             fontWeight: FontWeight.w900,
                             color: isSelected
                                 ? Colors.white
-                                : Colors.grey.shade700,
+                                : (isDark
+                                    ? Colors.white70
+                                    : Colors.grey.shade700),
                           ),
                         ),
                       ),
@@ -824,11 +805,16 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                '${_startDate.year}/${_startDate.month}/${_startDate.day}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF4F5BD5),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    '${_startDate.year}/${_startDate.month}/${_startDate.day}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF4F5BD5),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -917,9 +903,10 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                 // 🎨 ڕەنگ
                 Text(
                   tr('ڕەنگ'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
+                    color: fg,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -946,7 +933,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isSelected
-                                ? Colors.black
+                                ? (isDark ? Colors.white : Colors.black)
                                 : Colors.transparent,
                             width: 3,
                           ),
@@ -968,7 +955,7 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                   value: _isFeatured,
                   onChanged: (v) => setState(() => _isFeatured = v),
                   title: Text(
-                    tr('ڕووداوی تایبەت ⭐'),
+                    tr('ڕووداوی تایبەت'),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
@@ -981,30 +968,27 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                   contentPadding: EdgeInsets.zero,
                 ),
 
-                const SizedBox(height: 20),
-
-                SizedBox(
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                    20, 8, 20, MediaQuery.paddingOf(context).bottom + 14),
+                child: SizedBox(
                   width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
+                  height: 52,
+                  child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F5BD5),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     onPressed: _loading ? null : _save,
-                    child: _loading
-                        ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                        : Text(
+                    icon: const Icon(Icons.check_circle_rounded),
+                    label: Text(
                       tr(isEditing ? 'نوێکردنەوە' : 'بڵاوکردنەوە'),
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
@@ -1013,8 +997,9 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
           ),
         ),
       ),
@@ -1022,27 +1007,40 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
   }
 
   Widget _buildField(
-      String label,
-      TextEditingController ctrl, {
-        int maxLines = 1,
-        TextInputType? keyboard,
-      }) {
+    String label,
+    TextEditingController ctrl, {
+    int maxLines = 1,
+    TextInputType? keyboard,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: ctrl,
       maxLines: maxLines,
       keyboardType: keyboard,
+      style: TextStyle(
+        fontSize: 13.5,
+        color: isDark ? Colors.white : Colors.black87,
+      ),
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
+        labelStyle: TextStyle(
+          fontSize: 12.5,
+          color: isDark ? Colors.white54 : Colors.grey.shade700,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.grey.shade300,
+          ),
         ),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 14,
-        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       ),
     );
   }
