@@ -22,6 +22,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
   bool _loading = true;
   List<Map<String, dynamic>> _departments = [];
   String _searchQuery = '';
+  String? _error;
   final TextEditingController _searchCtrl = TextEditingController();
 
   late AnimationController _entryController;
@@ -49,7 +50,12 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
   }
 
   Future<void> _loadDepartments() async {
-    if (mounted) setState(() => _loading = true);
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final res = await Supabase.instance.client
           .from('departments')
@@ -65,7 +71,12 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
       }
     } catch (e) {
       debugPrint('❌ Departments error: $e');
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _error = '$e';
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -540,7 +551,9 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
           ),
           const SizedBox(height: 16),
           AutoTranslate(
-            text: tr('هیچ فەرمانگەیەک نییە'),
+            text: _error != null
+                ? tr('فەرمانگەکان نەهێنران')
+                : tr('هیچ فەرمانگەیەک نییە'),
             lang: lang,
             style: TextStyle(
               fontSize: 16,
@@ -549,6 +562,26 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
             ),
             maxLines: 2,
           ),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              _error ?? tr('فەرمانگە و مامەڵەکانیان بەم زووانە زیاد دەکرێن'),
+              textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12.5,
+                color: isDark ? Colors.white54 : const Color(0xFF8A90A0),
+              ),
+            ),
+          ),
+          if (_error != null)
+            TextButton.icon(
+              onPressed: _loadDepartments,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(tr('دووبارە هەوڵبدەوە')),
+            ),
         ],
       ),
     );
