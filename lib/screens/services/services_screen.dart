@@ -16,6 +16,11 @@ import '../videos/user_videos.dart';
 /// 🧰 ناوەندی خزمەتگوزارییەکان — هەموو بەشەکان لە یەک شوێن.
 /// دیزاینی ئارام: هەر بەش لە یەک کارتدایە، ئایکۆنەکان بە یەک ڕەنگی سەرەکین
 /// (تەنها فریاکەوتن سوورە چونکە مانای تایبەتی هەیە).
+/// ڕەنگی هێمن بەپێی بەش (ئایکۆنەکان تەنها ڕەنگ دەگرن، نەک خشتی گەورە)
+const Color _kCity = AppColors.primary; // شین
+const Color _kMedia = Color(0xFFD9822B); // پرتەقاڵی
+const Color _kHelp = Color(0xFF0F9D7A); // سەوز
+
 class ServicesScreen extends StatelessWidget {
   final VoidCallback? onMenuTap;
 
@@ -38,24 +43,28 @@ class ServicesScreen extends StatelessWidget {
           title: tr('نەخشە'),
           subtitle: tr('گەڕەک و شوێنەکان لەسەر نەخشە'),
           icon: Icons.map_rounded,
+          color: _kCity,
           onTap: (c) => _open(c, const MapScreen()),
         ),
         _Service(
           title: tr('گەڕەکان'),
           subtitle: tr('زانیاری گەڕەکەکانی کەلار'),
           icon: Icons.location_city_rounded,
+          color: _kCity,
           onTap: (c) => _open(c, const NeighborhoodsScreen()),
         ),
         _Service(
           title: tr('بەشەکان'),
           subtitle: tr('خزمەتگوزارییەکانی شار'),
           icon: Icons.account_balance_rounded,
+          color: _kCity,
           onTap: (c) => _open(c, const DepartmentsScreen()),
         ),
         _Service(
           title: tr('ڕووداو و بۆنەکان'),
           subtitle: tr('چالاکییەکانی شارەکەمان'),
           icon: Icons.event_rounded,
+          color: _kCity,
           onTap: (c) => _open(c, const EventsScreen()),
         ),
       ]),
@@ -64,12 +73,14 @@ class ServicesScreen extends StatelessWidget {
           title: tr('گەلەری'),
           subtitle: tr('جوانترین وێنەکانی شار'),
           icon: Icons.photo_library_rounded,
+          color: _kMedia,
           onTap: (c) => _open(c, const GalleryScreen()),
         ),
         _Service(
           title: tr('ڤیدیۆکان'),
           subtitle: tr('ڤیدیۆ و ڕێنماییەکان'),
           icon: Icons.play_circle_rounded,
+          color: _kMedia,
           onTap: (c) => _open(c, const UserVideosScreen()),
         ),
       ]),
@@ -85,12 +96,14 @@ class ServicesScreen extends StatelessWidget {
           title: tr('ناردنی سکاڵا'),
           subtitle: tr('سکاڵا بۆ شارەوانی بنێرە'),
           icon: Icons.campaign_rounded,
+          color: _kHelp,
           onTap: (c) => ComplaintInstructionDialog.show(c),
         ),
         _Service(
           title: tr('پێشنیاری شوێن'),
           subtitle: tr('شوێنێکی نوێمان پێ بناسێنە'),
           icon: Icons.add_location_alt_rounded,
+          color: _kHelp,
           onTap: (c) => _open(c, const SuggestPlaceScreen()),
         ),
       ]),
