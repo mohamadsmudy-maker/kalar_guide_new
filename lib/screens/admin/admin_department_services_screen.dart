@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/tr.dart';
+import 'admin_department_service_editor.dart';
 
 /// 🏛️ شاشەی مامەڵەکانی فەرمانگە
 class AdminDepartmentServicesScreen extends StatefulWidget {
@@ -50,14 +51,29 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
   // ═══════════════════════════════════════════════════════════
   // ➕ زیادکردن / دەستکاریکردن
   // ═══════════════════════════════════════════════════════════
-  void _openEditor({Map<String, dynamic>? service}) {
-    showDialog(
+  Future<void> _openEditor({Map<String, dynamic>? service}) async {
+    final saved = await showModalBottomSheet<bool>(
       context: context,
-      builder: (_) => ServiceEditorDialog(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ServiceEditorSheet(
         departmentId: widget.department['id'],
         service: service,
+        color: _hexToColor(
+          widget.department['color']?.toString() ?? '#10B981',
+        ),
       ),
-    ).then((_) => _fetchServices());
+    );
+    if (saved != true) return;
+    await _fetchServices();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(tr('✅ پاشەکەوتکرا')),
+          backgroundColor: const Color(0xFF0F9D7A),
+        ),
+      );
+    }
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -192,7 +208,7 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
     final description = service['description']?.toString() ?? '';
     final duration = service['duration']?.toString() ?? '';
     final fees = service['fees'];
-    final documents = service['documents'];
+    final documents = serviceRequirementsOf(service);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -286,14 +302,14 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
             ),
           ],
 
-          if (documents is List && documents.isNotEmpty) ...[
+          if (documents.isNotEmpty) ...[
             const SizedBox(height: 10),
             Row(
               children: [
                 const Icon(Icons.description_outlined, size: 14, color: Color(0xFF0F9D7A)),
                 const SizedBox(width: 6),
                 Text(
-                  tr('بەڵگەنامە پێویستەکان:'),
+                  tr('پێداویستییەکان:'),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -404,281 +420,5 @@ class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesS
     } catch (_) {
       return const Color(0xFF1E88E5);
     }
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// 🎨 دیالۆگی زیادکردن / دەستکاریکردنی مامەڵە
-// ═══════════════════════════════════════════════════════════
-class ServiceEditorDialog extends StatefulWidget {
-  final dynamic departmentId;
-  final Map<String, dynamic>? service;
-
-  const ServiceEditorDialog({
-    super.key,
-    required this.departmentId,
-    this.service,
-  });
-
-  @override
-  State<ServiceEditorDialog> createState() => _ServiceEditorDialogState();
-}
-
-class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
-  late TextEditingController _titleKuCtrl;
-  late TextEditingController _titleArCtrl;
-  late TextEditingController _titleEnCtrl;
-  late TextEditingController _descriptionCtrl;
-  late TextEditingController _durationCtrl;
-  late TextEditingController _documentsCtrl;
-  late TextEditingController _feesCtrl;
-  late TextEditingController _notesCtrl;
-  bool _loading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final s = widget.service;
-    _titleKuCtrl = TextEditingController(text: s?['title_ku'] ?? '');
-    _titleArCtrl = TextEditingController(text: s?['title_ar'] ?? '');
-    _titleEnCtrl = TextEditingController(text: s?['title_en'] ?? '');
-    _descriptionCtrl = TextEditingController(text: s?['description'] ?? '');
-    _durationCtrl = TextEditingController(text: s?['duration'] ?? '');
-    _notesCtrl = TextEditingController(text: s?['notes'] ?? '');
-
-    // بەڵگەنامەکان وەک لیست
-    final docs = s?['documents'];
-    if (docs is List) {
-      _documentsCtrl = TextEditingController(text: docs.join('\n'));
-    } else {
-      _documentsCtrl = TextEditingController();
-    }
-
-    // نرخەکان وەک لیست
-    final fees = s?['fees'];
-    if (fees is List) {
-      _feesCtrl = TextEditingController(text: fees.join('\n'));
-    } else {
-      _feesCtrl = TextEditingController();
-    }
-  }
-
-  @override
-  void dispose() {
-    _titleKuCtrl.dispose();
-    _titleArCtrl.dispose();
-    _titleEnCtrl.dispose();
-    _descriptionCtrl.dispose();
-    _durationCtrl.dispose();
-    _documentsCtrl.dispose();
-    _feesCtrl.dispose();
-    _notesCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (_titleKuCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(tr('ناوی مامەڵە پێویستە')),
-          backgroundColor: const Color(0xFFD9822B),
-        ),
-      );
-      return;
-    }
-
-    setState(() => _loading = true);
-    try {
-      // بەڵگەنامەکان
-      final documents = _documentsCtrl.text
-          .split('\n')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-
-      // نرخەکان
-      final fees = _feesCtrl.text
-          .split('\n')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-
-      final data = {
-        'department_id': widget.departmentId,
-        'title_ku': _titleKuCtrl.text.trim(),
-        'title_ar': _titleArCtrl.text.trim(),
-        'title_en': _titleEnCtrl.text.trim(),
-        'description': _descriptionCtrl.text.trim(),
-        'duration': _durationCtrl.text.trim(),
-        'documents': documents,
-        'fees': fees,
-        'notes': _notesCtrl.text.trim(),
-        'is_active': true,
-        'updated_at': DateTime.now().toIso8601String(),
-      };
-
-      if (widget.service == null) {
-        await Supabase.instance.client
-            .from('department_services')
-            .insert(data);
-      } else {
-        await Supabase.instance.client
-            .from('department_services')
-            .update(data)
-            .eq('id', widget.service!['id']);
-      }
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(tr('✅ پاشەکەوتکرا')),
-            backgroundColor: const Color(0xFF0F9D7A),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isEditing = widget.service != null;
-
-    return Directionality(
-      textDirection: AppLang.direction,
-      child: Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.description_rounded,
-                      color: Color(0xFF1E88E5),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      tr(isEditing
-                          ? 'دەستکاریکردنی مامەڵە'
-                          : 'زیادکردنی مامەڵەی نوێ'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                _buildField(tr('ناوی کوردی *'), _titleKuCtrl),
-                const SizedBox(height: 10),
-                _buildField(tr('ناوی عەرەبی'), _titleArCtrl),
-                const SizedBox(height: 10),
-                _buildField(tr('ناوی ئینگلیزی'), _titleEnCtrl),
-                const SizedBox(height: 10),
-                _buildField(tr('وەسف'), _descriptionCtrl, maxLines: 3),
-                const SizedBox(height: 10),
-                _buildField(
-                  tr('ماوە (بۆ نموونە: ٣٠-٦٠ خولەک)'),
-                  _durationCtrl,
-                ),
-                const SizedBox(height: 10),
-                _buildField(
-                  tr('بەڵگەنامەکان (هەر دێرێک = یەک بەڵگەنامە)'),
-                  _documentsCtrl,
-                  maxLines: 5,
-                ),
-                const SizedBox(height: 10),
-                _buildField(
-                  tr('نرخەکان (هەر دێرێک = یەک نرخ)'),
-                  _feesCtrl,
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 10),
-                _buildField(tr('تێبینی'), _notesCtrl, maxLines: 2),
-
-                const SizedBox(height: 24),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E88E5),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: _loading ? null : _save,
-                    icon: _loading
-                        ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                        : const Icon(Icons.save_rounded),
-                    label: Text(
-                      tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildField(
-      String label,
-      TextEditingController ctrl, {
-        int maxLines = 1,
-      }) {
-    return TextField(
-      controller: ctrl,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade50,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 14,
-        ),
-      ),
-    );
   }
 }

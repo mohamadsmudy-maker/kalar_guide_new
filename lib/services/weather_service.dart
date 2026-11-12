@@ -4,7 +4,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ═══════════════════════════════════════════════════════════
 // 📦 Models
@@ -175,11 +174,6 @@ dynamic _at(List<dynamic>? l, int i) =>
 
 DateTime? _toTime(dynamic v) => v == null ? null : DateTime.tryParse('$v');
 
-String? _clean(dynamic v) {
-  final s = v?.toString().trim();
-  return (s == null || s.isEmpty) ? null : s;
-}
-
 // ═══════════════════════════════════════════════════════════
 // 🌤️ WeatherService (Singleton) — تاکە سەرچاوەی داتای کەشوهەوا
 // ═══════════════════════════════════════════════════════════
@@ -190,7 +184,6 @@ class WeatherService {
   static const double lat = 34.6189;
   static const double lon = 45.3156;
   static const Duration _timeout = Duration(seconds: 10);
-  static const Duration _officialMaxAge = Duration(hours: 3);
 
   final ValueNotifier<WeatherSnapshot?> snapshot = ValueNotifier(null);
   final ValueNotifier<bool> refreshing = ValueNotifier(false);
@@ -241,94 +234,22 @@ class WeatherService {
   }
 
   Future<WeatherSnapshot?> _load() async {
-    // هەر سێکیان بە هاوکات دەنێردرێن
+    // هەردووکیان بە هاوکات دەنێردرێن
     final liveF = _fetchLive();
-    final officialF = _fetchOfficial();
     final airF = _fetchAir();
     final live = await liveF;
-    final official = await officialF;
     final air = await airF;
 
-    if (live == null && official == null) return null;
-
-    final WeatherCurrent current;
-    if (official != null) {
-      final l = live?.current;
-
-      // "هەست پێکراو" بە هەمان جیاوازی پلەی فەرمی دەگوازرێتەوە
-      int? feels = l?.feels;
-      if (feels != null && l != null) feels += (official.temp - l.temp);
-
-      current = WeatherCurrent(
-        temp: official.temp,
-        feels: feels,
-        humidity: official.humidity ?? l?.humidity,
-        wind: official.wind ?? l?.wind,
-        windDir: l?.windDir,
-        gust: l?.gust,
-        pressure: l?.pressure,
-        code: l?.code,
-        cloud: l?.cloud,
-        visibilityKm: l?.visibilityKm,
-        uv: l?.uv,
-        isDay: l?.isDay ?? true,
-        textOverride: official.textOverride,
-        emojiOverride: official.emojiOverride,
-        updatedAt: official.updatedAt,
-        official: true,
-      );
-    } else {
-      current = live!.current;
-    }
+    if (live == null) return null;
 
     return WeatherSnapshot(
-      current: current,
-      hours: live?.hours ?? const [],
-      days: live?.days ?? const [],
+      current: live.current,
+      hours: live.hours,
+      days: live.days,
       air: air,
       fetchedAt: DateTime.now(),
-      nowLocal: live?.nowLocal ?? DateTime.now(),
+      nowLocal: live.nowLocal,
     );
-  }
-
-  // ─── 🏛️ داتای فەرمی (Supabase) ───
-  Future<WeatherCurrent?> _fetchOfficial() async {
-    try {
-      final res = await Supabase.instance.client
-          .from('weather')
-          .select()
-          .order('id', ascending: false)
-          .limit(1)
-          .maybeSingle()
-          .timeout(_timeout);
-
-      if (res == null) return null;
-
-      final updatedAt = _toTime(res['updated_at'])?.toLocal();
-
-      if (updatedAt != null &&
-          DateTime.now().difference(updatedAt) > _officialMaxAge) {
-        debugPrint('⚠️ داتای فەرمی کۆنە — Open-Meteo بەکاردێت');
-        return null;
-      }
-
-      final temp = _toInt(res['temperature']);
-      if (temp == null) return null;
-
-      return WeatherCurrent(
-        temp: temp,
-        humidity: _toInt(res['humidity']),
-        wind: _toInt(res['wind_speed']),
-        textOverride: _clean(res['condition_text']),
-        emojiOverride: _clean(res['icon_emoji']),
-        updatedAt: updatedAt ?? DateTime.now(),
-        official: true,
-      );
-    } catch (e) {
-      // ئەگەر Supabase ئامادە نەکرابێت یان هەڵە ڕووبدات
-      debugPrint('⚠️ Supabase weather error: $e');
-      return null;
-    }
   }
 
   // ─── 🌐 Open-Meteo ───

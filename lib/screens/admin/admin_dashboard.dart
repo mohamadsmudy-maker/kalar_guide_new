@@ -22,8 +22,6 @@ import 'admin_prayer_times.dart';
 import 'admin_translations.dart';
 import 'admin_osm_import.dart';
 import 'admin_place_suggestions.dart';
-import 'admin_weather.dart';
-import 'admin_notifications.dart';
 import 'admin_vendor_requests.dart';
 import 'admin_live_users.dart';
 import 'admin_complaint_instructions.dart';
@@ -598,14 +596,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           screen: () => const AdminCurrencyStationsScreen(),
         ),
         _DashItem(
-          id: 'weather',
-          icon: Icons.cloud_rounded,
-          color: blue,
-          title: tr('کەشوهەوا'),
-          subtitle: tr('نوێکردنەوەی پلەی گەرما و دۆخ'),
-          screen: () => const AdminWeatherScreen(),
-        ),
-        _DashItem(
           id: 'prayer_times',
           icon: Icons.mosque_rounded,
           color: blue,
@@ -616,14 +606,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         ),
       ]),
       _DashSection('system', tr('سیستەم'), [
-        _DashItem(
-          id: 'notifications',
-          icon: Icons.notifications_active_rounded,
-          color: blue,
-          title: tr('ناردنی ئاگاداری'),
-          subtitle: tr('ناردنی ئاگاداری بۆ بەکارهێنەران'),
-          screen: () => const AdminNotificationsScreen(),
-        ),
         _DashItem(
           id: 'translations',
           icon: Icons.translate_rounded,

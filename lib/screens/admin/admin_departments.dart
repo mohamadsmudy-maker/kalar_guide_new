@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'admin_department_place_picker.dart';
 import 'admin_department_services_screen.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../l10n/tr.dart';
 
 part 'admin_department_editor_sheet.dart';
-part 'admin_department_services.dart';
 
 /// 🏛️ شاشەی بەڕێوەبردنی فەرمانگەکان — ULTRA PRO V2
 class AdminDepartmentsScreen extends StatefulWidget {
@@ -132,6 +132,55 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // 📍 زیادکردن لە شوێنە تۆمارکراوەکان
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _addFromPlaces() async {
+    final place = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          DepartmentPlacePickerSheet(existingDepartments: _departments),
+    );
+    if (place == null) return;
+
+    final row = DepartmentPlaces.rowFromPlace(place);
+    final table = Supabase.instance.client.from('departments');
+    try {
+      Map<String, dynamic> created;
+      try {
+        created = await table.insert(row).select().single();
+      } on PostgrestException catch (e) {
+        // مایگرەیشنی place_id هێشتا جێبەجێ نەکراوە — بێ ئەو ستوونە زیاد بکە
+        if (!e.message.contains('place_id')) rethrow;
+        created =
+            await table.insert({...row}..remove('place_id')).select().single();
+      }
+
+      await _fetchDepartments();
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(tr('✅ فەرمانگە زیادکرا — ئێستا مامەڵەکانی زیاد بکە')),
+          backgroundColor: const Color(0xFF0F9D7A),
+        ),
+      );
+      // ڕاستەوخۆ بۆ زیادکردنی مامەڵەکانی ئەم فەرمانگەیە
+      await _openServicesManager(created);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(trf('هەڵە: {0}', [e])),
+            backgroundColor: const Color(0xFFDC3545),
+          ),
+        );
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // 🗑️ Delete
   // ═══════════════════════════════════════════════════════════
   Future<void> _deleteDepartment(Map<String, dynamic> department) async {
@@ -209,7 +258,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
   // 📋 بەڕێوەبردنی مامەڵەکان
   // ═══════════════════════════════════════════════════════════
   Future<void> _openServicesManager(Map<String, dynamic> dept) async {
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => AdminDepartmentServicesScreen(department: dept),
@@ -322,7 +371,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
             : FloatingActionButton.extended(
           backgroundColor: const Color(0xFF0F9D7A),
           foregroundColor: Colors.white,
-          onPressed: () => _openEditor(),
+          onPressed: _addFromPlaces,
           icon: const Icon(Icons.add_rounded),
           label: Text(
             tr('زیادکردنی فەرمانگە'),

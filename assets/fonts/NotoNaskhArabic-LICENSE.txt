@@ -1,0 +1,12 @@
+Noto Naskh Arabic
+Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is available with a FAQ at: https://openfontlicense.org
+
+Used by the PDF reports (complaints, fuel, currency) so they render offline.
+
+Roboto (Roboto-Regular.ttf)
+Copyright 2011 Google Inc. Licensed under the Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0). Used only as a fallback for
+Latin letters and punctuation that the Naskh subset does not contain.
