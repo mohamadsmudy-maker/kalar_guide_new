@@ -42,12 +42,15 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
   Future<void> _fetchStores() async {
     setState(() => _isLoading = true);
     try {
-      final res =
-          await Supabase.instance.client.from('dukan').select().order('name');
+      final res = await Supabase.instance.client
+          .from('dukan')
+          .select()
+          .order('name');
 
       final List<dynamic> rawList = res as List;
-      final stores =
-          rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final stores = rawList
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
 
       int withLoc = 0;
       for (var s in stores) {
@@ -79,15 +82,17 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
       final name = (store['name'] ?? '').toString().toLowerCase();
       final address = (store['address'] ?? '').toString().toLowerCase();
       final q = _searchQuery.toLowerCase();
-      final matchesSearch =
-          _searchQuery.isEmpty || name.contains(q) || address.contains(q);
+      final matchesSearch = _searchQuery.isEmpty ||
+          name.contains(q) ||
+          address.contains(q);
 
       if (!matchesSearch) return false;
       if (_filter == 'all') return true;
 
       final lat = double.tryParse(store['latitude']?.toString() ?? '');
       final lng = double.tryParse(store['longitude']?.toString() ?? '');
-      final hasLocation = lat != null && lng != null && lat != 0 && lng != 0;
+      final hasLocation =
+          lat != null && lng != null && lat != 0 && lng != 0;
 
       if (_filter == 'with_location') return hasLocation;
       if (_filter == 'without_location') return !hasLocation;
@@ -111,38 +116,41 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
   // ═══════════════════════════════════════════════════════════
   Future<void> _deleteStore(dynamic storeId) async {
     bool confirm = await showDialog(
-          context: context,
-          builder: (ctx) => Directionality(
-            textDirection: AppLang.direction,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: Text(tr("سڕینەوەی شوێن 🗑")),
-              content: Text(tr("ئایا دڵنیایت لە سڕینەوەی ئەم شوێنە؟")),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: Text(tr("نەخێر")),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC3545),
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: Text(tr("سڕینەوە")),
-                ),
-              ],
-            ),
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: AppLang.direction,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-        ) ??
+          title: Text(tr("سڕینەوەی شوێن 🗑")),
+          content: Text(tr("ئایا دڵنیایت لە سڕینەوەی ئەم شوێنە؟")),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(tr("نەخێر")),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC3545),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr("سڕینەوە")),
+            ),
+          ],
+        ),
+      ),
+    ) ??
         false;
 
     if (!confirm) return;
 
     try {
-      await Supabase.instance.client.from('dukan').delete().eq('id', storeId);
+      await Supabase.instance.client
+          .from('dukan')
+          .delete()
+          .eq('id', storeId);
       _fetchStores();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -155,9 +163,7 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(trf("هەڵە: {0}", [e])),
-              backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -247,7 +253,8 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                 ),
                 child: TextField(
                   controller: _searchCtrl,
-                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                  onChanged: (val) =>
+                      setState(() => _searchQuery = val.trim()),
                   decoration: InputDecoration(
                     hintText: tr("گەڕان بەدوای شوێنەکان..."),
                     hintStyle: const TextStyle(
@@ -261,16 +268,16 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                     ),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(
-                              Icons.close_rounded,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () {
-                              _searchCtrl.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        _searchCtrl.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
                         : null,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -351,30 +358,31 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
             Expanded(
               child: _isLoading
                   ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    )
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+              )
                   : filteredStores.isEmpty
-                      ? Center(
-                          child: Text(
-                            tr("هیچ شوێنێک نەدۆزرایەوە 📍"),
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                          itemCount: filteredStores.length,
-                          itemBuilder: (context, index) {
-                            return _buildStoreCard(
-                              filteredStores[index],
-                              lang,
-                            );
-                          },
-                        ),
+                  ? Center(
+                child: Text(
+                  tr("هیچ شوێنێک نەدۆزرایەوە 📍"),
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+                  : ListView.builder(
+                padding:
+                const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                itemCount: filteredStores.length,
+                itemBuilder: (context, index) {
+                  return _buildStoreCard(
+                    filteredStores[index],
+                    lang,
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -388,7 +396,8 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
   Widget _buildStoreCard(Map<String, dynamic> store, String lang) {
     final lat = double.tryParse(store['latitude']?.toString() ?? '');
     final lng = double.tryParse(store['longitude']?.toString() ?? '');
-    final hasLocation = lat != null && lng != null && lat != 0 && lng != 0;
+    final hasLocation =
+        lat != null && lng != null && lat != 0 && lng != 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

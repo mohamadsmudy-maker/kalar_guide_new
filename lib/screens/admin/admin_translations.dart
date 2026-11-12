@@ -17,8 +17,7 @@ class AdminTranslationsScreen extends StatefulWidget {
   const AdminTranslationsScreen({super.key});
 
   @override
-  State<AdminTranslationsScreen> createState() =>
-      _AdminTranslationsScreenState();
+  State<AdminTranslationsScreen> createState() => _AdminTranslationsScreenState();
 }
 
 class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
@@ -58,7 +57,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
       if (_missingMode) {
         final all = await _collectTexts();
         final have = <String>{};
-        for (var from = 0;; from += 1000) {
+        for (var from = 0; ; from += 1000) {
           final page = await _db
               .from('text_translations')
               .select('source')
@@ -77,10 +76,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
           ..sort();
         if (!mounted) return;
         setState(() {
-          _rows = [
-            for (final t in missing)
-              {'source': t, 'translation': '', '_new': true}
-          ];
+          _rows = [for (final t in missing) {'source': t, 'translation': '', '_new': true}];
           _loading = false;
         });
         return;
@@ -93,8 +89,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
       if (q.isNotEmpty) {
         query = query.or('source.ilike.%$q%,translation.ilike.%$q%');
       }
-      final res =
-          await query.order('updated_at', ascending: false).limit(_pageSize);
+      final res = await query.order('updated_at', ascending: false).limit(_pageSize);
       if (!mounted) return;
       setState(() {
         _rows = List<Map<String, dynamic>>.from(res as List);
@@ -129,8 +124,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
       builder: (ctx) => Directionality(
         textDirection: AppLang.direction,
         child: AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(tr('ڕاستکردنەوەی وەرگێڕان')),
           content: SingleChildScrollView(
             child: Column(
@@ -145,14 +139,12 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
                   ),
                   child: Directionality(
                     textDirection: TextDirection.rtl,
-                    child: Text('${row['source']}',
-                        style: const TextStyle(height: 1.5)),
+                    child: Text('${row['source']}', style: const TextStyle(height: 1.5)),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Directionality(
-                  textDirection:
-                      _lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
+                  textDirection: _lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
                   child: TextField(
                     controller: ctrl,
                     minLines: 1,
@@ -160,8 +152,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
                     autofocus: true,
                     decoration: InputDecoration(
                       labelText: _lang == 'en' ? 'English' : 'العربية',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
@@ -169,9 +160,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
             ),
           ),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(tr('پاشگەزبوونەوە'))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('پاشگەزبوونەوە'))),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
               child: Text(tr('پاشەکەوتکردن')),
@@ -264,12 +253,8 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
           content: Text(tr(
               'ناوی هەموو شوێن، ناونیشان، بەش و هەواڵەکان بۆ ئینگلیزی و عەرەبی وەردەگێڕدرێن. چەند خولەکێک دەخایەنێت؛ تا تەواو دەبێت ئەم شاشەیە دامەخە.')),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(tr('پاشگەزبوونەوە'))),
-            FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text(tr('دەستپێکردن'))),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('پاشگەزبوونەوە'))),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('دەستپێکردن'))),
           ],
         ),
       ),
@@ -277,8 +262,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     if (go != true || !mounted) return;
 
     final texts = await _collectTexts();
-    texts.removeWhere((t) =>
-        AppLang.lookup('en', t) != null); // پێشتر لە ناو ئەپدا وەرگێڕدراون
+    texts.removeWhere((t) => AppLang.lookup('en', t) != null); // پێشتر لە ناو ئەپدا وەرگێڕدراون
     if (!mounted) return;
 
     final progress = ValueNotifier<String>('');
@@ -307,8 +291,8 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
       done += await TranslationService.translateAllNow(
         texts.toList(),
         lang,
-        onProgress: (d, t) =>
-            progress.value = '${lang == 'en' ? 'English' : 'العربية'}: $d / $t',
+        onProgress: (d, t) => progress.value =
+            '${lang == 'en' ? 'English' : 'العربية'}: $d / $t',
       );
     }
     if (!mounted) return;
@@ -326,10 +310,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
             content: Text(
               '${tr(err.contains('429') ? 'سنووری بەخۆڕایی Gemini تەواو بووە. سبەی دووبارە هەوڵ بدەرەوە، یان لە Google AI Studio بیلینگ چالاک بکە.' : err.contains('GEMINI_API_KEY') || err.contains('API key') ? 'کلیلی GEMINI_API_KEY لە Supabase هەڵەیە یان دانەنراوە.' : 'سێرڤەری وەرگێڕان وەڵامی نەدایەوە. لۆگی فەنکشنی translate-text بپشکنە.')}\n\n$err',
             ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx), child: Text(tr('باشە')))
-            ],
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('باشە')))],
           ),
         ),
       );
@@ -348,9 +329,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
           title: Text(tr('سڕینەوەی وەرگێڕان')),
           content: Text(tr('ئەم دەقە جارێکی تر بە Gemini وەردەگێڕدرێتەوە.')),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(tr('پاشگەزبوونەوە'))),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('پاشگەزبوونەوە'))),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: AppColors.toneRed),
               onPressed: () => Navigator.pop(ctx, true),
@@ -377,14 +356,12 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final card = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final hairline =
-        isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8EDF3);
+    final hairline = isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8EDF3);
 
     return Directionality(
       textDirection: AppLang.direction,
       child: Scaffold(
-        backgroundColor:
-            isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: Text(tr('وەرگێڕانەکان')),
           backgroundColor: AppColors.primary,
@@ -395,8 +372,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
               onPressed: _translateAll,
               icon: const Icon(Icons.g_translate_rounded),
             ),
-            IconButton(
-                onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
+            IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
           ],
         ),
         body: Column(
@@ -420,14 +396,9 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
               child: SegmentedButton<bool>(
                 segments: [
+                  ButtonSegment(value: false, label: Text(tr('وەرگێڕدراو')), icon: const Icon(Icons.check_rounded)),
                   ButtonSegment(
-                      value: false,
-                      label: Text(tr('وەرگێڕدراو')),
-                      icon: const Icon(Icons.check_rounded)),
-                  ButtonSegment(
-                      value: true,
-                      label: Text(tr('وەرنەگێڕدراو')),
-                      icon: const Icon(Icons.edit_note_rounded)),
+                      value: true, label: Text(tr('وەرنەگێڕدراو')), icon: const Icon(Icons.edit_note_rounded)),
                 ],
                 showSelectedIcon: false,
                 selected: {_missingMode},
@@ -441,10 +412,8 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Text(
-                  trf('{0} دەق ماوە — کرتە لە هەر یەکێک بکە و وەرگێڕانەکەی بنووسە',
-                      [_rows.length]),
-                  style: const TextStyle(
-                      fontSize: 12.5, fontWeight: FontWeight.w700),
+                  trf('{0} دەق ماوە — کرتە لە هەر یەکێک بکە و وەرگێڕانەکەی بنووسە', [_rows.length]),
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
                 ),
               ),
             Padding(
@@ -490,9 +459,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     }
     if (_rows.isEmpty) {
       return Center(
-          child: Text(tr(_missingMode
-              ? 'هەموو دەقەکان وەرگێڕدراون ✅'
-              : 'هێشتا هیچ وەرگێڕانێک نییە')));
+          child: Text(tr(_missingMode ? 'هەموو دەقەکان وەرگێڕدراون ✅' : 'هێشتا هیچ وەرگێڕانێک نییە')));
     }
     return RefreshIndicator(
       onRefresh: _load,
@@ -531,14 +498,11 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            r['_new'] == true
-                                ? tr('کرتە بکە بۆ نووسینی وەرگێڕان')
-                                : '${r['translation']}',
+                            r['_new'] == true ? tr('کرتە بکە بۆ نووسینی وەرگێڕان') : '${r['translation']}',
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            textDirection: _lang == 'en'
-                                ? TextDirection.ltr
-                                : TextDirection.rtl,
+                            textDirection:
+                                _lang == 'en' ? TextDirection.ltr : TextDirection.rtl,
                             style: const TextStyle(color: AppColors.toneSlate),
                           ),
                         ],
@@ -547,11 +511,9 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
                     if (edited)
                       const Padding(
                         padding: EdgeInsetsDirectional.only(start: 8),
-                        child: Icon(Icons.verified_rounded,
-                            color: AppColors.toneTeal, size: 18),
+                        child: Icon(Icons.verified_rounded, color: AppColors.toneTeal, size: 18),
                       ),
-                    const Icon(Icons.edit_rounded,
-                        color: AppColors.toneSlate, size: 18),
+                    const Icon(Icons.edit_rounded, color: AppColors.toneSlate, size: 18),
                   ],
                 ),
               ),

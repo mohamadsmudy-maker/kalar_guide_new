@@ -92,9 +92,7 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(trf("هەڵە: {0}", [e])),
-              backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -135,133 +133,133 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
         body: _fetching
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.shade200),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline_rounded,
-                              color: Colors.blue.shade700,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                tr('ئەم داتایە بۆ ئەپی بەکارهێنەر پیشان دەدرێت. ئەگەر بەتاڵ بێت، ئەپ خۆی لە Live دەهێنێت.'),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.blue.shade900,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: Colors.blue.shade700,
+                        size: 20,
                       ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _tempCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: tr("پلەی گەرما (°C)"),
-                          prefixIcon: const Icon(
-                            Icons.thermostat,
-                            color: AppColors.primary,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          tr('ئەم داتایە بۆ ئەپی بەکارهێنەر پیشان دەدرێت. ئەگەر بەتاڵ بێت، ئەپ خۆی لە Live دەهێنێت.'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blue.shade900,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _conditionCtrl,
-                        decoration: InputDecoration(
-                          labelText: tr("دۆخ (ساماڵ، هەور، باران...)"),
-                          prefixIcon: const Icon(
-                            Icons.cloud,
-                            color: AppColors.primary,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _humidityCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: tr("شێدارى (%)"),
-                          prefixIcon: const Icon(
-                            Icons.water_drop,
-                            color: AppColors.primary,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _windCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: tr("خێرایی با (کم/س)"),
-                          prefixIcon: const Icon(
-                            Icons.air,
-                            color: AppColors.primary,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: _loading
-                            ? const Center(
-                                child: CircularProgressIndicator(),
-                              )
-                            : ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                onPressed: _save,
-                                child: Text(
-                                  tr("پاشەکەوتکردن ✅"),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
                       ),
                     ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _tempCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: tr("پلەی گەرما (°C)"),
+                    prefixIcon: const Icon(
+                      Icons.thermostat,
+                      color: AppColors.primary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _conditionCtrl,
+                  decoration: InputDecoration(
+                    labelText: tr("دۆخ (ساماڵ، هەور، باران...)"),
+                    prefixIcon: const Icon(
+                      Icons.cloud,
+                      color: AppColors.primary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _humidityCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: tr("شێدارى (%)"),
+                    prefixIcon: const Icon(
+                      Icons.water_drop,
+                      color: AppColors.primary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _windCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: tr("خێرایی با (کم/س)"),
+                    prefixIcon: const Icon(
+                      Icons.air,
+                      color: AppColors.primary,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: _loading
+                      ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                      : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: _save,
+                    child: Text(
+                      tr("پاشەکەوتکردن ✅"),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

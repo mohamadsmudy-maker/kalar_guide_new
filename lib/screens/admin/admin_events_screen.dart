@@ -56,8 +56,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
       // ✅ Cast بە تەواوی
       final pastList = (pastRes as List)
           .map((e) => AppEvent.fromJson(
-                Map<String, dynamic>.from(e as Map),
-              ))
+        Map<String, dynamic>.from(e as Map),
+      ))
           .toList();
 
       if (mounted) {
@@ -119,8 +119,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(tr('سڕینەوە')),
-          content:
-              Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [event.titleKu])),
+          content: Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [event.titleKu])),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -153,7 +152,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-            isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
+        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         body: NestedScrollView(
           headerSliverBuilder: (context, inner) => [
             SliverAppBar(
@@ -246,17 +245,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen>
           ],
           body: _loading
               ? const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF4F5BD5),
-                  ),
-                )
+            child: CircularProgressIndicator(
+              color: Color(0xFF4F5BD5),
+            ),
+          )
               : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildList(_upcoming, isUpcoming: true),
-                    _buildList(_past, isUpcoming: false),
-                  ],
-                ),
+            controller: _tabController,
+            children: [
+              _buildList(_upcoming, isUpcoming: true),
+              _buildList(_past, isUpcoming: false),
+            ],
+          ),
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(),
@@ -652,25 +651,30 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
       // ✅ Map ی پارێزراو بە type
       final Map<String, dynamic> data = {
         'title_ku': _titleKuCtrl.text.trim(),
-        'title_ar':
-            _titleArCtrl.text.trim().isEmpty ? null : _titleArCtrl.text.trim(),
-        'title_en':
-            _titleEnCtrl.text.trim().isEmpty ? null : _titleEnCtrl.text.trim(),
-        'description_ku':
-            _descKuCtrl.text.trim().isEmpty ? null : _descKuCtrl.text.trim(),
+        'title_ar': _titleArCtrl.text.trim().isEmpty
+            ? null
+            : _titleArCtrl.text.trim(),
+        'title_en': _titleEnCtrl.text.trim().isEmpty
+            ? null
+            : _titleEnCtrl.text.trim(),
+        'description_ku': _descKuCtrl.text.trim().isEmpty
+            ? null
+            : _descKuCtrl.text.trim(),
         'start_date': startDateTime.toIso8601String(),
         'end_date': _endDate?.toIso8601String(),
         'is_all_day': _isAllDay,
         'location_name': _locationCtrl.text.trim().isEmpty
             ? null
             : _locationCtrl.text.trim(),
-        'address':
-            _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
+        'address': _addressCtrl.text.trim().isEmpty
+            ? null
+            : _addressCtrl.text.trim(),
         'organizer': _organizerCtrl.text.trim().isEmpty
             ? null
             : _organizerCtrl.text.trim(),
-        'contact_phone':
-            _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+        'contact_phone': _phoneCtrl.text.trim().isEmpty
+            ? null
+            : _phoneCtrl.text.trim(),
         'image_url': _imageUrlCtrl.text.trim().isEmpty
             ? null
             : _imageUrlCtrl.text.trim(),
@@ -755,13 +759,14 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                         decoration: BoxDecoration(
                           gradient: isSelected
                               ? const LinearGradient(
-                                  colors: [
-                                    Color(0xFF4F5BD5),
-                                    Color(0xFFC2557A),
-                                  ],
-                                )
+                            colors: [
+                              Color(0xFF4F5BD5),
+                              Color(0xFFC2557A),
+                            ],
+                          )
                               : null,
-                          color: isSelected ? null : Colors.grey.shade100,
+                          color:
+                          isSelected ? null : Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
@@ -803,8 +808,8 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color:
-                                const Color(0xFF4F5BD5).withValues(alpha: 0.1),
+                            color: const Color(0xFF4F5BD5)
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: const Color(0xFF4F5BD5)
@@ -841,13 +846,13 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                             color: _isAllDay
                                 ? Colors.grey.shade100
                                 : const Color(0xFF4F5BD5)
-                                    .withValues(alpha: 0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _isAllDay
                                   ? Colors.grey.shade300
                                   : const Color(0xFF4F5BD5)
-                                      .withValues(alpha: 0.3),
+                                  .withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -940,17 +945,18 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                           color: color,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color:
-                                isSelected ? Colors.black : Colors.transparent,
+                            color: isSelected
+                                ? Colors.black
+                                : Colors.transparent,
                             width: 3,
                           ),
                         ),
                         child: isSelected
                             ? const Icon(
-                                Icons.check_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              )
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        )
                             : null,
                       ),
                     );
@@ -991,20 +997,20 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
                     onPressed: _loading ? null : _save,
                     child: _loading
                         ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                         : Text(
-                            tr(isEditing ? 'نوێکردنەوە' : 'بڵاوکردنەوە'),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 15,
-                            ),
-                          ),
+                      tr(isEditing ? 'نوێکردنەوە' : 'بڵاوکردنەوە'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -1016,11 +1022,11 @@ class _EventEditorDialogState extends State<_EventEditorDialog> {
   }
 
   Widget _buildField(
-    String label,
-    TextEditingController ctrl, {
-    int maxLines = 1,
-    TextInputType? keyboard,
-  }) {
+      String label,
+      TextEditingController ctrl, {
+        int maxLines = 1,
+        TextInputType? keyboard,
+      }) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,

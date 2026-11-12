@@ -95,7 +95,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-            isDark ? const Color(0xFF0F0F14) : const Color(0xFFF7F5F8),
+        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF7F5F8),
         appBar: AppBar(
           title: Text(
             tr("ناردنی ئاگاداری 🔔"),
@@ -138,7 +138,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     ),
                     filled: true,
                     fillColor:
-                        isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
+                    isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -160,7 +160,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                     ),
                     filled: true,
                     fillColor:
-                        isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
+                    isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -199,25 +199,25 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                   height: 50,
                   child: _isLoading
                       ? const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                          ),
-                        )
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                    ),
+                  )
                       : ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: _sendNotification,
-                          icon: const Icon(Icons.send_rounded),
-                          label: Text(
-                            tr("ناردن ✅"),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: _sendNotification,
+                    icon: const Icon(Icons.send_rounded),
+                    label: Text(
+                      tr("ناردن ✅"),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
               ],
             ),

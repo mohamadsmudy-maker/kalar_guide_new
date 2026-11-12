@@ -16,8 +16,7 @@ class AdminDepartmentServicesScreen extends StatefulWidget {
       _AdminDepartmentServicesScreenState();
 }
 
-class _AdminDepartmentServicesScreenState
-    extends State<AdminDepartmentServicesScreen> {
+class _AdminDepartmentServicesScreenState extends State<AdminDepartmentServicesScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _services = [];
 
@@ -116,9 +115,7 @@ class _AdminDepartmentServicesScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(trf('هەڵە: {0}', [e])),
-              backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -136,7 +133,7 @@ class _AdminDepartmentServicesScreenState
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-            isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
+        isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
             trf('مامەڵەکانی {0}', [name]),
@@ -159,19 +156,19 @@ class _AdminDepartmentServicesScreenState
         ),
         body: _isLoading
             ? Center(
-                child: CircularProgressIndicator(color: color),
-              )
+          child: CircularProgressIndicator(color: color),
+        )
             : _services.isEmpty
-                ? _buildEmptyState(isDark, color)
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _services.length,
-                    itemBuilder: (context, index) => _buildServiceCard(
-                      _services[index],
-                      isDark,
-                      color,
-                    ),
-                  ),
+            ? _buildEmptyState(isDark, color)
+            : ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _services.length,
+          itemBuilder: (context, index) => _buildServiceCard(
+            _services[index],
+            isDark,
+            color,
+          ),
+        ),
         floatingActionButton: FloatingActionButton.extended(
           backgroundColor: color,
           foregroundColor: Colors.white,
@@ -187,10 +184,10 @@ class _AdminDepartmentServicesScreenState
   }
 
   Widget _buildServiceCard(
-    Map<String, dynamic> service,
-    bool isDark,
-    Color color,
-  ) {
+      Map<String, dynamic> service,
+      bool isDark,
+      Color color,
+      ) {
     final title = service['title_ku']?.toString() ?? '';
     final description = service['description']?.toString() ?? '';
     final duration = service['duration']?.toString() ?? '';
@@ -275,8 +272,7 @@ class _AdminDepartmentServicesScreenState
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.schedule_rounded,
-                    size: 14, color: Color(0xFF1E88E5)),
+                const Icon(Icons.schedule_rounded, size: 14, color: Color(0xFF1E88E5)),
                 const SizedBox(width: 6),
                 Text(
                   trf('ماوە: {0}', [duration]),
@@ -294,8 +290,7 @@ class _AdminDepartmentServicesScreenState
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.description_outlined,
-                    size: 14, color: Color(0xFF0F9D7A)),
+                const Icon(Icons.description_outlined, size: 14, color: Color(0xFF0F9D7A)),
                 const SizedBox(width: 6),
                 Text(
                   tr('بەڵگەنامە پێویستەکان:'),
@@ -309,33 +304,30 @@ class _AdminDepartmentServicesScreenState
             ),
             const SizedBox(height: 6),
             ...documents.map((doc) => Padding(
-                  padding: const EdgeInsets.only(right: 20, bottom: 3),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.circle,
-                          size: 5, color: Color(0xFF0F9D7A)),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          doc.toString(),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color:
-                                isDark ? Colors.white70 : Colors.grey.shade700,
-                          ),
-                        ),
+              padding: const EdgeInsets.only(right: 20, bottom: 3),
+              child: Row(
+                children: [
+                  const Icon(Icons.circle, size: 5, color: Color(0xFF0F9D7A)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      doc.toString(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
                       ),
-                    ],
+                    ),
                   ),
-                )),
+                ],
+              ),
+            )),
           ],
 
           if (fees is List && fees.isNotEmpty) ...[
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.attach_money_rounded,
-                    size: 14, color: Color(0xFFD9822B)),
+                const Icon(Icons.attach_money_rounded, size: 14, color: Color(0xFFD9822B)),
                 const SizedBox(width: 6),
                 Text(
                   tr('نرخ:'),
@@ -349,25 +341,23 @@ class _AdminDepartmentServicesScreenState
             ),
             const SizedBox(height: 6),
             ...fees.map((fee) => Padding(
-                  padding: const EdgeInsets.only(right: 20, bottom: 3),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.circle,
-                          size: 5, color: Color(0xFFD9822B)),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          fee.toString(),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color:
-                                isDark ? Colors.white70 : Colors.grey.shade700,
-                          ),
-                        ),
+              padding: const EdgeInsets.only(right: 20, bottom: 3),
+              child: Row(
+                children: [
+                  const Icon(Icons.circle, size: 5, color: Color(0xFFD9822B)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      fee.toString(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
                       ),
-                    ],
+                    ),
                   ),
-                )),
+                ],
+              ),
+            )),
           ],
         ],
       ),
@@ -528,7 +518,9 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
       };
 
       if (widget.service == null) {
-        await Supabase.instance.client.from('department_services').insert(data);
+        await Supabase.instance.client
+            .from('department_services')
+            .insert(data);
       } else {
         await Supabase.instance.client
             .from('department_services')
@@ -548,9 +540,7 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(trf('هەڵە: {0}', [e])),
-              backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -602,6 +592,7 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
                   ],
                 ),
                 const SizedBox(height: 16),
+
                 _buildField(tr('ناوی کوردی *'), _titleKuCtrl),
                 const SizedBox(height: 10),
                 _buildField(tr('ناوی عەرەبی'), _titleArCtrl),
@@ -628,7 +619,9 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
                 ),
                 const SizedBox(height: 10),
                 _buildField(tr('تێبینی'), _notesCtrl, maxLines: 2),
+
                 const SizedBox(height: 24),
+
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -643,13 +636,13 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
                     onPressed: _loading ? null : _save,
                     icon: _loading
                         ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                         : const Icon(Icons.save_rounded),
                     label: Text(
                       tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
@@ -666,10 +659,10 @@ class _ServiceEditorDialogState extends State<ServiceEditorDialog> {
   }
 
   Widget _buildField(
-    String label,
-    TextEditingController ctrl, {
-    int maxLines = 1,
-  }) {
+      String label,
+      TextEditingController ctrl, {
+        int maxLines = 1,
+      }) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,

@@ -17,7 +17,8 @@ class AdminCurrencyPricesScreen extends StatefulWidget {
       _AdminCurrencyPricesScreenState();
 }
 
-class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
+class _AdminCurrencyPricesScreenState
+    extends State<AdminCurrencyPricesScreen> {
   bool _loading = true;
   Map<String, dynamic> _currencyPrices = {};
 
@@ -136,10 +137,7 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          trf('نرخی ئێستا — کڕین: {0} • فرۆشتن: {1}', [
-                            currentBuy.toStringAsFixed(0),
-                            currentSell.toStringAsFixed(0)
-                          ]),
+                          trf('نرخی ئێستا — کڕین: {0} • فرۆشتن: {1}', [currentBuy.toStringAsFixed(0), currentSell.toStringAsFixed(0)]),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
@@ -267,7 +265,8 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
                   currencyType: currencyType,
                   newBuyPrice: newBuy,
                   newSellPrice: newSell,
-                  updatedByName: AuthSessionManager.userName ?? 'بەکارهێنەر',
+                  updatedByName:
+                  AuthSessionManager.userName ?? 'بەکارهێنەر',
                   notes: notesCtrl.text.trim().isEmpty
                       ? null
                       : notesCtrl.text.trim(),
@@ -279,8 +278,7 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
                 } else {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
-                      content: Text(
-                          result.messageFor(admin: AuthSessionManager.isAdmin)),
+                      content: Text(result.messageFor(admin: AuthSessionManager.isAdmin)),
                       duration: const Duration(seconds: 8),
                       backgroundColor: const Color(0xFFDC3545),
                       behavior: SnackBarBehavior.floating,
@@ -335,7 +333,7 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-            isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
+        isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
             tr(name),
@@ -359,21 +357,21 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
         ),
         body: _loading
             ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
-              )
+          child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
+        )
             : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildStationHeader(name, address),
-                  const SizedBox(height: 20),
-                  _buildSectionTitle(tr('جۆرەکانی دراو')),
-                  const SizedBox(height: 12),
-                  ...currencyTypes.map(
-                    (type) => _buildPriceCard(type, isDark),
-                  ),
-                  const SizedBox(height: 30),
-                ],
-              ),
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildStationHeader(name, address),
+            const SizedBox(height: 20),
+            _buildSectionTitle(tr('جۆرەکانی دراو')),
+            const SizedBox(height: 12),
+            ...currencyTypes.map(
+                  (type) => _buildPriceCard(type, isDark),
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }
@@ -502,10 +500,12 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
     final color = _hexToColor(type['color'] as String);
 
     final data = _currencyPrices[currencyType];
-    final buyPrice =
-        (data is Map) ? (data['buy'] as num?)?.toDouble() ?? 0 : 0.0;
-    final sellPrice =
-        (data is Map) ? (data['sell'] as num?)?.toDouble() ?? 0 : 0.0;
+    final buyPrice = (data is Map)
+        ? (data['buy'] as num?)?.toDouble() ?? 0
+        : 0.0;
+    final sellPrice = (data is Map)
+        ? (data['sell'] as num?)?.toDouble() ?? 0
+        : 0.0;
     final hasPrice = buyPrice > 0 || sellPrice > 0;
 
     return GestureDetector(
@@ -567,8 +567,9 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
-                          color:
-                              isDark ? Colors.white : const Color(0xFF1A1A2E),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF1A1A2E),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -603,8 +604,8 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color:
-                              const Color(0xFF1E88E5).withValues(alpha: 0.15),
+                          color: const Color(0xFF1E88E5)
+                              .withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -628,9 +629,9 @@ class _AdminCurrencyPricesScreenState extends State<AdminCurrencyPricesScreen> {
                             colors: hasPrice
                                 ? [color, color.withValues(alpha: 0.8)]
                                 : [
-                                    Colors.grey.shade400,
-                                    Colors.grey.shade500,
-                                  ],
+                              Colors.grey.shade400,
+                              Colors.grey.shade500,
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(10),
                         ),

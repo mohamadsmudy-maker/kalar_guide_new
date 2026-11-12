@@ -207,10 +207,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              trf('{0} بۆ {1}', [
-                                _formatDate(_fromDate),
-                                _formatDate(_toDate)
-                              ]),
+                              trf('{0} بۆ {1}', [_formatDate(_fromDate), _formatDate(_toDate)]),
                               style: const TextStyle(
                                 color: Color(0xFF0F1421),
                                 fontSize: 13,
@@ -247,14 +244,11 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                   const SizedBox(height: 20),
 
                   // ═══ لایەنی پەیوەندیدار ═══
-                  _buildSection(
-                      tr('لایەنی پەیوەندیدار'), Icons.account_balance_rounded),
+                  _buildSection(tr('لایەنی پەیوەندیدار'), Icons.account_balance_rounded),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF0F0F14)
-                          : Colors.grey.shade50,
+                      color: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -263,27 +257,22 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                         isExpanded: true,
                         hint: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(tr('هەموو لایەنەکان'),
-                              style: const TextStyle(fontSize: 13)),
+                          child: Text(tr('هەموو لایەنەکان'), style: const TextStyle(fontSize: 13)),
                         ),
                         items: [
                           DropdownMenuItem(
                             value: null,
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              child: Text(tr('هەموو لایەنەکان'),
-                                  style: const TextStyle(fontSize: 13)),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(tr('هەموو لایەنەکان'), style: const TextStyle(fontSize: 13)),
                             ),
                           ),
                           ..._authorities.map(
-                            (a) => DropdownMenuItem(
+                                (a) => DropdownMenuItem(
                               value: a,
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: Text(tr(a),
-                                    style: const TextStyle(fontSize: 13)),
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(tr(a), style: const TextStyle(fontSize: 13)),
                               ),
                             ),
                           ),
@@ -296,30 +285,25 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                   const SizedBox(height: 20),
 
                   // ═══ فلتەرە زیادەکان ═══
-                  _buildSection(
-                      tr('فلتەرە زیادەکان'), Icons.filter_alt_rounded),
+                  _buildSection(tr('فلتەرە زیادەکان'), Icons.filter_alt_rounded),
                   const SizedBox(height: 8),
                   SwitchListTile(
                     value: _onlyWithVoice,
                     onChanged: (v) => setState(() => _onlyWithVoice = v),
                     title: Text(
                       tr('تەنها دەنگ هەیە'),
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
-                    secondary:
-                        const Icon(Icons.mic_rounded, color: Color(0xFF1E88E5)),
+                    secondary: const Icon(Icons.mic_rounded, color: Color(0xFF1E88E5)),
                   ),
                   SwitchListTile(
                     value: _onlyWithImages,
                     onChanged: (v) => setState(() => _onlyWithImages = v),
                     title: Text(
                       tr('تەنها وێنە هەیە'),
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
-                    secondary: const Icon(Icons.image_rounded,
-                        color: Color(0xFFC2557A)),
+                    secondary: const Icon(Icons.image_rounded, color: Color(0xFFC2557A)),
                   ),
 
                   const SizedBox(height: 20),
@@ -346,8 +330,7 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
                         onPressed: () {
                           setState(() {
                             _sortBy = 'newest';
-                            _fromDate = DateTime.now()
-                                .subtract(const Duration(days: 30));
+                            _fromDate = DateTime.now().subtract(const Duration(days: 30));
                             _toDate = DateTime.now();
                             _authority = null;
                             _statuses.clear();
@@ -423,11 +406,11 @@ class _ComplaintFilterSheetState extends State<ComplaintFilterSheet> {
   }
 
   Widget _buildSortOption(
-    String label,
-    String value,
-    IconData icon,
-    String subtitle,
-  ) {
+      String label,
+      String value,
+      IconData icon,
+      String subtitle,
+      ) {
     final isSelected = _sortBy == value;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

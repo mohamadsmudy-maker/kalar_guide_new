@@ -97,8 +97,7 @@ class _AdminPlaceSuggestionsScreenState
       MaterialPageRoute(
         builder: (_) => AddStoreScreen(prefill: {
           'name': s['name'],
-          'category':
-              _categories.contains(s['category']) ? s['category'] : null,
+          'category': _categories.contains(s['category']) ? s['category'] : null,
           'phone': s['phone'],
           'address': s['address'],
           'description': s['note'],

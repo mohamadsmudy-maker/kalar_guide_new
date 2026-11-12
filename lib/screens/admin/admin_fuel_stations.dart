@@ -115,7 +115,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-            isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
+        isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
             tr(role == 'vendor' ? 'بەنزینخانەکەم' : 'بەڕێوەبردنی سووتەمەنی'),
@@ -134,13 +134,13 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
             IconButton(
               icon: _generatingPdf
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFFD9822B),
-                      ),
-                    )
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFFD9822B),
+                ),
+              )
                   : const Icon(Icons.picture_as_pdf_rounded),
               tooltip: tr('ڕاپۆرتی PDF'),
               onPressed: _generatingPdf ? null : _generatePdf,
@@ -153,102 +153,104 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
         ),
         body: _loading
             ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFFD9822B)),
-              )
+          child: CircularProgressIndicator(color: Color(0xFFD9822B)),
+        )
             : RefreshIndicator(
-                color: const Color(0xFFD9822B),
-                onRefresh: _loadAllData,
-                child: CustomScrollView(
-                  slivers: [
-                    // ═══════════════════════════════════════
-                    // 📊 Chart ی گشتی
-                    // ═══════════════════════════════════════
-                    if (_allHistory.isNotEmpty)
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                          child: MultiFuelChartWidget(
-                            history: _allHistory,
-                            isDark: isDark,
-                          ),
-                        ),
-                      ),
-
-                    // ═══════════════════════════════════════
-                    // 🔍 گەڕان
-                    // ═══════════════════════════════════════
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        child: _buildSearchBar(isDark),
-                      ),
+          color: const Color(0xFFD9822B),
+          onRefresh: _loadAllData,
+          child: CustomScrollView(
+            slivers: [
+              // ═══════════════════════════════════════
+              // 📊 Chart ی گشتی
+              // ═══════════════════════════════════════
+              if (_allHistory.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: MultiFuelChartWidget(
+                      history: _allHistory,
+                      isDark: isDark,
                     ),
+                  ),
+                ),
 
-                    // ═══════════════════════════════════════
-                    // 🏷️ فلتەر
-                    // ═══════════════════════════════════════
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                        child: _buildTypeFilter(isDark),
-                      ),
-                    ),
-
-                    // ═══════════════════════════════════════
-                    // 📋 ئاماری ئەنجام
-                    // ═══════════════════════════════════════
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                        child: _buildResultCount(isDark),
-                      ),
-                    ),
-
-                    // ═══════════════════════════════════════
-                    // 🏢 لیستی بەنزینخانەکان
-                    // ═══════════════════════════════════════
-                    if (_filteredStations.isEmpty)
-                      SliverFillRemaining(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.local_gas_station_rounded,
-                                size: 80,
-                                color:
-                                    isDark ? Colors.white24 : Colors.grey[300],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                tr('هیچ بەنزینخانەیەک نەدۆزرایەوە'),
-                                style: TextStyle(
-                                  color: isDark ? Colors.white54 : Colors.grey,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) => _buildStationCard(
-                              _filteredStations[index],
-                              isDark,
-                              lang,
-                            ),
-                            childCount: _filteredStations.length,
-                          ),
-                        ),
-                      ),
-                  ],
+              // ═══════════════════════════════════════
+              // 🔍 گەڕان
+              // ═══════════════════════════════════════
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: _buildSearchBar(isDark),
                 ),
               ),
+
+              // ═══════════════════════════════════════
+              // 🏷️ فلتەر
+              // ═══════════════════════════════════════
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: _buildTypeFilter(isDark),
+                ),
+              ),
+
+              // ═══════════════════════════════════════
+              // 📋 ئاماری ئەنجام
+              // ═══════════════════════════════════════
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: _buildResultCount(isDark),
+                ),
+              ),
+
+              // ═══════════════════════════════════════
+              // 🏢 لیستی بەنزینخانەکان
+              // ═══════════════════════════════════════
+              if (_filteredStations.isEmpty)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.local_gas_station_rounded,
+                          size: 80,
+                          color: isDark
+                              ? Colors.white24
+                              : Colors.grey[300],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          tr('هیچ بەنزینخانەیەک نەدۆزرایەوە'),
+                          style: TextStyle(
+                            color:
+                            isDark ? Colors.white54 : Colors.grey,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                          (context, index) => _buildStationCard(
+                        _filteredStations[index],
+                        isDark,
+                        lang,
+                      ),
+                      childCount: _filteredStations.length,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -283,12 +285,12 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    _searchCtrl.clear();
-                    setState(() => _searchQuery = '');
-                  },
-                )
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              _searchCtrl.clear();
+              setState(() => _searchQuery = '');
+            },
+          )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -310,16 +312,8 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
       {'key': 'super', 'label': 'سوپەر', 'color': const Color(0xFFDC3545)},
       {'key': 'muhassen', 'label': 'محەسەن', 'color': const Color(0xFFD9822B)},
       {'key': 'oil', 'label': 'زەیت', 'color': const Color(0xFF0F9D7A)},
-      {
-        'key': 'iraqi_gas',
-        'label': 'گازی عێراقی',
-        'color': const Color(0xFF0F9D7A)
-      },
-      {
-        'key': 'iranian_gas',
-        'label': 'گازی ئێرانی',
-        'color': const Color(0xFF4F5BD5)
-      },
+      {'key': 'iraqi_gas', 'label': 'گازی عێراقی', 'color': const Color(0xFF0F9D7A)},
+      {'key': 'iranian_gas', 'label': 'گازی ئێرانی', 'color': const Color(0xFF4F5BD5)},
     ];
 
     return SizedBox(
@@ -344,8 +338,8 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? LinearGradient(
-                        colors: [color, color.withValues(alpha: 0.7)],
-                      )
+                  colors: [color, color.withValues(alpha: 0.7)],
+                )
                     : null,
                 color: isSelected
                     ? null
@@ -455,10 +449,10 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
   // 🎴 Station Card
   // ═══════════════════════════════════════════════════════════
   Widget _buildStationCard(
-    Map<String, dynamic> station,
-    bool isDark,
-    String lang,
-  ) {
+      Map<String, dynamic> station,
+      bool isDark,
+      String lang,
+      ) {
     final name = station['name']?.toString() ?? 'بەنزینخانە';
     final address = station['address']?.toString();
     final isVerified = station['is_verified'] == true;
@@ -483,8 +477,8 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
             color: isVerified
                 ? const Color(0xFF1E88E5).withValues(alpha: 0.3)
                 : (isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.grey.shade200),
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.grey.shade200),
             width: isVerified ? 1.5 : 1,
           ),
           boxShadow: [
@@ -555,7 +549,8 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                      color:
+                      isDark ? Colors.white : const Color(0xFF1A1A2E),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -567,7 +562,8 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                         Icon(
                           Icons.location_on_rounded,
                           size: 13,
-                          color: isDark ? Colors.white54 : Colors.grey.shade600,
+                          color:
+                          isDark ? Colors.white54 : Colors.grey.shade600,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
