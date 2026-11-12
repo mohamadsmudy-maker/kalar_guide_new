@@ -1,4 +1,5 @@
 // lib/screens/home/home_screen.dart
+import '../search/global_search_screen.dart';
 import 'dart:async';
 import 'dart:ui' show PathMetric;
 
@@ -27,9 +28,8 @@ const int _kPrecacheCount = 3;
 
 class HomeScreen extends ConsumerStatefulWidget {
   final VoidCallback? onMenuTap;
-  final VoidCallback? onSearchTap;
 
-  const HomeScreen({super.key, this.onMenuTap, this.onSearchTap});
+  const HomeScreen({super.key, this.onMenuTap});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -93,12 +93,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _openSearch() {
     HapticFeedback.selectionClick();
-    final cb = widget.onSearchTap;
-    if (cb != null) {
-      cb();
-    } else {
-      Navigator.pushNamed(context, '/search');
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const GlobalSearchScreen()),
+    );
   }
 
   void _openScreen(Widget screen, {String? analyticsName}) {

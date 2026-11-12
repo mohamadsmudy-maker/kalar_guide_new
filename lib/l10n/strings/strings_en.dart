@@ -1900,4 +1900,13 @@ const Map<String, String> stringsEn = {
   'ڤیدیۆکان نەهێنران': 'Could not load videos',
   'ڤیدیۆکە سڕایەوە': 'Video deleted',
   'سکاڵاکان نەهێنران': 'Could not load complaints',
+  'بەشەکانی ئەپ': 'App sections',
+  'خێرا بچۆ بۆ': 'Quick access',
+  'داتاکان نەهێنران — تەنها بەشەکانی ئەپ دەگەڕێن': 'Could not load data — only app sections are searchable',
+  'قیبلەنما': 'Qibla finder',
+  'نرخی دراو': 'Currency rates',
+  'نرخی سووتەمەنی': 'Fuel prices',
+  'وشەیەکی کورتتر یان جیاواز تاقی بکەرەوە': 'Try a shorter or different word',
+  'گەڕان بۆ شوێن، مامەڵە، گەڕەک...': 'Search places, transactions, neighborhoods...',
+  'گەڕانەکانی پێشوو': 'Recent searches',
 };
