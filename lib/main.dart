@@ -47,6 +47,7 @@ import 'screens/gallery/gallery_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/services/services_screen.dart';
+import 'screens/legal/privacy_policy_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -1006,6 +1007,14 @@ class _AppDrawer extends StatelessWidget {
                           title: _t('drawer_about', 'دەربارەی من 👨‍💻'),
                           onTap: () =>
                               _go(context, screen: const AboutScreen()),
+                        ),
+                        _item(
+                          context,
+                          icon: Icons.privacy_tip_rounded,
+                          color: const Color(0xFF5B6B82),
+                          title: tr('سیاسەتی تایبەتمەندی'),
+                          onTap: () =>
+                              _go(context, screen: const PrivacyPolicyScreen()),
                         ),
                         const Divider(height: 20),
                         if (!isLogged)
