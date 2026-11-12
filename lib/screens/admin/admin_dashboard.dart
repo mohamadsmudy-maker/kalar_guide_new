@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 
@@ -30,7 +29,6 @@ import 'admin_live_users.dart';
 import 'admin_complaint_instructions.dart';
 import 'admin_news.dart';
 import 'admin_database_viewer.dart';
-import 'admin_banners.dart';
 import 'admin_videos.dart';
 // ✅ گەلەری ئەدمین
 import 'admin_gallery.dart';
@@ -53,12 +51,6 @@ const Duration _kAutoRefresh = Duration(seconds: 90);
 /// If the app was in the background longer than this, refresh on resume
 const Duration _kStaleAfter = Duration(seconds: 60);
 
-/// How many "recently used" tools to remember
-const int _kMaxRecents = 4;
-
-const String _kPrefCollapsed = 'admin_dash_collapsed';
-const String _kPrefRecents = 'admin_dash_recents';
-
 const Color _kAppBarColor = Color(0xFF1A1B2E);
 
 /// 🎨 Theme palette
@@ -77,12 +69,12 @@ class _Palette {
       isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade200;
 
   List<BoxShadow> shadow([double light = 0.04]) => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: isDark ? 0.3 : light),
-      blurRadius: 12,
-      offset: const Offset(0, 4),
-    ),
-  ];
+        BoxShadow(
+          color: Colors.black.withValues(alpha: isDark ? 0.3 : light),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ];
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -126,14 +118,12 @@ class _DashSection {
 class _Entry extends StatelessWidget {
   final Animation<double> animation;
   final int index;
-  final Offset from;
   final Widget child;
 
   const _Entry({
     required this.animation,
     required this.index,
     required this.child,
-    this.from = const Offset(0, 20),
   });
 
   @override
@@ -146,7 +136,7 @@ class _Entry extends StatelessWidget {
         final raw = ((animation.value - delay) / 0.4).clamp(0.0, 1.0);
         final t = Curves.easeOutCubic.transform(raw);
         return Transform.translate(
-          offset: Offset(from.dx * (1 - t), from.dy * (1 - t)),
+          offset: Offset(0, 20 * (1 - t)),
           child: Opacity(opacity: t, child: ch),
         );
       },
@@ -191,12 +181,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   Timer? _realtimeDebounce;
   RealtimeChannel? _channel;
 
-  /// Section ids the admin collapsed (persisted)
-  final Set<String> _collapsed = {};
-
-  /// Most recent first
-  List<String> _recentIds = [];
-
   late final AnimationController _headerController;
   late final AnimationController _pulseController;
   late final AnimationController _shimmerController;
@@ -240,7 +224,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
     _headerController.forward();
     _entryController.forward();
-    _restorePrefs();
     _loadData();
     _watchLiveUsers();
     _subscribeRealtime();
@@ -301,48 +284,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     _entryController.dispose();
     _searchCtrl.dispose();
     super.dispose();
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 💾 Preferences (collapsed sections + recent tools)
-  // ═══════════════════════════════════════════════════════════
-  Future<void> _restorePrefs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final collapsed = prefs.getStringList(_kPrefCollapsed) ?? const [];
-      final recents = prefs.getStringList(_kPrefRecents) ?? const [];
-      if (!mounted) return;
-      setState(() {
-        _collapsed
-          ..clear()
-          ..addAll(collapsed);
-        _recentIds = recents.take(_kMaxRecents).toList();
-      });
-    } catch (e) {
-      debugPrint('⚠️ restore prefs: $e');
-    }
-  }
-
-  Future<void> _saveCollapsed() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_kPrefCollapsed, _collapsed.toList());
-    } catch (_) {}
-  }
-
-  Future<void> _saveRecents() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_kPrefRecents, _recentIds);
-    } catch (_) {}
-  }
-
-  void _rememberRecent(String id) {
-    final next = [id, ..._recentIds.where((e) => e != id)]
-        .take(_kMaxRecents)
-        .toList();
-    setState(() => _recentIds = next);
-    _saveRecents();
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -414,15 +355,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       _loadError = failed == 0
           ? null
           : (failed == results.length
-          ? 'نەتوانرا ئامارەکان بهێنرێن. پەیوەندی ئینتەرنێتەکەت بپشکنە.'
-          : trf('بەشێک لە ئامارەکان نەهێنران ({0} لە {1}).', [_ku(failed), _ku(results.length)]));
+              ? 'نەتوانرا ئامارەکان بهێنرێن. پەیوەندی ئینتەرنێتەکەت بپشکنە.'
+              : trf('بەشێک لە ئامارەکان نەهێنران ({0} لە {1}).',
+                  [_ku(failed), _ku(results.length)]));
     });
   }
 
   void _watchLiveUsers() {
     try {
       _onlineSub = PresenceService.watchOnlineCount().listen(
-            (count) {
+        (count) {
           if (mounted) setState(() => _onlineUsers = count);
         },
         onError: (error) => debugPrint('⚠️ Live users stream error: $error'),
@@ -447,17 +389,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       _channel = Supabase.instance.client
           .channel('admin-dashboard-live')
           .onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: 'public',
-        table: 'complaints',
-        callback: onChange,
-      )
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'complaints',
+            callback: onChange,
+          )
           .onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: 'public',
-        table: 'app_users',
-        callback: onChange,
-      )
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'app_users',
+            callback: onChange,
+          )
           .subscribe();
     } catch (e) {
       debugPrint('⚠️ realtime unavailable: $e');
@@ -478,7 +420,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   Future<void> _open(_DashItem item) async {
-    _rememberRecent(item.id);
     await _push(item.screen());
   }
 
@@ -486,9 +427,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   // 🧰 Helpers
   // ═══════════════════════════════════════════════════════════
   String _ku(Object n) => n.toString().replaceAllMapped(
-    RegExp(r'\d'),
+        RegExp(r'\d'),
         (m) => '٠١٢٣٤٥٦٧٨٩'[int.parse(m[0]!)],
-  );
+      );
 
   /// Makes Arabic / Kurdish letter variants match each other in search.
   String _norm(String s) => s
@@ -512,12 +453,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   // 📋 Sections data
   // ═══════════════════════════════════════════════════════════
   List<_DashSection> _buildSections(bool isAdmin) {
+    const red = AppColors.red;
+    const blue = AppColors.primary;
     final sections = <_DashSection>[
-      _DashSection('complaints', '🔥 بەشی گرنگ', [
+      _DashSection('complaints', tr('سکاڵاکان'), [
         _DashItem(
           id: 'complaints',
           icon: Icons.assignment_rounded,
-          color: const Color(0xFFDC3545),
+          color: red,
           title: tr('بەڕێوەبردنی سکاڵاکان'),
           subtitle: tr('بینین و جێبەجێکردنی سکاڵاکان'),
           badge: _pendingComplaints,
@@ -527,35 +470,69 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'complaints_map',
           icon: Icons.map_rounded,
-          color: const Color(0xFFC2557A),
+          color: blue,
           title: tr('نەخشەی گشتی سکاڵاکان'),
           subtitle: tr('بینینی گشت سکاڵاکان لەسەر نەخشە'),
           screen: () => const AllComplaintsMapScreen(),
         ),
         _DashItem(
           id: 'complaint_instructions',
-          icon: Icons.campaign_rounded,
-          color: const Color(0xFFD9822B),
+          icon: Icons.help_center_rounded,
+          color: blue,
           title: tr('ڕێنماییەکانی سکاڵا'),
           subtitle: tr('دەستکاری و گۆڕینی پۆپئاپی سکاڵا'),
           screen: () => const AdminComplaintInstructionsListScreen(),
         ),
       ]),
-      _DashSection('stores', '🏪 بەڕێوەبردنی شوێن و فەرمانگە', [
+      _DashSection('content', tr('ناوەڕۆک'), [
+        _DashItem(
+          id: 'news',
+          icon: Icons.newspaper_rounded,
+          color: blue,
+          title: tr('هەواڵەکان'),
+          subtitle: tr('زیادکردن و دەستکاری هەواڵەکان'),
+          screen: () => const AdminNewsScreen(),
+        ),
+        _DashItem(
+          id: 'gallery',
+          icon: Icons.photo_library_rounded,
+          color: blue,
+          title: tr('گەلەری'),
+          subtitle: tr('زیادکردن و دەستکاریکردنی وێنەکان'),
+          screen: () => const AdminGallery(),
+        ),
+        _DashItem(
+          id: 'videos',
+          icon: Icons.play_circle_rounded,
+          color: blue,
+          title: tr('ڤیدیۆکان'),
+          subtitle: tr('زیادکردن و دەستکاری ڤیدیۆکان'),
+          screen: () => const AdminVideosScreen(),
+        ),
+        _DashItem(
+          id: 'events',
+          icon: Icons.event_rounded,
+          color: blue,
+          title: tr('ڕووداو و بۆنەکان'),
+          subtitle: tr('زیادکردن و دەستکاری ڕووداوەکان'),
+          screen: () => const AdminEventsScreen(),
+        ),
+      ]),
+      _DashSection('places', tr('شوێن و فەرمانگە'), [
         _DashItem(
           id: 'stores',
           icon: Icons.storefront_rounded,
-          color: const Color(0xFF1E88E5),
-          title: tr('بەڕێوەبردنی شوێنەکان'),
+          color: blue,
+          title: tr('شوێنەکان'),
           subtitle: tr('سەرجەم شوێنە تۆمارکراوەکان'),
           badge: _totalStores,
           screen: () => const AdminStoresScreen(),
         ),
         _DashItem(
           id: 'departments',
-          icon: Icons.business_rounded,
-          color: const Color(0xFF0F9D7A),
-          title: tr('بەڕێوەبردنی فەرمانگەکان'),
+          icon: Icons.account_balance_rounded,
+          color: blue,
+          title: tr('فەرمانگەکان'),
           subtitle: tr('زیادکردن و دەستکاری مامەڵەکانی فەرمانگەکان'),
           badge: _totalDepartments,
           screen: () => const AdminDepartmentsScreen(),
@@ -563,7 +540,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'categories',
           icon: Icons.category_rounded,
-          color: const Color(0xFF4F5BD5),
+          color: blue,
           title: tr('بەشە سەرەکی و ژێربەشەکان'),
           subtitle: tr('زیادکردن و دەستکاری بەشەکان'),
           screen: () => const AdminCategoriesManagementScreen(),
@@ -571,107 +548,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'neighborhoods',
           icon: Icons.location_city_rounded,
-          color: const Color(0xFF1E88E5),
-          title: tr('بەڕێوەبردنی گەڕەکەکان'),
+          color: blue,
+          title: tr('گەڕەکان'),
           subtitle: tr('زیادکردن و دەستکاری گەڕەکانی کەلار'),
           screen: () => const AdminNeighborhoodsScreen(),
         ),
         _DashItem(
-          id: 'news',
-          icon: Icons.newspaper_rounded,
-          color: const Color(0xFF4F5BD5),
-          title: tr('بەڕێوەبردنی هەواڵ'),
-          subtitle: tr('زیادکردن و دەستکاری هەواڵەکان'),
-          screen: () => const AdminNewsScreen(),
-        ),
-        _DashItem(
-          id: 'gallery',
-          icon: Icons.photo_library_rounded,
-          color: const Color(0xFFD9822B),
-          title: tr('بەڕێوەبردنی گەلەری'),
-          subtitle: tr('زیادکردن و دەستکاریکردنی وێنەکان'),
-          screen: () => const AdminGallery(),
-        ),
-        _DashItem(
-          id: 'banners',
-          icon: Icons.slideshow_rounded,
-          color: const Color(0xFFC2557A),
-          title: tr('ڕێکخستنی سلایدەکان'),
-          subtitle: tr('ڕێکخستن و گۆڕینی بانەرەکان'),
-          screen: () => const AdminReorderBannersScreen(),
-        ),
-        _DashItem(
-          id: 'videos',
-          icon: Icons.video_library_rounded,
-          color: const Color(0xFF4F5BD5),
-          title: tr('بەڕێوەبردنی ڤیدیۆکان'),
-          subtitle: tr('زیادکردن و دەستکاری ڤیدیۆکان'),
-          screen: () => const AdminVideosScreen(),
-        ),
-        _DashItem(
-          id: 'events',
-          icon: Icons.event_rounded,
-          color: const Color(0xFF4F5BD5),
-          title: tr('ڕووداوەکان'),
-          subtitle: tr('زیادکردن و دەستکاری ڕووداوەکان'),
-          screen: () => const AdminEventsScreen(),
-        ),
-      ]),
-      _DashSection('daily', '⚡ خزمەتگوزارییە ڕۆژانەکان', [
-        _DashItem(
-          id: 'emergency',
-          icon: Icons.emergency_rounded,
-          color: const Color(0xFFDC3545),
-          title: tr('بەڕێوەبردنی فریاکەوتن'),
-          subtitle: tr('ژمارەکانی فریاکەوتن'),
-          screen: () => const AdminEmergencyServicesScreen(),
-        ),
-        _DashItem(
-          id: 'fuel',
-          icon: Icons.local_gas_station_rounded,
-          color: const Color(0xFFD9822B),
-          title: tr('بەڕێوەبردنی سووتەمەنی'),
-          subtitle: tr('نوێکردنەوەی نرخی بەنزین و گاز'),
-          screen: () => const AdminFuelStationsScreen(),
-        ),
-        _DashItem(
-          id: 'currency',
-          icon: Icons.attach_money_rounded,
-          color: const Color(0xFF0F9D7A),
-          title: tr('بەڕێوەبردنی دراوەکان'),
-          subtitle: tr('نوێکردنەوەی نرخی دۆلار و زێڕ'),
-          screen: () => const AdminCurrencyStationsScreen(),
-        ),
-        _DashItem(
-          id: 'weather',
-          icon: Icons.cloud_rounded,
-          color: const Color(0xFF1E88E5),
-          title: tr('بەڕێوەبردنی کەشوهەوا'),
-          subtitle: tr('نوێکردنەوەی پلەی گەرما و دۆخ'),
-          screen: () => const AdminWeatherScreen(),
-        ),
-        _DashItem(
-          id: 'prayer_times',
-          icon: Icons.mosque_rounded,
-          color: const Color(0xFF0F9D7A),
-          title: tr('کاتەکانی نوێژ'),
-          subtitle: tr('دەستکاری یان پەیستکردنی خشتەی ئامۆژگاری'),
-          adminOnly: true,
-          screen: () => const AdminPrayerTimesScreen(),
-        ),
-        _DashItem(
-          id: 'translations',
-          icon: Icons.translate_rounded,
-          color: const Color(0xFF4F5BD5),
-          title: tr('وەرگێڕانەکان'),
-          subtitle: tr('ڕاستکردنەوەی وەرگێڕانی ناوی شوێن و هەواڵ'),
-          adminOnly: true,
-          screen: () => const AdminTranslationsScreen(),
-        ),
-        _DashItem(
           id: 'place_suggestions',
           icon: Icons.add_location_alt_rounded,
-          color: const Color(0xFF0F9D7A),
+          color: blue,
           title: tr('پێشنیاری شوێنەکان'),
           subtitle: tr('پێشنیاری هاوڵاتیان — چالاک/ناچالاک و پەسەندکردن'),
           adminOnly: true,
@@ -679,27 +564,79 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         ),
         _DashItem(
           id: 'osm_import',
-          icon: Icons.travel_explore_rounded,
-          color: const Color(0xFF1E88E5),
+          icon: Icons.download_for_offline_rounded,
+          color: blue,
           title: tr('هێنانی شوێن لە OpenStreetMap'),
           subtitle: tr('زیادکردنی شوێنەکانی کەلار بە کۆمەڵ'),
           adminOnly: true,
           screen: () => const AdminOsmImportScreen(),
         ),
       ]),
-      _DashSection('system', '⚙️ ڕێکخستن و سیستەم', [
+      _DashSection('daily', tr('خزمەتگوزارییە ڕۆژانەکان'), [
+        _DashItem(
+          id: 'emergency',
+          icon: Icons.emergency_rounded,
+          color: red,
+          title: tr('فریاکەوتن'),
+          subtitle: tr('ژمارەکانی فریاکەوتن'),
+          screen: () => const AdminEmergencyServicesScreen(),
+        ),
+        _DashItem(
+          id: 'fuel',
+          icon: Icons.local_gas_station_rounded,
+          color: blue,
+          title: tr('سووتەمەنی'),
+          subtitle: tr('نوێکردنەوەی نرخی بەنزین و گاز'),
+          screen: () => const AdminFuelStationsScreen(),
+        ),
+        _DashItem(
+          id: 'currency',
+          icon: Icons.currency_exchange_rounded,
+          color: blue,
+          title: tr('دراوەکان'),
+          subtitle: tr('نوێکردنەوەی نرخی دۆلار و زێڕ'),
+          screen: () => const AdminCurrencyStationsScreen(),
+        ),
+        _DashItem(
+          id: 'weather',
+          icon: Icons.cloud_rounded,
+          color: blue,
+          title: tr('کەشوهەوا'),
+          subtitle: tr('نوێکردنەوەی پلەی گەرما و دۆخ'),
+          screen: () => const AdminWeatherScreen(),
+        ),
+        _DashItem(
+          id: 'prayer_times',
+          icon: Icons.mosque_rounded,
+          color: blue,
+          title: tr('کاتەکانی نوێژ'),
+          subtitle: tr('دەستکاری یان پەیستکردنی خشتەی ئامۆژگاری'),
+          adminOnly: true,
+          screen: () => const AdminPrayerTimesScreen(),
+        ),
+      ]),
+      _DashSection('system', tr('سیستەم'), [
         _DashItem(
           id: 'notifications',
           icon: Icons.notifications_active_rounded,
-          color: const Color(0xFFD9822B),
+          color: blue,
           title: tr('ناردنی ئاگاداری'),
           subtitle: tr('ناردنی ئاگاداری بۆ بەکارهێنەران'),
           screen: () => const AdminNotificationsScreen(),
         ),
         _DashItem(
+          id: 'translations',
+          icon: Icons.translate_rounded,
+          color: blue,
+          title: tr('وەرگێڕانەکان'),
+          subtitle: tr('ڕاستکردنەوەی وەرگێڕانی ناوی شوێن و هەواڵ'),
+          adminOnly: true,
+          screen: () => const AdminTranslationsScreen(),
+        ),
+        _DashItem(
           id: 'vendor_requests',
           icon: Icons.assignment_ind_rounded,
-          color: const Color(0xFF4F5BD5),
+          color: red,
           title: tr('داوکاری ئەدمینەکان'),
           subtitle: tr('پەسەندکردنی ئەدمینە نوێکان'),
           badge: _pendingRequests,
@@ -710,7 +647,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         _DashItem(
           id: 'database',
           icon: Icons.storage_rounded,
-          color: const Color(0xFF1E88E5),
+          color: blue,
           title: tr('خشتەکانی داتابەیس'),
           subtitle: tr('بینینی گشت خشتەکانی داتابەیس'),
           adminOnly: true,
@@ -723,10 +660,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
     return sections
         .map((s) => _DashSection(
-      s.id,
-      s.title,
-      s.items.where((i) => !i.adminOnly).toList(),
-    ))
+              s.id,
+              s.title,
+              s.items.where((i) => !i.adminOnly).toList(),
+            ))
         .where((s) => s.items.isNotEmpty)
         .toList();
   }
@@ -747,10 +684,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       final items = query.isEmpty
           ? s.items
           : s.items
-          .where((i) =>
-      _norm(i.title).contains(query) ||
-          _norm(i.subtitle).contains(query))
-          .toList();
+              .where((i) =>
+                  _norm(i.title).contains(query) ||
+                  _norm(i.subtitle).contains(query))
+              .toList();
       if (items.isNotEmpty) visible.add(_DashSection(s.id, s.title, items));
     }
 
@@ -784,16 +721,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                         duration: const Duration(milliseconds: 300),
                         child: _loading && _hasLoadedOnce
                             ? Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: const LinearProgressIndicator(
-                              color: AppColors.primary,
-                              backgroundColor: Colors.transparent,
-                              minHeight: 3,
-                            ),
-                          ),
-                        )
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: const LinearProgressIndicator(
+                                    color: AppColors.primary,
+                                    backgroundColor: Colors.transparent,
+                                    minHeight: 3,
+                                  ),
+                                ),
+                              )
                             : const SizedBox(width: double.infinity),
                       ),
                       if (_loadError != null) _buildErrorBanner(p),
@@ -801,15 +738,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       const SizedBox(height: 12),
                       _buildAttentionBanner(p, isAdmin),
                       const SizedBox(height: 20),
-                      _buildSectionHeader(tr('📊 ئامارە سەرەکییەکان'), p,
-                          itemIndex: 2),
-                      const SizedBox(height: 12),
-                      _buildStatsGrid(p, isAdmin),
-                      const SizedBox(height: 24),
+                      _buildStatsStrip(p, isAdmin),
+                      const SizedBox(height: 16),
                       _buildSearchBar(p),
-                      if (!searching) _buildRecents(p, sections),
-                      if (!searching && visible.length > 1)
-                        _buildExpandCollapseRow(p, visible),
                       const SizedBox(height: 4),
                       if (visible.isEmpty && searching)
                         _buildNoResults(p)
@@ -919,150 +850,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🕘 Recents + expand/collapse
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildRecents(_Palette p, List<_DashSection> sections) {
-    // Resolve ids against what this user is allowed to see
-    final byId = {
-      for (final s in sections)
-        for (final i in s.items) i.id: i,
-    };
-    final items = [
-      for (final id in _recentIds)
-        if (byId[id] != null) byId[id]!,
-    ];
-    if (items.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.history_rounded, size: 16, color: p.textSub),
-              const SizedBox(width: 6),
-              Text(
-                tr('دوایین بەکارهاتوو'),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  color: p.textSub,
-                ),
-              ),
-              const Spacer(),
-              InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _recentIds = []);
-                  _saveRecents();
-                },
-                child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Text(
-                    tr('پاککردنەوە'),
-                    style: TextStyle(fontSize: 11, color: p.textSub),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 40,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, i) {
-                final item = items[i];
-                return Semantics(
-                  button: true,
-                  label: item.title,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      _open(item);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: item.color.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(item.icon, size: 16, color: item.color),
-                          const SizedBox(width: 6),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 150),
-                            child: Text(
-                              tr(item.title),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: p.text,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExpandCollapseRow(_Palette p, List<_DashSection> visible) {
-    final allOpen = visible.every((s) => !_collapsed.contains(s.id));
-
-    return Align(
-      alignment: AlignmentDirectional.centerEnd,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: TextButton.icon(
-          style: TextButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            foregroundColor: p.textSub,
-          ),
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            setState(() {
-              if (allOpen) {
-                _collapsed.addAll(visible.map((s) => s.id));
-              } else {
-                _collapsed.removeAll(visible.map((s) => s.id));
-              }
-            });
-            _saveCollapsed();
-          },
-          icon: Icon(
-            allOpen ? Icons.unfold_less_rounded : Icons.unfold_more_rounded,
-            size: 18,
-          ),
-          label: Text(
-            tr(allOpen ? 'داخستنی هەموو بەشەکان' : 'کردنەوەی هەموو بەشەکان'),
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
   // 📂 Section + Item
   // ═══════════════════════════════════════════════════════════
   Widget _buildSection({
@@ -1070,106 +857,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     required _Palette p,
     required int itemIndex,
   }) {
-    // While searching, every matching section is forced open
-    final searching = _searchQuery.isNotEmpty;
-    final isExpanded = searching || !_collapsed.contains(section.id);
-
     return _Entry(
       animation: _entryController,
       index: itemIndex,
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          Semantics(
-            button: !searching,
-            expanded: isExpanded,
-            label: section.title,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: searching
-                    ? null
-                    : () {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    if (isExpanded) {
-                      _collapsed.add(section.id);
-                    } else {
-                      _collapsed.remove(section.id);
-                    }
-                  });
-                  _saveCollapsed();
-                },
-                child: Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: p.chip,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          tr(section.title),
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w900,
-                            color: p.text,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          tr(_ku(section.items.length)),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      AnimatedRotation(
-                        turns: isExpanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 250),
-                        child: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: p.textSub,
-                        ),
-                      ),
-                    ],
-                  ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+              child: Text(
+                section.title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: p.textSub,
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 300),
-            sizeCurve: Curves.easeOutCubic,
-            crossFadeState: isExpanded
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            firstChild: Column(
-              children: [
-                for (final item in section.items) _buildItem(p, item),
-              ],
+            Container(
+              decoration: BoxDecoration(
+                color: p.card,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: p.shadow(0.05),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < section.items.length; i++) ...[
+                      if (i > 0)
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          indent: 70,
+                          endIndent: 16,
+                          color: p.border,
+                        ),
+                      _buildItem(p, section.items[i]),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            secondChild: const SizedBox(width: double.infinity),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-
 }
