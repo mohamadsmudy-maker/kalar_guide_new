@@ -17,7 +17,8 @@ class AdminDatabaseViewerScreen extends StatefulWidget {
       _AdminDatabaseViewerScreenState();
 }
 
-class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
+class _AdminDatabaseViewerScreenState
+    extends State<AdminDatabaseViewerScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _tableData = [];
 
@@ -31,8 +32,7 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
       'name': 'شوێنەکان',
       'icon': Icons.storefront_rounded,
       'color': Color(0xFF4F5BD5),
-      'columns':
-          'id, name, phone, address, category, type, is_verified, created_at',
+      'columns': 'id, name, phone, address, category, type, is_verified, created_at',
       // ⚠️ 'password' و 'user_phone' لابراون
     },
     {
@@ -40,16 +40,14 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
       'name': 'هەواڵەکان',
       'icon': Icons.newspaper_rounded,
       'color': Color(0xFF0F9D7A),
-      'columns':
-          'id, title, description, images, likes, views, created_at, store_id',
+      'columns': 'id, title, description, images, likes, views, created_at, store_id',
     },
     {
       'key': 'complaints',
       'name': 'سکاڵاکان',
       'icon': Icons.assignment_late_rounded,
       'color': Color(0xFFDC3545),
-      'columns':
-          'id, title, description, status, responsible_authority, created_at',
+      'columns': 'id, title, description, status, responsible_authority, created_at',
       // ⚠️ 'user_phone' و 'user_id' لابراون
     },
     {
@@ -107,7 +105,7 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
 
   Map<String, dynamic> get _selectedTableInfo {
     return _tables.firstWhere(
-      (t) => t['key'] == _selectedTable,
+          (t) => t['key'] == _selectedTable,
       orElse: () => _tables[0],
     );
   }
@@ -126,8 +124,9 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
           .limit(50);
 
       final List<dynamic> rawList = res as List;
-      final data =
-          rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final data = rawList
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
 
       if (mounted) {
         setState(() {
@@ -150,7 +149,8 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
     if (_searchQuery.isEmpty) return _tableData;
     return _tableData.where((row) {
       return row.values.any((val) =>
-          val != null && val.toString().toLowerCase().contains(_searchQuery));
+      val != null &&
+          val.toString().toLowerCase().contains(_searchQuery));
     }).toList();
   }
 
@@ -349,8 +349,7 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
               vertical: 8,
             ),
             decoration: BoxDecoration(
-              color: (isNull ? const Color(0xFFDC3545) : color)
-                  .withValues(alpha: 0.1),
+              color: (isNull ? const Color(0xFFDC3545) : color).withValues(alpha: 0.1),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(14),
               ),
@@ -389,11 +388,11 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
                     tr(isNull
                         ? 'NULL'
                         : value.runtimeType
-                            .toString()
-                            .replaceAll('_', ' ')
-                            .split(' ')
-                            .last
-                            .toUpperCase()),
+                        .toString()
+                        .replaceAll('_', ' ')
+                        .split(' ')
+                        .last
+                        .toUpperCase()),
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w900,
@@ -409,15 +408,17 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
             child: isImage
                 ? _buildImageValue(valueStr)
                 : Text(
-                    tr(isNull ? '— بەتاڵ —' : valueStr),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isNull ? Colors.red.shade400 : Colors.black87,
-                      fontWeight: isNull ? FontWeight.bold : FontWeight.w600,
-                      height: 1.4,
-                      fontStyle: isNull ? FontStyle.italic : FontStyle.normal,
-                    ),
-                  ),
+              tr(isNull ? '— بەتاڵ —' : valueStr),
+              style: TextStyle(
+                fontSize: 13,
+                color: isNull ? Colors.red.shade400 : Colors.black87,
+                fontWeight:
+                isNull ? FontWeight.bold : FontWeight.w600,
+                height: 1.4,
+                fontStyle:
+                isNull ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
           ),
         ],
       ),
@@ -525,7 +526,8 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       tr("بەڕێوەبردنی داتابەیس"),
@@ -553,7 +555,8 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.15),
+                                  color:
+                                  Colors.white.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -617,11 +620,11 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
                   child: TextField(
                     controller: _searchCtrl,
                     onChanged: (val) => setState(
-                      () => _searchQuery = val.trim().toLowerCase(),
+                          () => _searchQuery = val.trim().toLowerCase(),
                     ),
                     decoration: InputDecoration(
                       hintText:
-                          tr("گەڕان لەناو سەرجەم ستوونەکانی ئەم خشتەیە..."),
+                      tr("گەڕان لەناو سەرجەم ستوونەکانی ئەم خشتەیە..."),
                       hintStyle: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -633,16 +636,16 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(
-                                Icons.close_rounded,
-                                size: 18,
-                                color: Colors.grey,
-                              ),
-                              onPressed: () {
-                                _searchCtrl.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                            )
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
                           : null,
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -667,7 +670,7 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildDataCard(
+                        (context, index) => _buildDataCard(
                       _filteredData[index],
                       index,
                     ),
@@ -686,7 +689,8 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
     final colorValue = table['color'];
     final color = colorValue is Color ? colorValue : AppColors.primary;
     final iconValue = table['icon'];
-    final icon = iconValue is IconData ? iconValue : Icons.table_chart_rounded;
+    final icon =
+    iconValue is IconData ? iconValue : Icons.table_chart_rounded;
     final nameValue = table['name'];
     final name = nameValue is String ? nameValue : '';
 
@@ -713,19 +717,19 @@ class _AdminDatabaseViewerScreenState extends State<AdminDatabaseViewerScreen> {
           ),
           boxShadow: isSelected
               ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ]
               : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
