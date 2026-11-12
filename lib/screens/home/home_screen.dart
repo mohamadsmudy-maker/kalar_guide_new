@@ -129,6 +129,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final news = ref.watch(newsProvider.select((s) => s.news));
     final isLoading =
         ref.watch(newsProvider.select((s) => s.isLoading)) == true;
+    final newsError = ref.watch(newsProvider.select((s) => s.error));
 
     ref.listen(newsProvider.select((s) => s.news), (prev, next) {
       final had = prev?.isNotEmpty ?? false;
@@ -171,9 +172,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ? const _CarouselSkeleton()
                         : _NoNewsCard(
                             isDark: isDark,
-                            title: t('no_news', 'هیچ هەواڵێک نییە'),
-                            subtitle: t('pull_to_refresh',
-                                'بۆ نوێکردنەوە ڕایبکێشە خوارەوە'),
+                            title: newsError != null
+                                ? tr('بارکردن سەرکەوتوو نەبوو')
+                                : t('no_news', 'هیچ هەواڵێک نییە'),
+                            subtitle: newsError ??
+                                t('pull_to_refresh',
+                                    'بۆ نوێکردنەوە ڕایبکێشە خوارەوە'),
                             retryLabel: t('retry', 'دووبارە'),
                             onRetry: _onRefresh,
                           ),

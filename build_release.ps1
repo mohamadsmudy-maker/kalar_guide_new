@@ -1,6 +1,7 @@
 ﻿# بەکارهێنان:  .\build_release.ps1          ← خێرا (clean ناکات)
 #              .\build_release.ps1 -Clean   ← پاککردنەوەی تەواو پێش build
-param([switch]$Clean)
+#              .\build_release.ps1 -NoObfuscate ← بێ شاردنەوەی ناوەکان (بۆ دۆزینەوەی کێشە)
+param([switch]$Clean, [switch]$NoObfuscate)
 
 $ErrorActionPreference = "Stop"
 
@@ -31,8 +32,11 @@ flutter pub get
 $stamp = Get-Date -Format "yyyyMMdd-HHmm"
 $SYMBOLS_DIR = "symbols/$stamp"
 
+$obf = @()
+if (-not $NoObfuscate) { $obf = @("--obfuscate", "--split-debug-info=$SYMBOLS_DIR") }
+
 flutter build apk --release --split-per-abi `
-    --obfuscate --split-debug-info="$SYMBOLS_DIR" `
+    @obf `
     --dart-define=SUPABASE_URL="$SUPABASE_URL" `
     --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" `
     --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
