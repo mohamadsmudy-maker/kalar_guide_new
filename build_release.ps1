@@ -1,4 +1,7 @@
-﻿
+﻿# بەکارهێنان:  .\build_release.ps1          ← خێرا (clean ناکات)
+#              .\build_release.ps1 -Clean   ← پاککردنەوەی تەواو پێش build
+param([switch]$Clean)
+
 $ErrorActionPreference = "Stop"
 
 $SUPABASE_URL = "https://krqrhrqtmcpwpcsxkaql.supabase.co"
@@ -7,7 +10,17 @@ $SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 # 🔵 Google Sign-In: «Web client ID» (docs/GOOGLE_LOGIN.md). بەتاڵ = دوگمەی Google پیشان نادرێت
 $GOOGLE_WEB_CLIENT_ID = ""
 
-flutter clean
+# flutter clean تەنها کاتێک پێویستە ئەگەر build ی ناڕێک ببینی. لە Windows دا
+# زۆرجار پۆشەی build قفڵە (Android Studio / ئێکسپلۆرەر / ئانتی‌ڤایرۆس) و
+# هەڵەی «Failed to remove ...\build» دەدات، بۆیە بە بنەڕەت ناکرێت.
+if ($Clean) {
+    if (Test-Path "android\gradlew.bat") {
+        Push-Location android
+        .\gradlew.bat --stop | Out-Null   # daemon ی Gradle قفڵی build دەکات
+        Pop-Location
+    }
+    flutter clean
+}
 flutter pub get
 
 # 🔒 --obfuscate: ناوی کلاس و فەنکشنەکان دەگۆڕێت بۆ ناوی بێ مانا، بۆ ئەوەی ئەگەر
