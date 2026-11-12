@@ -8,6 +8,16 @@ import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
 
 /// 🎬 شاشەی ڤیدیۆ و ڕێنماییەکان
+/// وێنۆچکەی یوتیووب ئەگەر بەستەرەکە یوتیووب بێت
+String? youtubeThumb(String url) {
+  final m = RegExp(
+    r'(?:youtu\.be/|youtube\.com/(?:watch\?(?:.*&)?v=|shorts/|embed/|live/))([\w-]{11})',
+  ).firstMatch(url);
+  return m == null
+      ? null
+      : 'https://img.youtube.com/vi/${m.group(1)}/hqdefault.jpg';
+}
+
 class UserVideosScreen extends StatefulWidget {
   const UserVideosScreen({super.key});
 
@@ -29,14 +39,6 @@ class _UserVideosScreenState extends State<UserVideosScreen> {
     try {
       await f;
     } catch (_) {}
-  }
-
-  /// وێنۆچکەی یوتیووب ئەگەر بەستەرەکە یوتیووب بێت
-  static String? youtubeThumb(String url) {
-    final m = RegExp(
-      r'(?:youtu\.be/|youtube\.com/(?:watch\?(?:.*&)?v=|shorts/|embed/|live/))([\w-]{11})',
-    ).firstMatch(url);
-    return m == null ? null : 'https://img.youtube.com/vi/${m.group(1)}/hqdefault.jpg';
   }
 
   Future<void> _open(String url) async {
