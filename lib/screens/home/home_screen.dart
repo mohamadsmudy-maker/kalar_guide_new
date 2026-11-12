@@ -1169,7 +1169,7 @@ class _ComplaintBannerState extends State<_ComplaintBanner>
   static const _radius = 22.0;
   late final AnimationController _beam = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 3600),
+    duration: const Duration(milliseconds: 7000),
   );
 
   @override
