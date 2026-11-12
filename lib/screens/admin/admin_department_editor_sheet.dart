@@ -3,7 +3,6 @@
 
 part of 'admin_departments.dart';
 
-
 // ═══════════════════════════════════════════════════════════════
 // 🎨 Editor Sheet — زیادکردن / دەستکاریکردنی فەرمانگە
 // ═══════════════════════════════════════════════════════════════
@@ -12,8 +11,7 @@ class _DepartmentEditorSheet extends StatefulWidget {
   const _DepartmentEditorSheet({this.department});
 
   @override
-  State<_DepartmentEditorSheet> createState() =>
-      _DepartmentEditorSheetState();
+  State<_DepartmentEditorSheet> createState() => _DepartmentEditorSheetState();
 }
 
 class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
@@ -79,27 +77,19 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
 
     final data = {
       'name_ku': _nameKuCtrl.text.trim(),
-      'name_ar': _nameArCtrl.text.trim().isEmpty
-          ? null
-          : _nameArCtrl.text.trim(),
-      'name_en': _nameEnCtrl.text.trim().isEmpty
-          ? null
-          : _nameEnCtrl.text.trim(),
-      'phone': _phoneCtrl.text.trim().isEmpty
-          ? null
-          : _phoneCtrl.text.trim(),
-      'address': _addressCtrl.text.trim().isEmpty
-          ? null
-          : _addressCtrl.text.trim(),
-      'website': _websiteCtrl.text.trim().isEmpty
-          ? null
-          : _websiteCtrl.text.trim(),
+      'name_ar':
+          _nameArCtrl.text.trim().isEmpty ? null : _nameArCtrl.text.trim(),
+      'name_en':
+          _nameEnCtrl.text.trim().isEmpty ? null : _nameEnCtrl.text.trim(),
+      'phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+      'address':
+          _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
+      'website':
+          _websiteCtrl.text.trim().isEmpty ? null : _websiteCtrl.text.trim(),
       'user_phone': _userPhoneCtrl.text.trim().isEmpty
           ? null
           : _userPhoneCtrl.text.trim(),
-      'image': _imageCtrl.text.trim().isEmpty
-          ? null
-          : _imageCtrl.text.trim(),
+      'image': _imageCtrl.text.trim().isEmpty ? null : _imageCtrl.text.trim(),
       'color': _selectedColor,
       'updated_at': DateTime.now().toIso8601String(),
     };
@@ -167,9 +157,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
-                        color: isDark
-                            ? Colors.white
-                            : const Color(0xFF1A1A2E),
+                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                       ),
                     ),
                   ),
@@ -242,9 +230,8 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1A1A2E),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF1A1A2E),
                           ),
                         ),
                       ],
@@ -286,10 +273,10 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                             ),
                             child: isSelected
                                 ? const Icon(
-                              Icons.check_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            )
+                                    Icons.check_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  )
                                 : null,
                           ),
                         );
@@ -310,9 +297,7 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                 MediaQuery.of(context).padding.bottom + 16,
               ),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF0F0F14)
-                    : Colors.grey.shade50,
+                color: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
                 border: Border(
                   top: BorderSide(
                     color: isDark
@@ -332,14 +317,11 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     elevation: 3,
-                    shadowColor:
-                    const Color(0xFF0F9D7A).withValues(alpha: 0.4),
+                    shadowColor: const Color(0xFF0F9D7A).withValues(alpha: 0.4),
                   ),
                   onPressed: _save,
                   icon: Icon(
-                    isEditing
-                        ? Icons.save_rounded
-                        : Icons.add_circle_rounded,
+                    isEditing ? Icons.save_rounded : Icons.add_circle_rounded,
                     size: 22,
                   ),
                   label: Text(
@@ -359,12 +341,12 @@ class _DepartmentEditorSheetState extends State<_DepartmentEditorSheet> {
   }
 
   Widget _buildField(
-      String label,
-      TextEditingController ctrl,
-      bool isDark, {
-        TextInputType? keyboard,
-        int maxLines = 1,
-      }) {
+    String label,
+    TextEditingController ctrl,
+    bool isDark, {
+    TextInputType? keyboard,
+    int maxLines = 1,
+  }) {
     return TextField(
       controller: ctrl,
       keyboardType: keyboard,

@@ -19,12 +19,26 @@ class AdminPrayerTimesScreen extends StatefulWidget {
 class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
   static const _gold = Color(0xFFFFD700);
   static const _months = [
-    'کانوونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران',
-    'تەممووز', 'ئاب', 'ئەیلوول', 'تشرینی یەکەم', 'تشرینی دووەم', 'کانوونی یەکەم',
+    'کانوونی دووەم',
+    'شوبات',
+    'ئازار',
+    'نیسان',
+    'ئایار',
+    'حوزەیران',
+    'تەممووز',
+    'ئاب',
+    'ئەیلوول',
+    'تشرینی یەکەم',
+    'تشرینی دووەم',
+    'کانوونی یەکەم',
   ];
   static const _names = {
-    'fajr': 'بەیانی', 'sunrise': 'خۆرهەڵاتن', 'dhuhr': 'نیوەڕۆ',
-    'asr': 'عەسر', 'maghrib': 'ئێوارە', 'isha': 'خەوتنان',
+    'fajr': 'بەیانی',
+    'sunrise': 'خۆرهەڵاتن',
+    'dhuhr': 'نیوەڕۆ',
+    'asr': 'عەسر',
+    'maghrib': 'ئێوارە',
+    'isha': 'خەوتنان',
   };
 
   int _month = DateTime.now().month;
@@ -62,7 +76,8 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
       _snack(trf('{0} ڕۆژ پاشەکەوت کرا ✅', [days.length]));
     } catch (e) {
       debugPrint('❌ save prayer times: $e');
-      _snack(tr('پاشەکەوت نەکرا. دڵنیابە کە وەک ئەدمین چوویتەتە ژوورەوە.'), error: true);
+      _snack(tr('پاشەکەوت نەکرا. دڵنیابە کە وەک ئەدمین چوویتەتە ژوورەوە.'),
+          error: true);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -100,7 +115,8 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
           child: AlertDialog(
             backgroundColor: const Color(0xFF1A2030),
             title: Text('${date.day} ${tr(_months[date.month - 1])}',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w900)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -122,7 +138,9 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
                       ),
                     ),
                   if (error != null)
-                    Text(tr(error!), style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                    Text(tr(error!),
+                        style: const TextStyle(
+                            color: Colors.redAccent, fontSize: 12)),
                   const SizedBox(height: 4),
                   Text(
                     tr('دەتوانیت وەک ئامۆژگاری بنووسیت، بۆ نموونە عەسر 02:42. ئەپەکە خۆی دەیکات بە 14:42.'),
@@ -132,15 +150,19 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('پاشگەزبوونەوە'))),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(tr('پاشگەزبوونەوە'))),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+                style: FilledButton.styleFrom(
+                    backgroundColor: _gold, foregroundColor: Colors.black),
                 onPressed: () {
                   final out = <String, String>{};
                   for (final id in KalarPrayerTimes.ids) {
                     final v = KalarPrayerTimes.normalize(id, ctrls[id]!.text);
                     if (v == null) {
-                      setLocal(() => error = trf('کاتی {0} هەڵەیە', [_names[id]]));
+                      setLocal(
+                          () => error = trf('کاتی {0} هەڵەیە', [_names[id]]));
                       return;
                     }
                     out[id] = v;
@@ -179,7 +201,8 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
             child: AlertDialog(
               backgroundColor: const Color(0xFF1A2030),
               title: Text(trf('پەیستکردنی {0}', [tr(_months[_month - 1])]),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w900)),
               content: SizedBox(
                 width: 420,
                 child: Column(
@@ -188,7 +211,8 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
                   children: [
                     Text(
                       tr('هەر دێڕێک یەک ڕۆژە: ڕۆژ بەیانی خۆرهەڵاتن نیوەڕۆ عەسر ئێوارە خەوتنان'),
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -201,20 +225,29 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
                       controller: ctrl,
                       maxLines: 10,
                       textDirection: TextDirection.ltr,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontFamily: 'monospace'),
-                      decoration: const InputDecoration(border: OutlineInputBorder()),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontFamily: 'monospace'),
+                      decoration:
+                          const InputDecoration(border: OutlineInputBorder()),
                     ),
                     if (error != null) ...[
                       const SizedBox(height: 6),
-                      Text(tr(error!), style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                      Text(tr(error!),
+                          style: const TextStyle(
+                              color: Colors.redAccent, fontSize: 12)),
                     ],
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('پاشگەزبوونەوە'))),
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text(tr('پاشگەزبوونەوە'))),
                 FilledButton(
-                  style: FilledButton.styleFrom(backgroundColor: _gold, foregroundColor: Colors.black),
+                  style: FilledButton.styleFrom(
+                      backgroundColor: _gold, foregroundColor: Colors.black),
                   onPressed: () {
                     final r = parseMonth(ctrl.text, _month, _year);
                     if (r.error != null) {
@@ -245,7 +278,8 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
         appBar: AppBar(
           backgroundColor: const Color(0xFF1A1B2E),
           foregroundColor: Colors.white,
-          title: Text(tr('کاتەکانی نوێژ'), style: const TextStyle(fontWeight: FontWeight.w900)),
+          title: Text(tr('کاتەکانی نوێژ'),
+              style: const TextStyle(fontWeight: FontWeight.w900)),
           actions: [
             IconButton(
               tooltip: tr('پەیستکردنی مانگ'),
@@ -268,18 +302,23 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.chevron_right_rounded, color: _gold),
-                    onPressed: () => setState(() => _month = _month == 1 ? 12 : _month - 1),
+                    onPressed: () =>
+                        setState(() => _month = _month == 1 ? 12 : _month - 1),
                   ),
                   Expanded(
                     child: Text(
                       tr(_months[_month - 1]),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_left_rounded, color: _gold),
-                    onPressed: () => setState(() => _month = _month == 12 ? 1 : _month + 1),
+                    onPressed: () =>
+                        setState(() => _month = _month == 12 ? 1 : _month + 1),
                   ),
                 ],
               ),
@@ -303,7 +342,8 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
                       child: ListView.builder(
                         padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
                         itemCount: days,
-                        itemBuilder: (_, i) => _dayTile(DateTime(_year, _month, i + 1)),
+                        itemBuilder: (_, i) =>
+                            _dayTile(DateTime(_year, _month, i + 1)),
                       ),
                     ),
             ),
@@ -316,9 +356,13 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
   Widget _legend(Color c, String text) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+          Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
           const SizedBox(width: 4),
-          Text(tr(text), style: const TextStyle(color: Colors.white60, fontSize: 11)),
+          Text(tr(text),
+              style: const TextStyle(color: Colors.white60, fontSize: 11)),
         ],
       );
 
@@ -346,18 +390,23 @@ class _AdminPrayerTimesScreenState extends State<AdminPrayerTimesScreen> {
         leading: CircleAvatar(
           radius: 16,
           backgroundColor: color.withValues(alpha: 0.15),
-          child: Text('${date.day}', style: TextStyle(color: color, fontWeight: FontWeight.w900)),
+          child: Text('${date.day}',
+              style: TextStyle(color: color, fontWeight: FontWeight.w900)),
         ),
         title: Text(
-          tr(KalarPrayerTimes.ids.map((id) => KalarPrayerTimes.format12(t[id]!).split(' ').first).join('   ')),
+          tr(KalarPrayerTimes.ids
+              .map((id) => KalarPrayerTimes.format12(t[id]!).split(' ').first)
+              .join('   ')),
           textDirection: TextDirection.ltr,
-          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+              color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
         ),
         subtitle: day.source == PrayerSource.admin
             ? Text(tr('بۆ گەڕانەوە بۆ کاتی ئەپ، پەنجە ڕابگرە'),
                 style: const TextStyle(color: Colors.white38, fontSize: 10))
             : null,
-        trailing: const Icon(Icons.edit_rounded, color: Colors.white38, size: 18),
+        trailing:
+            const Icon(Icons.edit_rounded, color: Colors.white38, size: 18),
       ),
     );
   }
@@ -375,13 +424,18 @@ class ParsedMonth {
 ParsedMonth parseMonth(String text, int month, int year) {
   final out = <String, Map<String, String>>{};
   final maxDay = DateUtils.getDaysInMonth(year, month);
-  final lines = text.split(RegExp(r'[\r\n]+')).map((l) => l.trim()).where((l) => l.isNotEmpty);
+  final lines = text
+      .split(RegExp(r'[\r\n]+'))
+      .map((l) => l.trim())
+      .where((l) => l.isNotEmpty);
   var n = 0;
   for (final line in lines) {
     n++;
-    final parts = line.split(RegExp(r'[\s,|\t]+')).where((p) => p.isNotEmpty).toList();
+    final parts =
+        line.split(RegExp(r'[\s,|\t]+')).where((p) => p.isNotEmpty).toList();
     if (parts.length != 7) {
-      return ParsedMonth(const {}, trf('دێڕی {0}: دەبێت ٧ بەش بێت (ڕۆژ + ٦ کات)', [n]));
+      return ParsedMonth(
+          const {}, trf('دێڕی {0}: دەبێت ٧ بەش بێت (ڕۆژ + ٦ کات)', [n]));
     }
     final day = int.tryParse(KalarPrayerTimes.toLatinDigits(parts[0]));
     if (day == null || day < 1 || day > maxDay) {
@@ -391,7 +445,9 @@ ParsedMonth parseMonth(String text, int month, int year) {
     for (var i = 0; i < 6; i++) {
       final id = KalarPrayerTimes.ids[i];
       final v = KalarPrayerTimes.normalize(id, parts[i + 1]);
-      if (v == null) return ParsedMonth(const {}, trf('دێڕی {0}: کاتی هەڵە "{1}"', [n, parts[i + 1]]));
+      if (v == null)
+        return ParsedMonth(
+            const {}, trf('دێڕی {0}: کاتی هەڵە "{1}"', [n, parts[i + 1]]));
       times[id] = v;
     }
     if (!KalarPrayerTimes.isValidDay(times)) {

@@ -1857,4 +1857,7 @@ const Map<String, String> stringsEn = {
   'هەژمار و ڕێکخستن': 'Account & settings',
   'گۆڕینی ڕووناک / تاریک': 'Switch light / dark',
   'یارمەتی و پشتگیری': 'Help & support',
+  'خزمەتگوزارییە ڕۆژانەکان': 'Daily services',
+  'شوێن و فەرمانگە': 'Places & departments',
+  'ناوەڕۆک': 'Content',
 };

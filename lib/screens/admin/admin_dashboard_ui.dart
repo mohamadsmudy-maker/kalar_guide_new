@@ -9,11 +9,12 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
   // ═══════════════════════════════════════════════════════════
   Widget _buildAppBar(bool isAdmin) {
     final hasError = _loadError != null;
+    final dark = Theme.of(context).brightness == Brightness.dark;
 
     return SliverAppBar(
       expandedHeight: 140,
       pinned: true,
-      backgroundColor: _kAppBarColor,
+      backgroundColor: dark ? _kAppBarColor : AppColors.primary,
       foregroundColor: Colors.white,
       elevation: 0,
       title: const Text(''),
@@ -21,34 +22,32 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
         IconButton(
           icon: _loading
               ? const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
-          )
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
               : const Icon(Icons.refresh_rounded),
           onPressed: _loading
               ? null
               : () {
-            HapticFeedback.selectionClick();
-            if (!_reduceMotion) _entryController.forward(from: 0);
-            _loadData();
-          },
+                  HapticFeedback.selectionClick();
+                  if (!_reduceMotion) _entryController.forward(from: 0);
+                  _loadData();
+                },
           tooltip: tr('نوێکردنەوە'),
         ),
         const SizedBox(width: 8),
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF1A1B2E),
-                Color(0xFF2D1B4E),
-                Color(0xFF4F5BD5),
-              ],
+              colors: dark
+                  ? const [Color(0xFF1A1B2E), Color(0xFF232334)]
+                  : const [Color(0xFF1565C0), Color(0xFF1E88E5)],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),
@@ -97,18 +96,11 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
-                              ),
+                              color: Colors.white.withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFD9822B)
-                                      .withValues(alpha: 0.5),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.35),
+                              ),
                             ),
                             child: const Icon(
                               Icons.workspace_premium_rounded,
@@ -126,7 +118,9 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              tr(isAdmin ? 'پانێڵی ئەدمین' : 'پانێڵی بەڕێوەبردن'),
+                              tr(isAdmin
+                                  ? 'پانێڵی ئەدمین'
+                                  : 'پانێڵی بەڕێوەبردن'),
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
@@ -154,11 +148,16 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                                     child: Text(
                                       tr(hasError
                                           ? (_lastUpdated == null
-                                          ? 'کێشەی پەیوەندی'
-                                          : trf('کێشەی پەیوەندی • دوایین نوێکردنەوە {0}', [_lastUpdatedText]))
+                                              ? 'کێشەی پەیوەندی'
+                                              : trf(
+                                                  'کێشەی پەیوەندی • دوایین نوێکردنەوە {0}',
+                                                  [
+                                                      _lastUpdatedText
+                                                    ]))
                                           : (_lastUpdated == null
-                                          ? 'سیستەم چالاکە'
-                                          : trf('سیستەم چالاکە • {0}', [_lastUpdatedText]))),
+                                              ? 'سیستەم چالاکە'
+                                              : trf('سیستەم چالاکە • {0}',
+                                                  [_lastUpdatedText]))),
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
                                         fontSize: 11,
@@ -195,11 +194,13 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
         decoration: BoxDecoration(
           color: const Color(0xFFD9822B).withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFD9822B).withValues(alpha: 0.4)),
+          border:
+              Border.all(color: const Color(0xFFD9822B).withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.cloud_off_rounded, color: Color(0xFFD9822B), size: 20),
+            const Icon(Icons.cloud_off_rounded,
+                color: Color(0xFFD9822B), size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -215,7 +216,8 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
               onPressed: _loading ? null : () => _loadData(),
               child: Text(
                 tr('دووبارە'),
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                style:
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
               ),
             ),
           ],
@@ -319,13 +321,13 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
                     chip(
                       trf('{0} سکاڵای چاوەڕوان', [_ku(_pendingComplaints)]),
                       Icons.hourglass_empty_rounded,
-                          () => _push(const AdminComplaintsProScreen()),
+                      () => _push(const AdminComplaintsProScreen()),
                     ),
                   if (showRequests)
                     chip(
                       trf('{0} داوکاری ئەدمین', [_ku(_pendingRequests)]),
                       Icons.assignment_ind_rounded,
-                          () => _push(const AdminVendorRequestsScreen()),
+                      () => _push(const AdminVendorRequestsScreen()),
                     ),
                 ],
               ),
@@ -480,7 +482,7 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
       icon: Icons.people_rounded,
       title: tr('بەکارهێنەرانی چالاک'),
       semanticsLabel:
-      trf('بەکارهێنەرانی چالاک، {0} ئێستا لە خەتە', [_ku(_onlineUsers)]),
+          trf('بەکارهێنەرانی چالاک، {0} ئێستا لە خەتە', [_ku(_onlineUsers)]),
       onTap: () => _push(const AdminLiveUsersScreen()),
       subtitle: Row(
         children: [
@@ -516,393 +518,169 @@ extension _AdminDashboardScreenStateUi on _AdminDashboardScreenState {
   // ═══════════════════════════════════════════════════════════
   // 📊 Section header + Stats
   // ═══════════════════════════════════════════════════════════
-  Widget _buildSectionHeader(String title, _Palette p,
-      {required int itemIndex}) {
-    return _Entry(
-      animation: _entryController,
-      index: itemIndex,
-      from: const Offset(20, 0),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: 20,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, Color(0xFF4F5BD5)],
-              ),
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            tr(title),
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: p.text,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  /// ئاماری سەرەکی: یەک کارت بە چوار ژمارە (چاوەڕوانەکان لە بانەری سەرەوەن)
+  Widget _buildStatsStrip(_Palette p, bool isAdmin) {
+    final loading = _loading && !_hasLoadedOnce;
 
-  Widget _buildStatsGrid(_Palette p, bool isAdmin) {
-    final canOpenRequests = isAdmin || !_kRestrictSensitiveToAdmin;
-    final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5);
-
-    return GridView(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        // ✅ بەرزی کارتەکە زیادکرا بۆ ١١٨ بۆ ئەوەی کێشەی ئۆڤەرفلۆ نەبێت
-        mainAxisExtent: 118.0 * scale,
-      ),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: [
-        _buildStatCard(
-          p: p,
-          icon: Icons.storefront_rounded,
-          label: tr('شوێنەکان'),
-          value: _totalStores,
-          color: const Color(0xFFD9822B),
-          itemIndex: 3,
-          onTap: () => _push(const AdminStoresScreen()),
-        ),
-        _buildStatCard(
-          p: p,
-          icon: Icons.business_rounded,
-          label: tr('فەرمانگەکان'),
-          value: _totalDepartments,
-          color: const Color(0xFF0F9D7A),
-          itemIndex: 4,
-          onTap: () => _push(const AdminDepartmentsScreen()),
-        ),
-        _buildStatCard(
-          p: p,
-          icon: Icons.report_rounded,
-          label: tr('کۆی سکاڵاکان'),
-          value: _totalComplaints,
-          color: const Color(0xFFC2557A),
-          itemIndex: 5,
-          onTap: () => _push(const AdminComplaintsProScreen()),
-        ),
-        _buildStatCard(
-          p: p,
-          icon: Icons.hourglass_empty_rounded,
-          label: tr('سکاڵای چاوەڕوان'),
-          value: _pendingComplaints,
-          color: const Color(0xFFDC3545),
-          itemIndex: 6,
-          isImportant: _pendingComplaints > 0,
-          onTap: () => _push(const AdminComplaintsProScreen()),
-        ),
-        _buildStatCard(
-          p: p,
-          icon: Icons.assignment_ind_rounded,
-          label: tr('داوکاری ئەدمین'),
-          value: _pendingRequests,
-          color: const Color(0xFF4F5BD5),
-          itemIndex: 7,
-          isImportant: _pendingRequests > 0,
-          onTap: canOpenRequests
-              ? () => _push(const AdminVendorRequestsScreen())
-              : null,
-        ),
-        _buildStatCard(
-          p: p,
-          icon: Icons.newspaper_rounded,
-          label: tr('هەواڵەکان'),
-          value: _totalNews,
-          color: const Color(0xFF0F9D7A),
-          itemIndex: 8,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard({
-    required _Palette p,
-    required IconData icon,
-    required String label,
-    required int value,
-    required Color color,
-    required int itemIndex,
-    bool isImportant = false,
-    VoidCallback? onTap,
-  }) {
-    final showSkeleton = _loading && !_hasLoadedOnce;
-
-    return _Entry(
-      animation: _entryController,
-      index: itemIndex,
-      from: const Offset(0, 30),
-      child: Semantics(
-        button: onTap != null,
-        label: '$label: ${_ku(value)}',
-        child: Material(
-          color: Colors.transparent,
+    Widget stat(IconData icon, String label, int value, VoidCallback onTap) {
+      return Expanded(
+        child: Semantics(
+          button: true,
+          label: '$label: ${loading ? '' : _ku(value)}',
           child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: onTap == null
-                ? null
-                : () {
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
               HapticFeedback.lightImpact();
               onTap();
             },
-            child: Container(
-              // ✅ پادینگی ناوەوە کەمکرایەوە بۆ ئەوەی بۆشایی زیاتر بۆ دەق بمێنێت
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: p.card,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isImportant
-                      ? color.withValues(alpha: 0.5)
-                      : color.withValues(alpha: 0.15),
-                  width: isImportant ? 2 : 1.2,
-                ),
-                boxShadow: [
-                  ...p.shadow(),
-                  if (isImportant)
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                      spreadRadius: -4,
-                    ),
-                ],
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(icon, color: color, size: 18),
-                      ),
-                      const Spacer(),
-                      if (isImportant)
-                        AnimatedBuilder(
-                          animation: _pulseController,
-                          builder: (context, _) => Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: color.withValues(
-                                    alpha: _pulseAnimation.value * 0.8,
-                                  ),
-                                  blurRadius: 8,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else if (onTap != null)
-                        Icon(Icons.north_west_rounded,
-                            size: 14, color: p.chevron),
-                    ],
+                  Icon(icon, size: 20, color: AppColors.primary),
+                  const SizedBox(height: 6),
+                  Text(
+                    loading ? '…' : _ku(value),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: p.text,
+                    ),
                   ),
-                  // ✅ بەشی خوارەوە (ژمارە و ناو) بە FittedBox
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (showSkeleton)
-                        AnimatedBuilder(
-                          animation: _shimmerController,
-                          builder: (context, _) {
-                            final t = (_shimmerController.value * 2) % 2;
-                            final a = 0.12 + 0.12 * (t < 1 ? t : 2 - t);
-                            return Container(
-                              width: 54,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: a),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                            );
-                          },
-                        )
-                      else
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: AlignmentDirectional.centerStart,
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween<double>(
-                                begin: 0, end: value.toDouble()),
-                            duration: _reduceMotion
-                                ? Duration.zero
-                                : const Duration(milliseconds: 700),
-                            curve: Curves.easeOutCubic,
-                            builder: (context, v, _) => Text(
-                              tr(_ku(v.round())),
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                color: color,
-                                height: 1.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 4),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Text(
-                          tr(label),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: p.textSub,
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, color: p.textSub),
                   ),
                 ],
               ),
             ),
           ),
+        ),
+      );
+    }
+
+    Widget divider() => Container(width: 1, height: 44, color: p.border);
+
+    return _Entry(
+      animation: _entryController,
+      index: 3,
+      child: Container(
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: p.shadow(0.05),
+        ),
+        child: Row(
+          children: [
+            stat(Icons.storefront_rounded, tr('شوێنەکان'), _totalStores,
+                () => _push(const AdminStoresScreen())),
+            divider(),
+            stat(Icons.account_balance_rounded, tr('فەرمانگەکان'),
+                _totalDepartments, () => _push(const AdminDepartmentsScreen())),
+            divider(),
+            stat(Icons.assignment_rounded, tr('سکاڵاکان'), _totalComplaints,
+                () => _push(const AdminComplaintsProScreen())),
+            divider(),
+            stat(Icons.newspaper_rounded, tr('هەواڵەکان'), _totalNews,
+                () => _push(const AdminNewsScreen())),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildItem(_Palette p, _DashItem item) {
-    final badge = item.badge;
+    final badge = item.badge ?? 0;
+    final urgent = item.important && badge > 0;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Semantics(
-        button: true,
-        label: '${item.title}. ${item.subtitle}'
-            '${badge != null && badge > 0 ? '. ${_ku(badge)}' : ''}',
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _open(item);
-            },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: p.card,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: item.important
-                      ? item.color.withValues(alpha: 0.4)
-                      : Colors.transparent,
-                  width: item.important ? 1.5 : 0,
+    return Semantics(
+      button: true,
+      label: '${item.title}. ${item.subtitle}'
+          '${badge > 0 ? '. ${_ku(badge)}' : ''}',
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _open(item);
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: item.color.withValues(alpha: p.isDark ? 0.2 : 0.1),
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color:
-                    Colors.black.withValues(alpha: p.isDark ? 0.3 : 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+                child: Icon(item.icon, color: item.color, size: 22),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          item.color.withValues(alpha: 0.2),
-                          item.color.withValues(alpha: 0.08),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(13),
-                      border: Border.all(
-                        color: item.color.withValues(alpha: 0.25),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: p.text,
                       ),
                     ),
-                    child: Icon(item.icon, color: item.color, size: 20),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                tr(item.title),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  color: p.text,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (badge != null && badge > 0) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: item.color,
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: item.color.withValues(alpha: 0.4),
-                                      blurRadius: 6,
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  tr(_ku(badge)),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          tr(item.subtitle),
-                          style: TextStyle(fontSize: 11, color: p.textSub),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      item.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11.5, color: p.textSub),
                     ),
-                  ),
-                  Icon(Icons.chevron_right_rounded, size: 20, color: p.chevron),
-                ],
+                  ],
+                ),
               ),
-            ),
+              if (badge > 0) ...[
+                const SizedBox(width: 8),
+                urgent
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: item.color,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          _ku(badge),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        _ku(badge),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: p.textSub,
+                        ),
+                      ),
+              ],
+              const SizedBox(width: 4),
+              Icon(
+                AppLang.isRtl
+                    ? Icons.chevron_left_rounded
+                    : Icons.chevron_right_rounded,
+                size: 22,
+                color: p.chevron,
+              ),
+            ],
           ),
         ),
       ),

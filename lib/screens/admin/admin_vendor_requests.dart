@@ -47,8 +47,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
           .from('app_users')
           .select('*')
           .eq('is_approved', false)
-          .inFilter('role', ['vendor', 'vendor_pending'])
-          .order('created_at', ascending: false);
+          .inFilter('role', ['vendor', 'vendor_pending']).order('created_at',
+              ascending: false);
 
       // ٢. هێنانی ئەو ئەدمنانەی پەسەند کراون
       final approvedRes = await Supabase.instance.client
@@ -69,7 +69,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
       debugPrint('❌ Fetch requests error: $e');
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackBar(trf('هەڵە لە هێنانی داتا: {0}', [e]), const Color(0xFFDC3545));
+        _showSnackBar(
+            trf('هەڵە لە هێنانی داتا: {0}', [e]), const Color(0xFFDC3545));
       }
     }
   }
@@ -85,11 +86,14 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
       }).eq('id', userId);
 
       if (mounted) {
-        _showSnackBar(trf('بەڕێوبەرایەتی {0} پەسەند کرا ✅', [name]), const Color(0xFF0F9D7A));
+        _showSnackBar(trf('بەڕێوبەرایەتی {0} پەسەند کرا ✅', [name]),
+            const Color(0xFF0F9D7A));
         _fetchData(); // نوێکردنەوەی لیستەکە بۆ ئەوەی بچێتە تابی دووەم
       }
     } catch (e) {
-      if (mounted) _showSnackBar(trf('هەڵە لە پەسەندکردن: {0}', [e]), const Color(0xFFDC3545));
+      if (mounted)
+        _showSnackBar(
+            trf('هەڵە لە پەسەندکردن: {0}', [e]), const Color(0xFFDC3545));
     }
   }
 
@@ -110,11 +114,14 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
           .eq('id', userId);
 
       if (mounted) {
-        _showSnackBar(trf('داواکاری {0} ڕەتکرایەوە ❌', [name]), const Color(0xFFDC3545));
+        _showSnackBar(
+            trf('داواکاری {0} ڕەتکرایەوە ❌', [name]), const Color(0xFFDC3545));
         _fetchData();
       }
     } catch (e) {
-      if (mounted) _showSnackBar(trf('هەڵە لە ڕەتکردنەوە: {0}', [e]), const Color(0xFFDC3545));
+      if (mounted)
+        _showSnackBar(
+            trf('هەڵە لە ڕەتکردنەوە: {0}', [e]), const Color(0xFFDC3545));
     }
   }
 
@@ -128,7 +135,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
     return Directionality(
       textDirection: AppLang.direction,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
+        backgroundColor:
+            isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
             tr('داواکاری ئەدمینەکان'),
@@ -159,7 +167,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                   ),
                   labelColor: const Color(0xFF1A1A2E),
                   unselectedLabelColor: Colors.white70,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13),
                   indicatorSize: TabBarIndicatorSize.tab,
                   tabs: [
                     Tab(
@@ -168,7 +177,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                         children: [
                           const Icon(Icons.hourglass_empty, size: 16),
                           const SizedBox(width: 6),
-                          Text(trf('چاوەڕوانکراوەکان ({0})', [_pendingRequests.length])),
+                          Text(trf('چاوەڕوانکراوەکان ({0})',
+                              [_pendingRequests.length])),
                         ],
                       ),
                     ),
@@ -178,7 +188,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                         children: [
                           const Icon(Icons.verified, size: 16),
                           const SizedBox(width: 6),
-                          Text(trf('پەسەندکراوەکان ({0})', [_approvedRequests.length])),
+                          Text(trf('پەسەندکراوەکان ({0})',
+                              [_approvedRequests.length])),
                         ],
                       ),
                     ),
@@ -192,12 +203,14 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildRequestList(_pendingRequests, isPending: true, isDark: isDark),
-                  _buildRequestList(_approvedRequests, isPending: false, isDark: isDark),
-                ],
-              ),
+                      controller: _tabController,
+                      children: [
+                        _buildRequestList(_pendingRequests,
+                            isPending: true, isDark: isDark),
+                        _buildRequestList(_approvedRequests,
+                            isPending: false, isDark: isDark),
+                      ],
+                    ),
             ),
           ],
         ),
@@ -206,7 +219,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
   }
 
   // ── دروستکردنی لیستی داواکارییەکان ──
-  Widget _buildRequestList(List<Map<String, dynamic>> requests, {required bool isPending, required bool isDark}) {
+  Widget _buildRequestList(List<Map<String, dynamic>> requests,
+      {required bool isPending, required bool isDark}) {
     if (requests.isEmpty) {
       return Center(
         child: Column(
@@ -219,13 +233,21 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              tr(isPending ? 'هیچ داواکارییەکی چاوەڕوانکراو نییە' : 'هیچ ئەدمینێکی پەسەندکراو نییە'),
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.black87),
+              tr(isPending
+                  ? 'هیچ داواکارییەکی چاوەڕوانکراو نییە'
+                  : 'هیچ ئەدمینێکی پەسەندکراو نییە'),
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white70 : Colors.black87),
             ),
             const SizedBox(height: 8),
             Text(
-              tr(isPending ? 'هەموو داواکارییەکان پشکنین کراون' : 'لەم لیستەدا هیچ ئەدمینێک نییە'),
-              style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey),
+              tr(isPending
+                  ? 'هەموو داواکارییەکان پشکنین کراون'
+                  : 'لەم لیستەدا هیچ ئەدمینێک نییە'),
+              style: TextStyle(
+                  fontSize: 13, color: isDark ? Colors.white54 : Colors.grey),
             ),
           ],
         ),
@@ -246,11 +268,15 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
               color: isDark ? const Color(0xFF1A1A22) : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isPending ? Colors.amber.shade200 : Colors.green.shade200,
+                color:
+                    isPending ? Colors.amber.shade200 : Colors.green.shade200,
                 width: 1.5,
               ),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4)),
               ],
             ),
             child: Column(
@@ -261,12 +287,16 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isPending ? Colors.amber.shade50 : Colors.green.shade50,
+                        color: isPending
+                            ? Colors.amber.shade50
+                            : Colors.green.shade50,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.person_add_alt_1_rounded,
-                        color: isPending ? Colors.amber.shade700 : Colors.green.shade700,
+                        color: isPending
+                            ? Colors.amber.shade700
+                            : Colors.green.shade700,
                         size: 26,
                       ),
                     ),
@@ -277,16 +307,21 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                         children: [
                           Text(
                             tr(req['name'] ?? 'بێ ناو'),
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87),
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                color: isDark ? Colors.white : Colors.black87),
                           ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(Icons.phone, size: 14, color: Colors.grey.shade500),
+                              Icon(Icons.phone,
+                                  size: 14, color: Colors.grey.shade500),
                               const SizedBox(width: 4),
                               Text(
                                 tr(req['phone'] ?? 'بێ ژمارە'),
-                                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey.shade600),
                               ),
                             ],
                           ),
@@ -294,9 +329,12 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isPending ? Colors.amber.shade100 : Colors.green.shade100,
+                        color: isPending
+                            ? Colors.amber.shade100
+                            : Colors.green.shade100,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -304,7 +342,9 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: isPending ? Colors.amber.shade800 : Colors.green.shade800,
+                          color: isPending
+                              ? Colors.amber.shade800
+                              : Colors.green.shade800,
                         ),
                       ),
                     ),
@@ -321,14 +361,18 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => _rejectRequest(req['id'], req['name'] ?? ''),
+                          onPressed: () =>
+                              _rejectRequest(req['id'], req['name'] ?? ''),
                           icon: const Icon(Icons.close_rounded, size: 18),
-                          label: Text(tr('ڕەتکردنەوە'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                          label: Text(tr('ڕەتکردنەوە'),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFFDC3545),
                             side: const BorderSide(color: Color(0xFFDC3545)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),
@@ -336,14 +380,18 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                       Expanded(
                         flex: 2,
                         child: ElevatedButton.icon(
-                          onPressed: () => _approveRequest(req['id'], req['name'] ?? ''),
+                          onPressed: () =>
+                              _approveRequest(req['id'], req['name'] ?? ''),
                           icon: const Icon(Icons.check_rounded, size: 18),
-                          label: Text(tr('پەسەندکردن'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                          label: Text(tr('پەسەندکردن'),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green.shade600,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),
@@ -360,9 +408,14 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.verified_user_rounded, color: Color(0xFF0F9D7A), size: 18),
+                        const Icon(Icons.verified_user_rounded,
+                            color: Color(0xFF0F9D7A), size: 18),
                         const SizedBox(width: 8),
-                        Text(tr('ئەم بەکارهێنەرە پەسەندکراوە ✅'), style: const TextStyle(color: Color(0xFF0F9D7A), fontWeight: FontWeight.bold, fontSize: 12)),
+                        Text(tr('ئەم بەکارهێنەرە پەسەندکراوە ✅'),
+                            style: const TextStyle(
+                                color: Color(0xFF0F9D7A),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12)),
                       ],
                     ),
                   ),
@@ -377,20 +430,24 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
   // ── دیالۆگی دڵنیابوونەوە ──
   Future<bool> _showConfirmDialog(String title, String content) async {
     return await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr(title)),
-        content: Text(tr(content)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('نەخێر'))),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC3545)),
-            child: Text(tr('بەڵێ'), style: const TextStyle(color: Colors.white)),
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(tr(title)),
+            content: Text(tr(content)),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(tr('نەخێر'))),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC3545)),
+                child: Text(tr('بەڵێ'),
+                    style: const TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
   }
 
@@ -398,7 +455,8 @@ class _AdminVendorRequestsScreenState extends State<AdminVendorRequestsScreen>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(tr(message), style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(tr(message),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

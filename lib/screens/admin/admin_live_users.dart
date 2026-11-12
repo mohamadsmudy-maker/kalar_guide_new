@@ -49,7 +49,7 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
 
     return Scaffold(
       backgroundColor:
-      isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF4F6F9),
+          isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF4F6F9),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0A0A0F),
         foregroundColor: Colors.white,
@@ -78,19 +78,19 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-        onRefresh: _loadStats,
-        color: AppColors.primary,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildLiveCard(),
-            const SizedBox(height: 16),
-            _buildStatsGrid(isDark),
-            const SizedBox(height: 16),
-            _buildUsersList(isDark),
-          ],
-        ),
-      ),
+              onRefresh: _loadStats,
+              color: AppColors.primary,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildLiveCard(),
+                  const SizedBox(height: 16),
+                  _buildStatsGrid(isDark),
+                  const SizedBox(height: 16),
+                  _buildUsersList(isDark),
+                ],
+              ),
+            ),
     );
   }
 
@@ -169,7 +169,8 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
                     const SizedBox(height: 4),
                     Text(
                       tr('بەکارهێنەر'),
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
@@ -211,11 +212,13 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
+              const Icon(Icons.bar_chart_rounded,
+                  color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 tr('ئاماری تەواو'),
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                style:
+                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
               ),
             ],
           ),
@@ -298,7 +301,7 @@ class _AdminLiveUsersScreenState extends State<AdminLiveUsersScreen> {
                   const Spacer(),
                   Container(
                     padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFF0F9D7A).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),

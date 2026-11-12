@@ -153,7 +153,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
+            isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
             trf('گەڕەکەکان 🏘️ ({0})', [_neighborhoods.length]),
@@ -176,18 +176,18 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF1E88E5)),
-        )
+                child: CircularProgressIndicator(color: Color(0xFF1E88E5)),
+              )
             : _neighborhoods.isEmpty
-            ? _buildEmpty(isDark)
-            : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _neighborhoods.length,
-          itemBuilder: (ctx, i) => _buildCard(
-            _neighborhoods[i],
-            isDark,
-          ),
-        ),
+                ? _buildEmpty(isDark)
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _neighborhoods.length,
+                    itemBuilder: (ctx, i) => _buildCard(
+                      _neighborhoods[i],
+                      isDark,
+                    ),
+                  ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(),
           backgroundColor: const Color(0xFF1E88E5),
@@ -266,7 +266,7 @@ class _AdminNeighborhoodsScreenState extends State<AdminNeighborhoodsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '${n.centerLatitude!.toStringAsFixed(4)}, '
-                      '${n.centerLongitude!.toStringAsFixed(4)}',
+                  '${n.centerLongitude!.toStringAsFixed(4)}',
                   style: TextStyle(
                     fontSize: 10,
                     color: isDark ? Colors.white38 : Colors.grey.shade500,
@@ -346,8 +346,7 @@ class _NeighborhoodEditorDialog extends StatefulWidget {
       _NeighborhoodEditorDialogState();
 }
 
-class _NeighborhoodEditorDialogState
-    extends State<_NeighborhoodEditorDialog> {
+class _NeighborhoodEditorDialogState extends State<_NeighborhoodEditorDialog> {
   late TextEditingController _nameKuCtrl;
   late TextEditingController _nameEnCtrl;
   late TextEditingController _latCtrl;
@@ -391,9 +390,7 @@ class _NeighborhoodEditorDialogState
 
   // ⭐ گۆڕینی لیستی خاڵەکان بۆ تێکست
   String _boundaryToString(List<LatLng> boundary) {
-    return boundary
-        .map((p) => '${p.latitude},${p.longitude}')
-        .join(';');
+    return boundary.map((p) => '${p.latitude},${p.longitude}').join(';');
   }
 
   // ⭐ گۆڕینی تێکست بۆ لیستی خاڵەکان
@@ -442,7 +439,8 @@ class _NeighborhoodEditorDialogState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              trf('⚠️ سنوور دەبێت لانیکەم ٣ خاڵ بێت (ئێستا: {0})', [boundaryPoints.length]),
+              trf('⚠️ سنوور دەبێت لانیکەم ٣ خاڵ بێت (ئێستا: {0})',
+                  [boundaryPoints.length]),
             ),
             backgroundColor: const Color(0xFFD9822B),
           ),
@@ -452,9 +450,8 @@ class _NeighborhoodEditorDialogState
 
       final data = <String, dynamic>{
         'name_ku': _nameKuCtrl.text.trim(),
-        'name_en': _nameEnCtrl.text.trim().isEmpty
-            ? null
-            : _nameEnCtrl.text.trim(),
+        'name_en':
+            _nameEnCtrl.text.trim().isEmpty ? null : _nameEnCtrl.text.trim(),
         // ✅ ناوی دروست — center_latitude / center_longitude
         'center_latitude': _latCtrl.text.trim().isEmpty
             ? null
@@ -576,20 +573,20 @@ class _NeighborhoodEditorDialogState
                     onPressed: _loading ? null : _save,
                     child: _loading
                         ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : Text(
-                      tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 15,
-                      ),
-                    ),
+                            tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -601,10 +598,10 @@ class _NeighborhoodEditorDialogState
   }
 
   Widget _buildField(
-      String label,
-      TextEditingController ctrl, {
-        int maxLines = 1,
-      }) {
+    String label,
+    TextEditingController ctrl, {
+    int maxLines = 1,
+  }) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,

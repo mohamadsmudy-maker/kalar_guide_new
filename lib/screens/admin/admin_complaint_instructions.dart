@@ -20,13 +20,16 @@ const Color _kAppBarColor = Color(0xFF1E1B2E);
 // ═══════════════════════════════════════════════════════════
 // 🛠️ Shared UI Helpers
 // ═══════════════════════════════════════════════════════════
-void _toast(ScaffoldMessengerState messenger, String msg, {bool isError = false}) {
+void _toast(ScaffoldMessengerState messenger, String msg,
+    {bool isError = false}) {
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isError ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A),
+        content:
+            Text(tr(msg), style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor:
+            isError ? const Color(0xFFDC3545) : const Color(0xFF0F9D7A),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -34,14 +37,14 @@ void _toast(ScaffoldMessengerState messenger, String msg, {bool isError = false}
 }
 
 Future<bool> _confirmDialog(
-    BuildContext context, {
-      required String title,
-      required String message,
-      required String confirmLabel,
-      String cancelLabel = "نەخێر",
-      IconData icon = Icons.warning_amber_rounded,
-      Color color = const Color(0xFFDC3545),
-    }) async {
+  BuildContext context, {
+  required String title,
+  required String message,
+  required String confirmLabel,
+  String cancelLabel = "نەخێر",
+  IconData icon = Icons.warning_amber_rounded,
+  Color color = const Color(0xFFDC3545),
+}) async {
   final res = await showDialog<bool>(
     context: context,
     builder: (ctx) => Directionality(
@@ -53,7 +56,8 @@ Future<bool> _confirmDialog(
             Icon(icon, color: color),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(tr(title), style: const TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(tr(title),
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -61,13 +65,15 @@ Future<bool> _confirmDialog(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(tr(cancelLabel), style: const TextStyle(color: Colors.grey)),
+            child: Text(tr(cancelLabel),
+                style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(tr(confirmLabel)),
@@ -162,7 +168,8 @@ class _AdminComplaintInstructionsListScreenState
   final Set<dynamic> _togglingIds = {};
 
   bool get _limitReached => _instructions.length >= _kMaxInstructions;
-  int get _activeCount => _instructions.where((e) => (e['is_active'] ?? true) == true).length;
+  int get _activeCount =>
+      _instructions.where((e) => (e['is_active'] ?? true) == true).length;
 
   @override
   void initState() {
@@ -221,7 +228,9 @@ class _AdminComplaintInstructionsListScreenState
     });
 
     try {
-      await Supabase.instance.client.from(_kTable).update({'is_active': value}).eq('id', id);
+      await Supabase.instance.client
+          .from(_kTable)
+          .update({'is_active': value}).eq('id', id);
     } catch (e) {
       if (!mounted) return;
       setState(() => item['is_active'] = old);
@@ -252,7 +261,9 @@ class _AdminComplaintInstructionsListScreenState
 
   Future<void> _openEditor({Map<String, dynamic>? item}) async {
     if (item == null && _limitReached) {
-      _toast(ScaffoldMessenger.of(context), trf("گەیشتیتە سنووری {0} سلاید ⚠", [_kMaxInstructions]), isError: true);
+      _toast(ScaffoldMessenger.of(context),
+          trf("گەیشتیتە سنووری {0} سلاید ⚠", [_kMaxInstructions]),
+          isError: true);
       return;
     }
     final changed = await Navigator.push<bool>(
@@ -289,7 +300,8 @@ class _AdminComplaintInstructionsListScreenState
     return Directionality(
       textDirection: AppLang.direction,
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF4F6F9),
+        backgroundColor:
+            isDark ? AppColors.darkBackground : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
             tr("ڕێنماییەکانی سکاڵا 📢"),
@@ -311,19 +323,21 @@ class _AdminComplaintInstructionsListScreenState
         floatingActionButton: (_loading || _error != null || _limitReached)
             ? null
             : FloatingActionButton.extended(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          onPressed: () => _openEditor(),
-          icon: const Icon(Icons.add_rounded),
-          label: Text(tr("زیادکردنی نوێ"), style: const TextStyle(fontWeight: FontWeight.bold)),
-        ),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                onPressed: () => _openEditor(),
+                icon: const Icon(Icons.add_rounded),
+                label: Text(tr("زیادکردنی نوێ"),
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
       ),
     );
   }
 
   Widget _buildBody(bool isDark) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return const Center(
+          child: CircularProgressIndicator(color: AppColors.primary));
     }
     if (_error != null) {
       return _buildScrollableCenter(_buildErrorState(isDark));
@@ -379,11 +393,14 @@ class _AdminComplaintInstructionsListScreenState
         children: [
           Row(
             children: [
-              _statChip(isDark, Icons.layers_rounded, "$total / $_kMaxInstructions", "کۆی گشتی", AppColors.primary),
+              _statChip(isDark, Icons.layers_rounded,
+                  "$total / $_kMaxInstructions", "کۆی گشتی", AppColors.primary),
               const SizedBox(width: 8),
-              _statChip(isDark, Icons.visibility_rounded, "$active", "چالاک", const Color(0xFF0F9D7A)),
+              _statChip(isDark, Icons.visibility_rounded, "$active", "چالاک",
+                  const Color(0xFF0F9D7A)),
               const SizedBox(width: 8),
-              _statChip(isDark, Icons.visibility_off_rounded, "${total - active}", "ناچالاک", Colors.grey),
+              _statChip(isDark, Icons.visibility_off_rounded,
+                  "${total - active}", "ناچالاک", Colors.grey),
             ],
           ),
           if (_limitReached) ...[
@@ -393,16 +410,21 @@ class _AdminComplaintInstructionsListScreenState
               decoration: BoxDecoration(
                 color: const Color(0xFFD9822B).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFD9822B).withValues(alpha: 0.4)),
+                border: Border.all(
+                    color: const Color(0xFFD9822B).withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline_rounded, color: Color(0xFFD9822B), size: 18),
+                  const Icon(Icons.info_outline_rounded,
+                      color: Color(0xFFD9822B), size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      trf("گەیشتیتە زۆرترین ژمارەی سلاید ({0}). بۆ زیادکردنی نوێ، یەکێک بسڕەوە.", [_kMaxInstructions]),
-                      style: TextStyle(fontSize: 11, color: isDark ? Colors.white70 : Colors.black87),
+                      trf("گەیشتیتە زۆرترین ژمارەی سلاید ({0}). بۆ زیادکردنی نوێ، یەکێک بسڕەوە.",
+                          [_kMaxInstructions]),
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white70 : Colors.black87),
                     ),
                   ),
                 ],
@@ -413,20 +435,24 @@ class _AdminComplaintInstructionsListScreenState
           TextField(
             controller: _searchCtrl,
             onChanged: (v) => setState(() => _query = v),
-            style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13),
+            style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87, fontSize: 13),
             decoration: InputDecoration(
               hintText: tr("گەڕان بەپێی ناونیشان یان دەق..."),
-              hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontSize: 12),
-              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
+              hintStyle: TextStyle(
+                  color: isDark ? Colors.white54 : Colors.grey, fontSize: 12),
+              prefixIcon:
+                  const Icon(Icons.search_rounded, color: AppColors.primary),
               suffixIcon: _query.isEmpty
                   ? null
                   : IconButton(
-                icon: Icon(Icons.close_rounded, color: isDark ? Colors.white54 : Colors.grey),
-                onPressed: () {
-                  _searchCtrl.clear();
-                  setState(() => _query = '');
-                },
-              ),
+                      icon: Icon(Icons.close_rounded,
+                          color: isDark ? Colors.white54 : Colors.grey),
+                      onPressed: () {
+                        _searchCtrl.clear();
+                        setState(() => _query = '');
+                      },
+                    ),
               filled: true,
               fillColor: isDark ? AppColors.darkCard : Colors.white,
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -450,7 +476,8 @@ class _AdminComplaintInstructionsListScreenState
     );
   }
 
-  Widget _statChip(bool isDark, IconData icon, String value, String label, Color color) {
+  Widget _statChip(
+      bool isDark, IconData icon, String value, String label, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
@@ -479,7 +506,8 @@ class _AdminComplaintInstructionsListScreenState
             ),
             Text(
               tr(label),
-              style: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey),
+              style: TextStyle(
+                  fontSize: 10, color: isDark ? Colors.white54 : Colors.grey),
             ),
           ],
         ),
@@ -495,7 +523,9 @@ class _AdminComplaintInstructionsListScreenState
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: selected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+          color: selected
+              ? Colors.white
+              : (isDark ? Colors.white70 : Colors.black87),
         ),
       ),
       selected: selected,
@@ -503,14 +533,17 @@ class _AdminComplaintInstructionsListScreenState
       selectedColor: AppColors.primary,
       backgroundColor: isDark ? AppColors.darkCard : Colors.white,
       side: BorderSide(
-        color: selected ? AppColors.primary : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
+        color: selected
+            ? AppColors.primary
+            : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       onSelected: (_) => setState(() => _filter = value),
     );
   }
 
-  Widget _buildInstructionCard(Map<String, dynamic> item, int index, bool isDark) {
+  Widget _buildInstructionCard(
+      Map<String, dynamic> item, int index, bool isDark) {
     final bool isActive = (item['is_active'] ?? true) == true;
     final String imageUrl = (item['image_url'] ?? '').toString();
     final String title = (item['title'] ?? 'بێ ناونیشان').toString();
@@ -540,24 +573,30 @@ class _AdminComplaintInstructionsListScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
-            onTap: imageUrl.isEmpty ? null : () => _showImagePreview(context, imageUrl),
+            onTap: imageUrl.isEmpty
+                ? null
+                : () => _showImagePreview(context, imageUrl),
             child: Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(18)),
                   child: imageUrl.isNotEmpty
                       ? OptimizedNetworkImage(
-                    imageUrl: imageUrl,
-                    width: double.infinity,
-                    height: 160,
-                    fit: BoxFit.cover,
-                  )
+                          imageUrl: imageUrl,
+                          width: double.infinity,
+                          height: 160,
+                          fit: BoxFit.cover,
+                        )
                       : Container(
-                    width: double.infinity,
-                    height: 160,
-                    color: isDark ? AppColors.darkBackground : Colors.grey.shade100,
-                    child: const Icon(Icons.image_not_supported_rounded, color: Colors.grey, size: 40),
-                  ),
+                          width: double.infinity,
+                          height: 160,
+                          color: isDark
+                              ? AppColors.darkBackground
+                              : Colors.grey.shade100,
+                          child: const Icon(Icons.image_not_supported_rounded,
+                              color: Colors.grey, size: 40),
+                        ),
                 ),
                 Positioned(
                   bottom: 0,
@@ -570,7 +609,10 @@ class _AdminComplaintInstructionsListScreenState
                         gradient: LinearGradient(
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
-                          colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
+                          colors: [
+                            Colors.black.withValues(alpha: 0.7),
+                            Colors.transparent
+                          ],
                         ),
                       ),
                     ),
@@ -579,7 +621,9 @@ class _AdminComplaintInstructionsListScreenState
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: _badge(trf("سلاید {0}", [index + 1]), AppColors.primary, fontSize: 12),
+                  child: _badge(
+                      trf("سلاید {0}", [index + 1]), AppColors.primary,
+                      fontSize: 12),
                 ),
                 Positioned(
                   top: 12,
@@ -587,14 +631,17 @@ class _AdminComplaintInstructionsListScreenState
                   child: _badge(
                     isActive ? "چالاک" : "ناچالاک",
                     isActive ? const Color(0xFF0F9D7A) : Colors.grey,
-                    icon: isActive ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                    icon: isActive
+                        ? Icons.visibility_rounded
+                        : Icons.visibility_off_rounded,
                   ),
                 ),
                 if (imageUrl.isNotEmpty)
                   Positioned(
                     bottom: 10,
                     left: 12,
-                    child: Icon(Icons.zoom_out_map_rounded, color: Colors.white.withValues(alpha: 0.85), size: 18),
+                    child: Icon(Icons.zoom_out_map_rounded,
+                        color: Colors.white.withValues(alpha: 0.85), size: 18),
                   ),
               ],
             ),
@@ -620,26 +667,31 @@ class _AdminComplaintInstructionsListScreenState
                     ),
                     toggling
                         ? const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14),
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                      ),
-                    )
+                            padding: EdgeInsets.symmetric(horizontal: 14),
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: AppColors.primary),
+                            ),
+                          )
                         : Switch(
-                      value: isActive,
-                      activeThumbColor: const Color(0xFF0F9D7A),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      onChanged: (v) => _toggleActive(item, v),
-                    ),
+                            value: isActive,
+                            activeThumbColor: const Color(0xFF0F9D7A),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            onChanged: (v) => _toggleActive(item, v),
+                          ),
                   ],
                 ),
                 if (desc.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     tr(desc),
-                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.grey.shade600, height: 1.4),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white60 : Colors.grey.shade600,
+                        height: 1.4),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -660,9 +712,14 @@ class _AdminComplaintInstructionsListScreenState
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.edit_rounded, color: AppColors.primary, size: 16),
+                              const Icon(Icons.edit_rounded,
+                                  color: AppColors.primary, size: 16),
                               const SizedBox(width: 6),
-                              Text(tr("دەستکاری"), style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+                              Text(tr("دەستکاری"),
+                                  style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -673,12 +730,16 @@ class _AdminComplaintInstructionsListScreenState
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => _deleteInstruction(item['id']),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFFDC3545).withValues(alpha: 0.15) : Colors.red.shade50,
+                          color: isDark
+                              ? const Color(0xFFDC3545).withValues(alpha: 0.15)
+                              : Colors.red.shade50,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.delete_rounded, color: Color(0xFFDC3545), size: 18),
+                        child: const Icon(Icons.delete_rounded,
+                            color: Color(0xFFDC3545), size: 18),
                       ),
                     ),
                   ],
@@ -691,13 +752,16 @@ class _AdminComplaintInstructionsListScreenState
     );
   }
 
-  Widget _badge(String text, Color color, {IconData? icon, double fontSize = 10}) {
+  Widget _badge(String text, Color color,
+      {IconData? icon, double fontSize = 10}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 6)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 6)
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -708,7 +772,10 @@ class _AdminComplaintInstructionsListScreenState
           ],
           Text(
             tr(text),
-            style: TextStyle(color: Colors.white, fontSize: fontSize, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -720,11 +787,15 @@ class _AdminComplaintInstructionsListScreenState
       padding: const EdgeInsets.only(top: 50),
       child: Column(
         children: [
-          Icon(Icons.search_off_rounded, size: 52, color: isDark ? Colors.white54 : Colors.grey),
+          Icon(Icons.search_off_rounded,
+              size: 52, color: isDark ? Colors.white54 : Colors.grey),
           const SizedBox(height: 10),
           Text(
             tr("هیچ ئەنجامێک نەدۆزرایەوە"),
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isDark ? Colors.white54 : Colors.grey),
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isDark ? Colors.white54 : Colors.grey),
           ),
           const SizedBox(height: 8),
           TextButton(
@@ -748,8 +819,11 @@ class _AdminComplaintInstructionsListScreenState
       children: [
         Container(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-          child: const Icon(Icons.announcement_outlined, size: 60, color: AppColors.primary),
+          decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle),
+          child: const Icon(Icons.announcement_outlined,
+              size: 60, color: AppColors.primary),
         ),
         const SizedBox(height: 16),
         Text(
@@ -761,18 +835,22 @@ class _AdminComplaintInstructionsListScreenState
           ),
         ),
         const SizedBox(height: 6),
-        Text(tr("دەتوانیت ڕێنمایی نوێ زیاد بکەیت"), style: TextStyle(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey)),
+        Text(tr("دەتوانیت ڕێنمایی نوێ زیاد بکەیت"),
+            style: TextStyle(
+                fontSize: 12, color: isDark ? Colors.white54 : Colors.grey)),
         const SizedBox(height: 20),
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           ),
           onPressed: () => _openEditor(),
           icon: const Icon(Icons.add_rounded, size: 20),
-          label: Text(tr("زیادکردنی ڕێنمایی نوێ"), style: const TextStyle(fontWeight: FontWeight.bold)),
+          label: Text(tr("زیادکردنی ڕێنمایی نوێ"),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -786,13 +864,19 @@ class _AdminComplaintInstructionsListScreenState
         children: [
           Container(
             padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(color: const Color(0xFFDC3545).withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.wifi_off_rounded, size: 52, color: Color(0xFFDC3545)),
+            decoration: BoxDecoration(
+                color: const Color(0xFFDC3545).withValues(alpha: 0.1),
+                shape: BoxShape.circle),
+            child: const Icon(Icons.wifi_off_rounded,
+                size: 52, color: Color(0xFFDC3545)),
           ),
           const SizedBox(height: 16),
           Text(
             tr("هەڵەیەک ڕووی دا"),
-            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: isDark ? Colors.white : Colors.black87),
+            style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                color: isDark ? Colors.white : Colors.black87),
           ),
           const SizedBox(height: 6),
           Text(
@@ -800,19 +884,22 @@ class _AdminComplaintInstructionsListScreenState
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.grey),
+            style: TextStyle(
+                fontSize: 11, color: isDark ? Colors.white54 : Colors.grey),
           ),
           const SizedBox(height: 18),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             onPressed: () => _fetchInstructions(),
             icon: const Icon(Icons.refresh_rounded, size: 20),
-            label: Text(tr("دووبارە هەوڵبدەرەوە"), style: const TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(tr("دووبارە هەوڵبدەرەوە"),
+                style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -833,7 +920,8 @@ class AdminEditComplaintInstructionScreen extends StatefulWidget {
       _AdminEditComplaintInstructionScreenState();
 }
 
-class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaintInstructionScreen> {
+class _AdminEditComplaintInstructionScreenState
+    extends State<AdminEditComplaintInstructionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -854,14 +942,15 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
   bool get isEditing => widget.itemToEdit != null;
 
   bool get _hasImage =>
-      _pickedImage != null || (!_removedExisting && (_existingImageUrl ?? '').isNotEmpty);
+      _pickedImage != null ||
+      (!_removedExisting && (_existingImageUrl ?? '').isNotEmpty);
 
   bool get _isDirty =>
       _titleCtrl.text.trim() != _initTitle ||
-          _descCtrl.text.trim() != _initDesc ||
-          _isActive != _initActive ||
-          _pickedImage != null ||
-          _removedExisting;
+      _descCtrl.text.trim() != _initDesc ||
+      _isActive != _initActive ||
+      _pickedImage != null ||
+      _removedExisting;
 
   @override
   void initState() {
@@ -899,7 +988,8 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
     FocusScope.of(context).unfocus();
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70, maxWidth: 1600);
+      final picked = await _picker.pickImage(
+          source: ImageSource.gallery, imageQuality: 70, maxWidth: 1600);
       if (picked != null && mounted) {
         setState(() {
           _pickedImage = picked;
@@ -907,7 +997,8 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
         });
       }
     } catch (e) {
-      _toast(messenger, trf("نەتوانرا وێنە هەڵبژێردرێت: {0}", [e]), isError: true);
+      _toast(messenger, trf("نەتوانرا وێنە هەڵبژێردرێت: {0}", [e]),
+          isError: true);
     }
   }
 
@@ -927,7 +1018,8 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
     final formOk = _formKey.currentState?.validate() ?? false;
     if (!_hasImage) setState(() => _imageError = true);
     if (!formOk || !_hasImage) {
-      _toast(messenger, tr("تکایە زانیارییە پێویستەکان پڕبکەرەوە ⚠"), isError: true);
+      _toast(messenger, tr("تکایە زانیارییە پێویستەکان پڕبکەرەوە ⚠"),
+          isError: true);
       return;
     }
 
@@ -963,23 +1055,26 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
     }
   }
 
-  InputDecoration _decoration(bool isDark, {required String label, required IconData icon, bool multiline = false}) {
+  InputDecoration _decoration(bool isDark,
+      {required String label, required IconData icon, bool multiline = false}) {
     OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: c, width: w),
-    );
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: c, width: w),
+        );
 
-    final fieldBorderColor = isDark ? AppColors.darkBorder : Colors.grey.shade300;
+    final fieldBorderColor =
+        isDark ? AppColors.darkBorder : Colors.grey.shade300;
 
     return InputDecoration(
       labelText: label,
       alignLabelWithHint: multiline,
-      labelStyle: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey),
+      labelStyle:
+          TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.grey),
       prefixIcon: multiline
           ? Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: Icon(icon, color: AppColors.primary),
-      )
+              padding: const EdgeInsets.only(bottom: 80),
+              child: Icon(icon, color: AppColors.primary),
+            )
           : Icon(icon, color: AppColors.primary),
       border: border(fieldBorderColor),
       enabledBorder: border(fieldBorderColor),
@@ -988,8 +1083,10 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
       focusedErrorBorder: border(const Color(0xFFDC3545), 1.5),
       filled: true,
       fillColor: isDark ? AppColors.darkBackground : Colors.grey.shade50,
-      counterStyle: TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey),
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: multiline ? 16 : 16),
+      counterStyle:
+          TextStyle(fontSize: 10, color: isDark ? Colors.white54 : Colors.grey),
+      contentPadding:
+          EdgeInsets.symmetric(horizontal: 16, vertical: multiline ? 16 : 16),
     );
   }
 
@@ -1016,10 +1113,13 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
           if (leave) navigator.pop(false);
         },
         child: Scaffold(
-          backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFF4F6F9),
+          backgroundColor:
+              isDark ? AppColors.darkBackground : const Color(0xFFF4F6F9),
           appBar: AppBar(
             title: Text(
-              tr(isEditing ? "دەستکاریکردنی ڕێنمایی ✏️" : "زیادکردنی ڕێنمایی نوێ 📢"),
+              tr(isEditing
+                  ? "دەستکاریکردنی ڕێنمایی ✏️"
+                  : "زیادکردنی ڕێنمایی نوێ 📢"),
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
             ),
             backgroundColor: _kAppBarColor,
@@ -1033,7 +1133,8 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
                 behavior: HitTestBehavior.translucent,
                 onTap: () => FocusScope.of(context).unfocus(),
                 child: SingleChildScrollView(
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.all(16),
                   child: Form(
                     key: _formKey,
@@ -1054,7 +1155,8 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
               if (_loading)
                 Positioned.fill(
                   child: AbsorbPointer(
-                    child: Container(color: Colors.black.withValues(alpha: 0.15)),
+                    child:
+                        Container(color: Colors.black.withValues(alpha: 0.15)),
                   ),
                 ),
             ],
@@ -1071,16 +1173,19 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
     if (_pickedImage != null) {
       content = Image.file(File(_pickedImage!.path), fit: BoxFit.cover);
     } else if (!_removedExisting && (_existingImageUrl ?? '').isNotEmpty) {
-      content = OptimizedNetworkImage(imageUrl: _existingImageUrl!, fit: BoxFit.cover);
+      content = OptimizedNetworkImage(
+          imageUrl: _existingImageUrl!, fit: BoxFit.cover);
     } else {
       content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.add_a_photo_rounded, size: 40, color: AppColors.primary),
+          const Icon(Icons.add_a_photo_rounded,
+              size: 40, color: AppColors.primary),
           const SizedBox(height: 8),
           Text(
             tr("کرتە بکە بۆ هەڵبژاردنی وێنە 📸"),
-            style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold),
           ),
         ],
       );
@@ -1093,7 +1198,8 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
         children: [
           Row(
             children: [
-              const Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 20),
+              const Icon(Icons.photo_library_rounded,
+                  color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 tr("وێنەی سلاید *"),
@@ -1115,7 +1221,9 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
                 color: isDark ? AppColors.darkBackground : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: _imageError ? const Color(0xFFDC3545) : AppColors.primary.withValues(alpha: 0.3),
+                  color: _imageError
+                      ? const Color(0xFFDC3545)
+                      : AppColors.primary.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -1133,7 +1241,9 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
                           children: [
                             _roundBtn(Icons.edit_rounded, _pickImage),
                             const SizedBox(width: 6),
-                            _roundBtn(Icons.delete_outline_rounded, _removeImage, color: const Color(0xFFDC3545)),
+                            _roundBtn(
+                                Icons.delete_outline_rounded, _removeImage,
+                                color: const Color(0xFFDC3545)),
                           ],
                         ),
                       ),
@@ -1145,7 +1255,9 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
           if (_imageError)
             Padding(
               padding: const EdgeInsets.only(top: 8, right: 4),
-              child: Text(tr("تکایا وێنەیەک هەڵبژێرە"), style: const TextStyle(color: Color(0xFFDC3545), fontSize: 11)),
+              child: Text(tr("تکایا وێنەیەک هەڵبژێرە"),
+                  style:
+                      const TextStyle(color: Color(0xFFDC3545), fontSize: 11)),
             ),
         ],
       ),
@@ -1178,8 +1290,11 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
             maxLength: _kTitleMax,
             textInputAction: TextInputAction.next,
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _decoration(isDark, label: tr("ناونیشانی ڕێنمایی *"), icon: Icons.title_rounded),
-            validator: (v) => (v == null || v.trim().isEmpty) ? "تکایا ناونیشان پڕبکەرەوە" : null,
+            decoration: _decoration(isDark,
+                label: tr("ناونیشانی ڕێنمایی *"), icon: Icons.title_rounded),
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? "تکایا ناونیشان پڕبکەرەوە"
+                : null,
           ),
           const SizedBox(height: 10),
           TextFormField(
@@ -1189,7 +1304,10 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
             maxLength: _kDescMax,
             keyboardType: TextInputType.multiline,
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            decoration: _decoration(isDark, label: tr("دەق و ڕوونکردنەوەی ڕێنماییەکە"), icon: Icons.description_rounded, multiline: true),
+            decoration: _decoration(isDark,
+                label: tr("دەق و ڕوونکردنەوەی ڕێنماییەکە"),
+                icon: Icons.description_rounded,
+                multiline: true),
           ),
           const SizedBox(height: 10),
           _buildActiveToggle(isDark),
@@ -1204,11 +1322,15 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: _isActive
-            ? (isDark ? const Color(0xFF0F9D7A).withValues(alpha: 0.15) : Colors.green.shade50)
+            ? (isDark
+                ? const Color(0xFF0F9D7A).withValues(alpha: 0.15)
+                : Colors.green.shade50)
             : (isDark ? AppColors.darkBackground : Colors.grey.shade100),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: _isActive ? Colors.green.shade200 : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
+          color: _isActive
+              ? Colors.green.shade200
+              : (isDark ? AppColors.darkBorder : Colors.grey.shade300),
         ),
       ),
       child: Row(
@@ -1228,14 +1350,20 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
-                    color: _isActive ? Colors.green.shade800 : (isDark ? Colors.white70 : Colors.grey.shade700),
+                    color: _isActive
+                        ? Colors.green.shade800
+                        : (isDark ? Colors.white70 : Colors.grey.shade700),
                   ),
                 ),
                 Text(
-                  tr(_isActive ? "بەکارهێنەران دەتوانن بیبینن" : "بەکارهێنەران ناتوانن بیبینن"),
+                  tr(_isActive
+                      ? "بەکارهێنەران دەتوانن بیبینن"
+                      : "بەکارهێنەران ناتوانن بیبینن"),
                   style: TextStyle(
                     fontSize: 10,
-                    color: _isActive ? Colors.green.shade600 : (isDark ? Colors.white54 : Colors.grey.shade600),
+                    color: _isActive
+                        ? Colors.green.shade600
+                        : (isDark ? Colors.white54 : Colors.grey.shade600),
                   ),
                 ),
               ],
@@ -1244,7 +1372,8 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
           Switch(
             value: _isActive,
             activeThumbColor: const Color(0xFF0F9D7A),
-            onChanged: _loading ? null : (val) => setState(() => _isActive = val),
+            onChanged:
+                _loading ? null : (val) => setState(() => _isActive = val),
           ),
         ],
       ),
@@ -1261,25 +1390,29 @@ class _AdminEditComplaintInstructionScreenState extends State<AdminEditComplaint
           foregroundColor: Colors.white,
           disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
           disabledForegroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 3,
           shadowColor: AppColors.primary.withValues(alpha: 0.4),
         ),
         onPressed: _loading
             ? null
             : () {
-          HapticFeedback.lightImpact();
-          _save();
-        },
+                HapticFeedback.lightImpact();
+                _save();
+              },
         icon: _loading
             ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-        )
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2.5, color: Colors.white),
+              )
             : const Icon(Icons.save_rounded, size: 22),
         label: Text(
-          tr(_loading ? "تکایە چاوەڕێبە..." : (isEditing ? "نوێکردنەوە ✅" : "پاشەکەوتکردن ✅")),
+          tr(_loading
+              ? "تکایە چاوەڕێبە..."
+              : (isEditing ? "نوێکردنەوە ✅" : "پاشەکەوتکردن ✅")),
           style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
         ),
       ),

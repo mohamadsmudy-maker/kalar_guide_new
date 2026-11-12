@@ -106,10 +106,12 @@ class _AdminEmergencyServicesScreenState
             children: [
               const Icon(Icons.warning_amber_rounded, color: Color(0xFFDC3545)),
               const SizedBox(width: 8),
-              Text(tr('سڕینەوە'), style: const TextStyle(fontWeight: FontWeight.w900)),
+              Text(tr('سڕینەوە'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
             ],
           ),
-          content: Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [service.nameKu])),
+          content:
+              Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [service.nameKu])),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -166,7 +168,7 @@ class _AdminEmergencyServicesScreenState
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
+            isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
         appBar: AppBar(
           elevation: 0,
           backgroundColor: const Color(0xFFDC3545),
@@ -283,12 +285,12 @@ class _AdminEmergencyServicesScreenState
                     ),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      onPressed: () {
-                        _searchCtrl.clear();
-                        setState(() => _searchQuery = '');
-                      },
-                    )
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
                         : null,
                     border: InputBorder.none,
                   ),
@@ -302,18 +304,18 @@ class _AdminEmergencyServicesScreenState
             Expanded(
               child: _loading
                   ? const Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFFDC3545),
-                ),
-              )
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFDC3545),
+                      ),
+                    )
                   : _filtered.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                itemCount: _filtered.length,
-                itemBuilder: (context, i) =>
-                    _buildServiceTile(_filtered[i], isDark),
-              ),
+                      ? _buildEmptyState(isDark)
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                          itemCount: _filtered.length,
+                          itemBuilder: (context, i) =>
+                              _buildServiceTile(_filtered[i], isDark),
+                        ),
             ),
           ],
         ),
@@ -550,7 +552,10 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
 
   final List<Map<String, dynamic>> _icons = [
     {'key': 'local_police', 'icon': Icons.local_police_rounded},
-    {'key': 'local_fire_department', 'icon': Icons.local_fire_department_rounded},
+    {
+      'key': 'local_fire_department',
+      'icon': Icons.local_fire_department_rounded
+    },
     {'key': 'local_hospital', 'icon': Icons.local_hospital_rounded},
     {'key': 'bolt', 'icon': Icons.electric_bolt_rounded},
     {'key': 'water_drop', 'icon': Icons.water_drop_rounded},
@@ -603,8 +608,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
   }
 
   void _save() {
-    if (_nameKuCtrl.text.trim().isEmpty ||
-        _phoneCtrl.text.trim().isEmpty) {
+    if (_nameKuCtrl.text.trim().isEmpty || _phoneCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(tr('ناو و ژمارە پێویستن')),
@@ -616,26 +620,20 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
 
     final data = {
       'name_ku': _nameKuCtrl.text.trim(),
-      'name_ar': _nameArCtrl.text.trim().isEmpty
-          ? null
-          : _nameArCtrl.text.trim(),
-      'name_en': _nameEnCtrl.text.trim().isEmpty
-          ? null
-          : _nameEnCtrl.text.trim(),
+      'name_ar':
+          _nameArCtrl.text.trim().isEmpty ? null : _nameArCtrl.text.trim(),
+      'name_en':
+          _nameEnCtrl.text.trim().isEmpty ? null : _nameEnCtrl.text.trim(),
       'category': _category,
       'phone': _phoneCtrl.text.trim(),
-      'phone_alt': _phoneAltCtrl.text.trim().isEmpty
-          ? null
-          : _phoneAltCtrl.text.trim(),
-      'address': _addressCtrl.text.trim().isEmpty
-          ? null
-          : _addressCtrl.text.trim(),
+      'phone_alt':
+          _phoneAltCtrl.text.trim().isEmpty ? null : _phoneAltCtrl.text.trim(),
+      'address':
+          _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
       'authority_name': _authorityCtrl.text.trim().isEmpty
           ? null
           : _authorityCtrl.text.trim(),
-      'notes': _notesCtrl.text.trim().isEmpty
-          ? null
-          : _notesCtrl.text.trim(),
+      'notes': _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       'icon': _icon,
       'color': _selectedColor,
       'is_important': _isImportant,
@@ -706,9 +704,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
-                        color: isDark
-                            ? Colors.white
-                            : const Color(0xFF1A1A2E),
+                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                       ),
                     ),
                   ),
@@ -750,24 +746,24 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                             decoration: BoxDecoration(
                               gradient: isSelected
                                   ? const LinearGradient(
-                                colors: [
-                                  Color(0xFFDC3545),
-                                  Color(0xFFE35D6A),
-                                ],
-                              )
+                                      colors: [
+                                        Color(0xFFDC3545),
+                                        Color(0xFFE35D6A),
+                                      ],
+                                    )
                                   : null,
                               color: isSelected
                                   ? null
                                   : (isDark
-                                  ? const Color(0xFF0F0F14)
-                                  : Colors.grey.shade100),
+                                      ? const Color(0xFF0F0F14)
+                                      : Colors.grey.shade100),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isSelected
                                     ? Colors.transparent
                                     : (isDark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.grey.shade300),
+                                        ? Colors.white.withValues(alpha: 0.1)
+                                        : Colors.grey.shade300),
                               ),
                             ),
                             child: Text(
@@ -778,8 +774,8 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                                 color: isSelected
                                     ? Colors.white
                                     : (isDark
-                                    ? Colors.white70
-                                    : Colors.grey.shade700),
+                                        ? Colors.white70
+                                        : Colors.grey.shade700),
                               ),
                             ),
                           ),
@@ -852,24 +848,24 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                             decoration: BoxDecoration(
                               gradient: isSelected
                                   ? const LinearGradient(
-                                colors: [
-                                  Color(0xFFDC3545),
-                                  Color(0xFFE35D6A),
-                                ],
-                              )
+                                      colors: [
+                                        Color(0xFFDC3545),
+                                        Color(0xFFE35D6A),
+                                      ],
+                                    )
                                   : null,
                               color: isSelected
                                   ? null
                                   : (isDark
-                                  ? const Color(0xFF0F0F14)
-                                  : Colors.grey.shade100),
+                                      ? const Color(0xFF0F0F14)
+                                      : Colors.grey.shade100),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
                                     ? Colors.transparent
                                     : (isDark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.grey.shade300),
+                                        ? Colors.white.withValues(alpha: 0.1)
+                                        : Colors.grey.shade300),
                                 width: 2,
                               ),
                             ),
@@ -878,8 +874,8 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                               color: isSelected
                                   ? Colors.white
                                   : (isDark
-                                  ? Colors.white70
-                                  : Colors.grey.shade700),
+                                      ? Colors.white70
+                                      : Colors.grey.shade700),
                               size: 22,
                             ),
                           ),
@@ -927,10 +923,10 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                             ),
                             child: isSelected
                                 ? const Icon(
-                              Icons.check_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            )
+                                    Icons.check_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  )
                                 : null,
                           ),
                         );
@@ -945,7 +941,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                       Icons.star_rounded,
                       const Color(0xFFD9822B),
                       _isImportant,
-                          (v) => setState(() => _isImportant = v),
+                      (v) => setState(() => _isImportant = v),
                       isDark,
                     ),
                     _buildSwitch(
@@ -954,7 +950,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                       Icons.access_time_filled_rounded,
                       const Color(0xFF0F9D7A),
                       _is24h,
-                          (v) => setState(() => _is24h = v),
+                      (v) => setState(() => _is24h = v),
                       isDark,
                     ),
                     _buildSwitch(
@@ -963,7 +959,7 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
                       Icons.visibility_rounded,
                       AppColors.primary,
                       _isActive,
-                          (v) => setState(() => _isActive = v),
+                      (v) => setState(() => _isActive = v),
                       isDark,
                     ),
                     const SizedBox(height: 20),
@@ -1051,12 +1047,12 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
   }
 
   Widget _buildField(
-      String label,
-      TextEditingController ctrl,
-      bool isDark, {
-        TextInputType? keyboard,
-        int maxLines = 1,
-      }) {
+    String label,
+    TextEditingController ctrl,
+    bool isDark, {
+    TextInputType? keyboard,
+    int maxLines = 1,
+  }) {
     return TextField(
       controller: ctrl,
       keyboardType: keyboard,
@@ -1079,7 +1075,9 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade300,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.grey.shade300,
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -1097,14 +1095,14 @@ class _EmergencyEditorSheetState extends State<_EmergencyEditorSheet> {
   }
 
   Widget _buildSwitch(
-      String title,
-      String? subtitle,
-      IconData icon,
-      Color color,
-      bool value,
-      ValueChanged<bool> onChanged,
-      bool isDark,
-      ) {
+    String title,
+    String? subtitle,
+    IconData icon,
+    Color color,
+    bool value,
+    ValueChanged<bool> onChanged,
+    bool isDark,
+  ) {
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.all(12),

@@ -14,8 +14,7 @@ class AdminDepartmentsScreen extends StatefulWidget {
   const AdminDepartmentsScreen({super.key});
 
   @override
-  State<AdminDepartmentsScreen> createState() =>
-      _AdminDepartmentsScreenState();
+  State<AdminDepartmentsScreen> createState() => _AdminDepartmentsScreenState();
 }
 
 class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
@@ -117,7 +116,8 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(tr(department == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
+            content:
+                Text(tr(department == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
             backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
@@ -125,7 +125,9 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(
+              content: Text(trf('هەڵە: {0}', [e])),
+              backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -153,7 +155,8 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
             ],
           ),
           content: Text(
-            trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟\n\nهەموو مامەڵەکانی ئەم فەرمانگەش دەسڕدرێنەوە.', [department['name_ku']]),
+            trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟\n\nهەموو مامەڵەکانی ئەم فەرمانگەش دەسڕدرێنەوە.',
+                [department['name_ku']]),
           ),
           actions: [
             TextButton(
@@ -197,7 +200,9 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(
+              content: Text(trf('هەڵە: {0}', [e])),
+              backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -231,7 +236,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
+            isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
         appBar: AppBar(
           title: Text(
             tr(isVendor ? 'فەرمانگەکەم' : 'بەڕێوەبردنی فەرمانگەکان'),
@@ -254,81 +259,80 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
         ),
         body: _isLoading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
-        )
+                child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
+              )
             : Column(
-          children: [
-            // 🔍 Search
-            if (!isVendor)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1A1A22)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.grey.shade200,
-                    ),
-                  ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    onChanged: (v) =>
-                        setState(() => _searchQuery = v.trim()),
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: tr('گەڕان بەدوای فەرمانگەکان...'),
-                      hintStyle: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white54 : Colors.grey,
+                children: [
+                  // 🔍 Search
+                  if (!isVendor)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color:
+                              isDark ? const Color(0xFF1A1A22) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.grey.shade200,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _searchCtrl,
+                          onChanged: (v) =>
+                              setState(() => _searchQuery = v.trim()),
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: tr('گەڕان بەدوای فەرمانگەکان...'),
+                            hintStyle: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? Colors.white54 : Colors.grey,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.search_rounded,
+                              color: Color(0xFF0F9D7A),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 16,
+                            ),
+                          ),
+                        ),
                       ),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: Color(0xFF0F9D7A),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 14,
-                        horizontal: 16,
-                      ),
                     ),
-                  ),
-                ),
-              ),
 
-            // 📋 List
-            Expanded(
-              child: _filteredDepartments.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _filteredDepartments.length,
-                itemBuilder: (context, index) =>
-                    _buildDepartmentCard(
-                      _filteredDepartments[index],
-                      isDark,
-                    ),
+                  // 📋 List
+                  Expanded(
+                    child: _filteredDepartments.isEmpty
+                        ? _buildEmptyState(isDark)
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredDepartments.length,
+                            itemBuilder: (context, index) =>
+                                _buildDepartmentCard(
+                              _filteredDepartments[index],
+                              isDark,
+                            ),
+                          ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
         floatingActionButton: isVendor
             ? null
             : FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF0F9D7A),
-          foregroundColor: Colors.white,
-          onPressed: () => _openEditor(),
-          icon: const Icon(Icons.add_rounded),
-          label: Text(
-            tr('زیادکردنی فەرمانگە'),
-            style: const TextStyle(fontWeight: FontWeight.w900),
-          ),
-        ),
+                backgroundColor: const Color(0xFF0F9D7A),
+                foregroundColor: Colors.white,
+                onPressed: () => _openEditor(),
+                icon: const Icon(Icons.add_rounded),
+                label: Text(
+                  tr('زیادکردنی فەرمانگە'),
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
       ),
     );
   }
@@ -337,9 +341,9 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
   // 🎴 Department Card
   // ═══════════════════════════════════════════════════════════
   Widget _buildDepartmentCard(
-      Map<String, dynamic> department,
-      bool isDark,
-      ) {
+    Map<String, dynamic> department,
+    bool isDark,
+  ) {
     final name = department['name_ku']?.toString() ?? '';
     final phone = department['phone']?.toString() ?? '';
     final address = department['address']?.toString() ?? '';
@@ -378,26 +382,26 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                   borderRadius: BorderRadius.circular(14),
                   child: image.isNotEmpty
                       ? OptimizedNetworkImage(
-                    imageUrl: image,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                  )
+                          imageUrl: image,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                        )
                       : Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [color, color.withValues(alpha: 0.7)],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.business_rounded,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [color, color.withValues(alpha: 0.7)],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.business_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
                 ),
                 const SizedBox(width: 14),
 
@@ -412,9 +416,8 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF1A1A2E),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF1A1A2E),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -426,8 +429,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
                             Icon(
                               Icons.location_on_rounded,
                               size: 12,
-                              color:
-                              isDark ? Colors.white54 : Colors.grey,
+                              color: isDark ? Colors.white54 : Colors.grey,
                             ),
                             const SizedBox(width: 3),
                             Expanded(
@@ -477,9 +479,7 @@ class _AdminDepartmentsScreenState extends State<AdminDepartmentsScreen> {
           // ═══ Actions Bar ═══
           Container(
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF0F0F14)
-                  : const Color(0xFFF8F9FA),
+              color: isDark ? const Color(0xFF0F0F14) : const Color(0xFFF8F9FA),
               borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(18),
               ),

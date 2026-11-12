@@ -3,7 +3,6 @@
 
 part of 'admin_departments.dart';
 
-
 // ═══════════════════════════════════════════════════════════════
 // 📋 بەڕێوەبردنی مامەڵەکانی فەرمانگە — ULTRA PRO
 // ═══════════════════════════════════════════════════════════════
@@ -77,8 +76,7 @@ class _DepartmentServicesAdminScreenState
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-            Text(tr(service == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
+            content: Text(tr(service == null ? '✅ زیادکرا' : '✅ نوێکرایەوە')),
             backgroundColor: const Color(0xFF0F9D7A),
           ),
         );
@@ -86,7 +84,9 @@ class _DepartmentServicesAdminScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('هەڵە: {0}', [e])), backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(
+              content: Text(trf('هەڵە: {0}', [e])),
+              backgroundColor: const Color(0xFFDC3545)),
         );
       }
     }
@@ -152,7 +152,7 @@ class _DepartmentServicesAdminScreenState
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
+            isDark ? const Color(0xFF0A0A0F) : const Color(0xFFF0F4F9),
         appBar: AppBar(
           title: Text(
             trf('مامەڵەکانی {0}', [name]),
@@ -168,18 +168,18 @@ class _DepartmentServicesAdminScreenState
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF0F9D7A),
-          ),
-        )
+                child: CircularProgressIndicator(
+                  color: Color(0xFF0F9D7A),
+                ),
+              )
             : _services.isEmpty
-            ? _buildEmpty(isDark)
-            : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _services.length,
-          itemBuilder: (context, i) =>
-              _buildServiceTile(_services[i], isDark),
-        ),
+                ? _buildEmpty(isDark)
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _services.length,
+                    itemBuilder: (context, i) =>
+                        _buildServiceTile(_services[i], isDark),
+                  ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(),
           backgroundColor: const Color(0xFF0F9D7A),
@@ -236,8 +236,8 @@ class _DepartmentServicesAdminScreenState
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4F5BD5)
-                              .withValues(alpha: 0.12),
+                          color:
+                              const Color(0xFF4F5BD5).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -249,8 +249,7 @@ class _DepartmentServicesAdminScreenState
                           ),
                         ),
                       ),
-                    if (reqCount > 0 && feeCount > 0)
-                      const SizedBox(width: 6),
+                    if (reqCount > 0 && feeCount > 0) const SizedBox(width: 6),
                     if (feeCount > 0)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -258,8 +257,8 @@ class _DepartmentServicesAdminScreenState
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F9D7A)
-                              .withValues(alpha: 0.12),
+                          color:
+                              const Color(0xFF0F9D7A).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -413,18 +412,13 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
     final data = {
       'department_id': widget.departmentId,
       'title_ku': _titleCtrl.text.trim(),
-      'description': _descCtrl.text.trim().isEmpty
-          ? null
-          : _descCtrl.text.trim(),
-      'duration': _durationCtrl.text.trim().isEmpty
-          ? null
-          : _durationCtrl.text.trim(),
-      'location': _locationCtrl.text.trim().isEmpty
-          ? null
-          : _locationCtrl.text.trim(),
-      'notes': _notesCtrl.text.trim().isEmpty
-          ? null
-          : _notesCtrl.text.trim(),
+      'description':
+          _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+      'duration':
+          _durationCtrl.text.trim().isEmpty ? null : _durationCtrl.text.trim(),
+      'location':
+          _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
+      'notes': _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
       'requirements': requirements,
       'fees': fees,
       'icon': 'description',
@@ -494,9 +488,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
-                        color: isDark
-                            ? Colors.white
-                            : const Color(0xFF1A1A2E),
+                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                       ),
                     ),
                   ),
@@ -559,9 +551,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
                 MediaQuery.of(context).padding.bottom + 16,
               ),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF0F0F14)
-                    : Colors.grey.shade50,
+                color: isDark ? const Color(0xFF0F0F14) : Colors.grey.shade50,
                 border: Border(
                   top: BorderSide(
                     color: isDark
@@ -583,9 +573,7 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
                   ),
                   onPressed: _save,
                   icon: Icon(
-                    isEditing
-                        ? Icons.save_rounded
-                        : Icons.add_circle_rounded,
+                    isEditing ? Icons.save_rounded : Icons.add_circle_rounded,
                   ),
                   label: Text(
                     tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
@@ -604,11 +592,11 @@ class _ServiceEditorSheetState extends State<_ServiceEditorSheet> {
   }
 
   Widget _buildField(
-      String label,
-      TextEditingController ctrl,
-      bool isDark, {
-        int maxLines = 1,
-      }) {
+    String label,
+    TextEditingController ctrl,
+    bool isDark, {
+    int maxLines = 1,
+  }) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,

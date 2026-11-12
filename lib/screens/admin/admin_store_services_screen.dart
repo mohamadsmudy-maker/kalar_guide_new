@@ -19,8 +19,7 @@ class AdminStoreServicesScreen extends StatefulWidget {
       _AdminStoreServicesScreenState();
 }
 
-class _AdminStoreServicesScreenState
-    extends State<AdminStoreServicesScreen> {
+class _AdminStoreServicesScreenState extends State<AdminStoreServicesScreen> {
   bool _loading = true;
   List<StoreService> _services = [];
 
@@ -70,7 +69,8 @@ class _AdminStoreServicesScreenState
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(tr('سڕینەوەی مامەڵە')),
-          content: Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [service.titleKu])),
+          content:
+              Text(trf('ئایا دڵنیایت لە سڕینەوەی "{0}"؟', [service.titleKu])),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -103,7 +103,7 @@ class _AdminStoreServicesScreenState
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
+            isDark ? const Color(0xFF0F0F14) : const Color(0xFFF4F6F9),
         appBar: AppBar(
           title: Text(
             trf('مامەڵەکانی {0}', [widget.storeName]),
@@ -126,18 +126,17 @@ class _AdminStoreServicesScreenState
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF1E88E5),
-          ),
-        )
+                child: CircularProgressIndicator(
+                  color: Color(0xFF1E88E5),
+                ),
+              )
             : _services.isEmpty
-            ? _buildEmpty(isDark)
-            : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _services.length,
-          itemBuilder: (ctx, i) =>
-              _buildCard(_services[i], isDark),
-        ),
+                ? _buildEmpty(isDark)
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _services.length,
+                    itemBuilder: (ctx, i) => _buildCard(_services[i], isDark),
+                  ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openEditor(),
           backgroundColor: const Color(0xFF1E88E5),
@@ -205,7 +204,7 @@ class _AdminStoreServicesScreenState
               if (!service.isActive)
                 Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(6),
@@ -260,8 +259,7 @@ class _AdminStoreServicesScreenState
     );
   }
 
-  Widget _buildMiniInfo(
-      IconData icon, String text, Color color, bool isDark) {
+  Widget _buildMiniInfo(IconData icon, String text, Color color, bool isDark) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -440,15 +438,12 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
       final Map<String, dynamic> data = {
         'store_id': widget.storeId,
         'title_ku': _titleKuCtrl.text.trim(),
-        'title_ar': _titleArCtrl.text.trim().isEmpty
-            ? null
-            : _titleArCtrl.text.trim(),
-        'title_en': _titleEnCtrl.text.trim().isEmpty
-            ? null
-            : _titleEnCtrl.text.trim(),
-        'description': _descCtrl.text.trim().isEmpty
-            ? null
-            : _descCtrl.text.trim(),
+        'title_ar':
+            _titleArCtrl.text.trim().isEmpty ? null : _titleArCtrl.text.trim(),
+        'title_en':
+            _titleEnCtrl.text.trim().isEmpty ? null : _titleEnCtrl.text.trim(),
+        'description':
+            _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
         'requirements': requirements,
         'fees': fees,
         'duration': _durationCtrl.text.trim().isEmpty
@@ -457,9 +452,7 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
         'location': _locationCtrl.text.trim().isEmpty
             ? null
             : _locationCtrl.text.trim(),
-        'notes': _notesCtrl.text.trim().isEmpty
-            ? null
-            : _notesCtrl.text.trim(),
+        'notes': _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
         'icon': _icon,
         'color': _selectedColor,
         'is_active': _isActive,
@@ -550,9 +543,8 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
                         ),
                         child: Icon(
                           iconData,
-                          color: isSelected
-                              ? Colors.white
-                              : Colors.grey.shade700,
+                          color:
+                              isSelected ? Colors.white : Colors.grey.shade700,
                           size: 22,
                         ),
                       ),
@@ -593,18 +585,17 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
                           color: color,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected
-                                ? Colors.black
-                                : Colors.transparent,
+                            color:
+                                isSelected ? Colors.black : Colors.transparent,
                             width: 3,
                           ),
                         ),
                         child: isSelected
                             ? const Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        )
+                                Icons.check_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              )
                             : null,
                       ),
                     );
@@ -668,20 +659,20 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
                     onPressed: _loading ? null : _save,
                     child: _loading
                         ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : Text(
-                      tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 15,
-                      ),
-                    ),
+                            tr(isEditing ? 'نوێکردنەوە' : 'زیادکردن'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -693,10 +684,10 @@ class _ServiceEditorDialogState extends State<_ServiceEditorDialog> {
   }
 
   Widget _buildField(
-      String label,
-      TextEditingController ctrl, {
-        int maxLines = 1,
-      }) {
+    String label,
+    TextEditingController ctrl, {
+    int maxLines = 1,
+  }) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,

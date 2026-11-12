@@ -17,7 +17,8 @@ class AdminOsmImportScreen extends StatefulWidget {
 }
 
 class _Row {
-  _Row(this.place, this.match, this.category) : selected = match == OsmMatch.none && category != null;
+  _Row(this.place, this.match, this.category)
+      : selected = match == OsmMatch.none && category != null;
   final OsmPlace place;
   final OsmMatch match;
   String? category;
@@ -44,19 +45,24 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
     // ١) بەشەکان
     List<String> cats = [];
     try {
-      final res = await _db.from('main_categories').select('name').order('name');
-      cats = {for (final r in res) '${r['name'] ?? ''}'.trim()}.where((c) => c.isNotEmpty).toList();
+      final res =
+          await _db.from('main_categories').select('name').order('name');
+      cats = {for (final r in res) '${r['name'] ?? ''}'.trim()}
+          .where((c) => c.isNotEmpty)
+          .toList();
     } catch (_) {}
 
     // ٢) شوێنەکانی ئێستا (بۆ دووبارە نەبوونەوە)
     List<Map<String, dynamic>> existing = [];
     String? schemaNote;
     try {
-      existing = List<Map<String, dynamic>>.from(
-          await _db.from('dukan').select('name, latitude, longitude, external_id'));
+      existing = List<Map<String, dynamic>>.from(await _db
+          .from('dukan')
+          .select('name, latitude, longitude, external_id'));
     } catch (e) {
       // ستوونی external_id نییە → 20261115_places_sources.sql جێبەجێ نەکراوە
-      schemaNote = tr('فایلی 20261115_places_sources.sql هێشتا لە Supabase جێبەجێ نەکراوە');
+      schemaNote = tr(
+          'فایلی 20261115_places_sources.sql هێشتا لە Supabase جێبەجێ نەکراوە');
       try {
         existing = List<Map<String, dynamic>>.from(
             await _db.from('dukan').select('name, latitude, longitude'));
@@ -93,7 +99,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
   List<_Row> get _visible =>
       _onlyNew ? _rows.where((r) => r.match != OsmMatch.same).toList() : _rows;
 
-  int get _selectedCount => _rows.where((r) => r.selected && r.category != null).length;
+  int get _selectedCount =>
+      _rows.where((r) => r.selected && r.category != null).length;
 
   Future<void> _import() async {
     final todo = _rows.where((r) => r.selected && r.category != null).toList();
@@ -135,7 +142,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
     setState(() => _saving = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       backgroundColor: failed == 0 ? AppColors.toneTeal : AppColors.toneAmber,
-      content: Text(trf('{0} شوێن زیاد کرا، {1} سەرکەوتوو نەبوو', [ok, failed])),
+      content:
+          Text(trf('{0} شوێن زیاد کرا، {1} سەرکەوتوو نەبوو', [ok, failed])),
     ));
     await _fetch();
   }
@@ -166,12 +174,14 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final card = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final hairline = isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8EDF3);
+    final hairline =
+        isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE8EDF3);
 
     return Directionality(
       textDirection: AppLang.direction,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        backgroundColor:
+            isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: Text(tr('هێنانی شوێن لە OpenStreetMap')),
           backgroundColor: AppColors.primary,
@@ -183,12 +193,15 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                   child: FilledButton.icon(
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                    style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52)),
                     onPressed: _saving || _selectedCount == 0 ? null : _import,
                     icon: _saving
                         ? const SizedBox(
-                            width: 18, height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.add_location_alt_rounded),
                     label: Text(_saving
                         ? trf('زیاد دەکرێت... {0}/{1}', [_done, _selectedCount])
@@ -215,7 +228,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Icon(Icons.travel_explore_rounded, size: 64, color: AppColors.primary),
+          const Icon(Icons.travel_explore_rounded,
+              size: 64, color: AppColors.primary),
           const SizedBox(height: 16),
           Text(
             tr('هەموو ئەو شوێنانەی کەلار کە لە OpenStreetMap هەن دەهێنرێن. پێش زیادکردن خۆت هەڵیاندەبژێریت و بەشەکەیان دیاری دەکەیت. ئەوانەی پێشتر هەن دووبارە نابنەوە.'),
@@ -224,14 +238,17 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(tr('هێنان سەرکەوتوو نەبوو، پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە'),
-                textAlign: TextAlign.center, style: const TextStyle(color: AppColors.toneRed)),
+            Text(
+                tr('هێنان سەرکەوتوو نەبوو، پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.toneRed)),
             const SizedBox(height: 6),
             // هۆکاری تەکنیکی — بۆ ناردنی وێنە بۆ گەشەپێدەر
             SelectableText(_error!,
                 textAlign: TextAlign.center,
                 textDirection: TextDirection.ltr,
-                style: const TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8))),
+                style:
+                    const TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8))),
           ],
           const SizedBox(height: 20),
           FilledButton.icon(
@@ -241,7 +258,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
           ),
           const SizedBox(height: 24),
           const Text('© OpenStreetMap contributors (ODbL)',
-              textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
         ],
       );
     }
@@ -259,7 +277,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
               color: AppColors.toneAmber.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text('⚠️ ${_error!}', style: const TextStyle(fontWeight: FontWeight.w700)),
+            child: Text('⚠️ ${_error!}',
+                style: const TextStyle(fontWeight: FontWeight.w700)),
           ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -267,7 +286,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
             children: [
               Expanded(
                 child: Text(
-                  trf('{0} شوێن دۆزرایەوە، {1} پێشتر هەن', [_rows.length, same]),
+                  trf('{0} شوێن دۆزرایەوە، {1} پێشتر هەن',
+                      [_rows.length, same]),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -316,20 +336,28 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 10),
-                          Text(r.place.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                          Text(r.place.name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w800)),
                           const SizedBox(height: 2),
                           Wrap(spacing: 6, runSpacing: 4, children: [
-                            _chip(tr(OsmImportService.kindLabel(r.place.kind)), AppColors.toneSlate),
-                            if (added) _chip(tr('پێشتر زیاد کراوە'), AppColors.toneTeal),
+                            _chip(tr(OsmImportService.kindLabel(r.place.kind)),
+                                AppColors.toneSlate),
+                            if (added)
+                              _chip(tr('پێشتر زیاد کراوە'), AppColors.toneTeal),
                             if (r.match == OsmMatch.likely)
-                              _chip(tr('لەوانەیە پێشتر هەبێت'), AppColors.toneAmber),
+                              _chip(tr('لەوانەیە پێشتر هەبێت'),
+                                  AppColors.toneAmber),
                           ]),
                           if (!added) ...[
                             Align(
                               alignment: AlignmentDirectional.centerStart,
                               child: TextButton.icon(
-                                onPressed: _saving ? null : () => _completeAndAdd(r),
-                                icon: const Icon(Icons.edit_location_alt_rounded, size: 18),
+                                onPressed:
+                                    _saving ? null : () => _completeAndAdd(r),
+                                icon: const Icon(
+                                    Icons.edit_location_alt_rounded,
+                                    size: 18),
                                 label: Text(tr('تەواوکردن و زیادکردن')),
                               ),
                             ),
@@ -338,10 +366,12 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
                               isDense: true,
                               value: r.category,
                               hint: Text(tr('بەش هەڵبژێرە'),
-                                  style: const TextStyle(color: AppColors.toneRed)),
+                                  style: const TextStyle(
+                                      color: AppColors.toneRed)),
                               items: [
                                 for (final c in _categories)
-                                  DropdownMenuItem(value: c, child: Text(tr(c))),
+                                  DropdownMenuItem(
+                                      value: c, child: Text(tr(c))),
                               ],
                               onChanged: _saving
                                   ? null
@@ -370,6 +400,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
           color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w700, color: color)),
       );
 }

@@ -4,15 +4,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../l10n/tr.dart';
-import 'complaint_details_pro_sheet.dart';   // ✅ چاککرا
+import 'complaint_details_pro_sheet.dart'; // ✅ چاککرا
 
 /// 🗺️ نەخشەی گشتی سکاڵاکان (Pro Version)
 class AllComplaintsMapScreen extends StatefulWidget {
   const AllComplaintsMapScreen({super.key});
 
   @override
-  State<AllComplaintsMapScreen> createState() =>
-      _AllComplaintsMapScreenState();
+  State<AllComplaintsMapScreen> createState() => _AllComplaintsMapScreenState();
 }
 
 class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
@@ -43,9 +42,8 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
           .not('longitude', 'is', null);
 
       final List<dynamic> rawList = res as List;
-      final complaints = rawList
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
+      final complaints =
+          rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
 
       if (mounted) {
         setState(() {
@@ -68,8 +66,8 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
 
     if (_selectedStatusFilter == 'approved') {
       return _allComplaints
-          .where((c) =>
-      c['status'] == 'approved' || c['status'] == 'in_progress')
+          .where(
+              (c) => c['status'] == 'approved' || c['status'] == 'in_progress')
           .toList();
     }
     return _allComplaints
@@ -128,7 +126,8 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ComplaintDetailsProSheet(   // ✅ چاککرا
+      builder: (_) => ComplaintDetailsProSheet(
+        // ✅ چاککرا
         complaint: complaint,
         onStatusChanged: () {
           _fetchComplaints();
@@ -255,10 +254,10 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          _currentMapType = _currentMapType ==
-                              gmaps.MapType.satellite
-                              ? gmaps.MapType.normal
-                              : gmaps.MapType.satellite;
+                          _currentMapType =
+                              _currentMapType == gmaps.MapType.satellite
+                                  ? gmaps.MapType.normal
+                                  : gmaps.MapType.satellite;
                         });
                       },
                       child: Container(
@@ -518,7 +517,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
 
   Widget _buildSelectedComplaintCard() {
     final complaint = _allComplaints.firstWhere(
-          (c) => c['id'].toString() == _selectedComplaintId,
+      (c) => c['id'].toString() == _selectedComplaintId,
       orElse: () => {},
     );
     if (complaint.isEmpty) return const SizedBox.shrink();
@@ -579,8 +578,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () =>
-                      setState(() => _selectedComplaintId = null),
+                  onTap: () => setState(() => _selectedComplaintId = null),
                   child: const Icon(
                     Icons.close_rounded,
                     size: 18,
@@ -598,8 +596,7 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: OptimizedNetworkImage(
-                      imageUrl:
-                      (complaint['images'] as List).first.toString(),
+                      imageUrl: (complaint['images'] as List).first.toString(),
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
@@ -622,7 +619,9 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        trf('📍 {0}', [tr(complaint['responsible_authority'] ?? 'کەلار')]),
+                        trf('📍 {0}', [
+                          tr(complaint['responsible_authority'] ?? 'کەلار')
+                        ]),
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.grey.shade700,
@@ -643,11 +642,11 @@ class _AllComplaintsMapScreenState extends State<AllComplaintsMapScreen> {
   }
 
   Widget _buildFilterChip(
-      String label,
-      String value,
-      IconData icon,
-      Color color,
-      ) {
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     bool isSelected = _selectedStatusFilter == value;
     return Padding(
       padding: const EdgeInsets.only(left: 8),

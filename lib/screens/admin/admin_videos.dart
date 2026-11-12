@@ -81,10 +81,7 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
     if (mounted) setState(() => _isDeleting = true);
 
     try {
-      await Supabase.instance.client
-          .from('videos')
-          .delete()
-          .eq('id', id);
+      await Supabase.instance.client.from('videos').delete().eq('id', id);
 
       await _fetchVideos();
 
@@ -100,7 +97,9 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
       debugPrint('❌ Delete video error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(
+              content: Text(trf("هەڵە: {0}", [e])),
+              backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -137,90 +136,90 @@ class _AdminVideosScreenState extends State<AdminVideosScreen> {
         ),
         body: _isLoading
             ? const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        )
+                child: CircularProgressIndicator(color: AppColors.primary),
+              )
             : _videosList.isEmpty
-            ? Center(
-          child: Text(
-            tr("هیچ ڤیدیۆیەکی تۆمارکراو نییە 📭"),
-            style: const TextStyle(color: Colors.grey),
-          ),
-        )
-            : ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _videosList.length,
-          itemBuilder: (context, index) {
-            final vid = _videosList[index];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(12),
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.indigo.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    color: Color(0xFF4F5BD5),
-                  ),
-                ),
-                title: Text(
-                  tr(vid['title'] ?? ''),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                subtitle: Text(
-                  tr(vid['description'] ?? ''),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.edit,
-                        color: Color(0xFF1E88E5),
-                        size: 20,
-                      ),
-                      onPressed: _isDeleting
-                          ? null
-                          : () => _openAddDialog(videoToEdit: vid),
+                ? Center(
+                    child: Text(
+                      tr("هیچ ڤیدیۆیەکی تۆمارکراو نییە 📭"),
+                      style: const TextStyle(color: Colors.grey),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete,
-                        color: Color(0xFFDC3545),
-                        size: 20,
-                      ),
-                      onPressed: _isDeleting
-                          ? null
-                          : () => _deleteVideo(vid['id']),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _videosList.length,
+                    itemBuilder: (context, index) {
+                      final vid = _videosList[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(12),
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.shade50,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.play_arrow_rounded,
+                              color: Color(0xFF4F5BD5),
+                            ),
+                          ),
+                          title: Text(
+                            tr(vid['title'] ?? ''),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            tr(vid['description'] ?? ''),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Color(0xFF1E88E5),
+                                  size: 20,
+                                ),
+                                onPressed: _isDeleting
+                                    ? null
+                                    : () => _openAddDialog(videoToEdit: vid),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Color(0xFFDC3545),
+                                  size: 20,
+                                ),
+                                onPressed: _isDeleting
+                                    ? null
+                                    : () => _deleteVideo(vid['id']),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -310,7 +309,9 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
       debugPrint('❌ Save video error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf("هەڵە: {0}", [e])), backgroundColor: const Color(0xFFDC3545)),
+          SnackBar(
+              content: Text(trf("هەڵە: {0}", [e])),
+              backgroundColor: const Color(0xFFDC3545)),
         );
       }
     } finally {
@@ -395,22 +396,22 @@ class _AddEditVideoScreenState extends State<_AddEditVideoScreen> {
                   child: _loading
                       ? const Center(child: CircularProgressIndicator())
                       : ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: _save,
-                    child: Text(
-                      tr(isEditing ? "نوێکردنەوە ✅" : "بڵاوکردنەوە ✅"),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: _save,
+                          child: Text(
+                            tr(isEditing ? "نوێکردنەوە ✅" : "بڵاوکردنەوە ✅"),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
                 ),
               ],
             ),

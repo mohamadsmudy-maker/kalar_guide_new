@@ -80,7 +80,7 @@ class _AdminCurrencyStationsScreenState
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
+            isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
             tr(isVendor
@@ -105,69 +105,69 @@ class _AdminCurrencyStationsScreenState
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
-        )
+                child: CircularProgressIndicator(color: Color(0xFF0F9D7A)),
+              )
             : Column(
-          children: [
-            if (!isVendor)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1A1B2E)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.grey.shade200,
+                children: [
+                  if (!isVendor)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color:
+                              isDark ? const Color(0xFF1A1B2E) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.grey.shade200,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _searchCtrl,
+                          onChanged: (v) =>
+                              setState(() => _searchQuery = v.trim()),
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: tr('گەڕان بەدوای نوسینگەکان...'),
+                            hintStyle: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? Colors.white54 : Colors.grey,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.search_rounded,
+                              color: Color(0xFF0F9D7A),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 16,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
+                  Expanded(
+                    child: _filteredStations.isEmpty
+                        ? _buildEmptyState(isDark)
+                        : RefreshIndicator(
+                            color: const Color(0xFF0F9D7A),
+                            onRefresh: _loadStations,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _filteredStations.length,
+                              itemBuilder: (context, index) =>
+                                  _buildStationCard(
+                                _filteredStations[index],
+                                isDark,
+                              ),
+                            ),
+                          ),
                   ),
-                  child: TextField(
-                    controller: _searchCtrl,
-                    onChanged: (v) =>
-                        setState(() => _searchQuery = v.trim()),
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: tr('گەڕان بەدوای نوسینگەکان...'),
-                      hintStyle: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white54 : Colors.grey,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: Color(0xFF0F9D7A),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 14,
-                        horizontal: 16,
-                      ),
-                    ),
-                  ),
-                ),
+                ],
               ),
-            Expanded(
-              child: _filteredStations.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : RefreshIndicator(
-                color: const Color(0xFF0F9D7A),
-                onRefresh: _loadStations,
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _filteredStations.length,
-                  itemBuilder: (context, index) => _buildStationCard(
-                    _filteredStations[index],
-                    isDark,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -181,9 +181,8 @@ class _AdminCurrencyStationsScreenState
 
     // ⭐ نرخی دۆلار وەک پێشبینین
     final usdData = prices['usd'];
-    final usdSell = usdData is Map
-        ? (usdData['sell'] as num?)?.toDouble() ?? 0
-        : 0;
+    final usdSell =
+        usdData is Map ? (usdData['sell'] as num?)?.toDouble() ?? 0 : 0;
 
     return GestureDetector(
       onTap: () async {
@@ -219,16 +218,15 @@ class _AdminCurrencyStationsScreenState
               borderRadius: BorderRadius.circular(14),
               child: (image.isNotEmpty || logo.isNotEmpty)
                   ? Image.network(
-                image.isNotEmpty ? image : logo,
-                width: 56,
-                height: 56,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildDefaultIcon(),
-              )
+                      image.isNotEmpty ? image : logo,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildDefaultIcon(),
+                    )
                   : _buildDefaultIcon(),
             ),
             const SizedBox(width: 14),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +282,6 @@ class _AdminCurrencyStationsScreenState
                 ],
               ),
             ),
-
             const Icon(
               Icons.chevron_right_rounded,
               color: Color(0xFF0F9D7A),

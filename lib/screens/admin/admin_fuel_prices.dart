@@ -124,7 +124,8 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        trf('نرخی ئێستا: {0} د.ع', [currentPrice.toStringAsFixed(0)]),
+                        trf('نرخی ئێستا: {0} د.ع',
+                            [currentPrice.toStringAsFixed(0)]),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -223,7 +224,8 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                 } else {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
-                      content: Text(result.messageFor(admin: AuthSessionManager.isAdmin)),
+                      content: Text(
+                          result.messageFor(admin: AuthSessionManager.isAdmin)),
                       duration: const Duration(seconds: 8),
                       backgroundColor: const Color(0xFFDC3545),
                       behavior: SnackBarBehavior.floating,
@@ -279,7 +281,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
       textDirection: AppLang.direction,
       child: Scaffold(
         backgroundColor:
-        isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
+            isDark ? const Color(0xFF0F1421) : const Color(0xFFF5F6FA),
         appBar: AppBar(
           title: Text(
             tr(name),
@@ -303,25 +305,25 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
         ),
         body: _loading
             ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFFD9822B)),
-        )
+                child: CircularProgressIndicator(color: Color(0xFFD9822B)),
+              )
             : ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // ✅ هێدەری بەنزینخانە — وەک FuelTypesScreen
-            _buildStationHeader(name, address),
-            const SizedBox(height: 20),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // ✅ هێدەری بەنزینخانە — وەک FuelTypesScreen
+                  _buildStationHeader(name, address),
+                  const SizedBox(height: 20),
 
-            // ✅ ناونیشانی بەش
-            _buildSectionTitle(tr('جۆرەکانی سووتەمەنی')),
-            const SizedBox(height: 12),
+                  // ✅ ناونیشانی بەش
+                  _buildSectionTitle(tr('جۆرەکانی سووتەمەنی')),
+                  const SizedBox(height: 12),
 
-            // ✅ کارتەکان بە هەمان شێوازی FuelTypesScreen
-            ...fuelTypes.map((type) => _buildPriceCard(type, isDark)),
+                  // ✅ کارتەکان بە هەمان شێوازی FuelTypesScreen
+                  ...fuelTypes.map((type) => _buildPriceCard(type, isDark)),
 
-            const SizedBox(height: 30),
-          ],
-        ),
+                  const SizedBox(height: 30),
+                ],
+              ),
       ),
     );
   }
@@ -523,9 +525,8 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF1A1A2E),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF1A1A2E),
                         ),
                       ),
                       const SizedBox(height: 4),
