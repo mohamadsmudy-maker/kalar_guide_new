@@ -1,4 +1,8 @@
-﻿
+﻿# بەکارهێنان:  .\build_release.ps1          ← خێرا (clean ناکات)
+#              .\build_release.ps1 -Clean   ← پاککردنەوەی تەواو پێش build
+#              .\build_release.ps1 -NoObfuscate ← بێ شاردنەوەی ناوەکان (بۆ دۆزینەوەی کێشە)
+param([switch]$Clean, [switch]$NoObfuscate)
+
 $ErrorActionPreference = "Stop"
 
 $SUPABASE_URL = "https://krqrhrqtmcpwpcsxkaql.supabase.co"
@@ -7,7 +11,17 @@ $SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 # 🔵 Google Sign-In: «Web client ID» (docs/GOOGLE_LOGIN.md). بەتاڵ = دوگمەی Google پیشان نادرێت
 $GOOGLE_WEB_CLIENT_ID = ""
 
-flutter clean
+# flutter clean تەنها کاتێک پێویستە ئەگەر build ی ناڕێک ببینی. لە Windows دا
+# زۆرجار پۆشەی build قفڵە (Android Studio / ئێکسپلۆرەر / ئانتی‌ڤایرۆس) و
+# هەڵەی «Failed to remove ...\build» دەدات، بۆیە بە بنەڕەت ناکرێت.
+if ($Clean) {
+    if (Test-Path "android\gradlew.bat") {
+        Push-Location android
+        .\gradlew.bat --stop | Out-Null   # daemon ی Gradle قفڵی build دەکات
+        Pop-Location
+    }
+    flutter clean
+}
 flutter pub get
 
 # 🔒 --obfuscate: ناوی کلاس و فەنکشنەکان دەگۆڕێت بۆ ناوی بێ مانا، بۆ ئەوەی ئەگەر
@@ -18,8 +32,11 @@ flutter pub get
 $stamp = Get-Date -Format "yyyyMMdd-HHmm"
 $SYMBOLS_DIR = "symbols/$stamp"
 
+$obf = @()
+if (-not $NoObfuscate) { $obf = @("--obfuscate", "--split-debug-info=$SYMBOLS_DIR") }
+
 flutter build apk --release --split-per-abi `
-    --obfuscate --split-debug-info="$SYMBOLS_DIR" `
+    @obf `
     --dart-define=SUPABASE_URL="$SUPABASE_URL" `
     --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" `
     --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"

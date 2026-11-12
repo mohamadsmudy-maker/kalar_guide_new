@@ -69,7 +69,8 @@ class _StoresScreenState extends State<StoresScreen>
   @override
   void initState() {
     super.initState();
-    AppSettingsService.isOn(AppSettingsService.placeSuggestions, refresh: true).then((on) {
+    AppSettingsService.isOn(AppSettingsService.placeSuggestions, refresh: true)
+        .then((on) {
       if (mounted && on != _suggestionsOn) setState(() => _suggestionsOn = on);
     });
 
@@ -137,8 +138,16 @@ class _StoresScreenState extends State<StoresScreen>
   // ═══════════════════════════════════════════════════════════
   // 🏪 Fetch Stores
   // ═══════════════════════════════════════════════════════════
+  /// هۆکاری شکستی بارکردن (بۆ ئەوەی «داتابەیس بەتاڵە» ی هەڵە پیشان نەدرێت)
+  String? _loadError;
+
   Future<void> _fetchStores({bool forceRefresh = false}) async {
-    if (mounted) setState(() => _loadingStores = true);
+    if (mounted) {
+      setState(() {
+        _loadingStores = true;
+        _loadError = null;
+      });
+    }
 
     try {
       if (!forceRefresh) {
@@ -180,9 +189,11 @@ class _StoresScreenState extends State<StoresScreen>
     } catch (e) {
       debugPrint('❌ StoresScreen error: $e');
       if (mounted) {
+        final msg = e.toString().replaceAll('\n', ' ');
         setState(() {
           _allStores = [];
           _loadingStores = false;
+          _loadError = msg.length > 160 ? '${msg.substring(0, 160)}…' : msg;
         });
       }
     }
@@ -480,7 +491,8 @@ class _StoresScreenState extends State<StoresScreen>
                                   ? trf('{0} شوێن لە شاری کەلار',
                                       [PlaceDisplay.digits(_allStores.length)])
                                   : trf('{0} لە {1} شوێن', [
-                                      PlaceDisplay.digits(_filteredStores.length),
+                                      PlaceDisplay.digits(
+                                          _filteredStores.length),
                                       PlaceDisplay.digits(_allStores.length)
                                     ]),
                           lang: lang,
@@ -714,8 +726,10 @@ class _StoresScreenState extends State<StoresScreen>
     // هەموو بەشەکان (بەتاڵەکان لە کۆتایی و کاڵتر) — لەبری تابی «بەشەکان»
     final cats = <String>[
       for (final c in _allCategories)
-        if ((c['name'] ?? '').toString().trim().isNotEmpty) c['name'].toString(),
-    ]..sort((a, b) => (_countFor(a) == 0 ? 1 : 0).compareTo(_countFor(b) == 0 ? 1 : 0));
+        if ((c['name'] ?? '').toString().trim().isNotEmpty)
+          c['name'].toString(),
+    ]..sort((a, b) =>
+        (_countFor(a) == 0 ? 1 : 0).compareTo(_countFor(b) == 0 ? 1 : 0));
     if (cats.isEmpty) return const SizedBox(height: 4);
     final names = ['هەموو', ...cats];
     return SizedBox(
@@ -738,7 +752,10 @@ class _StoresScreenState extends State<StoresScreen>
               dim: false,
               onTap: () {
                 HapticFeedback.selectionClick();
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriesScreen()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CategoriesScreen()));
               },
             );
           }
@@ -747,15 +764,18 @@ class _StoresScreenState extends State<StoresScreen>
           final count = _countFor(name);
           return _categoryTile(
             isDark: isDark,
-            icon: name == 'هەموو' ? Icons.apps_rounded : PlaceDisplay.icon(name),
+            icon:
+                name == 'هەموو' ? Icons.apps_rounded : PlaceDisplay.icon(name),
             label: name,
-            color: name == 'هەموو' ? AppColors.primary : PlaceDisplay.color(name),
+            color:
+                name == 'هەموو' ? AppColors.primary : PlaceDisplay.color(name),
             count: count,
             selected: selected,
             dim: count == 0 && name != 'هەموو',
             onTap: () {
               HapticFeedback.selectionClick();
-              setState(() => _selectedCategory = selected && name != 'هەموو' ? 'هەموو' : name);
+              setState(() => _selectedCategory =
+                  selected && name != 'هەموو' ? 'هەموو' : name);
               _applyFilters();
             },
           );
@@ -783,12 +803,17 @@ class _StoresScreenState extends State<StoresScreen>
           width: 92,
           padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
           decoration: BoxDecoration(
-            color: selected ? color : (isDark ? const Color(0xFF1A1A22) : Colors.white),
+            color: selected
+                ? color
+                : (isDark ? const Color(0xFF1A1A22) : Colors.white),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: selected ? color : color.withValues(alpha: 0.18)),
+            border: Border.all(
+                color: selected ? color : color.withValues(alpha: 0.18)),
             boxShadow: [
               BoxShadow(
-                color: selected ? color.withValues(alpha: 0.35) : Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                color: selected
+                    ? color.withValues(alpha: 0.35)
+                    : Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                 blurRadius: selected ? 12 : 8,
                 offset: const Offset(0, 4),
               ),
@@ -806,7 +831,10 @@ class _StoresScreenState extends State<StoresScreen>
                       : LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color.lerp(color, Colors.white, 0.2)!, Color.lerp(color, Colors.black, 0.08)!],
+                          colors: [
+                            Color.lerp(color, Colors.white, 0.2)!,
+                            Color.lerp(color, Colors.black, 0.08)!
+                          ],
                         ),
                   borderRadius: BorderRadius.circular(13),
                 ),
@@ -823,7 +851,9 @@ class _StoresScreenState extends State<StoresScreen>
                     fontSize: 10.5,
                     height: 1.25,
                     fontWeight: FontWeight.w800,
-                    color: selected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                    color: selected
+                        ? Colors.white
+                        : (isDark ? Colors.white70 : const Color(0xFF334155)),
                   ),
                 ),
               ),
@@ -1067,7 +1097,9 @@ class _StoresScreenState extends State<StoresScreen>
                               size: 10, color: Color(0xFF0F9D7A)),
                           const SizedBox(width: 3),
                           Text(
-                            trf('{0} کم', [PlaceDisplay.digits(distance.toStringAsFixed(1))]),
+                            trf('{0} کم', [
+                              PlaceDisplay.digits(distance.toStringAsFixed(1))
+                            ]),
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFF0F9D7A),
@@ -1200,9 +1232,11 @@ class _StoresScreenState extends State<StoresScreen>
             ),
             const SizedBox(height: 20),
             AutoTranslate(
-              text: _allStores.isEmpty
-                  ? tr('هیچ شوێنێک نییە')
-                  : tr('هیچ شوێنێک نەدۆزرایەوە'),
+              text: _loadError != null
+                  ? tr('بارکردن سەرکەوتوو نەبوو')
+                  : _allStores.isEmpty
+                      ? tr('هیچ شوێنێک نییە')
+                      : tr('هیچ شوێنێک نەدۆزرایەوە'),
               lang: lang,
               style: TextStyle(
                 fontSize: 16,
@@ -1213,9 +1247,11 @@ class _StoresScreenState extends State<StoresScreen>
             ),
             const SizedBox(height: 8),
             AutoTranslate(
-              text: _allStores.isEmpty
-                  ? tr('داتابەیسەکە بەتاڵە — تکایە داتا زیاد بکە')
-                  : tr('گەڕانەکەت هیچ ئەنجامێکی نەبوو'),
+              text: _loadError != null
+                  ? tr('پەیوەندی ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە')
+                  : _allStores.isEmpty
+                      ? tr('داتابەیسەکە بەتاڵە — تکایە داتا زیاد بکە')
+                      : tr('گەڕانەکەت هیچ ئەنجامێکی نەبوو'),
               lang: lang,
               style: TextStyle(
                 fontSize: 12,
@@ -1224,6 +1260,23 @@ class _StoresScreenState extends State<StoresScreen>
               ),
               maxLines: 2,
             ),
+            if (_loadError != null) ...[
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: SelectableText(
+                  _loadError!,
+                  textAlign: TextAlign.center,
+                  textDirection: TextDirection.ltr,
+                  maxLines: 4,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    height: 1.4,
+                    color: isDark ? Colors.white38 : Colors.grey.shade500,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => _fetchStores(forceRefresh: true),
@@ -1385,7 +1438,8 @@ class _StoresScreenState extends State<StoresScreen>
                             borderRadius: BorderRadius.circular(14)),
                       ),
                       child: Text(
-                        trf('پیشاندانی {0} ئەنجام', [PlaceDisplay.digits(_filteredStores.length)]),
+                        trf('پیشاندانی {0} ئەنجام',
+                            [PlaceDisplay.digits(_filteredStores.length)]),
                         style: const TextStyle(
                             fontWeight: FontWeight.w900, color: Colors.white),
                       ),
