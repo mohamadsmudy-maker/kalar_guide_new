@@ -1862,4 +1862,5 @@ const Map<String, String> stringsEn = {
   'ناوەڕۆک': 'Content',
   'تێبینی ئەدمین': 'Admin note',
   'زیاتر': 'More',
+  'هاوبەشکردن بۆ واتسئاپ': 'Share on WhatsApp',
 };

@@ -51,6 +51,10 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
   // ═══════════════════════════════════════════════════════════
   bool _sendingWhatsApp = false;
 
+  // 🖼️ گەلەری وێنە
+  final PageController _imgCtrl = PageController();
+  int _imgIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +82,7 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
     _stateSub?.cancel();
     _voicePlayer.dispose();
     _noteCtrl.dispose();
+    _imgCtrl.dispose();
     super.dispose();
   }
 
@@ -409,31 +414,40 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🖼️ گەلەری وێنە
+                    // 🖼️ وێنەی گەورە (بە سواپ، کرتە بۆ شاشەی تەواو)
                     if (images.isNotEmpty) ...[
-                      SizedBox(
-                        height: 200,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: images.length,
-                          itemBuilder: (ctx, i) => GestureDetector(
-                            onTap: () => _openImage(images, i),
-                            child: Container(
-                              width: 180,
-                              margin: const EdgeInsets.only(left: 8),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: OptimizedNetworkImage(
-                                  imageUrl: images[i].toString(),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
+                      _buildImageGallery(images),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // 🔗 هاوبەشکردن بۆ واتسئاپ
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          WhatsAppComplaintService.shareToWhatsApp(
+                              context, widget.complaint);
+                        },
+                        icon: const Icon(Icons.share_rounded, size: 20),
+                        label: Text(
+                          tr('هاوبەشکردن بۆ واتسئاپ'),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w900, fontSize: 14),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                    ],
+                    ),
+                    const SizedBox(height: 16),
 
                     // 🎤 دەنگ
                     if (hasVoice) ...[
@@ -1130,6 +1144,134 @@ class _ComplaintDetailsProSheetState extends State<ComplaintDetailsProSheet> {
         '';
     if (raw.trim().isEmpty) return null;
     return raw.trim();
+  }
+
+  String _digits(int n) => n.toString().replaceAllMapped(
+      RegExp(r'\d'), (m) => '٠١٢٣٤٥٦٧٨٩'[int.parse(m[0]!)]);
+
+  /// 🖼️ گەلەری وێنەی گەورە: پانی تەواو، سواپ، ژمارە و خاڵی لاپەڕە
+  Widget _buildImageGallery(List images) {
+    final width = MediaQuery.sizeOf(context).width - 32;
+    final height = (width * 0.78).clamp(220.0, 380.0);
+    final multi = images.length > 1;
+
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: _imgCtrl,
+              itemCount: images.length,
+              onPageChanged: (i) => setState(() => _imgIndex = i),
+              itemBuilder: (_, i) => GestureDetector(
+                onTap: () => _openImage(images, i),
+                child: OptimizedNetworkImage(
+                  imageUrl: images[i].toString(),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            // سێبەری خوارەوە بۆ خاڵەکان
+            IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.25),
+                      Colors.transparent,
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: multi ? 0.45 : 0.0),
+                    ],
+                    stops: const [0.0, 0.25, 0.7, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            // ئایکۆنی شاشەی تەواو
+            PositionedDirectional(
+              top: 12,
+              start: 12,
+              child: IgnorePointer(
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.fullscreen_rounded,
+                      color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+            if (multi) ...[
+              PositionedDirectional(
+                top: 12,
+                end: 12,
+                child: IgnorePointer(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_digits(_imgIndex + 1)} / ${_digits(images.length)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 12,
+                left: 0,
+                right: 0,
+                child: IgnorePointer(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var i = 0; i < images.length; i++)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: i == _imgIndex ? 18 : 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: i == _imgIndex
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   void _openImage(List images, int initialIndex) {

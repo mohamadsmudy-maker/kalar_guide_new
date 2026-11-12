@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
@@ -253,72 +252,8 @@ class _AdminComplaintsProScreenState extends State<AdminComplaintsProScreen>
   // ═══════════════════════════════════════════════════════════
   // 🟢 WhatsApp Sharing with All Details
   // ═══════════════════════════════════════════════════════════
-  Future<void> _shareComplaintToWhatsApp(Map<String, dynamic> c) async {
-    final title = c['title'] ?? 'بێ ناونیشان';
-    final desc = c['description'] ?? 'بێ وەسف';
-    final authority = c['responsible_authority'] ?? 'نەزانراو';
-    final neighborhood = c['neighborhood_name'] ?? 'نەزانراو';
-
-    // 📍 لۆکەیشن
-    final lat = c['latitude'];
-    final lng = c['longitude'];
-    String locationText = 'شوێن تۆمار نەکراوە';
-    if (lat != null && lng != null) {
-      locationText =
-          'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
-    }
-
-    // 🎙️ ڤۆیس
-    final voiceUrl = c['voice_url']?.toString() ?? '';
-    String voiceText = voiceUrl.isNotEmpty ? voiceUrl : 'دەنگی بۆ نەنێردراوە';
-
-    // 🖼️ وێنەکان
-    final List images = c['images'] is List
-        ? c['images'] as List
-        : (c['images'] is String && (c['images'] as String).isNotEmpty
-            ? [c['images']]
-            : []);
-
-    String imagesText = '';
-    if (images.isNotEmpty) {
-      for (int i = 0; i < images.length; i++) {
-        imagesText += trf('🖼️ وێنەی {0}: {1}\n', [i + 1, images[i]]);
-      }
-    } else {
-      imagesText = 'هیچ وێنەیەک نییە\n';
-    }
-
-    // ✍️ دروستکردنی پەیامەکە بە شێوەیەکی جوان
-    final message = '''
-🔔 *سکاڵا* 🔔
-
-📌 *ناونیشان:* $title
-📝 *وەسف:* $desc
-🏢 *لایەنی پەیوەندیدار:* $authority
-📍 *گەڕەک:* $neighborhood
-
-🗺️ *لینکی شوێن:*
-$locationText
-
-🎙️ *لینکی دەنگ:*
-$voiceText
-
-$imagesText
-''';
-
-    // ✅ چاککردنی لینک بۆ ئەوەی لە هەموو ئامێرەکان کار بکات
-    final Uri whatsappUri =
-        Uri.parse("https://wa.me/?text=${Uri.encodeComponent(message)}");
-
-    try {
-      if (!await launchUrl(whatsappUri, mode: LaunchMode.externalApplication)) {
-        throw 'Could not launch WhatsApp';
-      }
-    } catch (e) {
-      _snack(tr('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.'),
-          const Color(0xFFDC3545));
-    }
-  }
+  Future<void> _shareComplaintToWhatsApp(Map<String, dynamic> c) =>
+      WhatsAppComplaintService.shareToWhatsApp(context, c);
 
   // ═══════════════════════════════════════════════════════════
   // 🔍 Filtering / sorting (pure, cached per tab)

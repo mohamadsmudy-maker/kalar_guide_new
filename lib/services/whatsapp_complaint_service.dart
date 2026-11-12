@@ -17,6 +17,77 @@ class WhatsAppComplaintService {
   // 🚀 API ی سەرەکی
   // ═══════════════════════════════════════════════════════════
 
+  /// 🔗 هاوبەشکردنی سکاڵا بۆ هەر کەسێک/گرووپێک لە واتسئاپ (نامەیەکی فۆرماتکراو
+  /// لەگەڵ لینکی شوێن، دەنگ و وێنەکان). هەم لە لیست و هەم لە وردەکاری بەکاردێت.
+  static Future<void> shareToWhatsApp(
+    BuildContext context,
+    Map<String, dynamic> c,
+  ) async {
+    final title = c['title'] ?? 'بێ ناونیشان';
+    final desc = c['description'] ?? 'بێ وەسف';
+    final authority = c['responsible_authority'] ?? 'نەزانراو';
+    final neighborhood = c['neighborhood_name'] ?? 'نەزانراو';
+
+    final lat = c['latitude'];
+    final lng = c['longitude'];
+    var locationText = 'شوێن تۆمار نەکراوە';
+    if (lat != null && lng != null) {
+      locationText =
+          'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+    }
+
+    final voiceUrl = c['voice_url']?.toString() ?? '';
+    final voiceText = voiceUrl.isNotEmpty ? voiceUrl : 'دەنگی بۆ نەنێردراوە';
+
+    final List images = c['images'] is List
+        ? c['images'] as List
+        : (c['images'] is String && (c['images'] as String).isNotEmpty
+            ? [c['images']]
+            : []);
+
+    var imagesText = '';
+    if (images.isNotEmpty) {
+      for (var i = 0; i < images.length; i++) {
+        imagesText += trf('🖼️ وێنەی {0}: {1}\n', [i + 1, images[i]]);
+      }
+    } else {
+      imagesText = 'هیچ وێنەیەک نییە\n';
+    }
+
+    final message = '''
+🔔 *سکاڵا* 🔔
+
+📌 *ناونیشان:* $title
+📝 *وەسف:* $desc
+🏢 *لایەنی پەیوەندیدار:* $authority
+📍 *گەڕەک:* $neighborhood
+
+🗺️ *لینکی شوێن:*
+$locationText
+
+🎙️ *لینکی دەنگ:*
+$voiceText
+
+$imagesText
+''';
+
+    final uri =
+        Uri.parse('https://wa.me/?text=${Uri.encodeComponent(message)}');
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw 'Could not launch WhatsApp';
+      }
+    } catch (_) {
+      if (context.mounted) {
+        _showSnack(
+          context,
+          tr('⚠️ نەتوانرا واتسئاپ بکرێتەوە. دڵنیابە واتسئاپ دامەزراوە.'),
+          const Color(0xFFDC3545),
+        );
+      }
+    }
+  }
+
   /// 📤 ناردنی سکاڵا بۆ واتسئاپ (بە هەموو پێکهاتەکان)
   static Future<bool> sendComplaint({
     required BuildContext context,
@@ -27,7 +98,8 @@ class WhatsAppComplaintService {
       // ١. دەرهێنانی ژمارەی مۆبایل
       final phone = _extractPhone(complaint);
       if (phone == null || phone.isEmpty) {
-        _showSnack(context, tr('⚠️ ژمارەی مۆبایلی سکاڵاکە نەدۆزرایەوە'), const Color(0xFFD9822B));
+        _showSnack(context, tr('⚠️ ژمارەی مۆبایلی سکاڵاکە نەدۆزرایەوە'),
+            const Color(0xFFD9822B));
         return false;
       }
 
@@ -47,7 +119,8 @@ class WhatsAppComplaintService {
 
       // ٤. داگرتنی وێنە و ڤۆیسەکان
       if (!context.mounted) return false;
-      _showSnack(context, tr('⏳ ئامادەکردنی فایلەکان...'), const Color(0xFF1E88E5));
+      _showSnack(
+          context, tr('⏳ ئامادەکردنی فایلەکان...'), const Color(0xFF1E88E5));
       final mediaFiles = await _downloadMedia(complaint);
 
       // ٥. ناردن
@@ -60,7 +133,8 @@ class WhatsAppComplaintService {
       );
     } catch (e) {
       debugPrint('❌ WhatsApp send error: $e');
-      if (context.mounted) _showSnack(context, trf('هەڵە: {0}', [e]), const Color(0xFFDC3545));
+      if (context.mounted)
+        _showSnack(context, trf('هەڵە: {0}', [e]), const Color(0xFFDC3545));
       return false;
     }
   }
@@ -142,7 +216,8 @@ class WhatsAppComplaintService {
     // ─── لۆکەیشن ───
     if (lat != null && lng != null && lat != 0 && lng != 0) {
       buffer.writeln('📍 *شوێنی سکاڵا لەسەر نەخشە:*');
-      buffer.writeln('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+      buffer
+          .writeln('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
       buffer.writeln();
       buffer.writeln('🔗 کۆئۆردینەت:');
       buffer.writeln('`$lat, $lng`');
@@ -227,7 +302,8 @@ class WhatsAppComplaintService {
           final file = await _downloadFile(
             url: url,
             directory: tempDir.path,
-            fileName: 'kalar_complaint_img_${i}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            fileName:
+                'kalar_complaint_img_${i}_${DateTime.now().millisecondsSinceEpoch}.jpg',
           );
           if (file != null) files.add(XFile(file.path));
         } catch (e) {
@@ -243,7 +319,8 @@ class WhatsAppComplaintService {
         final file = await _downloadFile(
           url: voiceUrl,
           directory: tempDir.path,
-          fileName: 'kalar_complaint_voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
+          fileName:
+              'kalar_complaint_voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
         );
         if (file != null) files.add(XFile(file.path));
       } catch (e) {
@@ -261,9 +338,8 @@ class WhatsAppComplaintService {
   }) async {
     try {
       final file = File('$directory/$fileName');
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 15));
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         debugPrint('⚠️ Download ${response.statusCode}: $url');
@@ -271,7 +347,8 @@ class WhatsAppComplaintService {
       }
 
       await file.writeAsBytes(response.bodyBytes);
-      debugPrint('✅ Downloaded: $fileName (${response.bodyBytes.length} bytes)');
+      debugPrint(
+          '✅ Downloaded: $fileName (${response.bodyBytes.length} bytes)');
       return file;
     } catch (e) {
       debugPrint('❌ Download error: $e');
@@ -334,20 +411,21 @@ class WhatsAppComplaintService {
       }
 
       // فۆڵباک بۆ whatsapp://
-      final fallback =
-      Uri.parse('whatsapp://send?phone=$phone&text=$encoded');
+      final fallback = Uri.parse('whatsapp://send?phone=$phone&text=$encoded');
       if (await canLaunchUrl(fallback)) {
         await launchUrl(fallback, mode: LaunchMode.externalApplication);
         return true;
       }
 
       if (context.mounted) {
-        _showSnack(context, tr('⚠️ واتسئاپ دامەزراو نییە'), const Color(0xFFD9822B));
+        _showSnack(
+            context, tr('⚠️ واتسئاپ دامەزراو نییە'), const Color(0xFFD9822B));
       }
       return false;
     } catch (e) {
       debugPrint('❌ WhatsApp open error: $e');
-      if (context.mounted) _showSnack(context, trf('هەڵە: {0}', [e]), const Color(0xFFDC3545));
+      if (context.mounted)
+        _showSnack(context, trf('هەڵە: {0}', [e]), const Color(0xFFDC3545));
       return false;
     }
   }
@@ -366,9 +444,9 @@ class WhatsAppComplaintService {
   // 📋 کۆپیکردنی نامە بۆ Clipboard
   // ═══════════════════════════════════════════════════════════
   static Future<void> copyMessage(
-      BuildContext context,
-      Map<String, dynamic> complaint,
-      ) async {
+    BuildContext context,
+    Map<String, dynamic> complaint,
+  ) async {
     final message = buildMessage(complaint);
     await Clipboard.setData(ClipboardData(text: message));
     if (!context.mounted) return;
@@ -488,8 +566,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF25D366)
-                              .withValues(alpha: 0.4),
+                          color: const Color(0xFF25D366).withValues(alpha: 0.4),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -512,9 +589,8 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w900,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1A1A2E),
+                            color:
+                                isDark ? Colors.white : const Color(0xFF1A1A2E),
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -522,9 +598,8 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                           tr('پێداچوونەوە بکە پێش ناردن'),
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark
-                                ? Colors.white54
-                                : Colors.grey.shade600,
+                            color:
+                                isDark ? Colors.white54 : Colors.grey.shade600,
                           ),
                         ),
                       ],
@@ -560,9 +635,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                     icon: Icons.location_on_rounded,
                     label: tr('شوێن'),
                     value: hasLocation ? 'بەردەست' : 'نەماوە',
-                    color: hasLocation
-                        ? const Color(0xFF1E88E5)
-                        : Colors.grey,
+                    color: hasLocation ? const Color(0xFF1E88E5) : Colors.grey,
                     isDark: isDark,
                   ),
                 ],
@@ -695,7 +768,7 @@ class _WhatsAppPreviewSheet extends StatelessWidget {
                         minimumSize: const Size(0, 54),
                         elevation: 4,
                         shadowColor:
-                        const Color(0xFF25D366).withValues(alpha: 0.5),
+                            const Color(0xFF25D366).withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
