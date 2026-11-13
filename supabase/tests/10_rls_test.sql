@@ -79,6 +79,9 @@ select t.check((select role from app_login('07500000004', 'custpass1')) = 'custo
 select t.check(app_role() = 'customer', 'session bound as customer');
 select t.check(t.rows($$insert into banners(title) values ('x')$$) = -1, 'customer cannot add banners');
 
+select t.check(t.rows($$insert into price_types(kind, key, name_ku, grp) values ('fuel', 'x', 'x', 'fuel')$$) = -1, 'customer cannot add price types');
+select t.check(t.rows($$delete from price_types$$) = 0, 'customer cannot delete price types');
+select t.check((select count(*) from price_types) >= 17, 'everyone can read price types');
 -- ── vendor (store 1) ─────────────────────────────────────────────
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 select app_login('07500000002', 'vendpass1');
@@ -121,6 +124,11 @@ select t.check(t.rows($$update complaints set status = 'done'$$) = 2, 'admin upd
 select t.check(t.rows($$insert into banners(title) values ('a')$$) = 1, 'admin adds banners');
 select t.check(app_update_currency_price(2, 'EUR', 1, 2) = 'ok', 'admin saves any station price');
 select t.check(t.rows($$update app_users set is_approved = false where phone = '07500000002'$$) = 1, 'admin revokes vendor');
+select t.check((select count(*) from price_types where kind = 'fuel') = 7, 'fuel types seeded');
+select t.check((select count(*) from price_types where kind = 'currency') = 10, 'currency types seeded');
+select t.check(t.rows($$insert into price_types(kind, key, name_ku, grp) values ('fuel', 'diesel', 'دیزڵ', 'fuel')$$) = 1, 'admin adds a fuel type');
+select t.check(t.rows($$update price_types set sort_order = 99 where key = 'diesel'$$) = 1, 'admin reorders');
+select t.check(t.rows($$delete from price_types where key = 'diesel'$$) = 1, 'admin deletes a type');
 
 reset role;
 select t.check((select role from app_sessions where auth_uid = '00000000-0000-0000-0000-00000000000b') = 'customer',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/price_types.dart';
 import '../../services/auth_service.dart';
 import '../../services/price_save_result.dart';
 import '../../services/fuel_service.dart';
@@ -24,6 +25,9 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
   void initState() {
     super.initState();
     _loadPrices();
+    PriceTypes.ensureLoaded().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   void _loadPrices() {
@@ -273,7 +277,7 @@ class _AdminFuelPricesScreenState extends State<AdminFuelPricesScreen> {
     final address = PlaceDisplay.address(widget.station['address']);
 
     // ✅ بەکارهێنانی هەمان جۆرەکانی FuelService
-    const fuelTypes = FuelService.fuelTypes;
+    final fuelTypes = FuelService.fuelTypes;
 
     return Directionality(
       textDirection: AppLang.direction,

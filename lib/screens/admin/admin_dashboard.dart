@@ -17,6 +17,8 @@ import 'admin_neighborhoods_screen.dart';
 import 'admin_events_screen.dart';
 import 'admin_emergency_services_screen.dart';
 import 'admin_fuel_stations.dart';
+import 'admin_price_types.dart';
+import '../../services/price_types.dart';
 import 'admin_currency_stations.dart';
 import 'admin_prayer_times.dart';
 import 'admin_translations.dart';
@@ -588,12 +590,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           screen: () => const AdminFuelStationsScreen(),
         ),
         _DashItem(
+          id: 'fuel_types',
+          icon: Icons.tune_rounded,
+          color: blue,
+          title: tr('جۆرەکانی سووتەمەنی'),
+          subtitle: tr('زیادکردن، سڕینەوە و ڕیزکردن بە ڕاکێشان'),
+          screen: () => const AdminPriceTypesScreen(kind: PriceKind.fuel),
+        ),
+        _DashItem(
           id: 'currency',
           icon: Icons.currency_exchange_rounded,
           color: blue,
           title: tr('دراوەکان'),
           subtitle: tr('نوێکردنەوەی نرخی دۆلار و زێڕ'),
           screen: () => const AdminCurrencyStationsScreen(),
+        ),
+        _DashItem(
+          id: 'currency_types',
+          icon: Icons.tune_rounded,
+          color: blue,
+          title: tr('جۆرەکانی دراو'),
+          subtitle: tr('زیادکردن، سڕینەوە و ڕیزکردن بە ڕاکێشان'),
+          screen: () => const AdminPriceTypesScreen(kind: PriceKind.currency),
         ),
         _DashItem(
           id: 'prayer_times',
