@@ -89,6 +89,7 @@ dependencies:
   google_sign_in: ^7.2.0
   # 6.4+ پێویستی بە Flutter 3.47 هەیە؛ ئەمە ئەپەکە لەسەر 3.44 دەهێڵێتەوە
   google_sign_in_ios: ">=6.0.0 <6.4.0"
+  home_widget: ^0.10.0
   # ❌ لابرا: kelar_boundaries — lib ەکەی بەتاڵە و هیچ شوێنێک بەکاری نەدەهێنا
 
 dev_dependencies:

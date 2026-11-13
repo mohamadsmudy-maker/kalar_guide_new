@@ -25,6 +25,7 @@ import 'config/theme.dart';
 import 'config/theme_provider.dart';
 import 'config/translations.dart';
 import 'l10n/tr.dart';
+import 'services/home_widget_service.dart';
 import 'services/price_types.dart';
 import 'services/translation_service.dart';
 
@@ -301,6 +302,7 @@ Future<void> _initSupabase() async {
     _supabaseReady = true;
     // کاشی ناوخۆیی، پاشان وەرگێڕانە هاوبەشە نوێکان (Supabase: text_translations)
     unawaited(PriceTypes.ensureLoaded());
+    HomeWidgetService.instance.start();
     unawaited(TranslationService.loadDiskCache()
         .then((_) => TranslationService.syncShared(AppLang.code)));
     AppLogger.i('✅ Supabase initialized');
