@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/price_types.dart';
 import '../../services/auth_service.dart';
 import '../../services/price_save_result.dart';
 import '../../services/currency_service.dart';
@@ -26,6 +27,9 @@ class _AdminCurrencyPricesScreenState
   void initState() {
     super.initState();
     _loadPrices();
+    PriceTypes.ensureLoaded().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   void _loadPrices() {
@@ -327,7 +331,7 @@ class _AdminCurrencyPricesScreenState
     final name = widget.station['name']?.toString() ?? 'نوسینگەی دراو';
     final address = PlaceDisplay.address(widget.station['address']);
 
-    const currencyTypes = CurrencyService.currencyTypes;
+    final currencyTypes = CurrencyService.currencyTypes;
 
     return Directionality(
       textDirection: AppLang.direction,

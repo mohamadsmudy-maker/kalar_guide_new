@@ -1,3 +1,4 @@
+import 'price_types.dart';
 import 'dart:ui' show Color;
 
 import 'package:flutter/foundation.dart';
@@ -90,7 +91,8 @@ class CurrencyService {
   //   unit = ناوی یەکەکە
   //   ⚠️ ئەگەر نوسینگەکان بە شێوەیەکی تر نرخ دادەنێن، تەنها `per` بگۆڕە
   // ═══════════════════════════════════════════════════════════
-  static const List<Map<String, dynamic>> currencyTypes = [
+  /// لیستی ناو ئەپ — تا ئەدمین لیستەکە نەگۆڕێت ئەمە بەکاردێت
+  static const List<Map<String, dynamic>> defaultCurrencyTypes = [
     {
       'key': 'usd', 'symbol': '\$', 'flag': '🇺🇸', 'group': 'fiat', 'per': 100,
       'name_ku': 'دۆلاری ئەمەریکی', 'name_ar': 'دولار أمريكي', 'name_en': 'US Dollar',
@@ -152,6 +154,10 @@ class CurrencyService {
       'color': '#D97706', 'order': 10,
     },
   ];
+
+  /// جۆرە چالاکەکان بەپێی ڕیزی ئەدمین (`price_types`)
+  static List<Map<String, dynamic>> get currencyTypes =>
+      PriceTypes.of(PriceKind.currency, defaultCurrencyTypes);
 
   static List<Map<String, String>> getCurrencyTypesForLang(String lang) {
     return currencyTypes.map((t) {
@@ -306,6 +312,7 @@ class CurrencyService {
 
   /// ✅ هەموو داتای شاشەی سەرەکی: باشترین نرخ، تێکڕا، گۆڕانکاری، کاتی نوێکردنەوە
   static Future<CurrencySnapshot> getMarketSnapshot({int monthsBack = 6}) async {
+    await PriceTypes.ensureLoaded();
     final results = await Future.wait([
       getCurrentPrices(),
       getMonthlyHistory(monthsBack: monthsBack),

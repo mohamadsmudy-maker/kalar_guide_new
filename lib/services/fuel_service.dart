@@ -1,4 +1,5 @@
 // lib/services/fuel_service.dart
+import 'price_types.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'price_save_result.dart';
@@ -110,7 +111,8 @@ class FuelService {
   //   group: fuel | gas      unit: یەکەی نرخ
   //   ⚠️ ئەگەر نرخی گاز بۆ بوتڵ نییە، unit_* بگۆڕە
   // ═══════════════════════════════════════════════════════════
-  static const List<Map<String, dynamic>> fuelTypes = [
+  /// لیستی ناو ئەپ — تا ئەدمین لیستەکە نەگۆڕێت ئەمە بەکاردێت
+  static const List<Map<String, dynamic>> defaultFuelTypes = [
     {
       'key': 'normal', 'name_ku': 'ئاسایی', 'name_ar': 'عادي', 'name_en': 'Normal',
       'color': '#1E88E5', 'order': 1, 'group': 'fuel', 'emoji': '⛽',
@@ -147,6 +149,10 @@ class FuelService {
       'unit_ku': 'بوتڵ', 'unit_ar': 'قنينة', 'unit_en': 'cylinder',
     },
   ];
+
+  /// جۆرە چالاکەکان بەپێی ڕیزی ئەدمین (`price_types`)
+  static List<Map<String, dynamic>> get fuelTypes =>
+      PriceTypes.of(PriceKind.fuel, defaultFuelTypes);
 
   static String _pick(Map<String, dynamic> t, String field, String lang) {
     final l = (lang == 'ar' || lang == 'en') ? lang : 'ku';
@@ -261,6 +267,7 @@ class FuelService {
 
   /// ✅ هەموو داتای شاشەی سەرەکی بە یەک جار
   static Future<FuelSnapshot> getMarketSnapshot({int monthsBack = 6}) async {
+    await PriceTypes.ensureLoaded();
     final results = await Future.wait([
       getCurrentPrices(),
       getMonthlyHistory(monthsBack: monthsBack),
