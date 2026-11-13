@@ -1930,4 +1930,7 @@ const Map<String, String> stringsEn = {
   'گەڕاندنەوەی جۆرە سەرەکییەکان': 'Restore default types',
   'یەکەی نرخ': 'Price unit',
   '✅ جۆرەکە سڕایەوە': '✅ Type deleted',
+  '{0} خولەکی ماوە': '{0} min left',
+  '{0} کاتژمێر و {1} خولەک': '{0} h {1} min',
+  'نوێژی داهاتوو': 'Next prayer',
 };
