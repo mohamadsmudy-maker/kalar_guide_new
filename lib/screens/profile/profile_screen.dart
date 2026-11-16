@@ -169,12 +169,12 @@ class _ProfileScreenState extends State<ProfileScreen>
           _count(() => client
               .from('favorite_stores')
               .select('id')
-              .eq('user_id', uid)
+              .inFilter('user_id', AuthSessionManager.ownerIds)
               .count()),
           _count(() => client
               .from('news_favorites')
               .select('id')
-              .eq('user_id', uid)
+              .inFilter('user_id', AuthSessionManager.ownerIds)
               .count()),
           _count(() => client
               .from('complaints')

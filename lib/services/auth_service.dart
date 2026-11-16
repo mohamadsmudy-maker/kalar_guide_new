@@ -49,6 +49,22 @@ class AuthSessionManager {
     return mine.length == 10 && mine == phoneKey(stationPhone);
   }
 
+  /// ناسنامەکانی خاوەنی لیستە تایبەتییەکان (دڵخواز، لایک): یەکەم ناسنامەی
+  /// ئەکاونتی ئەپ (ئەوەی شوێنەکان بەکاری دەهێنن)، دواتر ناسنامەی دانیشتنی
+  /// Supabase (ئەوەی هەواڵەکان پێشتر بەکاریان دەهێنا). بۆ نووسین یەکەمیان
+  /// بەکاربهێنە؛ بۆ خوێندنەوە و سڕینەوە هەردووکیان، بۆ ئەوەی دڵخوازە کۆنەکان
+  /// نەفەوتێن.
+  static List<String> get ownerIds {
+    final out = <String>[];
+    final app = currentUser?['id']?.toString().trim() ?? '';
+    if (app.isNotEmpty) out.add(app);
+    try {
+      final auth = Supabase.instance.client.auth.currentUser?.id.trim() ?? '';
+      if (auth.isNotEmpty && !out.contains(auth)) out.add(auth);
+    } catch (_) {}
+    return out;
+  }
+
   static Map<String, dynamic>? get currentUser {
     if (!isLoggedIn) return null;
     return {

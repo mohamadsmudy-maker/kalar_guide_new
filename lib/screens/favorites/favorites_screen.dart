@@ -198,10 +198,15 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       final favRes = await client
           .from(kind.favTable)
           .select('id, ${kind.targetCol}, created_at')
-          .eq('user_id', uid)
+          .inFilter('user_id', AuthSessionManager.ownerIds)
           .order('created_at', ascending: false);
 
-      final favList = List<Map<String, dynamic>>.from(favRes as List);
+      // هەمان شت ڕەنگە بە هەردوو ناسنامە پاشەکەوت کرابێت — یەک جار پیشان بدرێت
+      final seen = <String>{};
+      final favList = [
+        for (final f in List<Map<String, dynamic>>.from(favRes as List))
+          if (seen.add(f[kind.targetCol].toString())) f,
+      ];
       if (favList.isEmpty) {
         if (mounted) {
           setState(() {

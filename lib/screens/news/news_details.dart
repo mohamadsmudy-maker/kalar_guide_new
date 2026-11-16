@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/auth_service.dart';
 
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
@@ -87,36 +88,34 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
   }
 
   Future<void> _checkUserStatus() async {
-    final supabaseUser = Supabase.instance.client.auth.currentUser;
+    final owners = AuthSessionManager.ownerIds;
     final newsId = _newsId;
 
-    if (supabaseUser == null || newsId == null || newsId.isEmpty) {
+    if (owners.isEmpty || newsId == null || newsId.isEmpty) {
       if (mounted) setState(() => _loading = false);
       return;
     }
 
     try {
-      final userId = supabaseUser.id;
-
       final results = await Future.wait([
         Supabase.instance.client
             .from('news_likes')
-            .select()
-            .eq('user_id', userId)
+            .select('id')
+            .inFilter('user_id', owners)
             .eq('news_id', newsId)
-            .maybeSingle(),
+            .limit(1),
         Supabase.instance.client
             .from('news_favorites')
-            .select()
-            .eq('user_id', userId)
+            .select('id')
+            .inFilter('user_id', owners)
             .eq('news_id', newsId)
-            .maybeSingle(),
+            .limit(1),
       ]);
 
       if (!mounted) return;
       setState(() {
-        isLiked = results[0] != null;
-        isFavorite = results[1] != null;
+        isLiked = (results[0] as List).isNotEmpty;
+        isFavorite = (results[1] as List).isNotEmpty;
         _loading = false;
       });
     } catch (e) {
@@ -131,8 +130,8 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
   Future<void> _toggleLike() async {
     if (_isLiking) return;
 
-    final supabaseUser = Supabase.instance.client.auth.currentUser;
-    if (supabaseUser == null) {
+    final owners = AuthSessionManager.ownerIds;
+    if (owners.isEmpty) {
       _showLoginRequired();
       return;
     }
@@ -143,7 +142,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     HapticFeedback.lightImpact();
     setState(() => _isLiking = true);
 
-    final userId = supabaseUser.id;
+    final userId = owners.first;
     final wasLiked = isLiked;
     final oldLikes = likes;
 
@@ -162,7 +161,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
         await Supabase.instance.client
             .from('news_likes')
             .delete()
-            .eq('user_id', userId)
+            .inFilter('user_id', owners)
             .eq('news_id', newsId);
         await Supabase.instance.client.rpc(
           'decrement_likes',
@@ -193,8 +192,10 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
   Future<void> _toggleFavorite() async {
     if (_isFavoriting) return;
 
-    final supabaseUser = Supabase.instance.client.auth.currentUser;
-    if (supabaseUser == null) {
+    // دڵخواز بە ئەکاونتی ئەپەوە دەبەسترێتەوە (شاشەی دڵخوازەکان بەو ناسنامەیەوە
+    // دەیخوێنێتەوە) — میوان نایبینێتەوە، بۆیە داوای چوونەژوورەوە دەکرێت
+    final owners = AuthSessionManager.ownerIds;
+    if (!AuthSessionManager.isLoggedIn || owners.isEmpty) {
       _showLoginRequired();
       return;
     }
@@ -205,7 +206,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     HapticFeedback.lightImpact();
     setState(() => _isFavoriting = true);
 
-    final userId = supabaseUser.id;
+    final userId = owners.first;
     final wasFavorite = isFavorite;
     setState(() => isFavorite = !isFavorite);
 
@@ -214,7 +215,7 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
         await Supabase.instance.client
             .from('news_favorites')
             .delete()
-            .eq('user_id', userId)
+            .inFilter('user_id', owners)
             .eq('news_id', newsId);
       } else {
         await Supabase.instance.client
