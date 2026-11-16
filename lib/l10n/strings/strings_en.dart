@@ -2010,4 +2010,13 @@ const Map<String, String> stringsEn = {
   'کراوەیە • تا {0}': 'Open • until {0}',
   'بێ بەش': 'No category',
   'بێ ژێربەش': 'No subcategory',
+  '{0} پێشتر هەن': '{0} already added',
+  'دانانی بەش بۆ ئەمانە': 'Set category for these',
+  'دەرەوەی گەڕەکەکان': 'Outside neighborhoods',
+  'لابردنی هەڵبژاردنی ئەمانە': 'Deselect these',
+  'هیچ شوێنێک لەگەڵ ئەم فلتەرانە ناگونجێت': 'No places match these filters',
+  'هەڵبژاردنی هەموو ئەمانە': 'Select all of these',
+  'هەڵبژێردراوەکان': 'Selected',
+  'ژمارەی هەیە': 'Has phone',
+  'گەڕان بە ناو...': 'Search by name...',
 };
