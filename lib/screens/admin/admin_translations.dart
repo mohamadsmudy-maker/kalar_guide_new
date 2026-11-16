@@ -329,9 +329,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
           textDirection: AppLang.direction,
           child: AlertDialog(
             title: Text(tr('وەرگێڕان سەرکەوتوو نەبوو')),
-            content: Text(
-              '${tr(err.contains('429') ? 'سنووری بەخۆڕایی Gemini تەواو بووە. سبەی دووبارە هەوڵ بدەرەوە، یان لە Google AI Studio بیلینگ چالاک بکە.' : err.contains('GEMINI_API_KEY') || err.contains('API key') ? 'کلیلی GEMINI_API_KEY لە Supabase هەڵەیە یان دانەنراوە.' : 'سێرڤەری وەرگێڕان وەڵامی نەدایەوە. لۆگی فەنکشنی translate-text بپشکنە.')}\n\n$err',
-            ),
+            content: Text('${tr(_translateErrorHint(err))}\n\n$err'),
             actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('باشە')))],
           ),
         ),
@@ -340,6 +338,27 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
       _snack(trf('{0} وەرگێڕانی نوێ پاشەکەوت کرا', [done]));
     }
     if (mounted) _load();
+  }
+
+  /// پەیامێکی ڕوون بە کوردی بەپێی جۆری هەڵە
+  static String _translateErrorHint(String err) {
+    final e = err.toLowerCase();
+    if (e.contains('failed host lookup') ||
+        e.contains('socketexception') ||
+        e.contains('no address') ||
+        e.contains('network is unreachable')) {
+      return 'پەیوەندی ئینتەرنێت نییە یان لاوازە. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدەرەوە.';
+    }
+    if (e.contains('timeout') || e.contains('not completed')) {
+      return 'سێرڤەر درەنگ وەڵامی دایەوە. دڵنیابە فەنکشنی translate-text لە Supabase دانراوە و GEMINI_API_KEY ڕێک کراوە، پاشان دووبارە هەوڵ بدەرەوە.';
+    }
+    if (err.contains('429')) {
+      return 'سنووری بەخۆڕایی Gemini تەواو بووە. سبەی دووبارە هەوڵ بدەرەوە، یان لە Google AI Studio بیلینگ چالاک بکە.';
+    }
+    if (err.contains('GEMINI_API_KEY') || err.contains('API key')) {
+      return 'کلیلی GEMINI_API_KEY لە Supabase هەڵەیە یان دانەنراوە.';
+    }
+    return 'سێرڤەری وەرگێڕان وەڵامی نەدایەوە. لۆگی فەنکشنی translate-text بپشکنە.';
   }
 
   Future<void> _delete(Map<String, dynamic> row) async {

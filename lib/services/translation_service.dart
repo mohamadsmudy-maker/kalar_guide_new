@@ -83,7 +83,7 @@ class TranslationService {
   // ═══════════════════════════════════════════════════════════
   // 📦 بە کۆمەڵ: ٤٠ دەق بە یەک داواکاری
   // ═══════════════════════════════════════════════════════════
-  static const int _batchSize = 40;
+  static const int _batchSize = 20;
   static const int _batchItemMax = 600;
   static const Duration _batchDelay = Duration(milliseconds: 350);
 
