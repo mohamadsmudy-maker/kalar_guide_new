@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../l10n/tr.dart';
+import '../../utils/fee_total.dart';
 
 /// لیستی دەق لە خانەی داتابەیس (List یان دەقی `{a,b}` یان چەند دێڕ)
 List<String> serviceListOf(dynamic raw) {
@@ -339,6 +340,41 @@ class _ServiceEditorSheetState extends State<ServiceEditorSheet> {
                           ),
                         ],
                       ),
+
+                      if (FeeTotal.of(_fees).isUseful) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.functions_rounded,
+                                  size: 18, color: color),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  tr('سەرجەمی تێچوو'),
+                                  style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: fg),
+                                ),
+                              ),
+                              Text(
+                                '${FeeTotal.format(FeeTotal.of(_fees).total)} ${tr('دینار')}',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    color: color),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
 
                       // ═══ زانیاری زیاتر ═══
                       _heading(Icons.info_outline_rounded,

@@ -1934,4 +1934,6 @@ const Map<String, String> stringsEn = {
   '{0} کاتژمێر و {1} خولەک': '{0} h {1} min',
   'نوێژی داهاتوو': 'Next prayer',
   'کردنەوەی نەخشە': 'Open map',
+  'ئەم سەرجەمە تەنها ئەو تێچووانە دەگرێتەوە کە بڕیان بە دینار دیارە': 'This total only includes fees whose amount is clear and in dinar',
+  'سەرجەمی تێچوو': 'Total cost',
 };

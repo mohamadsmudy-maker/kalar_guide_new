@@ -206,17 +206,13 @@ class ServiceDetailsScreen extends StatelessWidget {
                           ),
                         ),
                         child: Column(
-                          children: service.fees
-                              .asMap()
-                              .entries
-                              .map(
-                                (entry) =>
+                          children: [
+                            ...service.fees.map((f) =>
                                 ServiceDetailWidgets.buildFeeItem(
-                                  text: entry.value,
-                                  isDark: isDark,
-                                ),
-                          )
-                              .toList(),
+                                    text: f, isDark: isDark)),
+                            ServiceDetailWidgets.buildFeeTotal(
+                                fees: service.fees, isDark: isDark),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
