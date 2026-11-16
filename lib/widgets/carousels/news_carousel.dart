@@ -199,14 +199,6 @@ class _NewsCarouselState extends State<NewsCarousel>
             (m) => '٠١٢٣٤٥٦٧٨٩'[int.parse(m[0]!)],
           );
 
-  /// 1234 → ١٫٢k
-  String _compact(dynamic value) {
-    final n = value is num ? value.toInt() : (int.tryParse('$value') ?? 0);
-    if (n < 1000) return _ku(n);
-    final k = (n / 1000).toStringAsFixed(n >= 10000 ? 0 : 1);
-    return AppLang.code == 'en' ? '${k}k' : '${_ku(k.replaceAll('.', '٫'))}k';
-  }
-
   String _extractImage(Map<String, dynamic> news) {
     final raw = news['images'] ?? news['img'] ?? news['image'];
     if (raw == null) return '';
@@ -315,8 +307,6 @@ class _NewsCarouselState extends State<NewsCarousel>
     final imageUrl = _extractImage(news);
     final title = news['title']?.toString() ?? '';
     final newsType = news['news_type']?.toString() ?? 'هەواڵ';
-    final views = news['views'] ?? 0;
-    final likes = news['likes'] ?? 0;
 
     // Store: from the join if present, otherwise from the prefetched cache
     Map<String, dynamic>? store;
@@ -425,19 +415,9 @@ class _NewsCarouselState extends State<NewsCarousel>
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildPublisher(
-                              store,
-                              _timeAgo(news['created_at']?.toString()),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          _buildStat(Icons.visibility_rounded, _compact(views)),
-                          const SizedBox(width: 10),
-                          _buildStat(Icons.thumb_up_rounded, _compact(likes)),
-                        ],
+                      _buildPublisher(
+                        store,
+                        _timeAgo(news['created_at']?.toString()),
                       ),
                     ],
                   ),
@@ -555,24 +535,6 @@ class _NewsCarouselState extends State<NewsCarousel>
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontFamily: 'Rabar', height: 1.2),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStat(IconData icon, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 12),
-        const SizedBox(width: 3),
-        Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w800,
           ),
         ),
       ],

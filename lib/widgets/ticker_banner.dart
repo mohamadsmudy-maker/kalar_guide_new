@@ -54,8 +54,8 @@ class _BreakingDialogState extends State<_BreakingDialog>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 900),
-  )..repeat(reverse: true);
+    duration: const Duration(milliseconds: 1400),
+  )..repeat();
 
   @override
   void dispose() {
@@ -65,120 +65,170 @@ class _BreakingDialogState extends State<_BreakingDialog>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: _red.withValues(alpha: 0.35),
-            blurRadius: 30,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── سەرپەڕ ──
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_redDark, _red, Color(0xFFD32F2F)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+    final items = widget.items;
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        // ── کارت ──
+        Container(
+          margin: const EdgeInsets.only(top: 34),
+          padding: const EdgeInsets.fromLTRB(18, 50, 18, 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 40,
+                offset: const Offset(0, 16),
               ),
-            ),
-            child: Row(
-              children: [
-                ScaleTransition(
-                  scale: Tween(begin: 0.85, end: 1.15).animate(_pulse),
-                  child: const Text('⚡', style: TextStyle(fontSize: 26)),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                tr('هەواڵی بەپەلە'),
+                style: const TextStyle(
+                  color: _red,
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
+              ),
+              const SizedBox(height: 6),
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: _red.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 340),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) => Container(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF5F5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFAD4D4)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 26,
+                            height: 26,
+                            margin: const EdgeInsets.only(top: 1),
+                            alignment: Alignment.center,
+                            decoration: const BoxDecoration(
+                              color: _red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              AppLang.localDigits('${i + 1}', AppLang.code),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              items[i],
+                              style: const TextStyle(
+                                fontSize: 15.5,
+                                height: 1.6,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1A1A2E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
                   child: Text(
-                    tr('هەواڵی بەپەلە'),
+                    tr('تێگەیشتم'),
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 0.3,
+                      height: 1.3,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          // ── ناوەڕۆک ──
-          Flexible(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 360),
-              child: ListView.separated(
-                shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
-                itemCount: widget.items.length,
-                separatorBuilder: (_, __) => Divider(
-                  height: 20,
-                  color: Colors.grey.shade200,
-                ),
-                itemBuilder: (_, i) => Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 6),
-                      width: 9,
-                      height: 9,
-                      decoration: const BoxDecoration(
-                        color: _red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        widget.items[i],
-                        style: const TextStyle(
-                          fontSize: 16,
-                          height: 1.6,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1A1A2E),
-                        ),
-                      ),
-                    ),
-                  ],
+        ),
+        // ── نیشانەی سەرەوە (لەسەر لێواری کارتەکە) ──
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            FadeTransition(
+              opacity: Tween(begin: 0.55, end: 0.0).animate(_pulse),
+              child: ScaleTransition(
+                scale: Tween(begin: 1.0, end: 1.35).animate(_pulse),
+                child: Container(
+                  width: 68,
+                  height: 68,
+                  decoration: const BoxDecoration(color: _red, shape: BoxShape.circle),
                 ),
               ),
             ),
-          ),
-          // ── دوگمەی داخستن ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
-            child: SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _red,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE53935), _redDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: Text(
-                  tr('تێگەیشتم'),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                ),
+                border: Border.all(color: Colors.white, width: 4),
               ),
+              child: const Icon(Icons.bolt_rounded, color: Color(0xFFFFD54F), size: 36),
             ),
+          ],
+        ),
+        // ── داخستن ──
+        PositionedDirectional(
+          top: 42,
+          end: 8,
+          child: IconButton(
+            tooltip: tr('داخستن'),
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(Icons.close_rounded, color: Colors.grey.shade500),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -200,7 +250,7 @@ class TickerBannerWidget extends StatefulWidget {
 
 class _TickerBannerWidgetState extends State<TickerBannerWidget>
     with SingleTickerProviderStateMixin {
-  static const _height = 48.0;
+  static const _height = 44.0;
   static const _pixelsPerSecond = 55.0;
   static const _style = TextStyle(
     color: Colors.white,
@@ -284,7 +334,7 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
             // ── نیشانەی «هەواڵی بەپەلە» ──
             Container(
               height: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               alignment: Alignment.center,
               decoration: const BoxDecoration(
                 color: _redDark,
@@ -296,12 +346,12 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('⚡', style: TextStyle(fontSize: 15)),
-                  const SizedBox(width: 5),
+                  const Icon(Icons.bolt_rounded, color: Color(0xFFFFD54F), size: 18),
+                  const SizedBox(width: 3),
                   Text(
-                    tr('هەواڵی بەپەلە'),
+                    tr('بەپەلە'),
                     textDirection: AppLang.direction,
-                    style: _style.copyWith(fontSize: 13, fontWeight: FontWeight.w900),
+                    style: _style.copyWith(fontSize: 14, fontWeight: FontWeight.w900),
                   ),
                 ],
               ),

@@ -2055,4 +2055,5 @@ const Map<String, String> stringsEn = {
   'تێگەیشتم': 'Got it',
   'پەیوەندی ئینتەرنێت نییە یان لاوازە. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدەرەوە.': 'No internet connection, or it is weak. Check your connection and try again.',
   'سێرڤەر درەنگ وەڵامی دایەوە. دڵنیابە فەنکشنی translate-text لە Supabase دانراوە و GEMINI_API_KEY ڕێک کراوە، پاشان دووبارە هەوڵ بدەرەوە.': 'The server was too slow. Make sure the translate-text function is deployed in Supabase and GEMINI_API_KEY is set, then try again.',
+  'بەپەلە': 'Breaking',
 };

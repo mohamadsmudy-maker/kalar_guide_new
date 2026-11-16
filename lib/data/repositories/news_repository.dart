@@ -13,6 +13,15 @@ class NewsRepository {
   // 📖 خوێندنەوە
   // ═══════════════════════════════════════════════════════════
 
+  /// news_type = جۆری بڵاوکراوە (هەواڵ، هۆشداری، ئاگاداری...). بێ ئەمە هەموویان
+  /// وەک «هەواڵ» دەردەکەوتن.
+  static const String _columns =
+      'id, title, description, images, likes, views, created_at, news_type, '
+      'store_id, dukan(name, logo, image)';
+
+  /// داتابەیسێکی کۆن کە ستوونی news_type ی نییە
+  static bool _hasTypeColumn = true;
+
   /// ✅ وەرگرتنی هەموو هەواڵەکان (بە Pagination)
   Future<List<News>> getNews({
     int page = 0,
@@ -24,10 +33,7 @@ class NewsRepository {
 
       final res = await _client
           .from('news')
-          .select(
-        'id, title, description, images, likes, views, created_at, '
-            'store_id, dukan(name, logo, image)',
-      )
+          .select(_hasTypeColumn ? _columns : _columns.replaceAll('news_type, ', ''))
           .order('id', ascending: false)
           .range(from, to);
 
@@ -35,6 +41,10 @@ class NewsRepository {
           .map((e) => News.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     } on PostgrestException catch (e) {
+      if (_hasTypeColumn && e.message.contains('news_type')) {
+        _hasTypeColumn = false;
+        return getNews(page: page, pageSize: pageSize);
+      }
       debugPrint('❌ NewsRepository.getNews: ${e.message}');
       rethrow;
     } catch (e) {
