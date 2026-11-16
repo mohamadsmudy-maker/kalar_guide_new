@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../models/opening_hours.dart';
+import '../../widgets/opening_hours_widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:geolocator/geolocator.dart';
@@ -58,6 +60,10 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
   double? _latitude;
   double? _longitude;
 
+  /// کاتی کارکردن؛ تەنها ئەگەر بەکارهێنەر دەستکاری کرد دەنێردرێت (ستوونەکە ڕەنگە هێشتا نەبێت)
+  OpeningHours? _hours;
+  bool _hoursTouched = false;
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +73,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       _addressController.text = widget.storeToEdit!['address'] ?? '';
       _descController.text = widget.storeToEdit!['description'] ?? '';
       _vendorCodeController.text = widget.storeToEdit!['vendor_code'] ?? '';
+      _hours = OpeningHours.fromJson(widget.storeToEdit!['opening_hours']);
 
       _selectedMainCategory = widget.storeToEdit!['category'] ??
           widget.storeToEdit!['sector'];
@@ -438,6 +445,8 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         'total_reviews': widget.storeToEdit?['total_reviews'] ?? 0,
         'services': widget.storeToEdit?['services'] ?? <dynamic>[],
       };
+
+      if (_hoursTouched) storeData['opening_hours'] = _hours?.toJson();
 
       if (editingId == null) {
         storeData['created_at'] = DateTime.now().toIso8601String();
@@ -852,6 +861,14 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
             'وەسف',
             maxLines: 3,
             isDark: isDark,
+          ),
+          const SizedBox(height: 14),
+          OpeningHoursEditor(
+            initial: _hours,
+            onChanged: (h) {
+              _hours = h;
+              _hoursTouched = true;
+            },
           ),
         ],
       ),

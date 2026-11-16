@@ -73,6 +73,10 @@ select t.check((select views from events where id = 1) = 1, 'event view counter 
 select t.check(not exists (select 1 from app_current_user()), 'no session -> no profile');
 select t.check(app_update_fuel_price(1, 'normal', 1500) = 'not_logged_in', 'guest cannot save fuel price');
 
+select app_presence_ping('device-aaaa1111', null, null, 'customer', '1.1.0', 'android', 'ku', null);
+select app_presence_ping('device-aaaa1111', null, null, 'customer', '1.1.0', 'android', 'ar', null);
+select app_presence_ping('short', null, null, 'customer', '1.1.0', 'android', 'ku', null);
+select t.check((select count(*) from active_users) = 0, 'guest cannot read the live users table');
 -- ── customer ─────────────────────────────────────────────────────
 select t.check(not exists (select 1 from app_login('07500000004', 'wrong')), 'wrong password rejected');
 select t.check((select role from app_login('07500000004', 'custpass1')) = 'customer', 'customer login');
@@ -91,6 +95,11 @@ select app_log_search('كەلار  ', 0, 'ku');
 select app_log_search('07501234567', 0, 'ku');
 select app_log_search('a', 0, 'ku');
 select t.check((select count(*) from search_logs) = 0, 'customer cannot read search logs');
+do $$ begin
+  perform get_presence_stats();
+  raise exception 'FAILED: customer read presence stats';
+exception when insufficient_privilege then raise notice 'ok: customer cannot read presence stats';
+end $$;
 -- ── vendor (store 1) ─────────────────────────────────────────────
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 select app_login('07500000002', 'vendpass1');
@@ -140,6 +149,9 @@ select t.check((app_admin_stats(7)->'complaints'->>'now')::int = 2, 'admin stats
 select t.check((app_admin_stats(9999)->>'days')::int = 365, 'admin stats caps the period');
 select t.check((select count(*) from search_logs) = 1, 'search log keeps one clean row (phone numbers and 1-letter text dropped)');
 select t.check((app_admin_stats(7)->'search'->>'now')::int = 1, 'admin stats counts searches');
+select t.check((get_presence_stats()->>'online_now')::int = 1, 'presence: one install, pinged twice, short id ignored');
+select t.check((select language from active_users where device_id = 'device-aaaa1111') = 'ar', 'presence ping updates the row');
+select t.check((app_admin_stats(7)->'users'->>'online')::int = 1, 'admin stats show online users');
 select t.check((app_admin_stats(7)->'search'->'no_results'->0->>'name') = 'كەلار', 'no-result searches are listed');
 select t.check((select count(*) from price_types where kind = 'fuel') = 7, 'fuel types seeded');
 select t.check((select count(*) from price_types where kind = 'currency') = 10, 'currency types seeded');

@@ -663,6 +663,7 @@ class _NewsCarouselState extends State<NewsCarousel>
         ),
         child: Text(
           '${_ku(_currentIndex + 1)} / ${_ku(total)}',
+          textDirection: TextDirection.ltr,
           style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w900,

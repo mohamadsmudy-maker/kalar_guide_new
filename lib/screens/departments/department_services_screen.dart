@@ -7,6 +7,7 @@ import '../../config/settings_provider.dart';
 import '../../widgets/common/auto_translate.dart';
 import 'department_service_details.dart';
 import '../../l10n/tr.dart';
+import '../../services/cache_service.dart';
 
 /// 📋 مامەڵەکانی فەرمانگە — ULTRA PRO
 class DepartmentServicesScreen extends StatefulWidget {
@@ -32,16 +33,20 @@ class _DepartmentServicesScreenState extends State<DepartmentServicesScreen> {
   Future<void> _loadServices() async {
     if (mounted) setState(() => _loading = true);
     try {
-      final res = await Supabase.instance.client
-          .from('department_services')
-          .select()
-          .eq('department_id', widget.department['id'])
-          .eq('is_active', true)
-          .order('display_order');
+      final res = await CacheService.fetchList(
+        'department_services_${widget.department['id']}',
+        () async => List<Map<String, dynamic>>.from(await Supabase
+            .instance.client
+            .from('department_services')
+            .select()
+            .eq('department_id', widget.department['id'])
+            .eq('is_active', true)
+            .order('display_order')),
+      );
 
       if (mounted) {
         setState(() {
-          _services = List<Map<String, dynamic>>.from(res);
+          _services = res;
           _loading = false;
         });
       }

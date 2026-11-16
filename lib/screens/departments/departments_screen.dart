@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/settings_provider.dart';
+import '../../services/cache_service.dart';
 import '../../widgets/common/auto_translate.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import 'department_services_screen.dart';
@@ -57,14 +58,18 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
       });
     }
     try {
-      final res = await Supabase.instance.client
-          .from('departments')
-          .select()
-          .order('name_ku');
+      final res = await CacheService.fetchList(
+        'departments_list',
+        () async => List<Map<String, dynamic>>.from(await Supabase
+            .instance.client
+            .from('departments')
+            .select()
+            .order('name_ku')),
+      );
 
       if (mounted) {
         setState(() {
-          _departments = List<Map<String, dynamic>>.from(res);
+          _departments = res;
           _loading = false;
         });
         _entryController.forward(from: 0);
