@@ -4,6 +4,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class NewsService {
   static SupabaseClient get _client => Supabase.instance.client;
 
+  /// news_type = جۆری بڵاوکراوە (هەواڵ، هۆشداری، ئاگاداری...). بێ ئەمە هەموویان
+  /// وەک «هەواڵ» دەردەکەوتن.
+  static const String _columns =
+      'id, title, description, images, likes, views, created_at, news_type, '
+      'store_id, dukan(name, logo, image)';
+
+  /// داتابەیسێکی کۆن کە ستوونی news_type ی نییە
+  static bool _hasTypeColumn = true;
+
   // ═══════════════════════════════════════════════════════════
   // 📰 هێنانی هەواڵەکان — بە Pagination
   // ═══════════════════════════════════════════════════════════
@@ -14,14 +23,18 @@ class NewsService {
     try {
       final res = await _client
           .from('news')
-          .select(
-        'id, title, description, images, likes, views, created_at, '
-            'store_id, dukan(name, logo, image)',
-      )
+          .select(_hasTypeColumn ? _columns : _columns.replaceAll('news_type, ', ''))
           .order('id', ascending: false)
           .range(from, to);  // ✅ Pagination
 
       return List<Map<String, dynamic>>.from(res);
+    } on PostgrestException catch (e) {
+      if (_hasTypeColumn && e.message.contains('news_type')) {
+        _hasTypeColumn = false;
+        return getNews(from: from, to: to);
+      }
+      debugPrint('❌ getNews error: $e');
+      return [];
     } catch (e) {
       debugPrint('❌ getNews error: $e');
       return [];
