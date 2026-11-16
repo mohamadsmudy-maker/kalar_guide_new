@@ -83,11 +83,7 @@ class HomeWidgetService with WidgetsBindingObserver {
 
   static String _date(DateTime d) => '${d.year}-${_two(d.month)}-${_two(d.day)}';
 
-  static String _digits(String s) {
-    if (!AppLang.isRtl) return s;
-    const ku = '٠١٢٣٤٥٦٧٨٩';
-    return s.replaceAllMapped(RegExp(r'\d'), (m) => ku[int.parse(m[0]!)]);
-  }
+  static String _digits(String s) => AppLang.localDigits(s);
 
   /// «دووشەممە • ١٦/١١» — بۆ سەرپەڕی ویجێتەکە
   @visibleForTesting
@@ -116,7 +112,7 @@ class HomeWidgetService with WidgetsBindingObserver {
     final tomorrow = today.add(const Duration(days: 1));
     final out = <String, String>{
       'lang': AppLang.code,
-      'digits': AppLang.isRtl ? '1' : '0',
+      'digits': AppLang.code == 'en' ? '0' : (AppLang.code == 'fa' ? '2' : '1'),
       'title': tr('ڕێبەری کەلار'),
       'next_label': tr('نوێژی داهاتوو'),
       'tpl_min': tr('{0} خولەکی ماوە'),

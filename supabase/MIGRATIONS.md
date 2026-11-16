@@ -20,6 +20,7 @@
 | 12 | `20261118_price_types.sql` | جۆرەکانی سووتەمەنی و دراو لەلایەن ئەدمینەوە بگۆڕدرێن (زیادکردن، سڕینەوە، ڕیزکردن) | ✅ |
 | 13 | `20261119_admin_stats.sql` | ئاماری ئەدمین + تۆمارکردنی گەڕانی بێناسنامە (بۆ ناوەندی کۆنترۆڵ) | ✅ |
 | 14 | `20261120_presence_and_hours.sql` | بەکارهێنەرانی چالاک بە ڕاستی دەژمێردرێن + کاتی کارکردنی شوێنەکان | ✅ |
+| 15 | `20261121_translations_fa.sql` | زیادکردنی 'fa' (فارسی) بۆ چەکی lang لە text_translations | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -39,7 +40,10 @@ select
           and table_name = 'departments' and column_name = 'place_id')          as m11_department_places,
   to_regclass('public.price_types')                               is not null as m12_price_types,
   to_regprocedure('public.app_admin_stats(int)')                  is not null as m13_admin_stats,
-  to_regprocedure('public.get_presence_stats()')                  is not null as m14_presence_hours;
+  to_regprocedure('public.get_presence_stats()')                  is not null as m14_presence_hours,
+  exists (select 1 from information_schema.check_constraints where constraint_schema = 'public'
+          and constraint_name = 'text_translations_lang_check'
+          and check_clause like '%fa%')                                          as m15_translations_fa;
 ```
 
 ## Edge Functions (جیا لە SQL)

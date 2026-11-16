@@ -137,9 +137,7 @@ class _NeighborhoodsMapScreenState extends State<NeighborhoodsMapScreen> {
     final lang = context.watch<SettingsProvider>().languageId;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final title = lang == 'ar'
-        ? 'خريطة الأحياء'
-        : (lang == 'en' ? 'Neighborhoods Map' : 'نەخشەی گەڕەکان');
+    final title = trTo(lang, 'نەخشەی گەڕەکەکان');
 
     return Directionality(
       textDirection: lang == 'en' ? TextDirection.ltr : TextDirection.rtl,

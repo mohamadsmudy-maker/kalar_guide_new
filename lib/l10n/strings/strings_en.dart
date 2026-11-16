@@ -2019,4 +2019,8 @@ const Map<String, String> stringsEn = {
   'هەڵبژێردراوەکان': 'Selected',
   'ژمارەی هەیە': 'Has phone',
   'گەڕان بە ناو...': 'Search by name...',
+  'وەرگێڕانی ئەم {0} دەقە بە Gemini': 'Translate these {0} texts with Gemini',
+  'وەرگێڕانی دەقە نوێ و وەرنەگێڕدراوەکان': 'Translate new and untranslated texts',
+  'فارسی': 'Persian',
+  'ناوی هەموو شوێن، ناونیشان، بەش و هەواڵەکان بۆ ئینگلیزی، عەرەبی و فارسی وەردەگێڕدرێن. چەند خولەکێک دەخایەنێت؛ تا تەواو دەبێت ئەم شاشەیە دامەخە.': 'All place names, addresses, categories and news will be translated to English, Arabic and Persian. It takes a few minutes; keep this screen open until it finishes.',
 };

@@ -63,7 +63,7 @@ class NeighborhoodInfoSheet extends StatelessWidget {
     final lang = context.select<SettingsProvider, String>((s) => s.languageId);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
-    String t(String k) => _tr[k]?[lang] ?? _tr[k]?['en'] ?? k;
+    String t(String k) => trRow(_tr[k], lang) ?? k;
 
     final n = neighborhood;
     final color = n.displayColor;

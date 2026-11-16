@@ -10,6 +10,7 @@ import '../../config/settings_provider.dart';
 import '../../config/translations.dart';
 import '../../services/weather_service.dart';
 import '../../widgets/weather_widget.dart';
+import '../../l10n/tr.dart';
 
 /// ☁️ شاشەی کەشوهەوا — Ultra Pro Max
 class WeatherScreen extends StatelessWidget {
@@ -50,7 +51,7 @@ class WeatherScreen extends StatelessWidget {
             ValueListenableBuilder<bool>(
               valueListenable: WeatherService.instance.refreshing,
               builder: (context, busy, _) => IconButton(
-                tooltip: _refreshTip[lang] ?? _refreshTip['en'],
+                tooltip: trRow(_refreshTip, lang),
                 onPressed: busy ? null : () => unawaited(_refresh()),
                 icon: busy
                     ? const SizedBox(

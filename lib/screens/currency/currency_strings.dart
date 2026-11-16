@@ -1,4 +1,5 @@
 import '../../services/currency_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🌐 دەقەکانی بەشی دراو — کوردی / عەرەبی / ئینگلیزی
 class CurrencyStrings {
@@ -71,7 +72,7 @@ class CurrencyStrings {
   static String of(String lang, String key) {
     final row = _t[key];
     if (row == null) return key;
-    return row[lang] ?? row['ku'] ?? key;
+    return trRow(row, lang) ?? key;
   }
 
   /// "٥ خولەک لەمەوبەر"

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../services/cache_service.dart';
+import '../../l10n/tr.dart';
 
 /// 🗄️ FutureBuilder لەگەڵ کاش — ULTRA PRO v2
 ///
@@ -229,7 +230,7 @@ class CachedFutureBuilderState<T> extends State<CachedFutureBuilder<T>> {
   @override
   Widget build(BuildContext context) {
     final lang = context.select<SettingsProvider, String>((s) => s.languageId);
-    String t(String k) => _tr[k]?[lang] ?? _tr[k]?['en'] ?? k;
+    String t(String k) => trRow(_tr[k], lang) ?? k;
 
     // ✅ داتا هەیە (تەنانەت ئەگەر refresh بەردەوام بێت)
     if (_hasData) return widget.builder(context, _data as T);

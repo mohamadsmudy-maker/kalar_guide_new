@@ -152,7 +152,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lang = context.select<SettingsProvider, String>((s) => s.languageId);
-    String t(String k) => _tr[k]?[lang] ?? _tr[k]?['en'] ?? k;
+    String t(String k) => trRow(_tr[k], lang) ?? k;
 
     final hasQuery = _controller.text.trim().isNotEmpty;
     final showPanel = _hasFocus && hasQuery;

@@ -566,11 +566,7 @@ class _StoresScreenState extends State<StoresScreen>
                         fontWeight: FontWeight.w600,
                       ),
                       decoration: InputDecoration(
-                        hintText: lang == 'ar'
-                            ? tr('ابحث عن الأماكن...')
-                            : (lang == 'en'
-                                ? 'Search places...'
-                                : 'گەڕان بەدوای شوێنەکان...'),
+                        hintText: tr('گەڕان بەدوای شوێنەکان...'),
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark ? Colors.white38 : Colors.grey,

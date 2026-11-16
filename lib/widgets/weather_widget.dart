@@ -177,6 +177,10 @@ class _WeatherWidgetState extends State<WeatherWidget>
   };
 
   static const Map<String, List<String>> _dayNames = {
+    'fa': [
+      'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه',
+      'جمعه', 'شنبه', 'یکشنبه'
+    ],
     'ku': [
       'دووشەممە', 'سێشەممە', 'چوارشەممە', 'پێنجشەممە',
       'هەینی', 'شەممە', 'یەکشەممە'
@@ -189,6 +193,10 @@ class _WeatherWidgetState extends State<WeatherWidget>
   };
 
   static const Map<String, List<String>> _compassNames = {
+    'fa': [
+      'شمال', 'شمال شرقی', 'شرق', 'جنوب شرقی',
+      'جنوب', 'جنوب غربی', 'غرب', 'شمال غربی'
+    ],
     'ku': [
       'باکوور', 'باکووری ڕۆژهەڵات', 'ڕۆژهەڵات', 'باشووری ڕۆژهەڵات',
       'باشوور', 'باشووری ڕۆژئاوا', 'ڕۆژئاوا', 'باکووری ڕۆژئاوا'
@@ -200,7 +208,7 @@ class _WeatherWidgetState extends State<WeatherWidget>
     'en': ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'],
   };
 
-  String _t(String k) => _tr[k]?[_lang] ?? _tr[k]?['en'] ?? k;
+  String _t(String k) => trRow(_tr[k], _lang) ?? k;
 
   /// ژمارەی ئینگلیزی → ژمارەی کوردی/عەرەبی
   String _n(Object v) {
@@ -314,11 +322,11 @@ class _WeatherWidgetState extends State<WeatherWidget>
     final base = WeatherService.conditionOf(c.code, c.temp, c.isDay);
     return (
     emoji: c.emojiOverride ?? base.emoji,
-    text: c.textOverride ?? (_cond[base.key]?[_lang] ?? base.key),
+    text: c.textOverride ?? (trRow(_cond[base.key], _lang) ?? base.key),
     );
   }
 
-  String _condText(String key) => _cond[key]?[_lang] ?? key;
+  String _condText(String key) => trRow(_cond[key], _lang) ?? key;
 
   List<Color> _gradient(WeatherCurrent c) {
     final code = c.code;

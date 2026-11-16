@@ -1,5 +1,6 @@
 // 📁 models/emergency_categories.dart
 import 'package:flutter/material.dart';
+import '../l10n/tr.dart';
 
 /// 📋 جۆرەکانی فریاکەوتن — Single Source of Truth
 ///
@@ -28,8 +29,10 @@ class EmergencyCategory {
         return nameAr;
       case 'en':
         return nameEn;
-      default:
+      case 'ku':
         return nameKu;
+      default:
+        return trTo(lang, nameKu);
     }
   }
 

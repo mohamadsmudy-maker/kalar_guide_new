@@ -1,4 +1,5 @@
 import '../currency/currency_strings.dart';
+import '../../l10n/tr.dart';
 
 /// 🌐 دەقەکانی بەشی سووتەمەنی — ئەوەی لێرە نییە لە CurrencyStrings وەردەگیرێت
 class FuelStrings {
@@ -37,6 +38,6 @@ class FuelStrings {
   static String of(String lang, String key) {
     final row = _t[key];
     if (row == null) return CurrencyStrings.of(lang, key);
-    return row[lang] ?? row['ku'] ?? key;
+    return trRow(row, lang) ?? key;
   }
 }

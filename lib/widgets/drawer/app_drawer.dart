@@ -467,6 +467,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
       {'id': 'ku', 'name': 'کوردی', 'flag': '☀️'},
       {'id': 'ar', 'name': 'عەرەبی', 'flag': '🇮🇶'},
       {'id': 'en', 'name': 'ئینگلیزی', 'flag': '🇬🇧'},
+      {'id': 'fa', 'name': 'فارسی', 'flag': '🇮🇷'},
     ];
 
     return AnimatedBuilder(

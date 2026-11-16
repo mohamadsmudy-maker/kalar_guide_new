@@ -14,6 +14,8 @@ class DatePickerHelper {
         return const Locale('ar', 'AE');
       case 'en':
         return const Locale('en', 'US');
+      case 'fa':
+        return const Locale('fa', 'IR');
       case 'ku':
       default:
         return const Locale('ar', 'AE');

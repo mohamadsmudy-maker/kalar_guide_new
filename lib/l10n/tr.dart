@@ -14,13 +14,41 @@ import 'package:flutter/widgets.dart';
 
 import 'strings/strings_ar.dart';
 import 'strings/strings_en.dart';
+import 'strings/strings_fa.dart';
 
 class AppLang {
   AppLang._();
 
   static String _code = 'ku';
 
-  /// `ku`, `ar` یان `en`
+  /// زمانەکانی ئەپ
+  static const List<String> supported = ['ku', 'ar', 'en', 'fa'];
+
+  /// زمانەکانی وەرگێڕان (هەموو جگە لە کوردی کە زمانی سەرچاوەیە)
+  static const List<String> targets = ['en', 'ar', 'fa'];
+
+  /// ناوی زمان بە خۆی
+  static String nativeName(String lang) => switch (lang) {
+        'en' => 'English',
+        'ar' => 'العربية',
+        'fa' => 'فارسی',
+        _ => 'کوردی',
+      };
+
+  static const String _kuDigits = '٠١٢٣٤٥٦٧٨٩';
+  static const String _faDigits = '۰۱۲۳۴۵۶۷۸۹';
+  static final RegExp _digit = RegExp(r'\d');
+
+  /// ژمارەکانی [s] بە پیتی [lang] (بنەڕەت: زمانی ئێستا):
+  /// کوردی/عەرەبی «١٤١»، فارسی «۱۴۱»، ئینگلیزی «141».
+  static String localDigits(String s, [String? lang]) {
+    final l = lang ?? _code;
+    if (l == 'en') return s;
+    final set = l == 'fa' ? _faDigits : _kuDigits;
+    return s.replaceAllMapped(_digit, (m) => set[int.parse(m[0]!)]);
+  }
+
+  /// `ku`, `ar`, `fa` یان `en`
   static String get code => _code;
   static bool get isKurdish => _code == 'ku';
   static bool get isRtl => _code != 'en';
@@ -29,6 +57,7 @@ class AppLang {
   static const Map<String, Map<String, String>> tables = {
     'ar': stringsAr,
     'en': stringsEn,
+    'fa': stringsFa,
   };
 
   /// وەرگێڕانی [text] بۆ [lang]؛ سەرەتا ڕێک، پاشان بە شێوەی ئاسایی‌کراو
@@ -86,7 +115,7 @@ class AppLang {
 
   /// SettingsProvider بانگی دەکات. true = زمان گۆڕا.
   static bool setCode(String code) {
-    final c = (code == 'ar' || code == 'en') ? code : 'ku';
+    final c = supported.contains(code) ? code : 'ku';
     if (c == _code) return false;
     _code = c;
     return true;
@@ -103,6 +132,22 @@ class AppLang {
     WidgetsBinding.instance.rootElement?.visitChildren(visit);
   }
 }
+
+/// بۆ خشتە بچووکەکانی `{'ku': …, 'ar': …, 'en': …}`: ئەگەر [lang] ی تێدا
+/// نەبوو (بۆ نموونە فارسی)، دەقە کوردییەکە بە خشتە گشتییەکان وەردەگێڕدرێت.
+String? trRow(Map<String, String>? row, String lang) {
+  if (row == null) return null;
+  final v = row[lang];
+  if (v != null) return v;
+  final ku = row['ku'];
+  if (ku == null) return row['en'];
+  if (lang == 'ku') return ku;
+  return AppLang.lookup(lang, ku) ?? ku;
+}
+
+/// دەقێکی کوردی بۆ [lang] (نەک تەنها زمانی ئێستا)
+String trTo(String lang, String ku) =>
+    lang == 'ku' ? ku : (AppLang.lookup(lang, ku) ?? ku);
 
 /// وەرگێڕانی دەقێکی کوردی بۆ زمانی ئێستا.
 String tr(String ku) {

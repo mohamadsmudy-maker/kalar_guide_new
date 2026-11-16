@@ -410,15 +410,8 @@ IconData _forwardIcon(BuildContext context, {bool small = false}) =>
 class _Fmt {
   const _Fmt._();
 
-  static String digits(String input, [String lang = 'ku']) {
-    if (lang == 'en') return input;
-    const en = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const ar = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    for (int i = 0; i < en.length; i++) {
-      input = input.replaceAll(en[i], ar[i]);
-    }
-    return input;
-  }
+  static String digits(String input, [String lang = 'ku']) =>
+      AppLang.localDigits(input, lang);
 
   static String compact(int n, [String lang = 'ku']) {
     String trim(double v) {
@@ -430,11 +423,11 @@ class _Fmt {
     if (n >= 1000000) {
       out = lang == 'en'
           ? '${trim(n / 1000000)}M'
-          : '${trim(n / 1000000)} ${lang == 'ar' ? 'مليون' : 'ملیۆن'}';
+          : '${trim(n / 1000000)} ${lang == 'ar' ? 'مليون' : (lang == 'fa' ? 'میلیون' : 'ملیۆن')}';
     } else if (n >= 1000) {
       out = lang == 'en'
           ? '${trim(n / 1000)}K'
-          : '${trim(n / 1000)} ${lang == 'ar' ? 'ألف' : 'هەزار'}';
+          : '${trim(n / 1000)} ${lang == 'ar' ? 'ألف' : (lang == 'fa' ? 'هزار' : 'هەزار')}';
     } else {
       out = '$n';
     }
@@ -453,6 +446,7 @@ class _Fmt {
       'لەمەوبەر'
     ],
     'ar': ['منذ لحظات', 'دقيقة', 'ساعة', 'يوم', 'شهر', 'سنة', 'منذ'],
+    'fa': ['چند لحظه پیش', 'دقیقه', 'ساعت', 'روز', 'ماه', 'سال', 'پیش'],
     'en': ['just now', 'min', 'h', 'd', 'mo', 'y', 'ago'],
   };
 

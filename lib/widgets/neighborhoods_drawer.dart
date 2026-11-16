@@ -120,7 +120,7 @@ class _NeighborhoodsDrawerState extends State<NeighborhoodsDrawer> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lang = context.select<SettingsProvider, String>((s) => s.languageId);
-    String t(String k) => _tr[k]?[lang] ?? _tr[k]?['en'] ?? k;
+    String t(String k) => trRow(_tr[k], lang) ?? k;
 
     final all = widget.neighborhoods;
     final q = _norm(_query);

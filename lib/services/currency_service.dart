@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'price_save_result.dart';
 
 import 'auth_service.dart';
+import '../l10n/tr.dart';
 
 /// 📊 بارودۆخی بازاڕ بۆ یەک جۆری دراو
 class CurrencyMarket {
@@ -174,8 +175,11 @@ class CurrencyService {
   }
 
   static String _pick(Map<String, dynamic> t, String field, String lang) {
-    final l = (lang == 'ar' || lang == 'en') ? lang : 'ku';
-    return (t['${field}_$l'] ?? t['${field}_ku'] ?? t['key']).toString();
+    final own = t['${field}_$lang'];
+    if (own != null) return own.toString();
+    final ku = (t['${field}_ku'] ?? t['key']).toString();
+    // زمانێک کە ستوونی خۆی نییە (فارسی): دەقە کوردییەکە وەردەگێڕدرێت
+    return trTo(lang, ku);
   }
 
   static Map<String, dynamic>? _type(String key) {

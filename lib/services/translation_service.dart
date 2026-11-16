@@ -20,7 +20,7 @@ class TranslationService {
 
   static const String _functionName = 'translate-text';
   static const String _sourceLanguage = 'ku';
-  static const Set<String> _supportedTargets = {'ar', 'en'};
+  static const Set<String> _supportedTargets = {'ar', 'en', 'fa'};
   static const Duration _timeout = Duration(seconds: 12);
   static const int _maxCacheEntries = 500;
   static const int _maxTextLength = 5000;

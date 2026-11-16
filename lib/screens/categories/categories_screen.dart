@@ -453,11 +453,7 @@ class _CategoriesScreenState extends State<CategoriesScreen>
                 fontWeight: FontWeight.w700,
               ),
               decoration: InputDecoration(
-                hintText: lang == 'ar'
-                    ? tr('ابحث عن الأقسام...')
-                    : (lang == 'en'
-                    ? 'Search for categories...'
-                    : 'گەڕان بەدوای بەشەکان...'),
+                hintText: tr('گەڕان بەدوای بەشەکان...'),
                 hintStyle: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.white38 : Colors.grey,

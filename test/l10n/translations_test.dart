@@ -1,13 +1,14 @@
 // test/l10n/translations_test.dart
 //
-// هەموو tr('...') و trf('...') ی ناو lib/ دەبێت وەرگێڕانی ئینگلیزی و
-// عەرەبییان هەبێت. ئەگەر دەقێکی نوێت زیاد کرد، لە
-// lib/l10n/strings/strings_en.dart و strings_ar.dart زیادی بکە.
+// هەموو tr('...') و trf('...') ی ناو lib/ دەبێت وەرگێڕانی ئینگلیزی،
+// عەرەبی، و فارسییان هەبێت. ئەگەر دەقێکی نوێت زیاد کرد، لە
+// lib/l10n/strings/strings_en.dart، strings_ar.dart، و strings_fa.dart زیادی بکە.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kalar_guide_new/l10n/strings/strings_ar.dart';
 import 'package:kalar_guide_new/l10n/strings/strings_en.dart';
+import 'package:kalar_guide_new/l10n/strings/strings_fa.dart';
 import 'package:kalar_guide_new/l10n/tr.dart';
 
 String _unescape(String s) => s.replaceAllMapped(
@@ -33,7 +34,11 @@ void main() {
 
   test('دەقەکانی ئەپ دۆزرانەوە', () => expect(keys.length, greaterThan(800)));
 
-  for (final (name, table) in [('English', stringsEn), ('Arabic', stringsAr)]) {
+  for (final (name, table) in [
+    ('English', stringsEn),
+    ('Arabic', stringsAr),
+    ('Persian', stringsFa),
+  ]) {
     test('هەموو دەقەکان وەرگێڕانی $name ـیان هەیە', () {
       final missing = keys.where((k) => !table.containsKey(k)).toList()..sort();
       expect(missing, isEmpty, reason: 'بێ وەرگێڕان (${missing.length}):\n${missing.take(30).join('\n')}');
@@ -74,6 +79,18 @@ void main() {
     test('دەقی نەناسراو (ناوی شوێن لە داتابەیس) وەک خۆی دەمێنێت', () {
       AppLang.setCode('en');
       expect(tr('دوکانی ئەحمەد'), 'دوکانی ئەحمەد');
+    });
+
+    test('فارسی RTL و وەرگێڕان', () {
+      AppLang.setCode('fa');
+      expect(tr('پاشەکەوت'), 'ذخیره');
+      expect(AppLang.isRtl, isTrue);
+    });
+
+    test('AppLang.localDigits: فارسی ژمارە', () {
+      expect(AppLang.localDigits('12:30', 'fa'), '۱۲:۳۰');
+      expect(AppLang.localDigits('12:30', 'ku'), '١٢:٣٠');
+      expect(AppLang.localDigits('12:30', 'en'), '12:30');
     });
   });
 }

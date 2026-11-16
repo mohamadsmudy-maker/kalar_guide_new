@@ -78,8 +78,10 @@ class _EventsScreenState extends State<EventsScreen>
         return cat['label_ar'] ?? cat['label']!;
       case 'en':
         return cat['label_en'] ?? cat['label']!;
-      default:
+      case 'ku':
         return cat['label']!;
+      default:
+        return trTo(lang, cat['label']!);
     }
   }
 

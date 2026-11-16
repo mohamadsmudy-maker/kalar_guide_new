@@ -446,7 +446,7 @@ class _CurrencyStationsByTypeScreenState extends State<CurrencyStationsByTypeScr
                   Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: Text(
-                      '${CurrencyService.formatPrice(diff, lang)} ${t('iqd')} ${lang == 'en' ? 'from best' : (lang == 'ar' ? 'عن الأفضل' : 'جیاوازی لە باشترین')}',
+                      '${CurrencyService.formatPrice(diff, lang)} ${t('iqd')} ${lang == 'en' ? 'from best' : (lang == 'ar' ? 'عن الأفضل' : trTo(lang, 'جیاوازی لە باشترین'))}',
                       style: const TextStyle(fontSize: 10, color: Color(0xFFD9822B), fontWeight: FontWeight.w700),
                     ),
                   ),
