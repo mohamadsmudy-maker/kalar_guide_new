@@ -2053,4 +2053,6 @@ const Map<String, String> stringsEn = {
   'هەندێک زمان وەرنەگێڕدرا. دووبارە هەوڵ بدەرەوە یان بە دەست بینووسە.': 'Some languages were not translated. Try again or type them manually.',
   'وەرگێڕانی خانە بەتاڵەکان بە Gemini': 'Translate empty fields with Gemini',
   'تێگەیشتم': 'Got it',
+  'پەیوەندی ئینتەرنێت نییە یان لاوازە. ئینتەرنێتەکەت بپشکنە و دووبارە هەوڵ بدەرەوە.': 'No internet connection, or it is weak. Check your connection and try again.',
+  'سێرڤەر درەنگ وەڵامی دایەوە. دڵنیابە فەنکشنی translate-text لە Supabase دانراوە و GEMINI_API_KEY ڕێک کراوە، پاشان دووبارە هەوڵ بدەرەوە.': 'The server was too slow. Make sure the translate-text function is deployed in Supabase and GEMINI_API_KEY is set, then try again.',
 };

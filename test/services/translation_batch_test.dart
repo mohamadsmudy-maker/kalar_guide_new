@@ -23,7 +23,7 @@ void main() {
         TranslationService.tryTranslate(text: 'شوێنی $i', targetLanguage: 'en'),
     ];
     final res = await Future.wait(futures).timeout(const Duration(seconds: 5));
-    expect(calls, [40, 40, 20], reason: '100 texts → 3 requests');
+    expect(calls, [20, 20, 20, 20, 20], reason: '100 texts → 5 requests');
     expect(res.first, 'EN:شوێنی 0');
     expect(TranslationService.cachedOrNull('شوێنی 99', 'en'), 'EN:شوێنی 99');
   });
