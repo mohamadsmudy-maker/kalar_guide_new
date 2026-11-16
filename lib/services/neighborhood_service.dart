@@ -157,6 +157,16 @@ class NeighborhoodService {
     }
   }
 
+  /// ناوی ئەو گەڕەکەی خاڵەکەی تێدایە، لە لیستێکی پێشتر هێنراو (بێ ئینتەرنێت)
+  static String? nameAt(double lat, double lng, List<Neighborhood> all) {
+    for (final n in all) {
+      if (n.hasBoundary && _isPointInPolygon(lat, lng, n.boundaryPoints)) {
+        return n.nameKu;
+      }
+    }
+    return null;
+  }
+
   /// 📐 Point-in-Polygon (Ray Casting Algorithm)
   static bool _isPointInPolygon(
       double lat,

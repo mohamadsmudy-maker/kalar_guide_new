@@ -35,4 +35,12 @@ void main() {
     expect(d['tpl_hm'], allOf(contains('{0}'), contains('{1}')));
     expect(d['digits'], AppLang.isRtl ? '1' : '0');
   });
+
+  test('ناونیشانی ڕۆژ: ناوی ڕۆژ + ڕۆژ/مانگ بۆ ئەمڕۆ و بەیانی', () {
+    // ٢٠٢٦/١١/١٦ دووشەممەیە
+    final d = HomeWidgetService.prayerData(DateTime(2026, 11, 16, 7));
+    expect(d['d0_label'], contains(tr('دووشەممە')));
+    expect(d['d1_label'], contains(tr('سێشەممە')));
+    expect(d['d0_label'], contains(AppLang.isRtl ? '١٦/١١' : '16/11'));
+  });
 }

@@ -8,6 +8,7 @@ import '../../widgets/common/optimized_network_image.dart';
 import '../stores/add_store_screen.dart';
 import 'admin_store_services_screen.dart';
 import '../../l10n/tr.dart';
+import '../../utils/store_category_counts.dart';
 
 /// 🏪 شاشەی بەڕێوەبردنی شوێنەکان — PRO EDITION
 class AdminStoresScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
   List<Map<String, dynamic>> _allStores = [];
   String _searchQuery = '';
   String _filter = 'all';
+  String? _category; // null = هەموو بەشەکان
+  String? _subCategory;
   final TextEditingController _searchCtrl = TextEditingController();
 
   @override
@@ -66,6 +69,13 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
         setState(() {
           _allStores = stores;
           _isLoading = false;
+          // ئەگەر بەشی هەڵبژێردراو چیتر شوێنی تێدا نەما، فلتەرەکە لابە
+          if (_category != null &&
+              !stores.any((s) =>
+                  StoreCategoryCounts.categoryOf(s) == _category)) {
+            _category = null;
+            _subCategory = null;
+          }
         });
       }
     } catch (e) {
@@ -87,6 +97,13 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
           address.contains(q);
 
       if (!matchesSearch) return false;
+      if (!StoreCategoryCounts.matches(
+        store,
+        category: _category,
+        subCategory: _subCategory,
+      )) {
+        return false;
+      }
       if (_filter == 'all') return true;
 
       final lat = double.tryParse(store['latitude']?.toString() ?? '');
@@ -315,6 +332,10 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
               ),
             ),
             const SizedBox(height: 8),
+
+            // 🗂 فلتەری بەشەکان
+            _buildCategoryRow(),
+            if (_category != null) _buildSubCategoryRow(),
 
             // 📊 ئاماری ئەنجام
             Padding(
@@ -620,6 +641,104 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
   // ═══════════════════════════════════════════════════════════
   // 🎨 فلتر Chip
   // ═══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 🗂 فلتەری بەش و ژێربەش
+  // ═══════════════════════════════════════════════════════════
+  String _catLabel(String key) =>
+      key == StoreCategoryCounts.none ? tr('بێ بەش') : tr(key);
+
+  Widget _buildCategoryRow() {
+    final counts = StoreCategoryCounts.count(_allStores);
+    if (counts.length < 2) return const SizedBox.shrink();
+    return _chipRow([
+      _catChip(
+        label: tr('هەموو بەشەکان'),
+        count: _allStores.length,
+        selected: _category == null,
+        onTap: () => setState(() {
+          _category = null;
+          _subCategory = null;
+        }),
+      ),
+      for (final e in counts)
+        _catChip(
+          label: _catLabel(e.key),
+          count: e.value,
+          selected: _category == e.key,
+          onTap: () => setState(() {
+            _category = _category == e.key ? null : e.key;
+            _subCategory = null;
+          }),
+        ),
+    ]);
+  }
+
+  Widget _buildSubCategoryRow() {
+    final inCategory = _allStores
+        .where((s) => StoreCategoryCounts.categoryOf(s) == _category);
+    final counts =
+        StoreCategoryCounts.count(inCategory, field: 'sub_category');
+    if (counts.length < 2) return const SizedBox.shrink();
+    return _chipRow([
+      for (final e in counts)
+        _catChip(
+          label: e.key == StoreCategoryCounts.none ? tr('بێ ژێربەش') : tr(e.key),
+          count: e.value,
+          selected: _subCategory == e.key,
+          small: true,
+          onTap: () => setState(
+            () => _subCategory = _subCategory == e.key ? null : e.key,
+          ),
+        ),
+    ]);
+  }
+
+  Widget _chipRow(List<Widget> chips) {
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        itemCount: chips.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (_, i) => chips[i],
+      ),
+    );
+  }
+
+  Widget _catChip({
+    required String label,
+    required int count,
+    required bool selected,
+    required VoidCallback onTap,
+    bool small = false,
+  }) {
+    final color = small ? const Color(0xFF6D28D9) : AppColors.primary;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? color : Colors.grey.shade300,
+          ),
+        ),
+        child: Text(
+          '$label ($count)',
+          style: TextStyle(
+            fontSize: small ? 11 : 12,
+            fontWeight: FontWeight.bold,
+            color: selected ? Colors.white : Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterChip({
     required String label,
     required String value,
