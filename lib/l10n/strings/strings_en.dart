@@ -1936,4 +1936,7 @@ const Map<String, String> stringsEn = {
   'کردنەوەی نەخشە': 'Open map',
   'ئەم سەرجەمە تەنها ئەو تێچووانە دەگرێتەوە کە بڕیان بە دینار دیارە': 'This total only includes fees whose amount is clear and in dinar',
   'سەرجەمی تێچوو': 'Total cost',
+  'ئاگادارکردنەوە بۆ ئەم ئەپە قەدەغەکراوە': 'Notifications are blocked for this app',
+  'تا ڕێگە نەدەیت، هیچ بانگێک نایەت. ڕێگە بدە، یان لە ڕێکخستنی ئەندرۆید ← ئەپەکان ← ڕێبەری کەلار ← ئاگادارکردنەوەکان بیکەرەوە.': 'No prayer alert will arrive until you allow it. Allow it, or open Android Settings → Apps → ڕێبەری کەلار → Notifications.',
+  'ڕێگە بدە': 'Allow',
 };

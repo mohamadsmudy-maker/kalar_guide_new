@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/prayer/kalar_prayer_times.dart';
 import '../../services/prayer_notification_service.dart';
 import '../../services/prayer/prayer_reminders.dart';
+import '../../services/prayer/prayer_scheduler.dart';
 import 'adhan_settings_screen.dart';
 import 'notification_test_screen.dart';
 import '../../l10n/tr.dart';
@@ -35,6 +38,9 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen>
   /// null = هێشتا نەپشکنراوە
   bool? _exactAlarm;
 
+  /// ئایا ئەندرۆید ڕێگە بە ئاگادارکردنەوە دەدات؟ (null = نەپشکنراوە)
+  bool? _notifAllowed;
+
   @override
   void initState() {
     super.initState();
@@ -57,7 +63,14 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen>
 
   Future<void> _checkAlarm() async {
     final ok = await PrayerNotificationService.checkExactAlarm();
-    if (mounted) setState(() => _exactAlarm = ok);
+    await PrayerNotificationService.initialize();
+    final allowed = await PrayerNotificationService.areNotificationsEnabled();
+    if (mounted) {
+      setState(() {
+        _exactAlarm = ok;
+        _notifAllowed = allowed;
+      });
+    }
   }
 
   Future<void> _load() async {
@@ -83,6 +96,8 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen>
     await p.setBool(PrayerReminderSettings.kRamadan, _ramadan);
     await p.setInt(PrayerReminderSettings.kRamadanMinutes, _ramadanMinutes);
     await p.setBool(PrayerReminderSettings.kKurdishDigits, _kurdishDigits);
+    // ڕێکخستنەکان گۆڕدران → بانگەکان دووبارە ڕێک بخەرەوە (پێشتر تا کردنەوەی شاشەی نوێژ نەدەگۆڕدران)
+    unawaited(PrayerScheduler.instance.rescheduleAll(force: true));
   }
 
   void _set(VoidCallback change) {
@@ -108,6 +123,7 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen>
                 padding: const EdgeInsets.all(16),
                 children: [
                   _section(tr('🔔 ئاگادارکردنەوە')),
+                  if (_notifications && _notifAllowed == false) _notifBlockedCard(),
                   if (_notifications && _exactAlarm == false) _alarmPermissionCard(),
                   _switchTile(
                     icon: Icons.notifications_active_rounded,
@@ -168,6 +184,59 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen>
   }
 
   /// ئەندرۆید ١٢+: بێ مۆڵەتی «Alarms and reminders» بانگ دوا دەکەوێت
+  Widget _notifBlockedCard() => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF3A1A1A),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.55)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.notifications_off_rounded,
+                    color: Color(0xFFEF4444), size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    tr('ئاگادارکردنەوە بۆ ئەم ئەپە قەدەغەکراوە'),
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              tr('تا ڕێگە نەدەیت، هیچ بانگێک نایەت. ڕێگە بدە، یان لە ڕێکخستنی ئەندرۆید ← ئەپەکان ← ڕێبەری کەلار ← ئاگادارکردنەوەکان بیکەرەوە.'),
+              style: const TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.6),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFEF4444),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () async {
+                  HapticFeedback.selectionClick();
+                  await PrayerNotificationService.requestPermissions();
+                  await _checkAlarm();
+                  unawaited(PrayerScheduler.instance.rescheduleAll(force: true));
+                },
+                icon: const Icon(Icons.notifications_active_rounded, size: 18),
+                label: Text(tr('ڕێگە بدە'), style: const TextStyle(fontWeight: FontWeight.w900)),
+              ),
+            ),
+          ],
+        ),
+      );
+
   Widget _alarmPermissionCard() => Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),

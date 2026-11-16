@@ -13,6 +13,7 @@ import '../../config/app_colors.dart';
 import '../../services/prayer/kalar_prayer_times.dart';
 import '../../services/prayer/prayer_reminders.dart';
 import '../../services/prayer/prayer_times_repository.dart';
+import '../../services/prayer/prayer_scheduler.dart';
 import '../../services/prayer_notification_service.dart';
 import '../daily/qibla_finder_screen.dart';
 import '../prayer/prayer_settings_screen.dart';
@@ -132,7 +133,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   double _lat = _defaultLat;
   double _lng = _defaultLng;
 
-  bool _notificationsEnabled = true;
   PrayerReminderSettings _reminders = const PrayerReminderSettings();
   bool get _kurdishDigits => _reminders.kurdishDigits;
 
@@ -214,11 +214,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   }
 
   Future<void> _loadSettings() async {
-    final p = await SharedPreferences.getInstance();
     final reminders = await PrayerReminderSettings.load();
     if (!mounted) return;
     setState(() {
-      _notificationsEnabled = p.getBool('prayer_notif') ?? true;
       _reminders = reminders;
     });
   }
@@ -437,19 +435,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   Future<void> _scheduleNotif() async {
     if (_prayers.isEmpty) return;
     try {
-      if (_notificationsEnabled) {
-        await PrayerNotificationService.scheduleAllPrayers(
-          prayerTimes: {for (final p in _prayers) p.name: p.time},
-          is24Hour: true, // کاتەکان بە HH:mm دەنێردرێن
-          enabled: true,
-        );
-      } else {
-        await PrayerNotificationService.cancelAll();
-      }
-      // هەینی و ڕەمەزان (scheduleAllPrayers پێشتر هەمووی سڕییەوە)
-      await PrayerNotificationService.scheduleReminders(
-        PrayerReminders.upcoming(DateTime.now(), _reminders),
-      );
+      // ٧ ڕۆژی داهاتوو بە کاتی ڕاستی هەر ڕۆژێک، لەگەڵ هەینی و ڕەمەزان.
+      // ئەگەر ئاگادارکردنەوە ناچالاک بێت، خۆی هەموو شتێک دەسڕێتەوە.
+      await PrayerScheduler.instance.rescheduleAll(force: true);
     } catch (e) {
       debugPrint('⚠️ schedule notif: $e');
     }

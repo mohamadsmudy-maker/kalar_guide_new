@@ -4,22 +4,37 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'adhan_service.dart';
 import 'prayer/prayer_reminders.dart';
+import 'prayer/prayer_scheduler.dart';
 import '../l10n/tr.dart';
 
 class PrayerNotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
   FlutterLocalNotificationsPlugin();
 
-  static const String _channelId = 'prayer_times_channel';
   static const String _channelName = 'کاتەکانی نوێژ';
   static const String _channelDesc = 'ئاگادارکردنەوە بۆ کاتەکانی نوێژ';
+
+  // سێ کەناڵی جیاواز: دەنگی کەناڵ دوای دروستکردن ناگۆڕدرێت، بۆیە بۆ هەر دەنگێک
+  // کەناڵێکی جیا هەیە. «_v2» چونکە کەناڵە کۆنەکە (بێ دەنگی بانگ) بەکارنایەت.
+  static const String _chAdhan = 'prayer_adhan_v2';
+  static const String _chBeep = 'prayer_beep_v2';
+  static const String _chSilent = 'prayer_silent_v2';
+  static const String _legacyChannel = 'prayer_times_channel';
+
+  /// فایلی بانگ: android/app/src/main/res/raw/adhan_default.mp3
+  static const RawResourceAndroidNotificationSound _adhanSound =
+      RawResourceAndroidNotificationSound('adhan_default');
+
+  static bool _initialized = false;
 
   /// ✅ ئایا مۆڵەتی exact alarm دراوە؟
   static bool _exactAlarmGranted = false;
   static bool get exactAlarmGranted => _exactAlarmGranted;
 
   static Future<void> initialize() async {
+    if (_initialized) return;
     try {
       tz.initializeTimeZones();
       tz.setLocalLocation(tz.getLocation('Asia/Baghdad'));
@@ -40,26 +55,58 @@ class PrayerNotificationService {
         ),
       );
 
-      await _notifications
+      final android = _notifications
           .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(
-        const AndroidNotificationChannel(
-          _channelId,
-          _channelName,
-          description: _channelDesc,
-          importance: Importance.high,
-          playSound: true,
-          enableVibration: true,
-        ),
-      );
+          AndroidFlutterLocalNotificationsPlugin>();
+      await android?.deleteNotificationChannel(_legacyChannel);
+      await android?.createNotificationChannel(const AndroidNotificationChannel(
+        _chAdhan,
+        'بانگ (دەنگی ئەدان)',
+        description: _channelDesc,
+        importance: Importance.max,
+        playSound: true,
+        sound: _adhanSound,
+        enableVibration: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      ));
+      await android?.createNotificationChannel(const AndroidNotificationChannel(
+        _chBeep,
+        'بانگ (دەنگی ئاگادارکردنەوە)',
+        description: _channelDesc,
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      ));
+      await android?.createNotificationChannel(const AndroidNotificationChannel(
+        _chSilent,
+        'بانگ (بێدەنگ)',
+        description: _channelDesc,
+        importance: Importance.defaultImportance,
+        playSound: false,
+        enableVibration: false,
+      ));
 
       // تەنها پشکنین — داواکردن (کردنەوەی ڕێکخستنی ئەندرۆید) تەنها بە دوگمە دەبێت
       await checkExactAlarm();
 
+      _initialized = true;
       debugPrint('✅ Prayer Notifications initialized');
     } catch (e) {
       debugPrint('❌ Prayer Notification error: $e');
+    }
+  }
+
+  /// ئایا ئەپەکە مۆڵەتی نیشاندانی ئاگادارکردنەوەی هەیە؟ (ئەندرۆید ١٣+ دەبێت
+  /// بەکارهێنەر ڕێگە بدات؛ ئەگەر نا، هیچ بانگێک نایەت)
+  static Future<bool> areNotificationsEnabled() async {
+    try {
+      final android = _notifications
+          .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (android == null) return true;
+      return await android.areNotificationsEnabled() ?? true;
+    } catch (_) {
+      return true;
     }
   }
 
@@ -136,127 +183,131 @@ class PrayerNotificationService {
     }
   }
 
+  static AndroidScheduleMode get _mode => _exactAlarmGranted
+      ? AndroidScheduleMode.exactAllowWhileIdle
+      : AndroidScheduleMode.inexactAllowWhileIdle;
+
+  /// کەناڵ و دەنگی بانگێک بەپێی هەڵبژاردنی بەکارهێنەر (ڕێکخستنی دەنگی بانگ)
+  static Future<(String channel, RawResourceAndroidNotificationSound? sound, bool playSound)>
+      _soundFor(String prayerName) async {
+    final choice = await AdhanService.getSoundForPrayer(prayerName);
+    if (choice == 'silent') return (_chSilent, null, false);
+    if (choice == 'beep') return (_chBeep, null, true);
+    // هەموو دەنگەکانی تر لەسەر یەک فایلی ئەدان دادەنرێن (تەنها یەک فایل هەیە)
+    return (_chAdhan, _adhanSound, true);
+  }
+
+  static Future<void> _scheduleOne({
+    required int id,
+    required String prayerName,
+    required DateTime at,
+    required AndroidScheduleMode mode,
+  }) async {
+    final (channel, sound, playSound) = await _soundFor(prayerName);
+    final shown = tr(prayerName);
+    final androidDetails = AndroidNotificationDetails(
+      channel,
+      _channelName,
+      channelDescription: _channelDesc,
+      importance: channel == _chSilent ? Importance.defaultImportance : Importance.max,
+      priority: channel == _chSilent ? Priority.defaultPriority : Priority.high,
+      playSound: playSound,
+      sound: sound,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      icon: '@mipmap/ic_launcher',
+      color: const Color(0xFFD9822B),
+      enableVibration: channel != _chSilent,
+      category: AndroidNotificationCategory.alarm,
+      autoCancel: true,
+      styleInformation: BigTextStyleInformation(
+        trf('کاتی {0}ـە. تکایە بۆ نوێژ ئامادە بە. 🕌', [shown]),
+      ),
+    );
+
+    await _notifications.zonedSchedule(
+      id,
+      trf('🕌 کاتی {0}', [shown]),
+      trf('کاتی {0}ـە. تکایە بۆ نوێژ ئامادە بە.', [shown]),
+      tz.TZDateTime.from(at, tz.local),
+      NotificationDetails(
+        android: androidDetails,
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: playSound,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        ),
+      ),
+      androidScheduleMode: mode,
+      payload: prayerName,
+      uiLocalNotificationDateInterpretation:
+      UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  /// ✅ ڕێکخستنی ٧ ڕۆژ: هەموو شتێکی کۆن دەسڕێتەوە (لەوانە ئەوانەی وەشانە کۆنەکان
+  /// کە «هەموو ڕۆژێک» دووبارە دەبوونەوە) و پلانی نوێ دەنووسێت.
+  static Future<void> scheduleAll({
+    required List<PlannedPrayer> prayers,
+    List<PrayerReminder> reminders = const [],
+  }) async {
+    if (!_exactAlarmGranted) await checkExactAlarm();
+    final mode = _mode;
+    debugPrint('📅 Schedule mode: $mode');
+
+    await _notifications.cancelAll();
+
+    var ok = 0;
+    for (final p in prayers) {
+      try {
+        await _scheduleOne(id: p.id, prayerName: p.name, at: p.at, mode: mode);
+        ok++;
+      } catch (e) {
+        // ئەگەر ئەمە هەرچی ڕووبدات، بزانرێت: لە release ـدا «Missing type parameter»
+        // واتە ڕێساکانی proguard-rules.pro کار ناکەن
+        debugPrint('❌ Schedule error (${p.name} ${p.at}): $e');
+      }
+    }
+    debugPrint('✅ $ok/${prayers.length} prayers scheduled');
+    await scheduleReminders(reminders);
+  }
+
+  /// تەنها بۆ شاشەی تاقیکردنەوە: ناوی نوێژ ← کاتی `HH:mm` (یەکەم کاتی داهاتوو)
   static Future<void> scheduleAllPrayers({
     required Map<String, String> prayerTimes,
     required bool is24Hour,
     bool enabled = true,
   }) async {
-    if (!enabled) {
-      debugPrint('⚠️ Notifications چالاک نین');
-      return;
-    }
-
-    // ✅ دڵنیابوونەوە لە مۆڵەتی exact alarm
-    if (!_exactAlarmGranted) {
-      await checkExactAlarm();
-    }
-
-    // ✅ هەڵبژاردنی Schedule Mode بەپێی مۆڵەت
-    final scheduleMode = _exactAlarmGranted
-        ? AndroidScheduleMode.exactAllowWhileIdle
-        : AndroidScheduleMode.inexactAllowWhileIdle;
-
-    debugPrint('📅 Schedule mode: $scheduleMode');
-
+    if (!enabled) return;
+    if (!_exactAlarmGranted) await checkExactAlarm();
+    final mode = _mode;
     await _notifications.cancelAll();
 
+    var n = 0;
     for (final entry in prayerTimes.entries) {
       if (entry.key == 'خۆرهەڵات' || entry.key == 'Sunrise') continue;
-
-      await _schedulePrayerNotification(
-        prayerName: entry.key,
-        time: entry.value,
-        is24Hour: is24Hour,
-        scheduleMode: scheduleMode,
-      );
-    }
-
-    debugPrint('✅ ${prayerTimes.length} Notifications scheduled');
-  }
-
-  static Future<void> _schedulePrayerNotification({
-    required String prayerName,
-    required String time,
-    required bool is24Hour,
-    required AndroidScheduleMode scheduleMode,
-  }) async {
-    try {
-      final parts = time.split(':');
-      final hour = int.parse(parts[0]);
-      final minute = int.parse(parts[1]);
-
-      final now = DateTime.now();
-      var scheduled = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        hour,
-        minute,
-      );
-
-      if (scheduled.isBefore(now)) {
-        scheduled = scheduled.add(const Duration(days: 1));
+      try {
+        final parts = entry.value.split(':');
+        final now = DateTime.now();
+        var at = DateTime(now.year, now.month, now.day,
+            int.parse(parts[0]), int.parse(parts[1]));
+        if (!at.isAfter(now)) at = at.add(const Duration(days: 1));
+        await _scheduleOne(
+          id: 900000 + n++,
+          prayerName: entry.key,
+          at: at,
+          mode: mode,
+        );
+      } catch (e) {
+        debugPrint('❌ Schedule error (${entry.key}): $e');
       }
-
-      final tzScheduled = tz.TZDateTime.from(scheduled, tz.local);
-      final id = prayerName.hashCode.abs() % 100000;
-
-      final androidDetails = AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        channelDescription: _channelDesc,
-        importance: Importance.high,
-        priority: Priority.high,
-        playSound: true,
-        icon: '@mipmap/ic_launcher',
-        color: const Color(0xFFD9822B),
-        enableVibration: true,
-        category: AndroidNotificationCategory.alarm,
-        fullScreenIntent: true,
-        ongoing: false,
-        autoCancel: true,
-        styleInformation: BigTextStyleInformation(
-          trf('کاتی {0}ـە. تکایە بۆ نوێژ ئامادە بە. 🕌', [prayerName]),
-        ),
-      );
-
-      const iosDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        interruptionLevel: InterruptionLevel.timeSensitive,
-      );
-
-      final details = NotificationDetails(
-        android: androidDetails,
-        iOS: iosDetails,
-      );
-
-      await _notifications.zonedSchedule(
-        id,
-        trf('🕌 کاتی {0}', [prayerName]),
-        trf('کاتی {0}ـە. تکایە بۆ نوێژ ئامادە بە.', [prayerName]),
-        tzScheduled,
-        details,
-        androidScheduleMode: scheduleMode,
-        matchDateTimeComponents: DateTimeComponents.time,
-        payload: prayerName,
-        uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
-      );
-
-      debugPrint('✅ Scheduled: $prayerName لە $time');
-    } catch (e) {
-      debugPrint('❌ Schedule error ($prayerName): $e');
     }
   }
 
   /// بیرخستنەوە یەکجارییەکان (هەینی، ڕەمەزان). دوای [scheduleAllPrayers]
   /// بانگی بکە، چونکە ئەو هەموو ئاگادارکردنەوەکان دەسڕێتەوە.
   static Future<void> scheduleReminders(List<PrayerReminder> reminders) async {
-    final scheduleMode = _exactAlarmGranted
-        ? AndroidScheduleMode.exactAllowWhileIdle
-        : AndroidScheduleMode.inexactAllowWhileIdle;
+    final scheduleMode = _mode;
     for (final r in reminders) {
       try {
         await _notifications.zonedSchedule(
@@ -266,7 +317,7 @@ class PrayerNotificationService {
           tz.TZDateTime.from(r.at, tz.local),
           const NotificationDetails(
             android: AndroidNotificationDetails(
-              _channelId,
+              _chBeep,
               _channelName,
               channelDescription: _channelDesc,
               importance: Importance.high,
@@ -297,9 +348,7 @@ class PrayerNotificationService {
       final scheduled = DateTime.now().add(delay);
       final tzScheduled = tz.TZDateTime.from(scheduled, tz.local);
 
-      final scheduleMode = _exactAlarmGranted
-          ? AndroidScheduleMode.exactAllowWhileIdle
-          : AndroidScheduleMode.inexactAllowWhileIdle;
+      final scheduleMode = _mode;
 
       await _notifications.zonedSchedule(
         999999,
@@ -308,12 +357,14 @@ class PrayerNotificationService {
         tzScheduled,
         const NotificationDetails(
           android: AndroidNotificationDetails(
-            _channelId,
+            _chAdhan,
             _channelName,
             channelDescription: _channelDesc,
-            importance: Importance.high,
+            importance: Importance.max,
             priority: Priority.high,
             playSound: true,
+            sound: _adhanSound,
+            audioAttributesUsage: AudioAttributesUsage.alarm,
             icon: '@mipmap/ic_launcher',
             color: Color(0xFFD9822B),
           ),
@@ -337,11 +388,6 @@ class PrayerNotificationService {
   static Future<void> cancelAll() async {
     await _notifications.cancelAll();
     debugPrint('🗑️ All prayer notifications canceled');
-  }
-
-  static Future<void> cancel(String prayerName) async {
-    final id = prayerName.hashCode.abs() % 100000;
-    await _notifications.cancel(id);
   }
 
   static Future<List<PendingNotificationRequest>>
