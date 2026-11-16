@@ -21,6 +21,7 @@ import 'package:kalar_guide_new/widgets/carousels/news_carousel.dart';
 import 'package:kalar_guide_new/screens/complaints/complaint_instruction_dialog.dart';
 import 'package:kalar_guide_new/screens/news/news_details.dart';
 import 'package:kalar_guide_new/screens/news/all_news_screen.dart';
+import 'package:kalar_guide_new/widgets/ticker_banner.dart';
 import '../../l10n/tr.dart';
 
 const double _kBackToTopOffset = 600;
@@ -203,6 +204,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     : const SizedBox(height: 8),
               ),
             ),
+
+            // 📺 توڵی هەواڵی بەپەلە — لەژێر دوگمەی سکاڵا
+            const SliverToBoxAdapter(child: TickerBannerWidget()),
 
             // 📰 هەواڵەکانی تر
             if (showOtherSection) ...[

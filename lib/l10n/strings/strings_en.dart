@@ -2052,4 +2052,5 @@ const Map<String, String> stringsEn = {
   'ناچالاک — نرخەکانی پیشان نادرێن': 'Inactive — its prices are hidden',
   'هەندێک زمان وەرنەگێڕدرا. دووبارە هەوڵ بدەرەوە یان بە دەست بینووسە.': 'Some languages were not translated. Try again or type them manually.',
   'وەرگێڕانی خانە بەتاڵەکان بە Gemini': 'Translate empty fields with Gemini',
+  'تێگەیشتم': 'Got it',
 };
