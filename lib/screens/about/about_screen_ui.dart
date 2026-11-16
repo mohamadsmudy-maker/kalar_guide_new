@@ -79,7 +79,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
   // ═══════════════════════════════════════════════════════════
   Widget _buildAppBar(bool isDark) {
     return SliverAppBar(
-      expandedHeight: 240,
+      expandedHeight: 270,
       pinned: true,
       backgroundColor: AppColors.darkBackground,
       foregroundColor: Colors.white,
@@ -131,11 +131,13 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   ),
                 ),
               ),
-              SafeArea(
+              Positioned.fill(
+                child: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(20, 36, 20, 16),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       AnimatedBuilder(
                         animation: _floatController,
@@ -164,11 +166,11 @@ extension _AboutScreenStateUi on _AboutScreenState {
                                 ],
                               ),
                               child: const CircleAvatar(
-                                radius: 42,
+                                radius: 48,
                                 backgroundColor: Colors.white,
                                 child: Icon(
                                   Icons.person_rounded,
-                                  size: 50,
+                                  size: 58,
                                   color: AppColors.purple,
                                 ),
                               ),
@@ -183,40 +185,48 @@ extension _AboutScreenStateUi on _AboutScreenState {
                           tr(_AboutScreenState._developerName),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 22,
+                            fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 0.3,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 10),
                       FadeTransition(
                         opacity: _headerAnimation,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
+                            horizontal: 14,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.3),
+                              color: AppColors.yellow.withValues(alpha: 0.55),
                             ),
                           ),
-                          child: Text(
-                            tr(_AboutScreenState._developerTitle),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.engineering_rounded,
+                                  color: AppColors.yellow, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                tr(_AboutScreenState._developerTitle),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ],
                   ),
+                ),
                 ),
               ),
             ],
@@ -300,7 +310,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                   child: Text(
                     trf('سڵاو! من {0}م', [_AboutScreenState._developerName]),
                     style: textTheme.titleSmall?.copyWith(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.w900,
                       color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
@@ -312,12 +322,12 @@ extension _AboutScreenStateUi on _AboutScreenState {
             Text(
               tr('ئەندازیاری شارستانی و گەشەپێدەری ئەپی "ڕێبەری کەلار". ئەم ئەپەم بە مەبەستی خزمەتکردنی خەڵکی شاری کەلار دروستکردووە، بەبێ چاوەڕوانی هیچ داهاتێک. هیوادارم ئەم ئەپە ببێتە هۆکاری ئاسانکاری بۆ هاوڵاتییانی خۆشەویستمان.'),
               style: textTheme.bodyMedium?.copyWith(
-                fontSize: 13,
-                height: 1.7,
+                fontSize: 14,
+                height: 1.8,
                 color: isDark ? Colors.white70 : AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Row(
               children: [
                 _buildMiniStat(
@@ -363,31 +373,31 @@ extension _AboutScreenStateUi on _AboutScreenState {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withValues(alpha: 0.25)),
         ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(height: 4),
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 6),
             Text(
               tr(value),
               style: textTheme.titleMedium?.copyWith(
-                fontSize: 15,
+                fontSize: 19,
                 fontWeight: FontWeight.w900,
                 color: color,
                 height: 1.0,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 5),
             Text(
               tr(label),
               style: textTheme.labelSmall?.copyWith(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
                 color: isDark ? Colors.white60 : AppColors.textSecondary,
               ),
             ),
@@ -477,9 +487,10 @@ extension _AboutScreenStateUi on _AboutScreenState {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        tr(value),
+                        value,
+                        textDirection: TextDirection.ltr,
                         style: textTheme.titleMedium?.copyWith(
-                          fontSize: 16,
+                          fontSize: 17,
                           fontWeight: FontWeight.w900,
                           color:
                           isDark ? Colors.white : AppColors.textPrimary,
@@ -489,25 +500,25 @@ extension _AboutScreenStateUi on _AboutScreenState {
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: () {
+                IconButton(
+                  tooltip: tr('کۆپیکردن'),
+                  onPressed: () {
                     Clipboard.setData(ClipboardData(text: value));
                     HapticFeedback.mediumImpact();
                     _showSnack(tr('✅ کۆپی کرا'), AppColors.green);
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : AppColors.backgroundGrey,
-                      borderRadius: BorderRadius.circular(10),
+                  style: IconButton.styleFrom(
+                    backgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : AppColors.backgroundGrey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      Icons.copy_rounded,
-                      size: 16,
-                      color: isDark ? Colors.white54 : Colors.grey,
-                    ),
+                  ),
+                  icon: Icon(
+                    Icons.copy_rounded,
+                    size: 18,
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
                   ),
                 ),
                 const SizedBox(width: 6),
