@@ -16,6 +16,7 @@ import 'admin_categories_management.dart';
 import 'admin_neighborhoods_screen.dart';
 import 'admin_events_screen.dart';
 import 'admin_emergency_services_screen.dart';
+import 'admin_control_center.dart';
 import 'admin_fuel_stations.dart';
 import 'admin_price_types.dart';
 import '../../services/price_types.dart';
@@ -456,6 +457,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     const red = AppColors.red;
     const blue = AppColors.primary;
     final sections = <_DashSection>[
+      _DashSection('control', tr('ناوەندی کۆنترۆڵ'), [
+        _DashItem(
+          id: 'control_center',
+          icon: Icons.dashboard_customize_rounded,
+          color: blue,
+          title: tr('ئامار و کۆنترۆڵی ئەپ'),
+          subtitle: tr('ئامار، حالەتی چاککردن، ڕاگەیاندن، نوێکردنەوە، پشکنینی داتابەیس'),
+          adminOnly: true,
+          screen: () => const AdminControlCenterScreen(),
+        ),
+      ]),
       _DashSection('complaints', tr('سکاڵاکان'), [
         _DashItem(
           id: 'complaints',

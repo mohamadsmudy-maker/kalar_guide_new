@@ -64,6 +64,9 @@ jobs:
           }
           JSON
       - run: flutter build apk --debug --target-platform android-arm64
+      # A release build runs R8 with android/app/proguard-rules.pro, so a rule
+      # that breaks shrinking (or a missing class) fails here, not on a phone.
+      - run: flutter build apk --release --target-platform android-arm64
 
   database:
     name: Migrations & RLS tests (Postgres)

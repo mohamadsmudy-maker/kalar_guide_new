@@ -269,12 +269,11 @@ class DepartmentServiceDetailsScreen extends StatelessWidget {
       lang: lang,
       badge: '${_fees.length}',
       child: Column(
-        children: _fees.asMap().entries.map((e) {
-          return ServiceDetailWidgets.buildFeeItem(
-            text: e.value,
-            isDark: isDark,
-          );
-        }).toList(),
+        children: [
+          ..._fees.map((f) =>
+              ServiceDetailWidgets.buildFeeItem(text: f, isDark: isDark)),
+          ServiceDetailWidgets.buildFeeTotal(fees: _fees, isDark: isDark),
+        ],
       ),
     );
   }

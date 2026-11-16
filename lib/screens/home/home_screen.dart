@@ -1,4 +1,6 @@
 // lib/screens/home/home_screen.dart
+import '../../services/app_control.dart';
+import '../../widgets/announcement_banner.dart';
 import '../search/global_search_screen.dart';
 import 'dart:async';
 import 'dart:ui' show PathMetric;
@@ -160,6 +162,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             _buildAppBar(isDark, surfaceColor, iconColor, t),
+            const SliverToBoxAdapter(child: AnnouncementBanner()),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 4),
@@ -182,17 +185,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
 
-            // 📣 ناردنی سکاڵا — دوگمەی سەوزی بەرچاو
+            // 📣 ناردنی سکاڵا — دوگمەی سەوزی بەرچاو (ئەدمین دەتوانێت بیشارێتەوە)
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
-                child: _ComplaintBanner(
-                  title: t('send_complaint', 'ناردنی سکاڵا'),
-                  onTap: () {
-                    if (!mounted) return;
-                    ComplaintInstructionDialog.show(context);
-                  },
-                ),
+              child: ValueListenableBuilder<AppControlState>(
+                valueListenable: AppControl.state,
+                builder: (context, control, _) => control.feature('complaints')
+                    ? Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+                        child: _ComplaintBanner(
+                          title: t('send_complaint', 'ناردنی سکاڵا'),
+                          onTap: () {
+                            if (!mounted) return;
+                            ComplaintInstructionDialog.show(context);
+                          },
+                        ),
+                      )
+                    : const SizedBox(height: 8),
               ),
             ),
 

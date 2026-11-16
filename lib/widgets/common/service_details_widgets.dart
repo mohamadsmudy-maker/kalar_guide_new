@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../l10n/tr.dart';
+import '../../utils/fee_total.dart';
 
 /// 🎨 ویدجێتەکانی هاوبەش بۆ وردەکاری مامەڵە (v2)
 ///
@@ -166,6 +167,75 @@ class ServiceDetailWidgets {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 💰 سەرجەمی تێچوو — تەنها ئەگەر لانی کەم دوو بڕ هەبن، ئەگەرنا بۆشایی
+  static Widget buildFeeTotal({
+    required List<String> fees,
+    required bool isDark,
+  }) {
+    final t = FeeTotal.of(fees);
+    if (!t.isUseful) return const SizedBox.shrink();
+    final value = FeeTotal.format(
+      t.total,
+      kurdishDigits: FeeTotal.usesEasternDigits(fees),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: _green.withValues(alpha: isDark ? 0.22 : 0.10),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _green.withValues(alpha: 0.35)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.functions_rounded, color: _green, size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    tr('سەرجەمی تێچوو'),
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white70 : const Color(0xFF1A1A2E),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '$value ${tr('دینار')}',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : _green,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (t.skipped > 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                tr('ئەم سەرجەمە تەنها ئەو تێچووانە دەگرێتەوە کە بڕیان بە دینار دیارە'),
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.4,
+                  color: isDark ? Colors.white54 : const Color(0xFF6B7280),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

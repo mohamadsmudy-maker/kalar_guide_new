@@ -26,6 +26,7 @@ POLICY = {
      'چالاکی: شوێنە دڵخوازەکان، لایک، هەڵسەنگاندن و ئەو شوێنانەی پێشنیاریان دەکەیت.',
      'ئاگاداری: کۆدێکی ئاگاداری (FCM token) بۆ ناردنی ئاگاداری.',
      'ئامار و هەڵە: ناسنامەیەکی هەڕەمەکی ئامێر، زمان و وەشانی ئەپ بۆ ژماردنی بەکارهێنەرانی چالاک؛ ئامار و ڕاپۆرتی کڕاش لە ڕێگەی Firebase بۆ باشترکردنی ئەپەکە.',
+     'ئەو وشانەی لە گەڕانی ئەپدا دەینووسیت (بێ ناو، بێ ناسنامەی ئامێر): تەنها بۆ ئەوەی ئەدمین بزانێت خەڵک چی دەگەڕێن و چی لە ئەپەکەدا کەمە. ژمارەی مۆبایل و ژمارە درێژەکان هەرگیز هەڵناگیرێن.',
    ]),
    ('بۆچی بەکاردێن', [
      'بۆ پیشاندانی شوێن، هەواڵ، نرخ و خزمەتگوزارییەکانی کەلار.',
@@ -67,6 +68,7 @@ POLICY = {
      'النشاط: الأماكن المفضلة والإعجابات والتقييمات والأماكن التي تقترحها.',
      'الإشعارات: رمز الإشعارات (FCM token) لإرسال الإشعارات.',
      'الإحصاءات والأخطاء: معرّف عشوائي للجهاز واللغة وإصدار التطبيق لحساب المستخدمين النشطين؛ إحصاءات وتقارير الأعطال عبر Firebase لتحسين التطبيق.',
+     'كلمات البحث التي تكتبها في بحث التطبيق (دون اسم أو معرّف جهاز): فقط ليعرف المشرف ما يبحث عنه الناس وما ينقص التطبيق. لا تُحفظ أرقام الهواتف ولا الأرقام الطويلة أبداً.',
    ]),
    ('لماذا نستخدمها', [
      'لعرض أماكن كلار وأخبارها وأسعارها وخدماتها.',
@@ -108,6 +110,7 @@ POLICY = {
      'Activity: favourite places, likes, reviews and places you suggest.',
      'Notifications: a notification token (FCM) to send you notifications.',
      'Statistics and errors: a random device ID, language and app version to count active users; analytics and crash reports through Firebase to improve the app.',
+     'Search words you type in the app search (no name, no device ID): only so the admin can see what people look for and what the app is missing. Phone numbers and long numbers are never stored.',
    ]),
    ('Why we use it', [
      'To show places, news, prices and services in Kalar.',

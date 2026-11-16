@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The adhan file is only looked up by name at runtime (notification channel
+     sound), so the resource shrinker would delete it from release builds. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/adhan_default" />

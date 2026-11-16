@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
+import '../../services/app_control.dart';
 import '../complaints/complaint_instruction_dialog.dart';
 import '../departments/departments_screen.dart';
 import '../emergency/emergency_main_screen.dart';
@@ -61,6 +62,7 @@ class ServicesScreen extends StatelessWidget {
           onTap: (c) => _open(c, const DepartmentsScreen()),
         ),
         _Service(
+          feature: 'events',
           title: tr('ڕووداو و بۆنەکان'),
           subtitle: tr('چالاکییەکانی شارەکەمان'),
           icon: Icons.event_rounded,
@@ -70,6 +72,7 @@ class ServicesScreen extends StatelessWidget {
       ]),
       _Section(tr('وێنە و ڤیدیۆ'), [
         _Service(
+          feature: 'gallery',
           title: tr('گەلەری'),
           subtitle: tr('جوانترین وێنەکانی شار'),
           icon: Icons.photo_library_rounded,
@@ -77,6 +80,7 @@ class ServicesScreen extends StatelessWidget {
           onTap: (c) => _open(c, const GalleryScreen()),
         ),
         _Service(
+          feature: 'videos',
           title: tr('ڤیدیۆکان'),
           subtitle: tr('ڤیدیۆ و ڕێنماییەکان'),
           icon: Icons.play_circle_rounded,
@@ -93,6 +97,7 @@ class ServicesScreen extends StatelessWidget {
           onTap: (c) => _open(c, const EmergencyScreen()),
         ),
         _Service(
+          feature: 'complaints',
           title: tr('ناردنی سکاڵا'),
           subtitle: tr('سکاڵا بۆ شارەوانی بنێرە'),
           icon: Icons.campaign_rounded,
@@ -100,6 +105,7 @@ class ServicesScreen extends StatelessWidget {
           onTap: (c) => ComplaintInstructionDialog.show(c),
         ),
         _Service(
+          feature: 'suggest_place',
           title: tr('پێشنیاری شوێن'),
           subtitle: tr('شوێنێکی نوێمان پێ بناسێنە'),
           icon: Icons.add_location_alt_rounded,
@@ -131,11 +137,16 @@ class ServicesScreen extends StatelessWidget {
                 TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: fg),
           ),
         ),
-        body: ListView(
+        body: ValueListenableBuilder<AppControlState>(
+          valueListenable: AppControl.state,
+          builder: (context, control, _) => ListView(
           padding: EdgeInsets.fromLTRB(
               16, 8, 16, 110 + MediaQuery.paddingOf(context).bottom),
           children: [
-            for (final s in sections) ...[
+            for (final s in sections.map((x) => _Section(x.title, [
+                  for (final i in x.items)
+                    if (i.feature == null || control.feature(i.feature!)) i,
+                ])).where((x) => x.items.isNotEmpty)) ...[
               Padding(
                 padding: const EdgeInsets.fromLTRB(6, 16, 6, 8),
                 child: Text(
@@ -150,6 +161,7 @@ class ServicesScreen extends StatelessWidget {
               _SectionCard(items: s.items, isDark: isDark),
             ],
           ],
+        ),
         ),
       ),
     );
@@ -169,7 +181,11 @@ class _Service {
   final Color color;
   final void Function(BuildContext) onTap;
 
+  /// کلیلی تایبەتمەندی (AppControlState.features)؛ ئەگەر ئەدمین بیکوژێنێتەوە، نیشان نادرێت
+  final String? feature;
+
   const _Service({
+    this.feature,
     required this.title,
     required this.subtitle,
     required this.icon,

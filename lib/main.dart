@@ -25,7 +25,10 @@ import 'config/theme.dart';
 import 'config/theme_provider.dart';
 import 'config/translations.dart';
 import 'l10n/tr.dart';
+import 'services/app_control.dart';
 import 'services/home_widget_service.dart';
+import 'widgets/app_gate.dart';
+import 'services/prayer/prayer_scheduler.dart';
 import 'services/price_types.dart';
 import 'services/translation_service.dart';
 
@@ -199,6 +202,7 @@ Future<void> _start() async {
   // (پێشتر تا ١٠ چرکە زیاتر شاشەی سپلاش دەمایەوە لە ئینتەرنێتی خراپدا)
   unawaited(_initPushLate());
   unawaited(LocalFavorites.ensureLoaded());
+  PrayerScheduler.instance.start(); // بانگەکانی ٧ ڕۆژی داهاتوو ڕێک دەخاتەوە
 
   runApp(
     ProviderScope(
@@ -303,6 +307,7 @@ Future<void> _initSupabase() async {
     // کاشی ناوخۆیی، پاشان وەرگێڕانە هاوبەشە نوێکان (Supabase: text_translations)
     unawaited(PriceTypes.ensureLoaded());
     HomeWidgetService.instance.start();
+    AppControl.instance.start(); // حالەتی چاککردن، ڕاگەیاندن، نوێکردنەوە، بەشەکان
     unawaited(TranslationService.loadDiskCache()
         .then((_) => TranslationService.syncShared(AppLang.code)));
     AppLogger.i('✅ Supabase initialized');
@@ -548,7 +553,7 @@ class KalarGuideApp extends StatelessWidget {
             // ✅ ئاراستە بەپێی زمان: کوردی/عەرەبی ڕاست-بۆ-چەپ، ئینگلیزی چەپ-بۆ-ڕاست
             child: Directionality(
               textDirection: AppLang.direction,
-              child: child ?? const SizedBox.shrink(),
+              child: AppGate(child: child ?? const SizedBox.shrink()),
             ),
           ),
         );

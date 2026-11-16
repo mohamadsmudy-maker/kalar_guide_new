@@ -82,6 +82,15 @@ select t.check(t.rows($$insert into banners(title) values ('x')$$) = -1, 'custom
 select t.check(t.rows($$insert into price_types(kind, key, name_ku, grp) values ('fuel', 'x', 'x', 'fuel')$$) = -1, 'customer cannot add price types');
 select t.check(t.rows($$delete from price_types$$) = 0, 'customer cannot delete price types');
 select t.check((select count(*) from price_types) >= 17, 'everyone can read price types');
+do $$ begin
+  perform app_admin_stats(7);
+  raise exception 'FAILED: customer read admin stats';
+exception when insufficient_privilege then raise notice 'ok: customer cannot read admin stats';
+end $$;
+select app_log_search('كەلار  ', 0, 'ku');
+select app_log_search('07501234567', 0, 'ku');
+select app_log_search('a', 0, 'ku');
+select t.check((select count(*) from search_logs) = 0, 'customer cannot read search logs');
 -- ── vendor (store 1) ─────────────────────────────────────────────
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 select app_login('07500000002', 'vendpass1');
@@ -124,6 +133,14 @@ select t.check(t.rows($$update complaints set status = 'done'$$) = 2, 'admin upd
 select t.check(t.rows($$insert into banners(title) values ('a')$$) = 1, 'admin adds banners');
 select t.check(app_update_currency_price(2, 'EUR', 1, 2) = 'ok', 'admin saves any station price');
 select t.check(t.rows($$update app_users set is_approved = false where phone = '07500000002'$$) = 1, 'admin revokes vendor');
+select t.check((app_admin_stats(7)->>'days')::int = 7, 'admin stats days');
+select t.check((app_admin_stats(7)->'totals'->>'complaints')::int = 2, 'admin stats totals');
+select t.check(jsonb_array_length(app_admin_stats(7)->'complaints'->'daily') = 7, 'admin stats daily series covers the period');
+select t.check((app_admin_stats(7)->'complaints'->>'now')::int = 2, 'admin stats counts new complaints');
+select t.check((app_admin_stats(9999)->>'days')::int = 365, 'admin stats caps the period');
+select t.check((select count(*) from search_logs) = 1, 'search log keeps one clean row (phone numbers and 1-letter text dropped)');
+select t.check((app_admin_stats(7)->'search'->>'now')::int = 1, 'admin stats counts searches');
+select t.check((app_admin_stats(7)->'search'->'no_results'->0->>'name') = 'كەلار', 'no-result searches are listed');
 select t.check((select count(*) from price_types where kind = 'fuel') = 7, 'fuel types seeded');
 select t.check((select count(*) from price_types where kind = 'currency') = 10, 'currency types seeded');
 select t.check(t.rows($$insert into price_types(kind, key, name_ku, grp) values ('fuel', 'diesel', 'دیزڵ', 'fuel')$$) = 1, 'admin adds a fuel type');

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../providers/news_providers.dart' show refreshNewsFeed;
 import '../../services/auth_service.dart';
 import '../../services/image_service.dart';
 import '../../services/storage_service.dart';
@@ -109,6 +110,7 @@ class _AdminNewsScreenState extends State<AdminNewsScreen> {
         debugPrint('⚠️ deleteNewsFiles: $e'); // هەواڵەکە سڕایەوە، تەنها فایلەکان نەسڕانەوە
       }
       await _fetchNews();
+      if (mounted) refreshNewsFeed(context);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(tr("✅ هەواڵەکە سڕایەوە")), backgroundColor: const Color(0xFF0F9D7A)),
@@ -454,6 +456,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       }
 
       if (mounted) {
+        refreshNewsFeed(context);
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

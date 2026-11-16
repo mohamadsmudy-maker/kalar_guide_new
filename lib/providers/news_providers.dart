@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show BuildContext;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repositories/news_repository.dart';
@@ -302,6 +303,20 @@ StateNotifierProvider<NewsNotifier, NewsState>((ref) {
   final repo = ref.watch(newsRepositoryProvider);
   return NewsNotifier(repo, ref);
 });
+
+/// ✅ پاش هەر زیادکردن/دەستکاری/سڕینەوەی هەواڵێک بانگ بکە: سلایدەری سەرەکی و
+/// «هەموو هەواڵەکان» لە newsProvider ـەوە دێن و خۆیان نانوێ دەبنەوە. (شاشەکانی
+/// ئەدمین Consumer نین، بۆیە لە ڕێگای ProviderScope ـەوە.) هەرگیز هەڵە نادات.
+void refreshNewsFeed(BuildContext context) {
+  try {
+    final container = ProviderScope.containerOf(context, listen: false);
+    unawaited(container.read(newsProvider.notifier).refresh().catchError((e) {
+      debugPrint('⚠️ refreshNewsFeed: $e');
+    }));
+  } catch (e) {
+    debugPrint('⚠️ refreshNewsFeed (no ProviderScope?): $e');
+  }
+}
 
 // 📰 News by store (auto-refreshable)
 final storeNewsProvider =

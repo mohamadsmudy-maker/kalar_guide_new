@@ -15,6 +15,7 @@ import '../../services/emergency_repository.dart';
 import '../../services/event_service.dart';
 import '../../services/neighborhood_service.dart';
 import '../../services/news_service.dart';
+import '../../services/admin_stats.dart';
 import '../../services/search/global_search.dart';
 import '../complaints/complaint_instruction_dialog.dart';
 import '../currency/currency_rates_screen.dart';
@@ -57,6 +58,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   final _ctrl = TextEditingController();
   final _focus = FocusNode();
   Timer? _debounce;
+  Timer? _logTimer;
+  String _lastLogged = '';
 
   List<SearchItem> _items = [];
   List<SearchItem> _news = [];
@@ -77,6 +80,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _logTimer?.cancel();
     _ctrl.dispose();
     _focus.dispose();
     super.dispose();
@@ -299,6 +303,16 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         _news = [];
       }
     });
+    _logTimer?.cancel();
+    if (q.length >= 2) {
+      // گەڕانێک کە بەکارهێنەر وەستاوە لەسەری: بێ ناسنامە تۆمار دەکرێت بۆ ئاماری ئەدمین
+      _logTimer = Timer(const Duration(milliseconds: 1800), () {
+        if (!mounted || q == _lastLogged || widget.loader != null) return;
+        _lastLogged = q;
+        final count = GlobalSearch.search(_items, q).length + _news.length;
+        unawaited(AdminStatsService.logSearch(q, count, AppLang.code));
+      });
+    }
     _debounce?.cancel();
     if (q.length < 2) {
       setState(() => _newsLoading = false);
