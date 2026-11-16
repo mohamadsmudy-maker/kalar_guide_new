@@ -82,9 +82,13 @@ class FuelService {
   static String get _categoryOnlyFilter =>
       [for (final k in stationKeywords) 'category.ilike.*$k*'].join(',');
 
+  /// تا مایگرەیشنی prices_active جێبەجێ نەکرابێت ئەم ستوونە نییە
+  static bool _hasActiveColumn = true;
+
   static Future<List<Map<String, dynamic>>> _stations(String columns, {String? phone}) async {
     Future<List> run(String filter) {
-      var q = _client.from('dukan').select(columns).or(filter);
+      final cols = _hasActiveColumn ? columns : columns.replaceAll(', prices_active', '');
+      var q = _client.from('dukan').select(cols).or(filter);
       if (phone != null) q = q.eq('phone', phone);
       return q.order('name');
     }
@@ -93,6 +97,10 @@ class FuelService {
     try {
       res = await run(stationFilter);
     } on PostgrestException catch (e) {
+      if (_hasActiveColumn && e.message.contains('prices_active')) {
+        _hasActiveColumn = false;
+        return _stations(columns, phone: phone);
+      }
       debugPrint('⚠️ fuel stations (sub_category?): ${e.message}');
       res = await run(_categoryOnlyFilter);
     }
@@ -105,7 +113,7 @@ class FuelService {
     return stationKeywords.any(c.contains);
   }
   static const String _stationColumns =
-      'id, name, phone, address, logo, image, latitude, longitude, fuel_prices';
+      'id, name, phone, address, logo, image, latitude, longitude, fuel_prices, prices_active';
 
   // ═══════════════════════════════════════════════════════════
   // 🎯 جۆرەکانی سووتەمەنی
@@ -206,6 +214,56 @@ class FuelService {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // 🔘 چالاک/ناچالاک + نرخی گشتی (تەنها ئەدمین)
+  // ═══════════════════════════════════════════════════════════
+  static const String generalName = 'نرخی گشتی کەلار';
+  static const String _generalKey = 'general_fuel_prices';
+  static String? _generalUpdatedAt;
+
+  /// نرخەکانی شوێنێک لە لیستی هاوڵاتیان پیشان بدرێن یان نا
+  static Future<bool> setStationActive(dynamic stationId, bool active) async {
+    try {
+      final res = await _client
+          .from('dukan')
+          .update({'prices_active': active})
+          .eq('id', stationId)
+          .select('prices_active');
+      return (res as List).isNotEmpty && res.first['prices_active'] == active;
+    } catch (e) {
+      debugPrint('❌ setStationActive: $e');
+      return false;
+    }
+  }
+
+  /// {"normal": 1000, ...}
+  static Future<Map<String, dynamic>> getGeneralPrices() async {
+    try {
+      final row =
+          await _client.from('app_settings').select('value, updated_at').eq('key', _generalKey).maybeSingle();
+      final v = row?['value'];
+      _generalUpdatedAt = row?['updated_at']?.toString();
+      return v is Map ? Map<String, dynamic>.from(v) : {};
+    } catch (e) {
+      debugPrint('⚠️ general fuel prices: $e');
+      return {};
+    }
+  }
+
+  static Future<bool> saveGeneralPrices(Map<String, dynamic> prices) async {
+    try {
+      final res = await _client.from('app_settings').upsert({
+        'key': _generalKey,
+        'value': prices,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).select('key');
+      return (res as List).isNotEmpty;
+    } catch (e) {
+      debugPrint('❌ save general fuel prices: $e');
+      return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // 🔐 دەسەڵات — ئەدمین هەموو، ڤێندەر تەنها هی خۆی
   // ═══════════════════════════════════════════════════════════
   static bool canEditStation({dynamic stationId, String? stationPhone}) =>
@@ -217,10 +275,24 @@ class FuelService {
   // ═══════════════════════════════════════════════════════════
   static Future<List<Map<String, dynamic>>> getCurrentPrices({String? fuelType}) async {
     try {
-      final res = await _stations(_stationColumns);
+      final all = await _stations(_stationColumns);
+      final active = activePriceStations(all);
+      final res = active ?? <Map<String, dynamic>>[];
       final list = <Map<String, dynamic>>[];
 
-      for (final station in (res as List)) {
+      // هەموو بەنزینخانەکان ناچالاکن → نرخی گشتی کە ئەدمین دایناوە
+      if (active == null) {
+        final general = await getGeneralPrices();
+        res.add({
+          'id': null,
+          'name': generalName,
+          'fuel_prices': general,
+          'updated_at': _generalUpdatedAt,
+          'is_general': true,
+        });
+      }
+
+      for (final station in res) {
         final stationMap = Map<String, dynamic>.from(station);
         final prices = stationMap['fuel_prices'];
         if (prices is! Map || prices.isEmpty) continue;
@@ -266,6 +338,8 @@ class FuelService {
       'fuel_type': type,
       'price': price,
       'unit': 'لیتر',
+      if (station['is_general'] == true) 'is_general': true,
+      if (station['is_general'] == true) 'updated_at': station['updated_at'],
     };
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/currency_service.dart';
 import 'admin_currency_prices.dart';
+import 'admin_general_prices.dart';
 import '../../l10n/tr.dart';
 
 /// 🏢 لیستی نوسینگەکانی دراو (لە `dukan`)
@@ -18,6 +19,7 @@ class _AdminCurrencyStationsScreenState
   bool _loading = true;
   List<Map<String, dynamic>> _stations = [];
   String _searchQuery = '';
+  final Set<String> _toggling = {};
   final TextEditingController _searchCtrl = TextEditingController();
 
   @override
@@ -56,6 +58,26 @@ class _AdminCurrencyStationsScreenState
     } catch (e) {
       debugPrint('❌ Error: $e');
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  bool get _allInactive =>
+      _stations.isNotEmpty && _stations.every((s) => s['prices_active'] == false);
+
+  Future<void> _setActive(Map<String, dynamic> station, bool active) async {
+    final id = '${station['id']}';
+    setState(() => _toggling.add(id));
+    final ok = await CurrencyService.setStationActive(station['id'], active);
+    if (!mounted) return;
+    setState(() {
+      _toggling.remove(id);
+      if (ok) station['prices_active'] = active;
+    });
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(tr('نەگۆڕدرا. مایگرەیشنی prices_active لە Supabase جێبەجێ بکە.')),
+      ));
     }
   }
 
@@ -109,6 +131,15 @@ class _AdminCurrencyStationsScreenState
         )
             : Column(
           children: [
+            if (role == 'admin')
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: GeneralPricesCard(
+                  isFuel: false,
+                  allInactive: _allInactive,
+                  isDark: isDark,
+                ),
+              ),
             if (!isVendor)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -178,6 +209,8 @@ class _AdminCurrencyStationsScreenState
     final image = station['image']?.toString() ?? '';
     final logo = station['logo']?.toString() ?? '';
     final prices = station['currency_prices'] as Map? ?? {};
+    final isAdmin = AuthSessionManager.userRole == 'admin';
+    final active = station['prices_active'] != false;
 
     // ⭐ نرخی دۆلار وەک پێشبینین
     final usdData = prices['usd'];
@@ -244,6 +277,17 @@ class _AdminCurrencyStationsScreenState
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (!active) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      tr('ناچالاک — نرخەکانی پیشان نادرێن'),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFDC3545),
+                      ),
+                    ),
+                  ],
                   if (address.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Row(
@@ -285,6 +329,21 @@ class _AdminCurrencyStationsScreenState
               ),
             ),
 
+            if (isAdmin)
+              _toggling.contains('${station['id']}')
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0F9D7A)),
+                      ),
+                    )
+                  : Switch(
+                      value: active,
+                      activeThumbColor: const Color(0xFF0F9D7A),
+                      onChanged: (v) => _setActive(station, v),
+                    ),
             const Icon(
               Icons.chevron_right_rounded,
               color: Color(0xFF0F9D7A),

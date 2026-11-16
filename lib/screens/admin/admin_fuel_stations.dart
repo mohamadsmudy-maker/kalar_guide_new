@@ -6,6 +6,7 @@ import '../../services/fuel_service.dart';
 import '../../services/fuel_pdf_service.dart';
 import '../../widgets/multi_fuel_chart_widget.dart';
 import 'admin_fuel_prices.dart';
+import 'admin_general_prices.dart';
 import '../../l10n/tr.dart';
 
 /// 🏢 شاشەی بەڕێوەبردنی بەنزینخانەکان — FULL PRO (Admin)
@@ -24,6 +25,7 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
   List<Map<String, dynamic>> _allHistory = [];
   String _searchQuery = '';
   String _filterType = 'all';
+  final Set<String> _toggling = {};
   final TextEditingController _searchCtrl = TextEditingController();
 
   @override
@@ -89,6 +91,26 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
     }
 
     return list;
+  }
+
+  bool get _allInactive =>
+      _stations.isNotEmpty && _stations.every((s) => s['prices_active'] == false);
+
+  Future<void> _setActive(Map<String, dynamic> station, bool active) async {
+    final id = '${station['id']}';
+    setState(() => _toggling.add(id));
+    final ok = await FuelService.setStationActive(station['id'], active);
+    if (!mounted) return;
+    setState(() {
+      _toggling.remove(id);
+      if (ok) station['prices_active'] = active;
+    });
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(tr('نەگۆڕدرا. مایگرەیشنی prices_active لە Supabase جێبەجێ بکە.')),
+      ));
+    }
   }
 
   // ✅ PDF
@@ -169,6 +191,18 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: MultiFuelChartWidget(
                       history: _allHistory,
+                      isDark: isDark,
+                    ),
+                  ),
+                ),
+
+              if (role == 'admin')
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: GeneralPricesCard(
+                      isFuel: true,
+                      allInactive: _allInactive,
                       isDark: isDark,
                     ),
                   ),
@@ -456,6 +490,8 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
     final name = station['name']?.toString() ?? 'بەنزینخانە';
     final address = station['address']?.toString();
     final isVerified = station['is_verified'] == true;
+    final isAdmin = AuthSessionManager.userRole == 'admin';
+    final active = station['prices_active'] != false;
 
     return GestureDetector(
       onTap: () async {
@@ -555,6 +591,17 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (!active) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      tr('ناچالاک — نرخەکانی پیشان نادرێن'),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFDC3545),
+                      ),
+                    ),
+                  ],
                   if (address != null && address.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Row(
@@ -586,6 +633,21 @@ class _AdminFuelStationsScreenState extends State<AdminFuelStationsScreen> {
                 ],
               ),
             ),
+            if (isAdmin)
+              _toggling.contains('${station['id']}')
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD9822B)),
+                      ),
+                    )
+                  : Switch(
+                      value: active,
+                      activeThumbColor: const Color(0xFF0F9D7A),
+                      onChanged: (v) => _setActive(station, v),
+                    ),
             const Icon(
               Icons.chevron_right_rounded,
               color: Color(0xFFD9822B),

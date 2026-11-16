@@ -112,6 +112,9 @@ select t.check(t.rows($$insert into fuel_price_history(station_id, price) values
 select t.check(t.rows($$insert into fuel_price_history(station_id, price) values (2, 1)$$) = -1, 'vendor cannot add other price history');
 select t.check(t.rows($$delete from dukan where id = 1$$) = 0, 'vendor cannot delete stores');
 select t.check(app_update_fuel_price(1, 'normal', 1500, 'n') = 'ok', 'vendor saves fuel price via RPC');
+select t.check(t.rows($$update dukan set prices_active = false where id = 1$$) = 1, 'vendor update of own station runs');
+select t.check((select prices_active from dukan where id = 1), 'vendor cannot deactivate station prices');
+select t.check(t.rows($$insert into app_settings(key, value) values ('general_fuel_prices', '{"normal": 1}')$$) = -1, 'vendor cannot set general prices');
 select t.check((select (fuel_prices->>'normal')::numeric from dukan where id = 1) = 1500, 'fuel price stored');
 select t.check(app_update_fuel_price(2, 'normal', 1500) = 'forbidden', 'vendor cannot price other station');
 select t.check(app_update_fuel_price(1, 'normal', 0) = 'invalid', 'zero fuel price rejected');
@@ -141,6 +144,9 @@ select t.check((select count(*) from complaints) = 2, 'admin reads all complaint
 select t.check(t.rows($$update complaints set status = 'done'$$) = 2, 'admin updates complaints');
 select t.check(t.rows($$insert into banners(title) values ('a')$$) = 1, 'admin adds banners');
 select t.check(app_update_currency_price(2, 'EUR', 1, 2) = 'ok', 'admin saves any station price');
+select t.check(t.rows($$update dukan set prices_active = false where id = 2$$) = 1, 'admin deactivates station prices');
+select t.check(not (select prices_active from dukan where id = 2), 'station prices are inactive');
+select t.check(t.rows($$insert into app_settings(key, value) values ('general_fuel_prices', '{"normal": 1000}')$$) = 1, 'admin sets general prices');
 select t.check(t.rows($$update app_users set is_approved = false where phone = '07500000002'$$) = 1, 'admin revokes vendor');
 select t.check((app_admin_stats(7)->>'days')::int = 7, 'admin stats days');
 select t.check((app_admin_stats(7)->'totals'->>'complaints')::int = 2, 'admin stats totals');

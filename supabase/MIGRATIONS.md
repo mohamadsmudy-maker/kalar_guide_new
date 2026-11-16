@@ -23,6 +23,7 @@
 | 15 | `20261121_translations_fa.sql` | زیادکردنی 'fa' (فارسی) بۆ چەکی lang لە text_translations | ✅ |
 | 16 | `20261122_news_rls_fix.sql` | چارەسەری هەڵەی RLS ی هەواڵ بۆ ڤێندەرانی store_id کۆن | ✅ |
 | 17 | `20261123_news_tickers.sql` | توڵی هەواڵی بەپەلە (جەدوەلی news_tickers + RLS) | ✅ |
+| 18 | `20261124_price_station_active.sql` | چالاک/ناچالاککردنی نرخی بەنزینخانە و نوسینگەی دراو (dukan.prices_active) | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -50,7 +51,9 @@ select
   exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
           where n.nspname = 'public' and p.proname = 'app_owns'
           and p.prosrc like '%app_users u%')                                     as m16_news_rls_fix,
-  to_regclass('public.news_tickers')                                             is not null as m17_news_tickers;
+  to_regclass('public.news_tickers')                                             is not null as m17_news_tickers,
+  exists (select 1 from information_schema.columns where table_schema = 'public'
+          and table_name = 'dukan' and column_name = 'prices_active')            as m18_price_station_active;
 ```
 
 ## Edge Functions (جیا لە SQL)
