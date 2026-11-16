@@ -41,6 +41,14 @@ alter table banners enable row level security;
 grant all on all tables in schema public to anon, authenticated;
 grant all on all sequences in schema public to anon, authenticated;
 
+-- columns the live tables have and the statistics function reads
+alter table complaints add column title text, add column created_at timestamptz default now(),
+  add column updated_at timestamptz default now(), add column responsible_authority text,
+  add column neighborhood_name text;
+alter table dukan add column created_at timestamptz default now(), add column total_reviews int default 0;
+create table active_users(device_id text primary key, language text, platform text,
+  user_role text, last_seen timestamptz default now());
+
 -- An older app_current_user with another return type already exists in the
 -- real project; the migration must replace it.
 create function app_current_user() returns json language sql as $$ select '{}'::json $$;
