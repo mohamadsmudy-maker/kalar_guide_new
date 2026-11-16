@@ -143,9 +143,11 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // 🎨 پاشبنەمای سەرمەیی → شینی دەریایی، هاوڕەنگی ناوەوەی لۆگۆکە
+    //    (نەخشەی تۆخ + هێڵی کەسک) تاکو بازنە کەسک و بینا زێڕینەکە بدرەوشێنەوە
     final colors = isDark
         ? const [Color(0xFF0F0F14), Color(0xFF1A1B2E)]
-        : const [Color(0xFF1E88E5), Color(0xFF1E88E5)];
+        : const [Color(0xFF0B2644), Color(0xFF0F3A4A)];
 
     return PopScope(
       // The splash must not be dismissible with the back button
