@@ -2008,4 +2008,6 @@ const Map<String, String> stringsEn = {
   'کراوە': 'Open',
   'کراوەیە': 'Open',
   'کراوەیە • تا {0}': 'Open • until {0}',
+  'بێ بەش': 'No category',
+  'بێ ژێربەش': 'No subcategory',
 };
