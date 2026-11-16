@@ -6,11 +6,13 @@ import 'package:flutter/widgets.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../l10n/tr.dart';
+import '../models/opening_hours.dart';
 import 'currency_service.dart';
 import 'prayer/kalar_prayer_times.dart';
 import 'weather_service.dart';
 
-/// 📱 ویجێتی سەر شاشەی ئەندرۆید: نوێژی داهاتوو، پلەی گەرما و نرخی دۆلار.
+/// 📱 ویجێتی سەر شاشەی ئەندرۆید: نوێژی داهاتوو، هەر شەش کاتەکە، بەروار،
+/// پلەی گەرما و نرخی دۆلار.
 ///
 /// ئەپەکە داتا دەنێرێت بۆ SharedPreferences ـی ویجێتەکە، و `KalarWidgetProvider`
 /// (Kotlin) لەوێوە دەیخوێنێتەوە. کاتی نوێژەکانی ئەمڕۆ و بەیانی دەنێردرێن، بۆ ئەوەی
@@ -87,6 +89,14 @@ class HomeWidgetService with WidgetsBindingObserver {
     return s.replaceAllMapped(RegExp(r'\d'), (m) => ku[int.parse(m[0]!)]);
   }
 
+  /// «دووشەممە • ١٦/١١» — بۆ سەرپەڕی ویجێتەکە
+  @visibleForTesting
+  static String dayLabel(DateTime d) {
+    final name =
+        tr(OpeningHours.dayNames[OpeningHours.keyOfWeekday(d.weekday)]!);
+    return '$name • ${_digits('${d.day}/${d.month}')}';
+  }
+
   /// ناوی نوێژەکان بە زمانی ئێستا
   static Map<String, String> prayerNames() => {
         'fajr': tr('بەیانی'),
@@ -113,6 +123,8 @@ class HomeWidgetService with WidgetsBindingObserver {
       'tpl_hm': tr('{0} کاتژمێر و {1} خولەک'),
       'd0_date': _date(today),
       'd1_date': _date(tomorrow),
+      'd0_label': dayLabel(today),
+      'd1_label': dayLabel(tomorrow),
     };
     final names = prayerNames();
     final t0 = KalarPrayerTimes.forDay(today).times;
