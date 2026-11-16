@@ -12,6 +12,8 @@ import '../../widgets/common/auto_translate.dart';
 import 'store_news_screen.dart';
 import '../departments/department_services_screen.dart';
 import '../../l10n/tr.dart';
+import '../../models/opening_hours.dart';
+import '../../widgets/opening_hours_widgets.dart';
 import '../../utils/place_display.dart';
 
 /// 🏪 دیالۆگی وردەکاری شوێن — ULTRA PRO V3
@@ -600,6 +602,21 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                                 ],
                               ),
                             ),
+
+                            if (OpeningHours.fromJson(store['opening_hours']) != null) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: cardColor,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: lineColor),
+                                ),
+                                child: OpeningHoursView(
+                                  hours: OpeningHours.fromJson(store['opening_hours'])!,
+                                ),
+                              ),
+                            ],
 
                             if (description.isNotEmpty) ...[
                               const SizedBox(height: 12),

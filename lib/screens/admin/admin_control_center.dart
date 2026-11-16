@@ -1130,7 +1130,8 @@ class _SystemTabState extends State<_SystemTab> {
     'app_settings': '20261115_places_sources.sql',
     'prayer_times_official': '20261110_prayer_times.sql',
     'text_translations': '20261112_translations_cache.sql',
-    'active_users': '',
+    'dukan.opening_hours': '20261120_presence_and_hours.sql',
+    'get_presence_stats': '20261120_presence_and_hours.sql',
   };
 
   @override
@@ -1159,7 +1160,8 @@ class _SystemTabState extends State<_SystemTab> {
       ok(() => db.from('app_settings').select('key').limit(1)),
       ok(() => db.from('prayer_times_official').select('day_month').limit(1)),
       ok(() => db.from('text_translations').select('*').limit(1)),
-      ok(() => db.from('active_users').select('device_id').limit(1)),
+      ok(() => db.from('dukan').select('opening_hours').limit(1)),
+      ok(() => db.rpc('get_presence_stats')),
     ]);
     return {for (var i = 0; i < files.length; i++) files.keys.elementAt(i): r[i]};
   }

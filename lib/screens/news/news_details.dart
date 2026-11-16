@@ -744,8 +744,10 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                       size: 14,
                     ),
                     const SizedBox(width: 4),
+                    // ئاراستەی چەپ-بۆ-ڕاست: لە ڕاست-بۆ-چەپدا «١ / ٢» وەک «٢ / ١» دەردەکەوت
                     Text(
-                      '${_currentImageIndex + 1} / ${imagesList.length}',
+                      PlaceDisplay.digits('${_currentImageIndex + 1} / ${imagesList.length}'),
+                      textDirection: TextDirection.ltr,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,

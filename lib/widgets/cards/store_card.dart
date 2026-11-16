@@ -1,3 +1,5 @@
+import '../../models/opening_hours.dart';
+import '../opening_hours_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -84,6 +86,8 @@ class StoreCard extends StatelessWidget {
         : distance! < 1
         ? '${_digits('${(distance! * 1000).round()}', lang)} ${t('m')}'
         : '${_digits(distance!.toStringAsFixed(1), lang)} ${t('km')}';
+
+    final hours = OpeningHours.fromJson(store['opening_hours']);
 
     final semanticsLabel = [
       name,
@@ -247,12 +251,14 @@ class StoreCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          if (category.isNotEmpty || distanceText != null) ...[
+                          if (category.isNotEmpty || distanceText != null || hours != null) ...[
                             const SizedBox(height: 8),
                             Wrap(
                               spacing: 6,
                               runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
+                                if (hours != null) OpenBadge(hours: hours),
                                 if (category.isNotEmpty)
                                   _Chip(
                                     color: accent,

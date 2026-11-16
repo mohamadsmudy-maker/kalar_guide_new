@@ -13,6 +13,7 @@ import '../../widgets/common/auto_translate.dart';
 import 'full_map_screen.dart';
 import 'store_details_dialog.dart';
 import '../../l10n/tr.dart';
+import '../../models/opening_hours.dart';
 import '../categories/categories_screen.dart';
 import '../../utils/place_display.dart';
 import '../../services/app_settings_service.dart';
@@ -38,6 +39,7 @@ class _StoresScreenState extends State<StoresScreen>
 
   String _searchQuery = '';
   String _selectedCategory = 'هەموو';
+  bool _openNowOnly = false;
   String _selectedType = 'هەموو';
   String _sortBy = 'default';
   String _viewMode = 'list';
@@ -165,18 +167,13 @@ class _StoresScreenState extends State<StoresScreen>
         }
       }
 
-      final res =
-          await Supabase.instance.client.from('dukan').select().order('name');
-
-      final stores = List<Map<String, dynamic>>.from(res as List);
-
-      if (stores.isNotEmpty) {
-        await CacheService.save(
-          _cacheKey,
-          stores,
-          duration: _cacheDuration,
-        );
-      }
+      final stores = await CacheService.fetchList(
+        _cacheKey,
+        () async => List<Map<String, dynamic>>.from(
+            await Supabase.instance.client.from('dukan').select().order('name')
+                as List),
+        keepFor: _cacheDuration,
+      );
 
       if (mounted) {
         setState(() {
@@ -283,6 +280,12 @@ class _StoresScreenState extends State<StoresScreen>
       if (_showOnlyVerified) {
         final isVerified = store['is_verified'] == true;
         if (!isVerified) return false;
+      }
+
+      // «ئێستا کراوە»: تەنها ئەو شوێنانەی کاتی کارکردنیان دیارە و ئێستا کراوەن
+      if (_openNowOnly) {
+        final h = OpeningHours.fromJson(store['opening_hours']);
+        if (h == null || !(h.is24h || h.statusAt(DateTime.now()).open)) return false;
       }
 
       return matchesSearch && matchesCategory && matchesType;
@@ -601,6 +604,29 @@ class _StoresScreenState extends State<StoresScreen>
           const SizedBox(width: 8),
           _buildFilterButton(isDark),
           const SizedBox(width: 8),
+          Tooltip(
+            message: tr('ئێستا کراوە'),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _openNowOnly = !_openNowOnly);
+                _applyFilters();
+              },
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _openNowOnly
+                      ? const Color(0xFF0F9D7A)
+                      : (isDark ? AppColors.darkCard : Colors.white),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.schedule_rounded,
+                    color: _openNowOnly ? Colors.white : AppColors.primary),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () {
               HapticFeedback.mediumImpact();
@@ -640,6 +666,7 @@ class _StoresScreenState extends State<StoresScreen>
   int get _activeFilterCount =>
       (_selectedCategory != 'هەموو' ? 1 : 0) +
       (_selectedType != 'هەموو' ? 1 : 0) +
+      (_openNowOnly ? 1 : 0) +
       (_searchQuery.isNotEmpty ? 1 : 0);
 
   void _clearFilters() {
@@ -649,6 +676,7 @@ class _StoresScreenState extends State<StoresScreen>
       _searchQuery = '';
       _selectedCategory = 'هەموو';
       _selectedType = 'هەموو';
+      _openNowOnly = false;
     });
     _applyFilters();
   }

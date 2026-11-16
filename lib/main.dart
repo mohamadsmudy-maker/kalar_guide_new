@@ -29,6 +29,7 @@ import 'services/app_control.dart';
 import 'services/home_widget_service.dart';
 import 'widgets/app_gate.dart';
 import 'services/prayer/prayer_scheduler.dart';
+import 'services/presence_service.dart';
 import 'services/price_types.dart';
 import 'services/translation_service.dart';
 
@@ -202,6 +203,7 @@ Future<void> _start() async {
   // (پێشتر تا ١٠ چرکە زیاتر شاشەی سپلاش دەمایەوە لە ئینتەرنێتی خراپدا)
   unawaited(_initPushLate());
   unawaited(LocalFavorites.ensureLoaded());
+  unawaited(PresenceService.start()); // بەکارهێنەرانی چالاک
   PrayerScheduler.instance.start(); // بانگەکانی ٧ ڕۆژی داهاتوو ڕێک دەخاتەوە
 
   runApp(

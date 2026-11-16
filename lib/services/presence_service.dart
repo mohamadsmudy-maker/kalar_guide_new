@@ -1,6 +1,10 @@
 // lib/services/presence_service.dart
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import '../config/constants.dart';
+import '../l10n/tr.dart';
+import 'auth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -24,53 +28,53 @@ class PresenceService {
     return id;
   }
 
-  static Future<void> start({
-    String? userId,
-    String? userName,
-    String? userRole,
-    String? language,
-    String? neighborhood,
-  }) async {
+  static final _observer = _PresenceObserver();
+  static const Duration _interval = Duration(seconds: 60);
+
+  /// یەکجار لە دەستپێکردنی ئەپ. پێشتر ئەمە هەرگیز بانگ نەدەکرا، بۆیە ژمارەی
+  /// «بەکارهێنەرانی چالاک» هەمیشە ٠ بوو. ئێستا هەر خولەکێک ئەگەر ئەپەکە
+  /// کراوە بێت RPC ی `app_presence_ping` بانگ دەکرێت (ناسنامەی هەڕەمەکی ئامێر،
+  /// زمان، وەشان، پلاتفۆرم — بێ ناو و مۆبایل).
+  static Future<void> start() async {
     if (_isRunning) return;
     _isRunning = true;
+    WidgetsBinding.instance.addObserver(_observer);
+    await ping();
+    _startTimer();
+  }
 
+  static void _startTimer() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(_interval, (_) => ping());
+  }
+
+  static Future<void> ping() async {
     try {
       final deviceId = await _getDeviceId();
-
-      await _client.from('active_users').upsert({
-        'device_id': deviceId,
-        'user_id': userId,
-        'user_name': userName,
-        'user_role': userRole ?? 'customer',
-        'app_version': '1.0.0',
-        'platform': defaultTargetPlatform.name,
-        'language': language ?? 'ku',
-        'neighborhood': neighborhood,
-        'last_seen': DateTime.now().toUtc().toIso8601String(),
-      }, onConflict: 'device_id');
-
-      debugPrint('👥 Presence started: $deviceId');
-
-      _heartbeatTimer?.cancel();
-      _heartbeatTimer = Timer.periodic(
-        const Duration(seconds: 20),
-            (_) => _updateHeartbeat(),
-      );
+      await _client.rpc('app_presence_ping', params: {
+        'p_device': deviceId,
+        'p_user': null,
+        'p_name': null,
+        'p_role': AuthSessionManager.userRole,
+        'p_version': AppConstants.appVersion,
+        'p_platform': defaultTargetPlatform.name,
+        'p_lang': AppLang.code,
+        'p_neighborhood': null,
+      });
     } catch (e) {
-      debugPrint('⚠️ Presence start error: $e');
-      _isRunning = false;
+      debugPrint('⚠️ Presence ping: $e');
     }
   }
 
-  static Future<void> _updateHeartbeat() async {
-    try {
-      final deviceId = await _getDeviceId();
-      await _client
-          .from('active_users')
-          .update({'last_seen': DateTime.now().toUtc().toIso8601String()})
-          .eq('device_id', deviceId);
-    } catch (e) {
-      debugPrint('⚠️ Heartbeat error: $e');
+  static void _onLifecycle(AppLifecycleState state) {
+    if (!_isRunning) return;
+    if (state == AppLifecycleState.resumed) {
+      unawaited(ping());
+      _startTimer();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _heartbeatTimer?.cancel();
+      _heartbeatTimer = null;
     }
   }
 
@@ -78,13 +82,7 @@ class PresenceService {
     _isRunning = false;
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
-
-    try {
-      final deviceId = await _getDeviceId();
-      await _client.from('active_users').delete().eq('device_id', deviceId);
-    } catch (e) {
-      debugPrint('⚠️ Presence stop error: $e');
-    }
+    WidgetsBinding.instance.removeObserver(_observer);
   }
 
   static Stream<int> watchOnlineCount() {
@@ -96,7 +94,7 @@ class PresenceService {
       return data.where((row) {
         final lastSeen = DateTime.tryParse(row['last_seen'] ?? '');
         if (lastSeen == null) return false;
-        return now.difference(lastSeen).inMinutes < 2;
+        return now.difference(lastSeen).inMinutes < 3;
       }).length;
     });
   }
@@ -137,4 +135,10 @@ class PresenceService {
       'total_users': 0,
     };
   }
+}
+
+class _PresenceObserver with WidgetsBindingObserver {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) =>
+      PresenceService._onLifecycle(state);
 }
