@@ -32,6 +32,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
 
   /// true = لیستی ئەو دەقانەی هێشتا وەرنەگێڕدراون (بۆ نووسینی بە دەست)
   bool _missingMode = false;
+  bool _translating = false;
 
   SupabaseClient get _db => Supabase.instance.client;
 
@@ -265,6 +266,23 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     texts.removeWhere((t) => AppLang.lookup('en', t) != null); // پێشتر لە ناو ئەپدا وەرگێڕدراون
     if (!mounted) return;
 
+    await _runTranslate(texts.toList(), const ['en', 'ar']);
+  }
+
+  /// 🆕 تەنها ئەو دەقانەی لە لیستی «وەرنەگێڕدراو» دان بۆ زمانی هەڵبژێردراو
+  Future<void> _translateMissing() async {
+    final texts = [
+      for (final r in _rows)
+        if (r['_new'] == true) '${r['source']}',
+    ];
+    if (texts.isEmpty) return;
+    await _runTranslate(texts, [_lang]);
+  }
+
+  /// دیالۆگی پێشکەوتن + وەرگێڕان بە Gemini + پیشاندانی هۆکاری هەڵە
+  Future<void> _runTranslate(List<String> texts, List<String> langs) async {
+    if (_translating) return;
+    setState(() => _translating = true);
     final progress = ValueNotifier<String>('');
     showDialog<void>(
       context: context,
@@ -287,9 +305,11 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     );
 
     var done = 0;
-    for (final lang in ['en', 'ar']) {
+    for (final lang in langs) {
+      // سەرەتا وەرگێڕانە هاوبەشەکان دابگرە، بۆ ئەوەی هیچ دەقێک دووجار نەنێردرێت
+      await TranslationService.syncShared(lang);
       done += await TranslationService.translateAllNow(
-        texts.toList(),
+        texts,
         lang,
         onProgress: (d, t) => progress.value =
             '${lang == 'en' ? 'English' : 'العربية'}: $d / $t',
@@ -298,6 +318,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     progress.dispose();
+    setState(() => _translating = false);
     final err = TranslationService.lastError;
     if (done == 0 && err != null) {
       // هۆکاری ڕاستەقینە پیشان بدە (بۆ نموونە 429 = سنووری Gemini)
@@ -317,7 +338,7 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
     } else {
       _snack(trf('{0} وەرگێڕانی نوێ پاشەکەوت کرا', [done]));
     }
-    _load();
+    if (mounted) _load();
   }
 
   Future<void> _delete(Map<String, dynamic> row) async {
@@ -416,6 +437,22 @@ class _AdminTranslationsScreenState extends State<AdminTranslationsScreen> {
                   style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
                 ),
               ),
+            // 🤖 وەرگێڕانی دەقە نوێ و وەرنەگێڕدراوەکان بە یەک کلیک
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _translating || _loading || (_missingMode && _rows.isEmpty)
+                      ? null
+                      : (_missingMode ? _translateMissing : _translateAll),
+                  icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                  label: Text(_missingMode
+                      ? trf('وەرگێڕانی ئەم {0} دەقە بە Gemini', [_rows.length])
+                      : tr('وەرگێڕانی دەقە نوێ و وەرنەگێڕدراوەکان')),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
               child: TextField(

@@ -2019,4 +2019,6 @@ const Map<String, String> stringsEn = {
   'هەڵبژێردراوەکان': 'Selected',
   'ژمارەی هەیە': 'Has phone',
   'گەڕان بە ناو...': 'Search by name...',
+  'وەرگێڕانی ئەم {0} دەقە بە Gemini': 'Translate these {0} texts with Gemini',
+  'وەرگێڕانی دەقە نوێ و وەرنەگێڕدراوەکان': 'Translate new and untranslated texts',
 };
