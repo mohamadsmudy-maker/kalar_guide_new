@@ -226,3 +226,10 @@ class PriceTypes {
     _inflight = null;
   }
 }
+
+/// شوێنە چالاکەکان (prices_active != false). `null` واتە شوێن هەیە بەڵام
+/// هەموویان ناچالاکن — ئەو کاتە «نرخی گشتی» ی ئەدمین پیشان دەدرێت.
+List<Map<String, dynamic>>? activePriceStations(List<Map<String, dynamic>> all) {
+  final active = all.where((s) => s['prices_active'] != false).toList();
+  return all.isNotEmpty && active.isEmpty ? null : active;
+}

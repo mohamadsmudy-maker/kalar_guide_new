@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
 import '../../services/ticker_service.dart';
+import '../../services/translation_service.dart';
 
 class AdminTickersScreen extends StatefulWidget {
   const AdminTickersScreen({super.key});
@@ -173,83 +174,67 @@ class _AdminTickersScreenState extends State<AdminTickersScreen> {
 
   Widget _buildCard(NewsTicker t, {required Key key}) {
     final isBusy = _busy == '${t.id}';
-    return Card(
+    return Container(
       key: key,
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        side: t.isActive
-            ? const BorderSide(color: Color(0xFFEF9A9A), width: 1.5)
-            : BorderSide(color: Colors.grey.shade200, width: 1.5),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: t.isActive
-              ? LinearGradient(
-                  colors: [Colors.red.shade50, Colors.white],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
+        border: Border.all(
+          color: t.isActive ? const Color(0xFFEF9A9A) : Colors.grey.shade300,
+          width: 1.5,
         ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: t.isActive ? const Color(0xFFB71C1C) : Colors.grey.shade300,
-              shape: BoxShape.circle,
-              boxShadow: t.isActive
-                  ? [BoxShadow(color: Colors.red.withValues(alpha: 0.3), blurRadius: 8)]
-                  : null,
-            ),
-            child: Icon(
-              Icons.tv_rounded,
-              color: t.isActive ? Colors.white : Colors.grey.shade600,
-              size: 22,
-            ),
-          ),
-          title: Text(
-            t.textKu.isNotEmpty ? t.textKu : '—',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: t.isActive ? Colors.black87 : Colors.grey,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              children: [
-                _langChip('ku', t.textKu),
-                const SizedBox(width: 4),
-                _langChip('ar', t.textAr),
-                const SizedBox(width: 4),
-                _langChip('en', t.textEn),
-                const SizedBox(width: 4),
-                _langChip('fa', t.textFa),
-              ],
-            ),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    t.textKu.isNotEmpty ? t.textKu : '—',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      height: 1.5,
+                      color: t.isActive ? const Color(0xFFB71C1C) : Colors.grey,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               isBusy
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     )
                   : Switch(
                       value: t.isActive,
                       activeThumbColor: const Color(0xFFB71C1C),
                       onChanged: (_) => _toggle(t),
                     ),
+            ],
+          ),
+          Row(
+            children: [
+              _langChip('ku', t.textKu),
+              const SizedBox(width: 4),
+              _langChip('ar', t.textAr),
+              const SizedBox(width: 4),
+              _langChip('en', t.textEn),
+              const SizedBox(width: 4),
+              _langChip('fa', t.textFa),
+              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.edit_rounded, size: 20),
                 color: AppColors.primary,
@@ -262,11 +247,13 @@ class _AdminTickersScreenState extends State<AdminTickersScreen> {
                 tooltip: tr('توڵی هەواڵ سڕینەوە'),
                 onPressed: () => _delete(t),
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.drag_handle_rounded, color: Colors.grey),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6),
+                child: Icon(Icons.drag_handle_rounded, color: Colors.grey),
+              ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -309,6 +296,32 @@ class _TickerEditSheetState extends State<_TickerEditSheet> {
   final _orderCtrl = TextEditingController();
   bool _isActive = true;
   bool _saving = false;
+  bool _translating = false;
+
+  /// خانە بەتاڵەکانی عەرەبی/ئینگلیزی/فارسی لە دەقە کوردییەکەوە پڕ دەکاتەوە
+  Future<void> _translate() async {
+    final ku = _kuCtrl.text.trim();
+    if (ku.isEmpty) return;
+    setState(() => _translating = true);
+    var failed = false;
+    for (final (lang, ctrl) in [('ar', _arCtrl), ('en', _enCtrl), ('fa', _faCtrl)]) {
+      if (ctrl.text.trim().isNotEmpty) continue;
+      final t = await TranslationService.tryTranslate(text: ku, targetLanguage: lang);
+      if (!mounted) return;
+      if (t == null || t.trim().isEmpty || t.trim() == ku) {
+        failed = true;
+      } else {
+        ctrl.text = t.trim();
+      }
+    }
+    setState(() => _translating = false);
+    if (failed) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(tr('هەندێک زمان وەرنەگێڕدرا. دووبارە هەوڵ بدەرەوە یان بە دەست بینووسە.')),
+      ));
+    }
+  }
 
   bool get _isEdit => widget.ticker != null;
 
@@ -401,6 +414,25 @@ class _TickerEditSheetState extends State<_TickerEditSheet> {
               ),
               const SizedBox(height: 24),
               _field(_kuCtrl, tr('دەقی تووڵ (کوردی)'), required: true, rtl: true),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _translating || _kuCtrl.text.trim().isEmpty ? null : _translate,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFB71C1C),
+                  side: const BorderSide(color: Color(0xFFEF9A9A)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: _translating
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFB71C1C)),
+                      )
+                    : const Icon(Icons.translate_rounded, size: 18),
+                label: Text(tr('وەرگێڕانی خانە بەتاڵەکان بە Gemini'),
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
               const SizedBox(height: 14),
               _field(_arCtrl, tr('دەقی تووڵ (عەرەبی)'), rtl: true),
               const SizedBox(height: 14),
@@ -416,13 +448,18 @@ class _TickerEditSheetState extends State<_TickerEditSheet> {
                 rtl: false,
               ),
               const SizedBox(height: 16),
-              SwitchListTile(
-                value: _isActive,
-                onChanged: (v) => setState(() => _isActive = v),
-                activeThumbColor: const Color(0xFFB71C1C),
-                title: Text(tr(_isActive ? 'چالاک' : 'ناچالاک'),
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                contentPadding: EdgeInsets.zero,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(tr(_isActive ? 'چالاک' : 'ناچالاک'),
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  Switch(
+                    value: _isActive,
+                    activeThumbColor: const Color(0xFFB71C1C),
+                    onChanged: (v) => setState(() => _isActive = v),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               SizedBox(

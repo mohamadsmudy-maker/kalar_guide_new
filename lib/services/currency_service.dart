@@ -84,7 +84,7 @@ class CurrencyService {
 
   static const String _subCategory = 'نوسینگەی دراو';
   static const String _stationColumns =
-      'id, name, phone, address, logo, image, currency_prices';
+      'id, name, phone, address, logo, image, currency_prices, prices_active';
 
   // ═══════════════════════════════════════════════════════════
   // 🎯 جۆرەکانی دراو — یەک سەرچاوە بۆ هەموو شوێنێک
@@ -195,20 +195,79 @@ class CurrencyService {
   // ═══════════════════════════════════════════════════════════
 
   /// نوسینگەکان دەهێنێت — سەرەتا بە sub_category، ئەگەر نەبوو بە category
+  /// تا مایگرەیشنی prices_active جێبەجێ نەکرابێت ئەم ستوونە نییە
+  static bool _hasActiveColumn = true;
+
   static Future<List<Map<String, dynamic>>> _fetchStations({
     String columns = '*',
     String? phone,
   }) async {
-    var q1 = _client.from('dukan').select(columns).eq('sub_category', _subCategory);
-    if (phone != null) q1 = q1.eq('phone', phone);
-    var res = await q1.order('name');
+    final cols = _hasActiveColumn ? columns : columns.replaceAll(', prices_active', '');
+    try {
+      var q1 = _client.from('dukan').select(cols).eq('sub_category', _subCategory);
+      if (phone != null) q1 = q1.eq('phone', phone);
+      var res = await q1.order('name');
 
-    if ((res as List).isEmpty) {
-      var q2 = _client.from('dukan').select(columns).ilike('category', '%$_subCategory%');
-      if (phone != null) q2 = q2.eq('phone', phone);
-      res = await q2.order('name');
+      if ((res as List).isEmpty) {
+        var q2 = _client.from('dukan').select(cols).ilike('category', '%$_subCategory%');
+        if (phone != null) q2 = q2.eq('phone', phone);
+        res = await q2.order('name');
+      }
+      return List<Map<String, dynamic>>.from(res as List);
+    } on PostgrestException catch (e) {
+      if (_hasActiveColumn && e.message.contains('prices_active')) {
+        _hasActiveColumn = false;
+        return _fetchStations(columns: columns, phone: phone);
+      }
+      rethrow;
     }
-    return List<Map<String, dynamic>>.from(res as List);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🔘 چالاک/ناچالاک + نرخی گشتی (تەنها ئەدمین)
+  // ═══════════════════════════════════════════════════════════
+  static const String generalName = 'نرخی گشتی کەلار';
+  static const String _generalKey = 'general_currency_prices';
+
+  /// نرخەکانی نوسینگەیەک لە لیستی هاوڵاتیان پیشان بدرێن یان نا
+  static Future<bool> setStationActive(dynamic stationId, bool active) async {
+    try {
+      final res = await _client
+          .from('dukan')
+          .update({'prices_active': active})
+          .eq('id', stationId)
+          .select('prices_active');
+      return (res as List).isNotEmpty && res.first['prices_active'] == active;
+    } catch (e) {
+      debugPrint('❌ setStationActive: $e');
+      return false;
+    }
+  }
+
+  /// {"usd": {"buy": .., "sell": .., "updated_at": ..}, ...}
+  static Future<Map<String, dynamic>> getGeneralPrices() async {
+    try {
+      final row = await _client.from('app_settings').select('value').eq('key', _generalKey).maybeSingle();
+      final v = row?['value'];
+      return v is Map ? Map<String, dynamic>.from(v) : {};
+    } catch (e) {
+      debugPrint('⚠️ general currency prices: $e');
+      return {};
+    }
+  }
+
+  static Future<bool> saveGeneralPrices(Map<String, dynamic> prices) async {
+    try {
+      final res = await _client.from('app_settings').upsert({
+        'key': _generalKey,
+        'value': prices,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).select('key');
+      return (res as List).isNotEmpty;
+    } catch (e) {
+      debugPrint('❌ save general currency prices: $e');
+      return false;
+    }
   }
 
   /// ✅ وەرگرتنی هەموو نوسینگەکانی دراو
@@ -276,14 +335,22 @@ class CurrencyService {
       'sell_price': sell,
       'updated_at': data['updated_at'],
       'unit': 'دینار',
+      if (station['is_general'] == true) 'is_general': true,
     };
   }
 
   /// ✅ وەرگرتنی نرخەکانی ئێستا — هەموو نوسینگەکان
   static Future<List<Map<String, dynamic>>> getCurrentPrices({String? currencyType}) async {
     try {
-      final stations = await _fetchStations(columns: _stationColumns);
+      final all = await _fetchStations(columns: _stationColumns);
+      final active = activePriceStations(all);
+      final stations = active ?? <Map<String, dynamic>>[];
       final list = <Map<String, dynamic>>[];
+
+      // هەموو نوسینگەکان ناچالاکن → نرخی گشتی کە ئەدمین دایناوە
+      if (active == null) {
+        stations.add({'id': null, 'name': generalName, 'currency_prices': await getGeneralPrices(), 'is_general': true});
+      }
 
       for (final station in stations) {
         final prices = station['currency_prices'];

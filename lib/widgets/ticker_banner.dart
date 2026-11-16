@@ -1,7 +1,7 @@
 // lib/widgets/ticker_banner.dart
 //
-// 📺 توڵی هەواڵی بەپەلە — TV-style red scrolling marquee.
-// Auto-hides when no active tickers; fetches on first build.
+// 📺 توڵی هەواڵی بەپەلە — دەقی سوور لە چەپەوە بۆ ڕاست دەجوڵێت وەک تەلەفزیۆن.
+// کاتێک هیچ تووڵێکی چالاک نییە خۆی دەشارێتەوە.
 
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -9,7 +9,10 @@ import '../l10n/tr.dart';
 import '../services/ticker_service.dart';
 
 class TickerBannerWidget extends StatefulWidget {
-  const TickerBannerWidget({super.key});
+  /// بۆ تێست؛ ئەگەر نەدرا لە Supabase دەهێنرێت
+  final Future<List<NewsTicker>> Function()? loader;
+
+  const TickerBannerWidget({super.key, this.loader});
 
   @override
   State<TickerBannerWidget> createState() => _TickerBannerWidgetState();
@@ -17,155 +20,127 @@ class TickerBannerWidget extends StatefulWidget {
 
 class _TickerBannerWidgetState extends State<TickerBannerWidget>
     with SingleTickerProviderStateMixin {
-  List<NewsTicker> _tickers = [];
-  bool _loaded = false;
-  String _fullText = '';
-  late AnimationController _ctrl;
+  static const _height = 42.0;
+  static const _pixelsPerSecond = 55.0;
+  static const _textStyle = TextStyle(
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+  );
+
+  late final AnimationController _ctrl = AnimationController(vsync: this);
   Timer? _refreshTimer;
-  static const _tickerHeight = 42.0;
-  static const _charsPerSec = 7.0; // scrolling speed
+  String _text = '';
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 1));
     _load();
-    // refresh every 2 minutes
     _refreshTimer = Timer.periodic(const Duration(minutes: 2), (_) => _load());
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
     _refreshTimer?.cancel();
+    _ctrl.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
-    final tickers = await TickerService.fetchActive();
+    final tickers = await (widget.loader ?? TickerService.fetchActive)();
     if (!mounted) return;
-    setState(() {
-      _tickers = tickers;
-      _loaded = true;
-      _buildText();
-    });
-  }
-
-  void _buildText() {
-    if (_tickers.isEmpty) {
-      _ctrl.stop();
-      return;
-    }
     final lang = AppLang.code;
-    final parts = _tickers.map((t) => t.textFor(lang)).where((s) => s.isNotEmpty).toList();
-    if (parts.isEmpty) {
-      _ctrl.stop();
-      return;
-    }
-    _fullText = parts.join('   ⬥   ');
-    final seconds = (_fullText.length / _charsPerSec).clamp(10.0, 300.0);
-    _ctrl.duration = Duration(milliseconds: (seconds * 1000).round());
-    _ctrl.repeat();
+    final text = tickers
+        .map((t) => t.textFor(lang).trim())
+        .where((s) => s.isNotEmpty)
+        .join('   ◆   ');
+    if (text == _text) return;
+    setState(() => _text = text);
+    if (text.isEmpty) _ctrl.stop();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded || _tickers.isEmpty || _fullText.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (_text.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      height: _tickerHeight,
+      height: _height,
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF8B0000), Color(0xFFB71C1C), Color(0xFFC62828)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFB71C1C), width: 2)),
         boxShadow: [
-          BoxShadow(
-            color: Color(0x66B71C1C),
-            blurRadius: 10,
-            spreadRadius: 2,
-            offset: Offset(0, -3),
-          ),
+          BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, -2)),
         ],
       ),
-      child: Row(
-        children: [
-          // ── Label badge ────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              color: Color(0xFF7B0000),
-              border: Border(
-                right: BorderSide(color: Color(0x55FFFFFF), width: 1),
+      // ئاڕاستەی جوڵە هەمیشە چەپ ← ڕاستە، بێ گوێدانە زمانی ئەپ
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Row(
+          children: [
+            Expanded(child: ClipRect(child: _marquee(context))),
+            Container(
+              height: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              alignment: Alignment.center,
+              color: const Color(0xFFB71C1C),
+              child: Text(
+                tr('هەواڵی بەپەلە'),
+                textDirection: AppLang.direction,
+                style: _textStyle.copyWith(fontSize: 12, fontWeight: FontWeight.w900),
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('⚡', style: TextStyle(fontSize: 13)),
-                const SizedBox(width: 5),
-                Text(
-                  tr('هەواڵی بەپەلە'),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // ── Scrolling text ─────────────────────────────────
-          Expanded(
-            child: ClipRect(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final textWidth = _measureText(_fullText);
-                  return AnimatedBuilder(
-                    animation: _ctrl,
-                    builder: (context, _) {
-                      final total = constraints.maxWidth + textWidth;
-                      // text enters from right: start = containerWidth, end = -textWidth
-                      final offset = constraints.maxWidth - _ctrl.value * total;
-                      return Transform.translate(
-                        offset: Offset(offset, 0),
-                        child: Text(
-                          _fullText,
-                          softWrap: false,
-                          maxLines: 1,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  double _measureText(String text) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-      ),
-      textDirection: TextDirection.ltr,
-      maxLines: 1,
-    )..layout(minWidth: 0, maxWidth: double.infinity);
-    return tp.width;
+  Widget _marquee(BuildContext context) {
+    final style = DefaultTextStyle.of(context).style.merge(_textStyle).copyWith(
+          color: const Color(0xFFC62828),
+        );
+    final direction = AppLang.direction;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(text: _text, style: style),
+          textDirection: direction,
+          textScaler: MediaQuery.textScalerOf(context),
+          maxLines: 1,
+        )..layout();
+        final textWidth = painter.width;
+        painter.dispose();
+
+        final travel = constraints.maxWidth + textWidth;
+        final duration = Duration(milliseconds: (travel / _pixelsPerSecond * 1000).round());
+        if (_ctrl.duration != duration || !_ctrl.isAnimating) {
+          _ctrl.duration = duration;
+          _ctrl.repeat();
+        }
+
+        return AnimatedBuilder(
+          animation: _ctrl,
+          builder: (context, child) => Transform.translate(
+            // لە دەرەوەی لای چەپەوە دێتە ژوور و لە لای ڕاستەوە دەچێتە دەر
+            offset: Offset(-textWidth + _ctrl.value * travel, 0),
+            child: child,
+          ),
+          child: OverflowBox(
+            minWidth: 0,
+            maxWidth: double.infinity,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _text,
+              key: const ValueKey('ticker-text'),
+              maxLines: 1,
+              softWrap: false,
+              textDirection: direction,
+              style: style,
+            ),
+          ),
+        );
+      },
+    );
   }
 }
