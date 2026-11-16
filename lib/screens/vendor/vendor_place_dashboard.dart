@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
+import '../../providers/news_providers.dart' show refreshNewsFeed;
 import '../../utils/place_display.dart';
 import '../admin/admin_news.dart';
 import '../stores/store_news_screen.dart';
@@ -126,6 +127,7 @@ class _VendorPlaceDashboardState extends State<VendorPlaceDashboard> {
         _toast(tr('ڕێگەت پێنەدراوە'), error: true);
       } else {
         _toast(tr('سڕایەوە'));
+        refreshNewsFeed(context);
         _loadNews();
       }
     } catch (e) {
