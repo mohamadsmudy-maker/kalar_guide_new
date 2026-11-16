@@ -19,6 +19,8 @@ import '../../services/neighborhood_service.dart';
 import '../../widgets/voice_recorder_widget.dart';
 import '../../l10n/tr.dart';
 
+import '../../widgets/ticker_banner.dart';
+
 part 'submit_complaint_ui.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -1119,6 +1121,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                   ),
                 ),
               ),
+              const TickerBannerWidget(),
             ],
           ),
         ),

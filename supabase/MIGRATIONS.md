@@ -21,6 +21,8 @@
 | 13 | `20261119_admin_stats.sql` | ئاماری ئەدمین + تۆمارکردنی گەڕانی بێناسنامە (بۆ ناوەندی کۆنترۆڵ) | ✅ |
 | 14 | `20261120_presence_and_hours.sql` | بەکارهێنەرانی چالاک بە ڕاستی دەژمێردرێن + کاتی کارکردنی شوێنەکان | ✅ |
 | 15 | `20261121_translations_fa.sql` | زیادکردنی 'fa' (فارسی) بۆ چەکی lang لە text_translations | ✅ |
+| 16 | `20261122_news_rls_fix.sql` | چارەسەری هەڵەی RLS ی هەواڵ بۆ ڤێندەرانی store_id کۆن | ✅ |
+| 17 | `20261123_news_tickers.sql` | توڵی هەواڵی بەپەلە (جەدوەلی news_tickers + RLS) | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -43,7 +45,12 @@ select
   to_regprocedure('public.get_presence_stats()')                  is not null as m14_presence_hours,
   exists (select 1 from information_schema.check_constraints where constraint_schema = 'public'
           and constraint_name = 'text_translations_lang_check'
-          and check_clause like '%fa%')                                          as m15_translations_fa;
+          and check_clause like '%fa%')                                          as m15_translations_fa,
+  -- m16: app_owns() دووبارە دروست کراوەتەوە (ئایا fallback هەیە؟)
+  exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname = 'public' and p.proname = 'app_owns'
+          and p.prosrc like '%app_users u%')                                     as m16_news_rls_fix,
+  to_regclass('public.news_tickers')                                             is not null as m17_news_tickers;
 ```
 
 ## Edge Functions (جیا لە SQL)

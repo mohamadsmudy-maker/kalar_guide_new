@@ -29,6 +29,7 @@ import 'admin_vendor_requests.dart';
 import 'admin_live_users.dart';
 import 'admin_complaint_instructions.dart';
 import 'admin_news.dart';
+import 'admin_tickers.dart';
 import 'admin_database_viewer.dart';
 import 'admin_videos.dart';
 // ✅ گەلەری ئەدمین
@@ -504,6 +505,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: tr('هەواڵەکان'),
           subtitle: tr('زیادکردن و دەستکاری هەواڵەکان'),
           screen: () => const AdminNewsScreen(),
+        ),
+        _DashItem(
+          id: 'tickers',
+          icon: Icons.tv_rounded,
+          color: const Color(0xFFB71C1C),
+          title: tr('توڵی هەواڵەکان'),
+          subtitle: tr('توڵی هەواڵی بەپەلەی تەلەفزوونی'),
+          screen: () => const AdminTickersScreen(),
         ),
         _DashItem(
           id: 'gallery',
