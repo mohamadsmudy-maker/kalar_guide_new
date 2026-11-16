@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -374,7 +373,8 @@ class _NewsCarouselState extends State<NewsCarousel>
                 else
                   _buildPlaceholder(),
 
-                // Gradient: light at the top for the chip, solid under the panel
+                // Gradient: light at the top for the chip, darker only at the
+                // very bottom so the text reads without a big box over the photo
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
@@ -384,9 +384,9 @@ class _NewsCarouselState extends State<NewsCarousel>
                         colors: [
                           Colors.black.withValues(alpha: 0.28),
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.55),
+                          Colors.black.withValues(alpha: 0.78),
                         ],
-                        stops: const [0.0, 0.38, 1.0],
+                        stops: const [0.0, 0.5, 1.0],
                       ),
                     ),
                   ),
@@ -399,66 +399,47 @@ class _NewsCarouselState extends State<NewsCarousel>
                   child: _buildTypeChip(newsType),
                 ),
 
-                // Frosted info panel: title, then publisher + time + stats
+                // Compact caption: title (2 lines max) + one small meta row
                 PositionedDirectional(
-                  start: 10,
-                  end: 10,
+                  start: 14,
+                  end: 14,
                   bottom: 10,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.42),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.14)),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              tr(title),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.start,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                height: 1.35,
-                                fontFamily: 'Rabar',
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              height: 1,
-                              color: Colors.white.withValues(alpha: 0.12),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildPublisher(
-                                    store,
-                                    _timeAgo(news['created_at']?.toString()),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                _buildStat(
-                                    Icons.visibility_rounded, _compact(views)),
-                                const SizedBox(width: 10),
-                                _buildStat(
-                                    Icons.thumb_up_rounded, _compact(likes)),
-                              ],
-                            ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        tr(title),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.start,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          height: 1.3,
+                          fontFamily: 'Rabar',
+                          shadows: [
+                            Shadow(color: Colors.black54, blurRadius: 6),
                           ],
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildPublisher(
+                              store,
+                              _timeAgo(news['created_at']?.toString()),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildStat(Icons.visibility_rounded, _compact(views)),
+                          const SizedBox(width: 10),
+                          _buildStat(Icons.thumb_up_rounded, _compact(likes)),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -529,9 +510,9 @@ class _NewsCarouselState extends State<NewsCarousel>
     return Row(
       children: [
         Container(
-          width: 32,
-          height: 32,
-          padding: const EdgeInsets.all(1.5),
+          width: 22,
+          height: 22,
+          padding: const EdgeInsets.all(1),
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
@@ -541,38 +522,39 @@ class _NewsCarouselState extends State<NewsCarousel>
                 ? CachedNetworkImage(
                     imageUrl: logo,
                     fit: BoxFit.cover,
-                    memCacheWidth: 120,
+                    memCacheWidth: 80,
                     errorWidget: (_, __, ___) => _logoFallback(name),
                   )
                 : _logoFallback(name),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      tr(name),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Rabar',
-                        height: 1.2,
-                      ),
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: tr(name),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (ago.isNotEmpty)
+                  TextSpan(
+                    text: '  •  $ago',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
-              timeText,
-            ],
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontFamily: 'Rabar', height: 1.2),
           ),
         ),
       ],
@@ -583,13 +565,13 @@ class _NewsCarouselState extends State<NewsCarousel>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 13),
+        Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 12),
         const SizedBox(width: 3),
         Text(
           text,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 11,
+            fontSize: 10.5,
             fontWeight: FontWeight.w800,
           ),
         ),

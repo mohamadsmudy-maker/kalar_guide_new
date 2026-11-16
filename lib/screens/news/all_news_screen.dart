@@ -22,6 +22,22 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
   final _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
+  /// null = هەموو. ئەمانە جۆرە ئاسایییەکانی ئەدمینن (admin_news.dart)؛ ئەگەر
+  /// هەواڵێک جۆرێکی تری هەبوو، ئەویش لە کۆتایی چیپەکان زیاد دەبێت.
+  static const List<String> _baseTypes = [
+    'هەواڵ',
+    'ئاگاداری',
+    'هۆشداری',
+    'ڕووداو',
+    'خزمەتگوزاری',
+  ];
+  String? _type;
+
+  String _typeOf(News n) {
+    final t = (n.newsType ?? '').trim();
+    return t.isEmpty ? 'هەواڵ' : t;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -83,13 +99,30 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
     final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
 
     final newsState = ref.watch(newsProvider);
-    final filteredNews = _searchQuery.isEmpty
-        ? newsState.news
-        : newsState.news.where((n) {
-      final q = _searchQuery.toLowerCase();
+    final q = _searchQuery.toLowerCase();
+    final filteredNews = newsState.news.where((n) {
+      if (_type != null && _typeOf(n) != _type) return false;
+      if (q.isEmpty) return true;
       return n.title.toLowerCase().contains(q) ||
           n.description.toLowerCase().contains(q);
     }).toList();
+
+    // فلتەر لەسەر ئەو هەواڵانەیە کە بار کراون؛ ئەگەر کەمن، پەڕەی دواتر بێنە
+    if ((_type != null || q.isNotEmpty) &&
+        filteredNews.length < 6 &&
+        newsState.hasMore &&
+        !newsState.isLoading &&
+        newsState.error == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(newsProvider.notifier).loadMore();
+      });
+    }
+
+    final types = <String>[
+      ..._baseTypes,
+      for (final t in {for (final n in newsState.news) _typeOf(n)})
+        if (!_baseTypes.contains(t)) t,
+    ];
 
     return Directionality(
       textDirection: AppLang.direction,
@@ -108,6 +141,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
         body: Column(
           children: [
             _buildSearchBar(isDark),
+            _buildTypeChips(types, isDark),
             Expanded(
               child: _buildBody(newsState, filteredNews, isDark),
             ),
@@ -168,6 +202,70 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏷️ Type chips: هەموو / هەواڵ / ئاگاداری / هۆشداری ...
+  // ═══════════════════════════════════════════════════════════
+  Widget _buildTypeChips(List<String> types, bool isDark) {
+    Widget chip(String? type) {
+      final selected = _type == type;
+      final color = type == null ? AppColors.primary : _getTypeColor(type);
+      final icon = type == null ? Icons.apps_rounded : _getTypeIcon(type);
+      return Padding(
+        padding: const EdgeInsetsDirectional.only(end: 8),
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _type = type);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected
+                  ? color
+                  : (isDark ? AppColors.darkCard : Colors.white),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: selected
+                    ? color
+                    : (isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : AppColors.border),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon,
+                    size: 15, color: selected ? Colors.white : color),
+                const SizedBox(width: 6),
+                Text(
+                  tr(type ?? 'هەموو'),
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: selected
+                        ? Colors.white
+                        : (isDark ? Colors.white70 : AppColors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+        children: [chip(null), for (final t in types) chip(t)],
       ),
     );
   }
@@ -251,7 +349,7 @@ class _AllNewsScreenState extends ConsumerState<AllNewsScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                tr(_searchQuery.isEmpty
+                tr(_searchQuery.isEmpty && _type == null
                     ? 'هیچ هەواڵێک نییە'
                     : 'هیچ هەواڵێک نەدۆزرایەوە'),
                 style: TextStyle(
