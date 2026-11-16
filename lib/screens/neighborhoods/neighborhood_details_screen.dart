@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 import 'package:provider/provider.dart';
@@ -10,6 +8,8 @@ import '../../config/settings_provider.dart';
 import '../../models/neighborhood.dart';
 import '../../utils/app_logger.dart';
 import '../stores/store_details_dialog.dart';
+import '../../widgets/neighborhoods/tap_to_open_map.dart';
+import 'neighborhood_map_screen.dart';
 import '../../l10n/tr.dart';
 import '../../utils/place_display.dart';
 
@@ -488,34 +488,32 @@ class _NeighborhoodDetailsScreenState extends State<NeighborhoodDetailsScreen> {
           count: mapped.isEmpty ? null : trf('{0} شوێن', [PlaceDisplay.digits(mapped.length)]),
         ),
         const SizedBox(height: 12),
-        Container(
+        TapToOpenMap(
+          color: color,
           height: 240,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: isDark ? Colors.white10 : Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: isDark ? Colors.black26 : color.withValues(alpha: 0.10),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
+          onOpen: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => NeighborhoodMapScreen(
+                neighborhood: n,
+                stores: _stores,
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(17),
-            child: gmaps.GoogleMap(
-              key: ValueKey('map-${mapped.length}'),
-              initialCameraPosition: gmaps.CameraPosition(target: center, zoom: 15),
-              markers: markers,
-              onMapCreated: (c) => _fitMap(c, points),
-              zoomControlsEnabled: false,
-              mapToolbarEnabled: false,
-              myLocationButtonEnabled: false,
-              // نەخشەکە دەجووڵێت بێ ئەوەی شاشەکە سکڕۆڵ بکات
-              gestureRecognizers: {
-                Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
-              },
             ),
+          ),
+          map: gmaps.GoogleMap(
+            key: ValueKey('map-${mapped.length}'),
+            initialCameraPosition: gmaps.CameraPosition(target: center, zoom: 15),
+            markers: markers,
+            onMapCreated: (c) => _fitMap(c, points),
+            // پێشاندانی نەگۆڕە — هیچ جووڵەیەک نییە، بۆ ئەوەی سکرۆڵ نەوەستێت
+            scrollGesturesEnabled: false,
+            zoomGesturesEnabled: false,
+            rotateGesturesEnabled: false,
+            tiltGesturesEnabled: false,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+            myLocationButtonEnabled: false,
+            compassEnabled: false,
           ),
         ),
       ],

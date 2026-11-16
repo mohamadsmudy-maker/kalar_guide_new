@@ -1933,4 +1933,5 @@ const Map<String, String> stringsEn = {
   '{0} خولەکی ماوە': '{0} min left',
   '{0} کاتژمێر و {1} خولەک': '{0} h {1} min',
   'نوێژی داهاتوو': 'Next prayer',
+  'کردنەوەی نەخشە': 'Open map',
 };
