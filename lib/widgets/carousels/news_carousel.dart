@@ -582,6 +582,7 @@ class _NewsCarouselState extends State<NewsCarousel>
   static const Map<String, List<String>> _agoWords = {
     'ku': ['ئێستا', 'خولەک', 'کاتژمێر', 'ڕۆژ', 'مانگ', 'ساڵ', 'لەمەوبەر'],
     'ar': ['الآن', 'دقيقة', 'ساعة', 'يوم', 'شهر', 'سنة', 'منذ'],
+    'fa': ['اکنون', 'دقیقه', 'ساعت', 'روز', 'ماه', 'سال', 'پیش'],
     'en': ['just now', 'min', 'h', 'd', 'mo', 'y', 'ago'],
   };
 

@@ -276,6 +276,7 @@ Future<void> _initDateFormatting() async {
       initializeDateFormatting('ku', null),
       initializeDateFormatting('ar', null),
       initializeDateFormatting('en', null),
+      initializeDateFormatting('fa', null),
     ]);
     AppLogger.i('✅ DateFormatting initialized');
   } catch (e) {
@@ -526,6 +527,7 @@ class KalarGuideApp extends StatelessWidget {
         Locale('ku', 'IQ'),
         Locale('ar', 'AE'),
         Locale('en', 'US'),
+        Locale('fa', 'IR'),
       ],
       theme: AppTheme.lightTheme(textTheme: lightTextTheme),
       darkTheme: AppTheme.darkTheme(textTheme: darkTextTheme),
@@ -753,6 +755,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
     final msg = switch (lang) {
       'en' => 'Press back again to exit',
       'ar' => 'اضغط رجوع مرة أخرى للخروج',
+      'fa' => 'برای خروج دوباره دکمهٔ بازگشت را بزنید',
       _ => 'بۆ دەرچوون دووبارە دوگمەی گەڕانەوە دابگرە',
     };
     scaffoldMessengerKey.currentState

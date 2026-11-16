@@ -133,7 +133,7 @@ class _DailyScreenState extends State<DailyScreen>
     },
   };
 
-  String _t(String key) => _tr[key]?[_lang] ?? _tr[key]?['ku'] ?? key;
+  String _t(String key) => trRow(_tr[key], _lang) ?? key;
 
   @override
   void initState() {
@@ -212,10 +212,10 @@ class _DailyScreenState extends State<DailyScreen>
   String _digits(String value) {
     if (_isEn) return value;
     const english = '0123456789';
-    const arabic = '٠١٢٣٤٥٦٧٨٩';
+    final localDigits = _lang == 'fa' ? '۰۱۲۳۴۵۶۷۸۹' : '٠١٢٣٤٥٦٧٨٩';
     var result = value;
     for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], arabic[i]);
+      result = result.replaceAll(english[i], localDigits[i]);
     }
     return result;
   }
@@ -287,12 +287,40 @@ class _DailyScreenState extends State<DailyScreen>
       'Dec',
     ];
 
+    const faWeekdays = [
+      'دوشنبه',
+      'سه‌شنبه',
+      'چهارشنبه',
+      'پنج‌شنبه',
+      'جمعه',
+      'شنبه',
+      'یک‌شنبه',
+    ];
+    const faMonths = [
+      'ژانویه',
+      'فوریه',
+      'مارس',
+      'آوریل',
+      'مه',
+      'ژوئن',
+      'ژوئیه',
+      'اوت',
+      'سپتامبر',
+      'اکتبر',
+      'نوامبر',
+      'دسامبر',
+    ];
+
     if (_isEn) {
       return '${enWeekdays[weekday]}, ${date.day} ${enMonths[month]} ${date.year}';
     }
     if (_isAr) {
       return _digits(
           '${arWeekdays[weekday]}، ${date.day} ${arMonths[month]} ${date.year}');
+    }
+    if (_lang == 'fa') {
+      return _digits(
+          '${faWeekdays[weekday]}، ${date.day} ${faMonths[month]} ${date.year}');
     }
     return _digits(
         '${tr(kuWeekdays[weekday])}، ${date.day}ی ${tr(kuMonths[month])} ${date.year}');

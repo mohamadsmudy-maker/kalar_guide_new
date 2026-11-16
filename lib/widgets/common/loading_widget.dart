@@ -118,7 +118,7 @@ class AppErrorWidget extends StatelessWidget {
                   onRetry!();
                 },
                 icon: const Icon(Icons.refresh_rounded),
-                label: Text(tr(retryLabel ?? _retry[lang] ?? _retry['en']!)),
+                label: Text(tr(retryLabel ?? trRow(_retry, lang)!)),
               ),
             ],
           ],

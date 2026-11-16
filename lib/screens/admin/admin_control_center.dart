@@ -666,6 +666,7 @@ class _StatsTabState extends State<_StatsTab> {
         'ku' => tr('کوردی'),
         'ar' => tr('عەرەبی'),
         'en' => tr('ئینگلیزی'),
+        'fa' => tr('فارسی'),
         _ => l,
       };
 }

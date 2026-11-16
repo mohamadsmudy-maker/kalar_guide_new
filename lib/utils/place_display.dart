@@ -150,7 +150,7 @@ class PlaceDisplay {
     final text =
         km < 1 ? '${(km * 1000).round()} م' : '${km.toStringAsFixed(1)} کم';
     if (!kurdishDigits) return text;
-    return _toKu(text);
+    return AppLang.localDigits(text, 'ku');
   }
 
   /// ئایا شوێنەکە سەر بەم بەشەیە؟ category یان sub_category، بە
@@ -165,11 +165,6 @@ class PlaceDisplay {
     return false;
   }
 
-  /// ژمارە بە پیتی زمانی ئێستا: کوردی/عەرەبی → «١٤١»، ئینگلیزی → «141»
-  static String digits(Object n) => AppLang.isRtl ? _toKu('$n') : '$n';
-
-  static String _toKu(String s) {
-    const ku = '٠١٢٣٤٥٦٧٨٩';
-    return s.replaceAllMapped(RegExp(r'\d'), (m) => ku[int.parse(m[0]!)]);
-  }
+  /// ژمارە بە پیتی زمانی ئێستا: کوردی/عەرەبی → «١٤١»، فارسی → «۱۴۱»، ئینگلیزی → «141»
+  static String digits(Object n) => AppLang.localDigits('$n');
 }

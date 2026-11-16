@@ -39,7 +39,7 @@ class KalarWidgetProvider : HomeWidgetProvider() {
     ) {
         val now = System.currentTimeMillis()
         val next = findNext(widgetData, now)
-        val kurdishDigits = widgetData.getString("digits", "0") == "1"
+        val digitMode = widgetData.getString("digits", "0") ?: "0"
         val lang = widgetData.getString("lang", "ku") ?: "ku"
         val rtl = lang != "en"
 
@@ -81,7 +81,7 @@ class KalarWidgetProvider : HomeWidgetProvider() {
                 views.setTextViewText(R.id.widget_prayer_name, name)
                 views.setTextViewText(
                     R.id.widget_prayer_time,
-                    digits(hhmm(next.millis), kurdishDigits),
+                    digits(hhmm(next.millis), digitMode),
                 )
                 val diff = next.millis - now
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -100,7 +100,7 @@ class KalarWidgetProvider : HomeWidgetProvider() {
                     views.setViewVisibility(R.id.widget_remaining, View.VISIBLE)
                     views.setTextViewText(
                         R.id.widget_remaining,
-                        "⏳ " + remaining(widgetData, diff, kurdishDigits),
+                        "⏳ " + remaining(widgetData, diff, digitMode),
                     )
                 }
                 views.setProgressBar(
@@ -148,7 +148,7 @@ class KalarWidgetProvider : HomeWidgetProvider() {
                 R.id.widget_prayer_row,
                 if (showRow) View.VISIBLE else View.GONE,
             )
-            if (showRow) bindRow(views, widgetData, next, kurdishDigits)
+            if (showRow) bindRow(views, widgetData, next, digitMode)
 
             // ویجێتی گەورە = دەقی گەورەتر
             val big = heightDp >= BIG_MIN_HEIGHT_DP
@@ -199,7 +199,7 @@ class KalarWidgetProvider : HomeWidgetProvider() {
         views: RemoteViews,
         data: SharedPreferences,
         next: Slot?,
-        kurdish: Boolean,
+        digitMode: String,
     ) {
         // دوای عیشا، کاتەکانی سبەینێ پیشان دەدرێن
         val day = next?.day ?: "d0"
@@ -207,7 +207,7 @@ class KalarWidgetProvider : HomeWidgetProvider() {
             views.setTextViewText(cell.name, data.getString("name_${cell.id}", "") ?: "")
             views.setTextViewText(
                 cell.time,
-                digits(data.getString("${day}_${cell.id}", "") ?: "", kurdish),
+                digits(data.getString("${day}_${cell.id}", "") ?: "", digitMode),
             )
             val active = next?.id == cell.id
             views.setInt(
@@ -301,24 +301,27 @@ class KalarWidgetProvider : HomeWidgetProvider() {
         }
     }
 
-    private fun remaining(data: SharedPreferences, diffMs: Long, kurdish: Boolean): String {
+    private fun remaining(data: SharedPreferences, diffMs: Long, digitMode: String): String {
         val totalMin = ((diffMs + 59_999L) / 60_000L).toInt().coerceAtLeast(1)
         val h = totalMin / 60
         val m = totalMin % 60
         return if (h > 0) {
             val tpl = data.getString("tpl_hm", "{0}:{1}") ?: "{0}:{1}"
-            digits(tpl.replace("{0}", h.toString()).replace("{1}", m.toString()), kurdish)
+            digits(tpl.replace("{0}", h.toString()).replace("{1}", m.toString()), digitMode)
         } else {
             val tpl = data.getString("tpl_min", "{0}") ?: "{0}"
-            digits(tpl.replace("{0}", m.toString()), kurdish)
+            digits(tpl.replace("{0}", m.toString()), digitMode)
         }
     }
 
-    private fun digits(s: String, kurdish: Boolean): String {
-        if (!kurdish) return s
-        val ku = "٠١٢٣٤٥٦٧٨٩"
+    private fun digits(s: String, digitMode: String): String {
+        val table = when (digitMode) {
+            "1" -> "٠١٢٣٤٥٦٧٨٩"  // Arabic-Indic (Kurdish/Arabic)
+            "2" -> "۰۱۲۳۴۵۶۷۸۹"  // Extended Arabic-Indic (Persian)
+            else -> return s
+        }
         val sb = StringBuilder()
-        for (ch in s) sb.append(if (ch in '0'..'9') ku[ch - '0'] else ch)
+        for (ch in s) sb.append(if (ch in '0'..'9') table[ch - '0'] else ch)
         return sb.toString()
     }
 

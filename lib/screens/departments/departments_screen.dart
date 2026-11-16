@@ -310,11 +310,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen>
                 fontWeight: FontWeight.w600,
               ),
               decoration: InputDecoration(
-                hintText: lang == 'ar'
-                    ? tr('ابحث عن الدوائر...')
-                    : (lang == 'en'
-                    ? 'Search departments...'
-                    : 'گەڕان بەدوای فەرمانگەکان...'),
+                hintText: tr('گەڕان بەدوای فەرمانگەکان...'),
                 hintStyle: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.white38 : Colors.grey,

@@ -48,6 +48,7 @@ class SettingsProvider extends ChangeNotifier {
     LanguageOption(id: 'ku', name: 'کوردی', native: 'کوردی', flag: '☀️'), // ئاڵای کوردستان بە LanguageFlag دەکێشرێت
     LanguageOption(id: 'ar', name: 'عەرەبی', native: 'العربية', flag: '🇮🇶'),
     LanguageOption(id: 'en', name: 'ئینگلیزی', native: 'English', flag: '🇬🇧'),
+    LanguageOption(id: 'fa', name: 'فارسی', native: 'فارسی', flag: '🇮🇷'),
   ];
 
   // ═══════════════════════════════════════════════════════════
@@ -116,6 +117,8 @@ class SettingsProvider extends ChangeNotifier {
     switch (_languageId) {
       case 'en':
         return const Locale('en', 'US');
+      case 'fa':
+        return const Locale('fa', 'IR');
       case 'ar':
       case 'ku':
       default:
@@ -127,6 +130,7 @@ class SettingsProvider extends ChangeNotifier {
     Locale('ku', 'IQ'),
     Locale('ar', 'AE'),
     Locale('en', 'US'),
+    Locale('fa', 'IR'),
   ];
 
   // ═══════════════════════════════════════════════════════════

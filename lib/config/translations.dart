@@ -1,5 +1,6 @@
 // lib/config/translations.dart
 import 'package:flutter/foundation.dart';
+import '../l10n/tr.dart';
 
 /// 🌍 وەرگێڕانەکانی ئەپ — ULTRA PRO MAX V2
 ///
@@ -22,6 +23,10 @@ class AppTranslations {
     final map = _translations[lang];
     final value = map?[key];
     if (value != null) return value;
+
+    // زمانێک کە خشتەی خۆی لێرە نییە (فارسی): دەقە کوردییەکە وەردەگێڕدرێت
+    final ku = _ku[key];
+    if (map == null && ku != null) return trTo(lang, ku);
 
     return _translations[fallbackLanguage]?[key] ?? key;
   }
@@ -72,6 +77,8 @@ class AppTranslations {
         return 'العربية';
       case 'en':
         return 'English';
+      case 'fa':
+        return 'فارسی';
       case 'ku':
       default:
         return 'کوردی';

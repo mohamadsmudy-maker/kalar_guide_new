@@ -7,7 +7,7 @@
 // Deploy:  supabase functions deploy translate-text
 // پێویستی بە هەمان GEMINI_API_KEY ی gemini-proxy هەیە.
 //
-// Request:  { "text": "...", "targetLanguage": "en" | "ar" }
+// Request:  { "text": "...", "targetLanguage": "en" | "ar" | "fa" }
 // Response: { "translation": "..." }
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
@@ -86,14 +86,14 @@ async function rpc(name: string, args: Record<string, unknown>): Promise<unknown
   }
 }
 
-const LANGS: Record<string, string> = { en: 'English', ar: 'Arabic' };
+const LANGS: Record<string, string> = { en: 'English', ar: 'Arabic', fa: 'Persian' };
 const MAX_LEN = 5000;
 
 const RULES =
   `Rules:\n` +
   `- Names of people, businesses, mosques, shops and brands: transliterate, do not translate literally.\n` +
   `- Generic words (hospital, municipality, directorate, neighborhood...) are translated.\n` +
-  `- "کەلار" is "Kalar" in English and "كلار" in Arabic.\n` +
+  `- "کەلار" is "Kalar" in English, "كلار" in Arabic, and "کلار" in Persian.\n` +
   `- Keep numbers, emojis, phone numbers and URLs unchanged.\n`;
 
 const MAX_BATCH = 50;
