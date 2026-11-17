@@ -61,6 +61,11 @@ select
 لە `supabase/functions/` دان. بۆ deploy کردن: Supabase ← **Edge Functions**، یان بە CLI:
 `supabase functions deploy <ناو>`.
 
+**ئاسانترین ڕێگا (بێ کۆپی و پەیست):** GitHub ← **Actions** ← *Deploy Supabase function* ← **Run workflow** ←
+فەنکشنەکە هەڵبژێرە. یەکجار ئەم دوو Secret ـە لە GitHub ← Settings ← Secrets and variables ← Actions دابنێ:
+`SUPABASE_ACCESS_TOKEN` (لە supabase.com/dashboard/account/tokens) و `SUPABASE_PROJECT_REF` (ناسنامەی پڕۆژە).
+ئەمە وەشانی ناو گیت دادەنێت و ئەو گۆڕانکارییانەی ڕاستەوخۆ لە داشبۆرد کراون لەسەر ئەو فەنکشنە دەسڕێتەوە.
+
 | فەنکشن | بۆ چی | نهێنی (Secrets) ی پێویست |
 |---|---|---|
 | `translate-text`، `gemini-proxy` | وەرگێڕان بە Gemini | `GEMINI_API_KEY` (هەرگیز لە ئەپەکەدا نا)؛ ئارەزوومەندانە `GEMINI_MODEL` |

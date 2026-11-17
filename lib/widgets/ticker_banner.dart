@@ -8,14 +8,15 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/tr.dart';
 import '../services/ticker_service.dart';
 
 const _red = Color(0xFFB71C1C);
 const _redDark = Color(0xFF7B0000);
 
-/// بۆ ئەوەی دایەلۆگەکە تەنها جارێک لە هەر کردنەوەی ئەپدا بە خۆکار دەربکەوێت
-bool _dialogShownThisLaunch = false;
+/// کلیلی ئەو هەواڵانەی کە پێشتر بە خۆکار پیشان دراون (SharedPreferences)
+const _seenKey = 'breaking_news_seen';
 
 /// دایەلۆگی جوانی هەواڵی بەپەلە پیشان دەدات
 Future<void> showBreakingNewsDialog(
@@ -239,7 +240,8 @@ class TickerBannerWidget extends StatefulWidget {
   /// بۆ تێست؛ ئەگەر نەدرا لە Supabase دەهێنرێت
   final Future<List<NewsTicker>> Function()? loader;
 
-  /// کاتی کردنەوەی ئەپ دایەلۆگەکە بە خۆکار دەربکەوێت (تەنها جارێک)
+  /// دایەلۆگەکە بە خۆکار دەربکەوێت — تەنها کاتێک هەواڵەکان نوێ بن؛ هەمان
+  /// هەواڵ دووبارە بە خۆکار پیشان نادرێت (کرتە لە توڵەکە هەر دەیکاتەوە)
   final bool autoDialog;
 
   const TickerBannerWidget({super.key, this.loader, this.autoDialog = true});
@@ -267,7 +269,7 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
   @override
   void initState() {
     super.initState();
-    _load(first: true);
+    _load();
     _refreshTimer = Timer.periodic(const Duration(minutes: 2), (_) => _load());
   }
 
@@ -278,7 +280,7 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
     super.dispose();
   }
 
-  Future<void> _load({bool first = false}) async {
+  Future<void> _load() async {
     final tickers = await (widget.loader ?? TickerService.fetchActive)();
     if (!mounted) return;
     final lang = AppLang.code;
@@ -290,18 +292,27 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
       _tickers = tickers;
       _text = text;
     });
-    if (text.isEmpty) _ctrl.stop();
-
-    // دایەلۆگی خۆکار — تەنها جارێک لە هەر کردنەوەی ئەپدا
-    if (first &&
-        widget.autoDialog &&
-        !_dialogShownThisLaunch &&
-        text.isNotEmpty) {
-      _dialogShownThisLaunch = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) showBreakingNewsDialog(context, _tickers);
-      });
+    if (text.isEmpty) {
+      _ctrl.stop();
+      return;
     }
+    if (widget.autoDialog) await _autoShowIfNew(tickers);
+  }
+
+  /// هەواڵی نوێ (یان گۆڕاو) → دایەلۆگ؛ هەمان هەواڵ → هیچ
+  Future<void> _autoShowIfNew(List<NewsTicker> tickers) async {
+    final signature = tickers.map((t) => '${t.id}:${t.textKu}').join('|');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getString(_seenKey) == signature) return;
+      await prefs.setString(_seenKey, signature);
+    } catch (_) {
+      // بێ پاشەکەوت: هەر پیشانی دەدەین
+    }
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) showBreakingNewsDialog(context, _tickers);
+    });
   }
 
   @override

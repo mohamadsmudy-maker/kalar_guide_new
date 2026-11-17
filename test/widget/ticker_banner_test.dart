@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kalar_guide_new/l10n/tr.dart';
 import 'package:kalar_guide_new/services/ticker_service.dart';
 import 'package:kalar_guide_new/widgets/ticker_banner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _long =
     'ئەمە دەقێکی زۆر درێژی هەواڵی بەپەلەیە کە لە پانی شاشە درێژترە و دەبێت بە تەواوی ببینرێت نەک ببڕدرێت';
@@ -73,5 +74,36 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(Dialog), findsNothing);
     await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('دایەلۆگی خۆکار: تەنها بۆ هەواڵی نوێ', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    Future<void> open(List<NewsTicker> tickers) async {
+      await _pump(tester, tickers, autoDialog: true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    Future<void> close() async {
+      await tester.tap(find.text('تێگەیشتم'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpWidget(const SizedBox());
+    }
+
+    // یەکەم جار: دەردەکەوێت
+    await open([_t('هەواڵی یەکەم')]);
+    expect(find.byType(Dialog), findsOneWidget);
+    await close();
+
+    // هەمان هەواڵ، کردنەوەی دووەم: دەرناکەوێت
+    await open([_t('هەواڵی یەکەم')]);
+    expect(find.byType(Dialog), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+
+    // هەواڵەکە گۆڕا: دووبارە دەردەکەوێت
+    await open([_t('هەواڵی نوێ')]);
+    expect(find.byType(Dialog), findsOneWidget);
+    await close();
   });
 }
