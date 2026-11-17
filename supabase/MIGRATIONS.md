@@ -25,6 +25,7 @@
 | 17 | `20261123_news_tickers.sql` | توڵی هەواڵی بەپەلە (جەدوەلی news_tickers + RLS) | ✅ |
 | 18 | `20261124_price_station_active.sql` | چالاک/ناچالاککردنی نرخی بەنزینخانە و نوسینگەی دراو (dukan.prices_active) | ✅ |
 | 19 | `20261125_breaking_news_push.sql` | ئاگاداری push بۆ هەواڵی بەپەلە (news_tickers.notified_at) | ✅ |
+| 20 | `20261126_complaint_push.sql` | ئاگاداری push بۆ ئەدمین کاتی سکاڵای نوێ (complaints.notified_at) | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -56,7 +57,9 @@ select
   exists (select 1 from information_schema.columns where table_schema = 'public'
           and table_name = 'dukan' and column_name = 'prices_active')            as m18_price_station_active,
   exists (select 1 from information_schema.columns where table_schema = 'public'
-          and table_name = 'news_tickers' and column_name = 'notified_at')       as m19_breaking_news_push;
+          and table_name = 'news_tickers' and column_name = 'notified_at')       as m19_breaking_news_push,
+  exists (select 1 from information_schema.columns where table_schema = 'public'
+          and table_name = 'complaints' and column_name = 'notified_at')         as m20_complaint_push;
 ```
 
 ## Edge Functions (جیا لە SQL)
@@ -75,7 +78,7 @@ select
 | `places-search`، `places-nearby`، `places-details` | گەڕانی شوێن | `GOOGLE_PLACES_API_KEY` |
 | `hash-password` | هاشکردنی پاسۆرد | `PASSWORD_SALT` |
 | `register-customer`، `register-vendor` | تۆمارکردن | (`SUPABASE_URL` و `SUPABASE_SERVICE_ROLE_KEY` خۆکارانە دەدرێن) |
-| `send-complaint-notification` | ئاگاداری سکاڵا (⚠️ هێشتا هیچ نانێرێت — تەنها نموونەیە) | `FIREBASE_SERVICE_ACCOUNT_KEY` |
+| `send-complaint-notification` | ئاگاداری push بۆ ئەدمین کاتی سکاڵای نوێ | `FIREBASE_SERVICE_ACCOUNT_KEY` |
 | `send-breaking-news` | ئاگاداری push بۆ هەواڵی بەپەلە | `FIREBASE_SERVICE_ACCOUNT_KEY` |
 
 نهێنییەکان: Supabase ← **Edge Functions ← Secrets**.
@@ -94,3 +97,12 @@ select
 
 هەر هەواڵێک تەنها یەکجار دەنێردرێت. وەشانی ئێستای ئەپ تەنها بۆ ئەوانە دەگات کە چوونەتە ژوورەوە؛
 لە وەشانی داهاتوودا هەموو مۆبایلەکان (میوانیش) وەری دەگرن.
+
+### 📣 ئاگاداری سکاڵای نوێ بۆ ئەدمین — یەکجار ڕێکی بخە
+
+هەمان Secret ـی `FIREBASE_SERVICE_ACCOUNT_KEY` بەکاردێت. سەرەڕای ئەوە:
+1. مایگرەیشنی ٢٠ (`20261126_complaint_push.sql`) جێبەجێ بکە.
+2. فەنکشنی `send-complaint-notification` دووبارە دابنێ (Verify JWT ناچالاک).
+3. Webhook ـێکی تر: Table `complaints` — Event: **Insert** — Type: Supabase Edge Functions ← `send-complaint-notification` ← `POST`.
+
+ئەدمین تەنها کاتێک وەری دەگرێت کە لە ئەپدا چووبێتە ژوورەوە (token ـەکەی پاشەکەوت کرابێت).
