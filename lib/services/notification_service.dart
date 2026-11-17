@@ -98,6 +98,9 @@ class NotificationService {
       // ٧. وەرگرتنی FCM Token — ✅ بێ هەڵە
       await _updateFcmToken();
 
+      // ⚡ هەواڵی بەپەلە بۆ هەموو مۆبایلەکان، میوانیش (بێ چوونەژوورەوە)
+      await _subscribeBreakingNews();
+
       // ٨. گوێگرتن لە گۆڕینی Token
       _messaging.onTokenRefresh.listen((newToken) {
         AppLogger.i('🔑 Token نوێ: $newToken');
@@ -108,6 +111,25 @@ class NotificationService {
     } catch (e) {
       AppLogger.e('❌ هەڵە لە Notification Service', e);
     }
+  }
+
+  /// هەمان ناو لە supabase/functions/send-breaking-news دا
+  static const String breakingNewsTopic = 'breaking_news';
+
+  static Future<void> _subscribeBreakingNews() async {
+    try {
+      await _messaging.subscribeToTopic(breakingNewsTopic);
+    } catch (e) {
+      AppLogger.w('⚠️ breaking news topic: $e');
+    }
+  }
+
+  /// هەمان هەواڵ هەم بە topic و هەم بە token دەگات؛ tag ـی یەکسان
+  /// وا دەکات تەنها یەک ئاگاداری پیشان بدرێت.
+  @visibleForTesting
+  static int notificationId(Map<String, dynamic> data, int fallback) {
+    final tag = data['tag'];
+    return tag is String && tag.isNotEmpty ? tag.hashCode & 0x7fffffff : fallback;
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -174,7 +196,7 @@ class NotificationService {
     if (notification == null) return;
 
     await _localNotifications.show(
-      notification.hashCode,
+      notificationId(message.data, notification.hashCode),
       notification.title,
       notification.body,
       const NotificationDetails(

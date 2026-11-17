@@ -9,3 +9,10 @@ entrypoint = "./functions/send-complaint-notification/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/send-complaint-notification/*.html" ]
+
+[functions.send-breaking-news]
+enabled = true
+# Database Webhook بانگی دەکات بێ JWT ی بەکارهێنەر. فەنکشنەکە بە notified_at
+# خۆی دەپارێزێت: هەر هەواڵێک تەنها یەکجار دەنێردرێت.
+verify_jwt = false
+entrypoint = "./functions/send-breaking-news/index.ts"

@@ -68,6 +68,17 @@ jobs:
       # that breaks shrinking (or a missing class) fails here, not on a phone.
       - run: flutter build apk --release --target-platform android-arm64
 
+  edge-functions:
+    name: Edge function tests (Node)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --experimental-strip-types --test supabase/tests/send_breaking_news.test.mjs
+
   database:
     name: Migrations & RLS tests (Postgres)
     runs-on: ubuntu-latest
