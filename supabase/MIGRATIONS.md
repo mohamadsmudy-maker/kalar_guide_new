@@ -24,6 +24,7 @@
 | 16 | `20261122_news_rls_fix.sql` | چارەسەری هەڵەی RLS ی هەواڵ بۆ ڤێندەرانی store_id کۆن | ✅ |
 | 17 | `20261123_news_tickers.sql` | توڵی هەواڵی بەپەلە (جەدوەلی news_tickers + RLS) | ✅ |
 | 18 | `20261124_price_station_active.sql` | چالاک/ناچالاککردنی نرخی بەنزینخانە و نوسینگەی دراو (dukan.prices_active) | ✅ |
+| 19 | `20261125_breaking_news_push.sql` | ئاگاداری push بۆ هەواڵی بەپەلە (news_tickers.notified_at) | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -53,7 +54,9 @@ select
           and p.prosrc like '%app_users u%')                                     as m16_news_rls_fix,
   to_regclass('public.news_tickers')                                             is not null as m17_news_tickers,
   exists (select 1 from information_schema.columns where table_schema = 'public'
-          and table_name = 'dukan' and column_name = 'prices_active')            as m18_price_station_active;
+          and table_name = 'dukan' and column_name = 'prices_active')            as m18_price_station_active,
+  exists (select 1 from information_schema.columns where table_schema = 'public'
+          and table_name = 'news_tickers' and column_name = 'notified_at')       as m19_breaking_news_push;
 ```
 
 ## Edge Functions (جیا لە SQL)
@@ -72,6 +75,22 @@ select
 | `places-search`، `places-nearby`، `places-details` | گەڕانی شوێن | `GOOGLE_PLACES_API_KEY` |
 | `hash-password` | هاشکردنی پاسۆرد | `PASSWORD_SALT` |
 | `register-customer`، `register-vendor` | تۆمارکردن | (`SUPABASE_URL` و `SUPABASE_SERVICE_ROLE_KEY` خۆکارانە دەدرێن) |
-| `send-complaint-notification` | ئاگاداری سکاڵا | `FIREBASE_SERVICE_ACCOUNT_KEY` |
+| `send-complaint-notification` | ئاگاداری سکاڵا (⚠️ هێشتا هیچ نانێرێت — تەنها نموونەیە) | `FIREBASE_SERVICE_ACCOUNT_KEY` |
+| `send-breaking-news` | ئاگاداری push بۆ هەواڵی بەپەلە | `FIREBASE_SERVICE_ACCOUNT_KEY` |
 
 نهێنییەکان: Supabase ← **Edge Functions ← Secrets**.
+
+### ⚡ ئاگاداری هەواڵی بەپەلە — یەکجار ڕێکی بخە
+
+1. مایگرەیشنی ١٩ (`20261125_breaking_news_push.sql`) جێبەجێ بکە.
+2. فەنکشنی `send-breaking-news` دابنێ (GitHub ← Actions ← *Deploy Supabase function*). ئەگەر
+   لە داشبۆردەوە دروستی دەکەیت، **Verify JWT** ناچالاک بکە.
+3. `FIREBASE_SERVICE_ACCOUNT_KEY`: Firebase ← Project settings ← **Service accounts** ←
+   *Generate new private key* ← ناوەڕۆکی تەواوی فایلە JSON ـەکە لە Supabase ← Edge Functions ← Secrets دابنێ.
+   (ئەم فایلە نهێنییە؛ بۆ کەسی مەنێرە.)
+4. Supabase ← **Database ← Webhooks** ← *Create a new hook*:
+   - Table: `news_tickers` — Events: **Insert** و **Update**
+   - Type: **Supabase Edge Functions** ← `send-breaking-news` ← Method: `POST`
+
+هەر هەواڵێک تەنها یەکجار دەنێردرێت. وەشانی ئێستای ئەپ تەنها بۆ ئەوانە دەگات کە چوونەتە ژوورەوە؛
+لە وەشانی داهاتوودا هەموو مۆبایلەکان (میوانیش) وەری دەگرن.

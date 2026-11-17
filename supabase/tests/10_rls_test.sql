@@ -310,4 +310,9 @@ exception when unique_violation then raise notice 'ok: same OSM place cannot be 
 end $$;
 set role authenticated;
 
+reset role;
+insert into news_tickers(text_ku) values ('هەواڵی نوێ');
+select t.check((select notified_at is null from news_tickers where text_ku = 'هەواڵی نوێ'), 'new breaking news is waiting for its push');
+set role authenticated;
+
 \echo 'ALL RLS TESTS PASSED'

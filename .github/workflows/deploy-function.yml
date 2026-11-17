@@ -22,6 +22,7 @@ on:
           - register-customer
           - register-vendor
           - send-complaint-notification
+          - send-breaking-news
 
 jobs:
   deploy:
