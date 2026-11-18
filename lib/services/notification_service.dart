@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/app_logger.dart';
 import 'auth_service.dart';
+import 'neighborhood_alert_service.dart';
 import '../l10n/tr.dart';
 
 /// 🔔 خزمەتگوزاری ئاگادارکردنەوە
@@ -100,6 +101,7 @@ class NotificationService {
 
       // ⚡ هەواڵی بەپەلە بۆ هەموو مۆبایلەکان، میوانیش (بێ چوونەژوورەوە)
       await _subscribeBreakingNews();
+      await NeighborhoodAlertService.resubscribeAll();
 
       // ٨. گوێگرتن لە گۆڕینی Token
       _messaging.onTokenRefresh.listen((newToken) {

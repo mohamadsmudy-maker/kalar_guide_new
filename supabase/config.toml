@@ -15,3 +15,9 @@ enabled = true
 # خۆی دەپارێزێت: هەر هەواڵێک تەنها یەکجار دەنێردرێت.
 verify_jwt = false
 entrypoint = "./functions/send-breaking-news/index.ts"
+
+[functions.send-neighborhood-alert]
+enabled = true
+# Database Webhook بانگی دەکات؛ notified_at ناردنی دووبارە ڕێگری دەکات.
+verify_jwt = false
+entrypoint = "./functions/send-neighborhood-alert/index.ts"

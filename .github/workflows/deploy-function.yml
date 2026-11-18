@@ -23,6 +23,7 @@ on:
           - register-vendor
           - send-complaint-notification
           - send-breaking-news
+          - send-neighborhood-alert
 
 jobs:
   deploy:
