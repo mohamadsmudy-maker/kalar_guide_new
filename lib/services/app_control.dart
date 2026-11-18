@@ -35,7 +35,14 @@ class AppControlState {
     this.updateMessage = '',
     this.updateUrl = '',
     this.features = const {},
+    this.official = false,
+    this.officialOrg = '',
   });
+
+  /// ئەپی فەرمیی [officialOrg] ـە؟ تەنها دوای نووسراوی فەرمی چالاک دەکرێت
+  /// (Google Play: ئەپی حکومی بەڵگەی ڕێگەپێدانی پێویستە).
+  final bool official;
+  final String officialOrg;
 
   final bool maintenance;
   final String maintenanceMessage;
@@ -106,6 +113,7 @@ class AppControlState {
     final a = obj('announcement');
     final u = obj('min_version');
     final f = obj('features');
+    final o = obj('official_status');
 
     final level = switch (str(a['level'])) {
       'warning' => AnnounceLevel.warning,
@@ -132,6 +140,8 @@ class AppControlState {
       updateMessage: str(u['message']),
       updateUrl: str(u['url']),
       features: features,
+      official: o['official'] == true && str(o['org']).isNotEmpty,
+      officialOrg: str(o['org']),
     );
   }
 }

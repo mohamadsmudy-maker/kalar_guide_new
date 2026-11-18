@@ -2111,4 +2111,10 @@ const Map<String, String> stringsEn = {
   "کۆمێنتەکە پێشتر سڕاوەتەوە": "The comment was already deleted",
   "هێشتنەوە": "Keep",
   "کۆمێنتەکە هێڵرایەوە": "The comment was kept",
+  "ئەمە ئەپی فەرمیی {0} ـە.": "This is the official app of {0}.",
+  "ئەپی فەرمی": "Official app",
+  "ئەپی فەرمییە": "This is an official app",
+  "ناوی دامەزراوە (بۆ نموونە: شارەوانیی کەلار)": "Organization name (e.g. Kalar Municipality)",
+  "⚠️ تەنها دوای وەرگرتنی نووسراوی فەرمی (بە مۆر و واژۆ) چالاکی بکە. Google Play ئەپێک کە بێ بەڵگە بڵێت فەرمییە ڕەت دەکاتەوە یان لای دەبات.": "⚠️ Turn this on only after you receive an official stamped and signed letter. Google Play rejects or removes apps that claim to be official without proof.",
+  "شارەوانیی کەلار": "Kalar Municipality",
 };
