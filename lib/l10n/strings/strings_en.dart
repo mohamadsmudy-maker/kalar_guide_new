@@ -2123,4 +2123,5 @@ const Map<String, String> stringsEn = {
   "لە سەرەوەی لیست و گەڕان دەردەکەوێت لەگەڵ نیشانەی «پێشنیارکراو». کاتێک ماوەکە تەواو بوو، خۆکار دەگەڕێتەوە.": "Shown at the top of lists and search with a \"Featured\" badge. It returns to normal automatically when the period ends.",
   "⚠️ تایبەتمەندیی «شوێنی پێشنیارکراو» لە ناوەندی کۆنترۆڵ کوژاوەتەوە، بۆیە ئێستا بۆ بەکارهێنەران دەرناکەوێت.": "⚠️ The \"Featured places\" feature is turned off in the control center, so users do not see it right now.",
   "لابردنی پێشنیارکراو": "Remove featured",
+  "تەنها ئەدمین دەتوانێت هەواڵ لە ڕێگەی شێرەوە بڵاو بکاتەوە": "Only an admin can publish news by sharing",
 };
