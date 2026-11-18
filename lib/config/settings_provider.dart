@@ -47,8 +47,8 @@ class SettingsProvider extends ChangeNotifier {
   static const List<LanguageOption> availableLanguages = [
     LanguageOption(id: 'ku', name: 'کوردی', native: 'کوردی', flag: '☀️'), // ئاڵای کوردستان بە LanguageFlag دەکێشرێت
     LanguageOption(id: 'ar', name: 'عەرەبی', native: 'العربية', flag: '🇮🇶'),
-    LanguageOption(id: 'en', name: 'ئینگلیزی', native: 'English', flag: '🇬🇧'),
     LanguageOption(id: 'fa', name: 'فارسی', native: 'فارسی', flag: '🇮🇷'),
+    LanguageOption(id: 'en', name: 'ئینگلیزی', native: 'English', flag: '🇬🇧'),
   ];
 
   // ═══════════════════════════════════════════════════════════

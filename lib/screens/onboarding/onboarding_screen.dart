@@ -1,11 +1,14 @@
 // lib/screens/onboarding/onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../config/app_colors.dart';
+import '../../config/settings_provider.dart';
 import '../../l10n/tr.dart';
+import 'language_picker_step.dart';
 
 /// 🎉 شاشەی ئۆن بۆردینگ — ULTRA PRO MAX V2
 class OnboardingScreen extends StatefulWidget {
@@ -22,7 +25,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _currentPage = 0;
   bool _isCompleting = false;
 
-  static final List<_OnboardingData> _pages = [
+  /// null = هێشتا نازانین؛ true = یەکەم جارە و زمان هەڵنەبژێردراوە
+  bool? _askLanguage;
+  String _lang = AppLang.code;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLanguage();
+  }
+
+  Future<void> _checkLanguage() async {
+    var ask = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      ask = !prefs.containsKey('language_id');
+    } catch (_) {}
+    if (mounted) setState(() => _askLanguage = ask);
+  }
+
+  void _selectLanguage(String id) {
+    setState(() => _lang = id);
+    try {
+      context.read<SettingsProvider>().setLanguage(id);
+    } catch (_) {
+      AppLang.setCode(id); // بێ Provider (تاقیکردنەوە)
+    }
+  }
+
+  Future<void> _confirmLanguage() async {
+    HapticFeedback.mediumImpact();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('language_id', _lang);
+    } catch (_) {}
+    if (mounted) setState(() => _askLanguage = false);
+  }
+
+  // getter: هەر جار بە زمانی ئێستا دروست دەبێت
+  List<_OnboardingData> get _pages => [
     _OnboardingData(
       icon: Icons.explore_rounded,
       title: tr('بەخێربێیت بۆ ڕێبەری کەلار'),
@@ -115,6 +156,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.surface;
+
+    if (_askLanguage != false) {
+      return Directionality(
+        textDirection: AppLang.direction,
+        child: Scaffold(
+          backgroundColor: bgColor,
+          body: SafeArea(
+            child: _askLanguage == null
+                ? const SizedBox.shrink()
+                : LanguagePickerStep(
+                    selected: _lang,
+                    onSelect: _selectLanguage,
+                    onContinue: _confirmLanguage,
+                  ),
+          ),
+        ),
+      );
+    }
+
     final currentColor = _pages[_currentPage].color;
 
     return Directionality(

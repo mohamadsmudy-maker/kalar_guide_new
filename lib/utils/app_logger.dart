@@ -1,6 +1,7 @@
 // lib/utils/app_logger.dart
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'error_reporter.dart';
 
 /// 📝 Logger ی پارێزراو — لە Release دا Log ناکات
 class AppLogger {
@@ -62,7 +63,11 @@ class AppLogger {
       if (error != null) debugPrint('$_red   Error: $error$_reset');
       if (st != null) debugPrint('$_red   StackTrace:\n$st$_reset');
     }
-    // TODO: ناردنی هەڵە بۆ Crashlytics / Sentry
+    // هەڵە گیراوەکان وەک «non-fatal» دەنێردرێن (هەڵەی تۆڕ نا)
+    ErrorReporter.log('ERROR: $msg');
+    if (error != null) {
+      ErrorReporter.recordError(error, st ?? StackTrace.current, reason: msg);
+    }
   }
 
   static void feature(String feature, String msg) {

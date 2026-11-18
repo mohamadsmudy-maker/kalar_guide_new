@@ -39,6 +39,10 @@ class PrayerScheduler with WidgetsBindingObserver {
   static final PrayerScheduler instance = PrayerScheduler._();
 
   static const String enabledKey = 'prayer_notif';
+
+  /// بانگ بە بنەڕەت ناچالاکە؛ تەنها دوای ئەوەی بەکارهێنەر خۆی لە
+  /// ڕێکخستنی نوێژ چالاکی بکات دەنگ دەدات.
+  static const bool enabledByDefault = false;
   static const int days = 7;
   static const int baseId = 300000; // + ڕۆژ×١٠ + ژمارەی نوێژ
   static const Duration _minGap = Duration(hours: 4);
@@ -117,7 +121,7 @@ class PrayerScheduler with WidgetsBindingObserver {
     _running = true;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final enabled = prefs.getBool(enabledKey) ?? true;
+      final enabled = prefs.getBool(enabledKey) ?? enabledByDefault;
       await PrayerNotificationService.initialize();
 
       if (!enabled) {

@@ -78,7 +78,8 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen>
     final s = await PrayerReminderSettings.load();
     if (!mounted) return;
     setState(() {
-      _notifications = p.getBool('prayer_notif') ?? true;
+      _notifications = p.getBool(PrayerScheduler.enabledKey) ??
+          PrayerScheduler.enabledByDefault;
       _friday = s.friday;
       _fridayMinutes = s.fridayMinutes;
       _ramadan = s.ramadan;
@@ -90,7 +91,7 @@ class _PrayerSettingsScreenState extends State<PrayerSettingsScreen>
 
   Future<void> _save() async {
     final p = await SharedPreferences.getInstance();
-    await p.setBool('prayer_notif', _notifications);
+    await p.setBool(PrayerScheduler.enabledKey, _notifications);
     await p.setBool(PrayerReminderSettings.kFriday, _friday);
     await p.setInt(PrayerReminderSettings.kFridayMinutes, _fridayMinutes);
     await p.setBool(PrayerReminderSettings.kRamadan, _ramadan);

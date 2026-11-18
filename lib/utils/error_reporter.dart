@@ -1,123 +1,106 @@
 // lib/utils/error_reporter.dart
+import 'dart:async';
+import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
-/// 📊 تۆمارکردنی هەڵە لە Crashlytics — Ultra Pro Max
+/// 📊 ناردنی هەڵە و تێکچوونەکان بۆ Firebase Crashlytics
+///
+/// - تەنها لە وەشانی release کار دەکات (لە debug هیچ نانێرێت).
+/// - هەڵەی تۆڕ (ئینتەرنێتی لاواز) نانێرێت، چونکە کێشەی ئەپ نین.
+/// - هیچ زانیاریی کەسی (ناو، ژمارە) نانێرێت؛ تەنها ناسنامەی بەکارهێنەر.
 class ErrorReporter {
   ErrorReporter._();
 
-  static bool _crashlyticsEnabled = false;
+  static bool _enabled = false;
 
-  // ═══════════════════════════════════════════════════════════
-  // 🚀 initialize
-  // ═══════════════════════════════════════════════════════════
-  static void initialize({bool crashlytics = true}) {
-    _crashlyticsEnabled = crashlytics && !kDebugMode;
+  /// ئایا Crashlytics چالاکە (Firebase ئامادەیە و release ـە)
+  static bool get enabled => _enabled;
 
-    if (kDebugMode) {
-      debugPrint('📊 ErrorReporter: Debug Mode — هەڵە نانێردرێت');
-      return;
-    }
-
-    if (!_crashlyticsEnabled) return;
-
+  /// دوای `Firebase.initializeApp` بانگ دەکرێت
+  static Future<void> initialize() async {
+    if (kDebugMode || Firebase.apps.isEmpty) return;
     try {
-      // Flutter Errors
-      FlutterError.onError = (details) {
-        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-        debugPrint('🔥 Crashlytics: ${details.exception}');
-      };
-
-      // Async Errors
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-
-      debugPrint('✅ Crashlytics چالاکە');
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      _enabled = true;
     } catch (e) {
       debugPrint('❌ Crashlytics init error: $e');
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🐛 recordError
-  // ═══════════════════════════════════════════════════════════
-  static Future<void> recordError(
-      dynamic error,
-      StackTrace? stackTrace, {
-        String? reason,
-        bool fatal = false,
-        Map<String, dynamic>? extras,
-      }) async {
-    if (kDebugMode) {
-      debugPrint('🐛 [Debug] $reason: $error');
-      return;
+  /// ئایا ئەم هەڵەیە شایەنی ناردنە؟ هەڵەی تۆڕ و کاتی تەواوبوو نانێردرێن.
+  @visibleForTesting
+  static bool shouldReport(Object error) {
+    if (error is SocketException ||
+        error is TimeoutException ||
+        error is HandshakeException ||
+        error is HttpException) {
+      return false;
     }
+    final s = error.toString().toLowerCase();
+    const networkHints = [
+      'socketexception',
+      'failed host lookup',
+      'connection closed',
+      'connection reset',
+      'connection refused',
+      'network is unreachable',
+      'clientexception',
+      'timed out',
+      'timeoutexception',
+      'handshakeexception',
+    ];
+    return !networkHints.any(s.contains);
+  }
 
-    if (!_crashlyticsEnabled) return;
-
+  /// هەڵەی Flutter (لە کاتی وێنەکێشانی شاشە)
+  static void recordFlutterError(FlutterErrorDetails details) {
+    if (!_enabled || !shouldReport(details.exception)) return;
     try {
-      List<String>? info;
-      if (extras != null && extras.isNotEmpty) {
-        info = extras.entries.map((e) => '${e.key}: ${e.value}').toList();
-      }
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    } catch (_) {}
+  }
 
+  /// هەڵەیەکی گشتی. [fatal] بۆ ئەو هەڵانەیە کە کەس نەیگرتوون.
+  static Future<void> recordError(
+    Object error,
+    StackTrace? stackTrace, {
+    String? reason,
+    bool fatal = false,
+  }) async {
+    if (!_enabled || !shouldReport(error)) return;
+    try {
       await FirebaseCrashlytics.instance.recordError(
         error,
         stackTrace,
         reason: reason,
         fatal: fatal,
-        information: info ?? const <String>[],
       );
-    } catch (e) {
-      debugPrint('❌ Crashlytics recordError: $e');
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // 📝 log
-  // ═══════════════════════════════════════════════════════════
-  static void log(String message, {Map<String, dynamic>? data}) {
-    if (kDebugMode) {
-      debugPrint('📝 $message ${data ?? ''}');
-      return;
-    }
-
-    if (!_crashlyticsEnabled) return;
-
-    try {
-      FirebaseCrashlytics.instance.log(message);
-      if (data != null) {
-        data.forEach((key, value) {
-          if (value is String || value is num || value is bool) {
-            FirebaseCrashlytics.instance.setCustomKey(key, value);
-          } else {
-            FirebaseCrashlytics.instance.setCustomKey(key, value.toString());
-          }
-        });
-      }
     } catch (_) {}
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 👤 setUser
-  // ═══════════════════════════════════════════════════════════
-  static Future<void> setUser({
-    required String id,
-    String? name,
-    String? phone,
-  }) async {
-    if (kDebugMode || !_crashlyticsEnabled) return;
-
+  /// تێبینییەک کە لەگەڵ ڕاپۆرتی تێکچوونی داهاتوو دەردەکەوێت
+  static void log(String message) {
+    if (!_enabled) return;
     try {
-      await FirebaseCrashlytics.instance.setUserIdentifier(id);
-      if (name != null) {
-        await FirebaseCrashlytics.instance.setCustomKey('user_name', name);
-      }
-      if (phone != null) {
-        await FirebaseCrashlytics.instance.setCustomKey('user_phone', phone);
-      }
+      FirebaseCrashlytics.instance.log(message);
+    } catch (_) {}
+  }
+
+  /// تەنها ناسنامەی بەکارهێنەر (UUID) — نەک ناو یان ژمارە
+  static Future<void> setUserId(String? id) async {
+    if (!_enabled) return;
+    try {
+      await FirebaseCrashlytics.instance.setUserIdentifier(id ?? '');
+    } catch (_) {}
+  }
+
+  static Future<void> setKey(String key, String value) async {
+    if (!_enabled) return;
+    try {
+      await FirebaseCrashlytics.instance.setCustomKey(key, value);
     } catch (_) {}
   }
 }

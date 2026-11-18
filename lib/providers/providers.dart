@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/error_reporter.dart';
 
 // ═══════════════════════════════════════════════════════════
 // 🔌 Supabase Client
@@ -221,10 +222,14 @@ class AppLogger {
   }
 
   void e(String tag, Object? message, [Object? error, StackTrace? st]) {
-    // ✅ Always log errors (even in release) — hook up Sentry/Crashlytics here
+    // ✅ Always log errors (even in release) + Crashlytics (non-fatal)
     debugPrint('❌ [$tag] $message');
     if (error != null) debugPrint('   └─ $error');
     if (st != null) debugPrint('   └─ $st');
+    if (error != null) {
+      ErrorReporter.recordError(error, st ?? StackTrace.current,
+          reason: '[$tag] $message');
+    }
   }
 }
 
