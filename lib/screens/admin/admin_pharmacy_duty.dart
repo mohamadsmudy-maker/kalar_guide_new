@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/tr.dart';
 import '../../services/pharmacy_duty_service.dart';
 import '../pharmacy/on_duty_pharmacy_screen.dart' show dutyDateLabel;
+import 'place_picker_sheet.dart';
 
 const _green = Color(0xFF059669);
 const _days = 30;
@@ -197,17 +198,8 @@ class _AddDutySheetState extends State<_AddDutySheet> {
   final _address = TextEditingController();
   final _note = TextEditingController();
   late DateTime _date = PharmacyDutyService.dutyNight(DateTime.now());
-  List<Map<String, dynamic>> _places = [];
   Map<String, dynamic>? _place;
   bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    PharmacyDutyService.pharmacyPlaces().then((p) {
-      if (mounted) setState(() => _places = p);
-    });
-  }
 
   @override
   void dispose() {
@@ -216,6 +208,15 @@ class _AddDutySheetState extends State<_AddDutySheet> {
     _address.dispose();
     _note.dispose();
     super.dispose();
+  }
+
+  Future<void> _choosePlace() async {
+    final p = await PlacePickerSheet.show(
+      context,
+      search: PharmacyDutyService.searchPlaces,
+      color: _green,
+    );
+    if (p != null) _pickPlace(p);
   }
 
   void _pickPlace(Map<String, dynamic>? p) {
@@ -299,23 +300,32 @@ class _AddDutySheetState extends State<_AddDutySheet> {
                 label: Text('${tr('شەوی')} ${dutyDateLabel(_date)}'),
               ),
               const SizedBox(height: 14),
-              if (_places.isNotEmpty) ...[
-                DropdownButtonFormField<Map<String, dynamic>?>(
-                  initialValue: _place,
-                  isExpanded: true,
-                  decoration: _dec(tr('دەرمانخانەیەک لە شوێنەکان هەڵبژێرە')),
-                  items: [
-                    DropdownMenuItem(value: null, child: Text(tr('یان بە دەست بنووسە'))),
-                    for (final p in _places)
-                      DropdownMenuItem(
-                        value: p,
-                        child: Text('${p['name'] ?? ''}', overflow: TextOverflow.ellipsis),
-                      ),
-                  ],
-                  onChanged: _pickPlace,
+              OutlinedButton.icon(
+                key: const ValueKey('pick-place'),
+                onPressed: _choosePlace,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _green,
+                  alignment: AlignmentDirectional.centerStart,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                const SizedBox(height: 14),
-              ],
+                icon: const Icon(Icons.local_pharmacy_rounded),
+                label: Text(
+                  _place == null
+                      ? tr('دەرمانخانەیەک لە شوێنەکان هەڵبژێرە')
+                      : '${_place!['name'] ?? ''}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (_place != null)
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton(
+                    onPressed: () => _pickPlace(null),
+                    child: Text(tr('یان بە دەست بنووسە')),
+                  ),
+                ),
+              const SizedBox(height: 14),
               TextField(
                 controller: _name,
                 onChanged: (_) => setState(() {}),

@@ -73,17 +73,48 @@ class PharmacyDutyService {
         .toList();
   }
 
+  /// وشەکانی «دەرمانخانە» بە شێوازە جیاوازەکانی نووسین (ە/ه، عەرەبی، ئینگلیزی)
+  static const List<String> pharmacyWords = ['دەرمان', 'ده‌رمان', 'دهرمان', 'صيدل', 'صیدل', 'pharm'];
+  static const String _placeColumns = 'id, name, phone, address, latitude, longitude';
+
+  static String _orFilter(List<String> columns) => [
+        for (final w in pharmacyWords)
+          for (final c in columns) '$c.ilike.*$w*',
+      ].join(',');
+
   /// شوێنە تۆمارکراوەکان کە دەرمانخانەن (بۆ هەڵبژاردن لە ئەدمین)
   static Future<List<Map<String, dynamic>>> pharmacyPlaces() async {
-    try {
-      final res = await _db
-          .from('dukan')
-          .select('id, name, phone, address, latitude, longitude')
-          .or('category.ilike.*دەرمانخانە*,sub_category.ilike.*دەرمانخانە*,name.ilike.*دەرمانخانە*')
-          .order('name');
+    Future<List<Map<String, dynamic>>> run(List<String> cols) async {
+      final res = await _db.from('dukan').select(_placeColumns).or(_orFilter(cols)).order('name').limit(300);
       return List<Map<String, dynamic>>.from(res as List);
+    }
+
+    try {
+      return await run(['name', 'category', 'sub_category']);
+    } on PostgrestException catch (e) {
+      // داتابەیسێک کە ستوونی sub_category ی نییە
+      debugPrint('⚠️ pharmacy places (sub_category?): ${e.message}');
+      try {
+        return await run(['name', 'category']);
+      } catch (e) {
+        debugPrint('⚠️ pharmacy places: $e');
+        return [];
+      }
     } catch (e) {
       debugPrint('⚠️ pharmacy places: $e');
+      return [];
+    }
+  }
+
+  /// گەڕان لە هەموو شوێنەکان بە ناو؛ بەتاڵ → تەنها دەرمانخانەکان
+  static Future<List<Map<String, dynamic>>> searchPlaces(String query) async {
+    final q = query.trim().replaceAll(RegExp(r'[,()*%]'), ' ').trim();
+    if (q.isEmpty) return pharmacyPlaces();
+    try {
+      final res = await _db.from('dukan').select(_placeColumns).ilike('name', '%$q%').order('name').limit(50);
+      return List<Map<String, dynamic>>.from(res as List);
+    } catch (e) {
+      debugPrint('⚠️ search places: $e');
       return [];
     }
   }

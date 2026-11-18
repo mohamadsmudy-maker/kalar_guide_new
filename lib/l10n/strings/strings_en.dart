@@ -2081,4 +2081,6 @@ const Map<String, String> stringsEn = {
   'ناردن': 'Send',
   'نەتوانرا، دووبارە هەوڵ بدەرەوە': 'Could not do it, please try again',
   'هیچ ئاگادارییەک نەنێردراوە': 'No alerts have been sent',
+  'هیچ دەرمانخانەیەک لە شوێنەکاندا نەدۆزرایەوە. ناوەکەی لە سەرەوە بنووسە.': 'No pharmacy was found among the places. Type its name above.',
+  'هیچ شوێنێک بەم ناوە نەدۆزرایەوە': 'No place with this name was found',
 };
