@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/auth_service.dart';
+import '../../services/news_share_service.dart';
 
 import '../../config/app_colors.dart';
 import '../../widgets/common/optimized_network_image.dart';
@@ -34,6 +35,10 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
   bool _isLiking = false;
   bool _isFavoriting = false;
 
+  /// null = نازانرێت (مایگرەیشنی ٢٤ نەکراوە) → تەنها ئایکۆن
+  int? _shares;
+  bool _isSharing = false;
+
   String? get _newsId => widget.newsItem['id']?.toString();
 
   // ═══════════════════════════════════════════════════════════
@@ -47,6 +52,54 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
     _checkUserStatus();
     _fetchStoreInfo();
     _incrementViews();
+    _loadShares();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📤 Share
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _loadShares() async {
+    final id = _newsId;
+    if (id == null || id.isEmpty) return;
+    final n = await NewsShareService.fetchShares(id);
+    if (mounted && n != null) setState(() => _shares = n);
+  }
+
+  Future<void> _share(BuildContext anchor) async {
+    if (_isSharing) return;
+    HapticFeedback.selectionClick();
+    setState(() => _isSharing = true);
+    final box = anchor.findRenderObject() as RenderBox?;
+    final origin = box == null || !box.hasSize
+        ? null
+        : box.localToGlobal(Offset.zero) & box.size;
+
+    final item = widget.newsItem;
+    final images = _extractAllImages(item['images'] ?? item['img']);
+    final storeName = _storeInfo?['name']?.toString();
+    final title = tr(item['title']?.toString() ?? '');
+    final text = NewsShareService.buildText(
+      title: title,
+      description: tr(item['description']?.toString() ?? ''),
+      publisher: storeName == null ? null : tr(storeName),
+    );
+
+    final shared = await NewsShareService.share(
+      text: text,
+      imageUrl: images.isEmpty ? null : images.first,
+      subject: title,
+      origin: origin,
+    );
+    final id = _newsId;
+    int? total;
+    if (shared && id != null && id.isNotEmpty) {
+      total = await NewsShareService.recordShare(id);
+    }
+    if (!mounted) return;
+    setState(() {
+      _isSharing = false;
+      if (total != null) _shares = total;
+    });
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -369,6 +422,16 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
           isDark ? Colors.white : AppColors.textPrimary,
           elevation: 0,
           centerTitle: true,
+          actions: [
+            Builder(
+              builder: (c) => IconButton(
+                key: const ValueKey('news-share-appbar'),
+                tooltip: tr('شێرکردن'),
+                onPressed: _isSharing ? null : () => _share(c),
+                icon: const Icon(Icons.share_rounded),
+              ),
+            ),
+          ],
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 30),
@@ -655,6 +718,32 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
                         : (isDark
                         ? Colors.white70
                         : AppColors.textSecondary),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Builder(
+                  builder: (c) => GestureDetector(
+                    key: const ValueKey('news-share'),
+                    onTap: _isSharing ? null : () => _share(c),
+                    child: _isSharing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : _shares == null
+                            ? Icon(Icons.share_rounded,
+                                size: 19,
+                                color: isDark
+                                    ? Colors.white70
+                                    : AppColors.textSecondary)
+                            : _buildStatItem(
+                                icon: Icons.share_rounded,
+                                value: PlaceDisplay.digits(_shares!),
+                                color: isDark
+                                    ? Colors.white70
+                                    : AppColors.textSecondary,
+                              ),
                   ),
                 ),
               ],

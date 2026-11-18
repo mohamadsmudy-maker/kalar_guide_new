@@ -2089,4 +2089,5 @@ const Map<String, String> stringsEn = {
   'وەرگێڕان': 'Translate',
   'وەرگێڕان بە Gemini': 'Translate with Gemini',
   'بەردەوامبە': 'Continue',
+  'شێرکردن': 'Share',
 };

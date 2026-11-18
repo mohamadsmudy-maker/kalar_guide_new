@@ -68,6 +68,9 @@ select t.check(t.rows($$insert into complaints(user_id) values ('00000000-0000-0
 select t.check((select count(*) from complaints) = 1, 'guest sees own complaint');
 select increment_views(id) from news where title = 'n1';
 select t.check((select views from news where title = 'n1') = 1, 'view counter works through RPC');
+select t.check((select increment_news_shares(id::text) from news where title = 'n1') = 1, 'guest share counter works through RPC');
+select t.check((select increment_news_shares(id::text) from news where title = 'n1') = 2, 'share counter returns the new total');
+select t.check(t.rows($$update news set shares = 100$$) = 0, 'guest cannot set shares directly');
 select increment_event_views('1');
 select t.check((select views from events where id = 1) = 1, 'event view counter works');
 select t.check(not exists (select 1 from app_current_user()), 'no session -> no profile');
