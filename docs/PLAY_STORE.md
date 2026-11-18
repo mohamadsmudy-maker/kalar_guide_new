@@ -50,6 +50,8 @@ firebase crashlytics:symbols:upload --app=<FIREBASE_ANDROID_APP_ID> symbols\v1.0
 
 ## ٣) لاپەڕەی ئەپ (Store listing)
 
+> ✅ ئامادەیە: دەقەکان بە سێ زمان لە [`docs/play-store/STORE_LISTING.md`](play-store/STORE_LISTING.md)، وێنەی سەرەکی لە `docs/play-store/feature_graphic_*.png`، و وەڵامی Data safety / App content لە [`docs/play-store/DATA_SAFETY.md`](play-store/DATA_SAFETY.md).
+
 | شت | پێداویستی |
 |---|---|
 | ناوی ئەپ | ≤ 30 پیت |
@@ -57,7 +59,7 @@ firebase crashlytics:symbols:upload --app=<FIREBASE_ANDROID_APP_ID> symbols\v1.0
 | وەسفی تەواو | ≤ 4000 پیت |
 | ناوی ئەپ (پێشنیار) | `ڕێبەری کەلار – Kalar Guide` |
 | ئایکۆن | `assets/branding/play_icon_512.png` (ئامادەیە؛ بۆ گۆڕین: `app_icon_1024.png` بگۆڕە و `python3 tool/make_icons.py` لێبدە) |
-| Feature graphic | ١٠٢٤×٥٠٠ |
+| Feature graphic | `docs/play-store/feature_graphic_ku.png` (١٠٢٤×٥٠٠) |
 | وێنەی شاشە | کەمتر نەبێت لە ٢ (٤-٨ باشە)، تاقیکردنەوە لەسەر مۆبایل |
 
 ## ٤) URL ەکان (Play دەیانخوازێت)
