@@ -2088,4 +2088,5 @@ const Map<String, String> stringsEn = {
   'دەقی ئێستای ئەو زمانانە دەگۆڕدرێت.': 'The current text of those languages will be replaced.',
   'وەرگێڕان': 'Translate',
   'وەرگێڕان بە Gemini': 'Translate with Gemini',
+  'بەردەوامبە': 'Continue',
 };

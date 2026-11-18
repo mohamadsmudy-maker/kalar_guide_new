@@ -22,7 +22,7 @@ class AppLang {
   static String _code = 'ku';
 
   /// زمانەکانی ئەپ
-  static const List<String> supported = ['ku', 'ar', 'en', 'fa'];
+  static const List<String> supported = ['ku', 'ar', 'fa', 'en'];
 
   /// زمانەکانی وەرگێڕان (هەموو جگە لە کوردی کە زمانی سەرچاوەیە)
   static const List<String> targets = ['en', 'ar', 'fa'];
