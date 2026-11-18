@@ -26,6 +26,9 @@
 | 18 | `20261124_price_station_active.sql` | چالاک/ناچالاککردنی نرخی بەنزینخانە و نوسینگەی دراو (dukan.prices_active) | ✅ |
 | 19 | `20261125_breaking_news_push.sql` | ئاگاداری push بۆ هەواڵی بەپەلە (news_tickers.notified_at) | ✅ |
 | 20 | `20261126_complaint_push.sql` | ئاگاداری push بۆ ئەدمین کاتی سکاڵای نوێ (complaints.notified_at) | ✅ |
+| 21 | `20261127_pharmacy_duty.sql` | دەرمانخانەی ئێشکگر (خشتەی pharmacy_duty) | ✅ |
+| 22 | `20261128_complaint_status_push.sql` | ئاگادارکردنەوەی هاوڵاتی کاتی گۆڕانی دۆخی سکاڵاکەی (complaints.status_notified) | ✅ |
+| 23 | `20261129_neighborhood_alerts.sql` | ئاگاداریی گەڕەک (خشتەی neighborhood_alerts) | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -59,7 +62,11 @@ select
   exists (select 1 from information_schema.columns where table_schema = 'public'
           and table_name = 'news_tickers' and column_name = 'notified_at')       as m19_breaking_news_push,
   exists (select 1 from information_schema.columns where table_schema = 'public'
-          and table_name = 'complaints' and column_name = 'notified_at')         as m20_complaint_push;
+          and table_name = 'complaints' and column_name = 'notified_at')         as m20_complaint_push,
+  to_regclass('public.pharmacy_duty')                                            is not null as m21_pharmacy_duty,
+  exists (select 1 from information_schema.columns where table_schema = 'public'
+          and table_name = 'complaints' and column_name = 'status_notified')     as m22_complaint_status_push,
+  to_regclass('public.neighborhood_alerts')                                      is not null as m23_neighborhood_alerts;
 ```
 
 ## Edge Functions (جیا لە SQL)
@@ -78,8 +85,9 @@ select
 | `places-search`، `places-nearby`، `places-details` | گەڕانی شوێن | `GOOGLE_PLACES_API_KEY` |
 | `hash-password` | هاشکردنی پاسۆرد | `PASSWORD_SALT` |
 | `register-customer`، `register-vendor` | تۆمارکردن | (`SUPABASE_URL` و `SUPABASE_SERVICE_ROLE_KEY` خۆکارانە دەدرێن) |
-| `send-complaint-notification` | ئاگاداری push بۆ ئەدمین کاتی سکاڵای نوێ | `FIREBASE_SERVICE_ACCOUNT_KEY` |
+| `send-complaint-notification` | سکاڵای نوێ → ئەدمین؛ گۆڕانی دۆخ → هاوڵاتی | `FIREBASE_SERVICE_ACCOUNT_KEY` |
 | `send-breaking-news` | ئاگاداری push بۆ هەواڵی بەپەلە | `FIREBASE_SERVICE_ACCOUNT_KEY` |
+| `send-neighborhood-alert` | ئاگاداری push بۆ گەڕەکێک | `FIREBASE_SERVICE_ACCOUNT_KEY` |
 
 نهێنییەکان: Supabase ← **Edge Functions ← Secrets**.
 
@@ -103,6 +111,16 @@ select
 هەمان Secret ـی `FIREBASE_SERVICE_ACCOUNT_KEY` بەکاردێت. سەرەڕای ئەوە:
 1. مایگرەیشنی ٢٠ (`20261126_complaint_push.sql`) جێبەجێ بکە.
 2. فەنکشنی `send-complaint-notification` دووبارە دابنێ (Verify JWT ناچالاک).
-3. Webhook ـێکی تر: Table `complaints` — Event: **Insert** — Type: Supabase Edge Functions ← `send-complaint-notification` ← `POST`.
+3. Webhook ـێکی تر: Table `complaints` — Events: **Insert** و **Update** — Type: Supabase Edge Functions ← `send-complaint-notification` ← `POST`.
+   (Update بۆ ئاگادارکردنەوەی هاوڵاتی کاتی گۆڕانی دۆخ؛ مایگرەیشنی ٢٢ پێویستە.)
 
 ئەدمین تەنها کاتێک وەری دەگرێت کە لە ئەپدا چووبێتە ژوورەوە (token ـەکەی پاشەکەوت کرابێت).
+هاوڵاتیش تەنها ئەگەر لە کاتی ناردنی سکاڵاکەدا چووبێتە ژوورەوە.
+
+### 📍 ئاگاداریی گەڕەک — یەکجار ڕێکی بخە
+
+1. مایگرەیشنی ٢٣ (`20261129_neighborhood_alerts.sql`) جێبەجێ بکە.
+2. فەنکشنی `send-neighborhood-alert` دابنێ (Verify JWT ناچالاک).
+3. Webhook: Table `neighborhood_alerts` — Event: **Insert** — `send-neighborhood-alert` ← `POST`.
+
+هاوڵاتی لە شاشەی گەڕەکەکەیدا ئاگادارییەکان چالاک دەکات (پێویستی بە وەشانی نوێی ئەپە).

@@ -19,9 +19,13 @@ globalThis.Deno = { env: { get: (k) => env[k] }, serve: () => {} };
 let state;
 beforeEach(() => {
   state = {
-    complaint: { id: 12, title: 'خۆڵ و خاشاک', neighborhood_name: 'ئازادی', notified_at: null },
+    complaint: {
+      id: 12, title: 'خۆڵ و خاشاک', neighborhood_name: 'ئازادی', user_id: '4',
+      status: 'pending', status_notified: 'pending', notified_at: null,
+    },
     admins: [{ fcm_token: 'adm-1' }, { fcm_token: 'adm-1' }, { fcm_token: 'adm-2' }],
-    adminQuery: null,
+    citizen: [{ fcm_token: 'cit-4' }],
+    queries: [],
     fcm: [],
     fcmStatus: 200,
   };
@@ -35,58 +39,80 @@ globalThis.fetch = async (url, init = {}) => {
     state.fcm.push(JSON.parse(init.body).message);
     return res({}, state.fcmStatus);
   }
-  const path = u.pathname;
-  if (path === '/rest/v1/complaints' && init.method === 'PATCH') {
+  const q = Object.fromEntries(u.searchParams);
+  const c = state.complaint;
+  const method = init.method ?? 'GET';
+  if (u.pathname === '/rest/v1/complaints' && method === 'GET') return res(q.id === `eq.${c.id}` ? [c] : []);
+  if (u.pathname === '/rest/v1/complaints' && method === 'PATCH') {
     const patch = JSON.parse(init.body);
-    if (patch.notified_at === null) {
-      state.complaint.notified_at = null;
-      return res([]);
-    }
-    const c = state.complaint;
-    if (u.searchParams.get('id') !== `eq.${c.id}` || c.notified_at !== null) return res([]);
-    c.notified_at = patch.notified_at;
+    if (q.id !== `eq.${c.id}`) return res([]);
+    const matches = Object.entries(q).every(([k, v]) => {
+      if (k === 'id') return true;
+      if (v === 'is.null') return c[k] === null;
+      if (v.startsWith('eq.')) return String(c[k]) === decodeURIComponent(v.slice(3));
+      return true;
+    });
+    if (!matches) return res([]);
+    Object.assign(c, patch);
     return res([c]);
   }
-  if (path === '/rest/v1/app_users' && (init.method ?? 'GET') === 'GET') {
-    state.adminQuery = Object.fromEntries(u.searchParams);
-    return res(state.admins);
+  if (u.pathname === '/rest/v1/app_users' && method === 'GET') {
+    state.queries.push(q);
+    if (q.role === 'eq.admin') return res(state.admins);
+    if (q.id === 'eq.4') return res(state.citizen);
+    return res([]);
   }
   throw new Error('unexpected fetch ' + url);
 };
 
-const { handle } = await import('../functions/send-complaint-notification/index.ts');
+const { handle, STATUS_TEXT } = await import('../functions/send-complaint-notification/index.ts');
 const call = (body) => handle(new Request('https://fn.test', { method: 'POST', body: JSON.stringify(body) }));
+const tokens = () => state.fcm.map((m) => m.token).sort();
 
-test('new complaint → every approved admin, once', async () => {
+test('new complaint → every approved admin once; citizen not told about "pending"', async () => {
   const r = await call({ type: 'INSERT', table: 'complaints', record: { id: 12 } });
   const out = await r.json();
   assert.equal(r.status, 200, JSON.stringify(out));
-  assert.equal(state.adminQuery.role, 'eq.admin');
-  assert.equal(state.adminQuery.is_approved, 'eq.true');
-  assert.deepEqual(state.fcm.map((m) => m.token).sort(), ['adm-1', 'adm-2']);
+  assert.deepEqual(tokens(), ['adm-1', 'adm-2']);
   assert.equal(state.fcm[0].notification.body, 'خۆڵ و خاشاک — ئازادی');
-  assert.equal(state.fcm[0].data.complaint_id, '12');
   assert.equal(state.fcm[0].android.notification.tag, 'complaint-12');
-  assert.deepEqual(out, { sent: 2, failed: 0, removedTokens: 0 });
+  assert.deepEqual(out.admins, { sent: 2, failed: 0, removedTokens: 0 });
+  assert.match(out.citizen.skipped, /unchanged/);
 
   state.fcm = [];
-  const again = await (await call({ id: 12 })).json();
-  assert.match(again.skipped, /already sent/);
-  assert.equal(state.fcm.length, 0);
+  await call({ id: 12 });
+  assert.equal(state.fcm.length, 0, 'second call sends nothing');
 });
 
-test('no admin with notifications → nothing sent, no error', async () => {
-  state.admins = [];
+test('status change → only the citizen who sent it, once', async () => {
+  state.complaint.notified_at = '2026-11-18T10:00:00Z';
+  state.complaint.status = 'completed';
+  const out = await (await call({ type: 'UPDATE', record: { id: 12 } })).json();
+  assert.deepEqual(tokens(), ['cit-4']);
+  assert.equal(state.fcm[0].notification.body, STATUS_TEXT.completed);
+  assert.equal(state.fcm[0].data.status, 'completed');
+  assert.equal(out.citizen.sent, 1);
+  assert.equal(state.complaint.status_notified, 'completed');
+
+  state.fcm = [];
+  await call({ id: 12 });
+  assert.equal(state.fcm.length, 0, 'same status is not sent twice');
+});
+
+test('complaint sent by a guest → nobody to tell', async () => {
+  Object.assign(state.complaint, { notified_at: 'x', status: 'rejected', user_id: null });
   const out = await (await call({ record: { id: 12 } })).json();
-  assert.equal(out.sent, 0);
+  assert.match(out.citizen.skipped, /guest/);
   assert.equal(state.fcm.length, 0);
 });
 
-test('Firebase failure → claim released for a retry', async () => {
+test('Firebase failure → both claims released for a retry', async () => {
   state.fcmStatus = 500;
+  state.complaint.status = 'approved';
   const r = await call({ record: { id: 12 } });
   assert.equal(r.status, 502);
   assert.equal(state.complaint.notified_at, null);
+  assert.equal(state.complaint.status_notified, 'pending');
 });
 
 test('missing Firebase key → clear error', async () => {

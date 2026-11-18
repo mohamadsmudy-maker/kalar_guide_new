@@ -30,6 +30,8 @@ import 'admin_live_users.dart';
 import 'admin_complaint_instructions.dart';
 import 'admin_news.dart';
 import 'admin_tickers.dart';
+import 'admin_pharmacy_duty.dart';
+import 'admin_neighborhood_alerts.dart';
 import 'admin_database_viewer.dart';
 import 'admin_videos.dart';
 // ✅ گەلەری ئەدمین
@@ -601,6 +603,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: tr('فریاکەوتن'),
           subtitle: tr('ژمارەکانی فریاکەوتن'),
           screen: () => const AdminEmergencyServicesScreen(),
+        ),
+        _DashItem(
+          id: 'pharmacy_duty',
+          icon: Icons.local_pharmacy_rounded,
+          color: const Color(0xFF059669),
+          title: tr('دەرمانخانەی ئێشکگر'),
+          subtitle: tr('خشتەی دەرمانخانە ئێشکگرەکان'),
+          screen: () => const AdminPharmacyDutyScreen(),
+        ),
+        _DashItem(
+          id: 'neighborhood_alerts',
+          icon: Icons.campaign_rounded,
+          color: blue,
+          title: tr('ئاگاداریی گەڕەکەکان'),
+          subtitle: tr('بڕینی ئاو، کارەبا... بۆ گەڕەکێک'),
+          screen: () => const AdminNeighborhoodAlertsScreen(),
         ),
         _DashItem(
           id: 'fuel',
