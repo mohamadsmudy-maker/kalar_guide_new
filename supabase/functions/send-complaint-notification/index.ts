@@ -1,93 +1,70 @@
 // supabase/functions/send-complaint-notification/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+//
+// 📣 ئاگاداری push بۆ ئەدمینەکان کاتێک سکاڵایەکی نوێ دێت.
+// Database Webhook (Insert لەسەر complaints) ئەم فەنکشنە بانگ دەکات.
+// هەر سکاڵایەک تەنها یەکجار دەنێردرێت: complaints.notified_at وەک «قفڵ» بەکاردێت.
+// دەنێردرێت بۆ fcm_token ـی هەموو ئەدمینە پەسەندکراوەکان.
+import {
+  clearTokens, json, loadServiceAccount, recordId, sendFcm, supabaseRest, uniqueTokens,
+} from '../_shared/fcm.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-};
+const TITLE = '📣 سکاڵای نوێ';
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+export async function handle(req: Request): Promise<Response> {
+  const db = supabaseRest();
+  if (!db) return json({ error: 'supabase env missing' }, 500);
+
+  const id = await recordId(req);
+  if (id == null) return json({ error: 'complaint id required' }, 400);
+
+  const sa = loadServiceAccount(Deno.env.get('FIREBASE_SERVICE_ACCOUNT_KEY'));
+  if (!sa) return json({ error: 'FIREBASE_SERVICE_ACCOUNT_KEY is missing or invalid' }, 500);
+
+  // قفڵ: هەر سکاڵایەک تەنها یەکجار
+  const claim = await db(`complaints?id=eq.${id}&notified_at=is.null`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ notified_at: new Date().toISOString() }),
+  });
+  if (!claim.ok) return json({ error: `db ${claim.status}`, detail: (await claim.text()).slice(0, 200) }, 500);
+  const rows = await claim.json();
+  if (!Array.isArray(rows) || rows.length === 0) return json({ skipped: 'already sent or not found' });
+  const c = rows[0];
+
+  const unclaim = () =>
+    db(`complaints?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ notified_at: null }) });
 
   try {
-    const { complaintId } = await req.json();
-
-    if (!complaintId) {
-      return new Response(
-        JSON.stringify({ error: 'complaintId پێویستە' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-
-    const admin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    const adminsRes = await db(
+      'app_users?select=fcm_token&role=eq.admin&is_approved=eq.true&fcm_token=not.is.null',
     );
+    const tokens = uniqueTokens(adminsRes.ok ? await adminsRes.json() : []);
+    if (tokens.length === 0) return json({ sent: 0, skipped: 'no admin has notifications on' });
 
-    // ✅ هێنانی سکاڵا
-    const { data: complaint, error } = await admin
-      .from('complaints')
-      .select('*')
-      .eq('id', complaintId)
-      .maybeSingle();
+    const parts = [c.title, c.neighborhood_name].map((s) => String(s ?? '').trim()).filter(Boolean);
+    const body = parts.length ? parts.join(' — ') : 'سکاڵایەکی نوێ گەیشت';
+    const tag = `complaint-${c.id}`;
+    const result = await sendFcm(sa, tokens.map((token) => ({
+      token,
+      notification: { title: TITLE, body },
+      data: { type: 'complaint', complaint_id: String(c.id), tag },
+      android: {
+        priority: 'HIGH',
+        notification: { tag, channel_id: 'high_importance_channel', sound: 'default' },
+      },
+    })));
+    await clearTokens(db, result.invalidTokens);
 
-    if (error || !complaint) {
-      return new Response(
-        JSON.stringify({ error: 'سکاڵا نەدۆزرایەوە' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+    if (result.sent === 0 && result.invalidTokens.length < tokens.length) {
+      await unclaim();
+      return json({ error: 'nothing was delivered', failed: result.failed }, 502);
     }
-
-    // ✅ FCM Token هەموو ئەدمینەکان
-    const { data: admins } = await admin
-      .from('app_users')
-      .select('fcm_token')
-      .eq('role', 'admin')
-      .eq('is_approved', true)
-      .not('fcm_token', 'is', null);
-
-    if (!admins || admins.length === 0) {
-      return new Response(
-        JSON.stringify({ success: true, sent: 0, message: 'هیچ ئەدمینێک نییە' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-
-    const tokens = admins
-      .map((a: any) => a.fcm_token)
-      .filter((t: string) => t && t.length > 0);
-
-    // ✅ ناردنی FCM بە HTTP v1
-    // ⚠️ پێویستە FIREBASE_SERVICE_ACCOUNT_KEY دانرابێت
-    const firebaseKey = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_KEY');
-    if (!firebaseKey) {
-      console.warn('FIREBASE_SERVICE_ACCOUNT_KEY دانەنراوە');
-      return new Response(
-        JSON.stringify({ success: false, sent: 0, message: 'FCM ناکارا' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-
-    // ⚠️ ئەمە تەنها نموونەیە — پێویستە Firebase SDK ی تەواو بەکاربهێنیت
-    // بۆ سادەیی، تەنها success دەگەڕێنینەوە
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        sent: tokens.length,
-        message: `${tokens.length} ئاگاداری نێردرا`,
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    return json({ sent: result.sent, failed: result.failed, removedTokens: result.invalidTokens.length });
   } catch (e) {
-    console.error('Exception:', e);
-    return new Response(
-      JSON.stringify({ error: 'هەڵەی ناوخۆیی' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    console.error('send-complaint-notification:', e);
+    await unclaim();
+    return json({ error: String(e).slice(0, 200) }, 500);
   }
-});
+}
+
+Deno.serve(handle);

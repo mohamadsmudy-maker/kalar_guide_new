@@ -313,6 +313,8 @@ set role authenticated;
 reset role;
 insert into news_tickers(text_ku) values ('هەواڵی نوێ');
 select t.check((select notified_at is null from news_tickers where text_ku = 'هەواڵی نوێ'), 'new breaking news is waiting for its push');
+insert into complaints(user_id) values ('push-test');
+select t.check((select notified_at is null from complaints where user_id = 'push-test'), 'new complaint is waiting for its push');
 set role authenticated;
 
 \echo 'ALL RLS TESTS PASSED'

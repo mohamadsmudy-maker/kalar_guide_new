@@ -77,7 +77,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --experimental-strip-types --test supabase/tests/send_breaking_news.test.mjs
+      - run: node --experimental-strip-types --test supabase/tests/*.test.mjs
 
   database:
     name: Migrations & RLS tests (Postgres)
