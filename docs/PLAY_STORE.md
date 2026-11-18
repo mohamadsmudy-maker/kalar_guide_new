@@ -19,14 +19,28 @@ Play تەنها **`.aab`** وەردەگرێت (نەک APK). لە PowerShell:
 ```powershell
 flutter pub get
 flutter build appbundle --release `
-  --obfuscate --split-debug-info=symbols\v1.1.0+2 `
+  --obfuscate --split-debug-info=symbols\v1.0.0+1 `
   --dart-define=SUPABASE_URL=... `
   --dart-define=SUPABASE_ANON_KEY=... `
   --dart-define=GOOGLE_WEB_CLIENT_ID=...
 ```
 
 فایلەکە لێرە دروست دەبێت: `build\app\outputs\bundle\release\app-release.aab`.
-**پۆشەی `symbols\v1.1.0+2` هەڵبگرە** — بۆ خوێندنەوەی Crash ـەکان پێویستە (`flutter symbolize`).
+**پۆشەی `symbols\v1.0.0+1` هەڵبگرە** — بۆ خوێندنەوەی Crash ـەکان پێویستە (`flutter symbolize`).
+
+### Crashlytics (ڕاپۆرتی تێکچوون)
+
+ئەپەکە لە وەشانی release هەڵە و تێکچوونەکان خۆکار بۆ Firebase Crashlytics دەنێرێت
+(هەڵەی ئینتەرنێتی لاواز نانێرێت؛ هیچ ناو و ژمارەیەک نانێرێت، تەنها ناسنامەی هەژمار).
+
+1. Firebase Console ← **Crashlytics** ← ئەپی Android هەڵبژێرە ← ئەگەر دوگمەی **Enable** هەبوو، دای بگرە.
+2. یەکەم ڕاپۆرت دوای کردنەوەی دووەمی ئەپ دەردەکەوێت (ڕاپۆرتەکە لە کردنەوەی داهاتوودا دەنێردرێت).
+3. چونکە بە `--obfuscate` بیلد دەکرێت، بۆ ئەوەی ناوی فەنکشنەکان بە خوێندراوەیی ببینیت، symbols بار بکە
+   (پێویستی بە [Firebase CLI](https://firebase.google.com/docs/cli) هەیە؛ App ID لە Firebase ← Project settings):
+
+```powershell
+firebase crashlytics:symbols:upload --app=<FIREBASE_ANDROID_APP_ID> symbols\v1.0.0+1
+```
 
 ## ٢) دروستکردنی ئەپ لە Play Console
 

@@ -69,6 +69,7 @@ import 'services/local_favorites.dart';
 import 'services/cache_service.dart';
 import 'services/notification_service.dart';
 import 'utils/app_logger.dart';
+import 'utils/error_reporter.dart';
 import 'utils/kurdish_localizations.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -139,6 +140,7 @@ Future<void> main() async {
     (error, stack) {
       AppLogger.e('🔥 Uncaught zone error', error);
       AppLogger.d('$stack');
+      ErrorReporter.recordError(error, stack, fatal: true);
     },
   );
 }
@@ -150,11 +152,13 @@ void _installErrorHandlers() {
       '🔥 FlutterError: ${details.exceptionAsString()}',
       details.exception,
     );
+    ErrorReporter.recordFlutterError(details);
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
     AppLogger.e('🔥 Platform error', error);
     AppLogger.d('$stack');
+    ErrorReporter.recordError(error, stack, fatal: true);
     return true;
   };
 
@@ -202,6 +206,7 @@ Future<void> _start() async {
   // ✅ ئاگادارکردنەوە و تۆکنی push دوای دەرکەوتنی ئەپ — نەک پێشی
   // (پێشتر تا ١٠ چرکە زیاتر شاشەی سپلاش دەمایەوە لە ئینتەرنێتی خراپدا)
   unawaited(_initPushLate());
+  _trackCrashContext();
   unawaited(LocalFavorites.ensureLoaded());
   unawaited(PresenceService.start()); // بەکارهێنەرانی چالاک
   PrayerScheduler.instance.start(); // بانگەکانی ٧ ڕۆژی داهاتوو ڕێک دەخاتەوە
@@ -239,6 +244,18 @@ Future<void> _bootstrap() async {
   ]);
 
   await _initSession();
+}
+
+/// ناسنامەی بەکارهێنەر و زمان بۆ ڕاپۆرتەکانی Crashlytics (بێ ناو و ژمارە)
+void _trackCrashContext() {
+  if (!ErrorReporter.enabled) return;
+  try {
+    final auth = Supabase.instance.client.auth;
+    unawaited(ErrorReporter.setUserId(auth.currentUser?.id));
+    auth.onAuthStateChange
+        .listen((s) => ErrorReporter.setUserId(s.session?.user.id));
+    unawaited(ErrorReporter.setKey('lang', AppLang.code));
+  } catch (_) {}
 }
 
 bool _pushInitDone = false;
@@ -324,6 +341,7 @@ Future<void> _initFirebase() async {
   try {
     await Firebase.initializeApp().timeout(_kInitTimeout);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    await ErrorReporter.initialize();
     AppLogger.i('✅ Firebase initialized');
   } catch (e) {
     AppLogger.w('⚠️ Firebase init failed: $e');
