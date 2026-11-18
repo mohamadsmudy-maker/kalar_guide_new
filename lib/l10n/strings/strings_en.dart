@@ -2083,4 +2083,9 @@ const Map<String, String> stringsEn = {
   'هیچ ئاگادارییەک نەنێردراوە': 'No alerts have been sent',
   'هیچ دەرمانخانەیەک لە شوێنەکاندا نەدۆزرایەوە. ناوەکەی لە سەرەوە بنووسە.': 'No pharmacy was found among the places. Type its name above.',
   'هیچ شوێنێک بەم ناوە نەدۆزرایەوە': 'No place with this name was found',
+  'وەرگێڕان بۆ کام زمان؟': 'Translate into which languages?',
+  'دەقی هەیە': 'Already has text',
+  'دەقی ئێستای ئەو زمانانە دەگۆڕدرێت.': 'The current text of those languages will be replaced.',
+  'وەرگێڕان': 'Translate',
+  'وەرگێڕان بە Gemini': 'Translate with Gemini',
 };

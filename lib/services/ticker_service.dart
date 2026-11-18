@@ -47,20 +47,18 @@ class NewsTicker {
 class TickerService {
   static final _db = Supabase.instance.client;
 
+  /// هەڵەی تۆڕ فڕێ دەدات (نەک لیستی بەتاڵ)، تاکو توڵەکە لە کاتی
+  /// پچڕانی ئینتەرنێتدا ون نەبێت
   static Future<List<NewsTicker>> fetchActive() async {
-    try {
-      final res = await _db
-          .from('news_tickers')
-          .select()
-          .eq('is_active', true)
-          .order('display_order')
-          .order('created_at');
-      return (res as List)
-          .map((e) => NewsTicker.fromMap(e as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      return [];
-    }
+    final res = await _db
+        .from('news_tickers')
+        .select()
+        .eq('is_active', true)
+        .order('display_order')
+        .order('created_at');
+    return (res as List)
+        .map((e) => NewsTicker.fromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   static Future<List<NewsTicker>> fetchAll() async {

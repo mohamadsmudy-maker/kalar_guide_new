@@ -264,7 +264,6 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
   late final AnimationController _ctrl = AnimationController(vsync: this);
   Timer? _refreshTimer;
   List<NewsTicker> _tickers = [];
-  String _text = '';
 
   @override
   void initState() {
@@ -281,23 +280,28 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
   }
 
   Future<void> _load() async {
-    final tickers = await (widget.loader ?? TickerService.fetchActive)();
+    final List<NewsTicker> tickers;
+    try {
+      tickers = await (widget.loader ?? TickerService.fetchActive)();
+    } catch (e) {
+      // پچڕانی ئینتەرنێت: هەواڵەکانی پێشوو دەمێننەوە، دواتر دووبارە هەوڵ دەدرێتەوە
+      debugPrint('⚠️ breaking news refresh: $e');
+      return;
+    }
     if (!mounted) return;
-    final lang = AppLang.code;
-    final text = tickers
-        .map((t) => t.textFor(lang).trim())
-        .where((s) => s.isNotEmpty)
-        .join('      ◆      ');
-    setState(() {
-      _tickers = tickers;
-      _text = text;
-    });
-    if (text.isEmpty) {
+    setState(() => _tickers = tickers);
+    if (_text.isEmpty) {
       _ctrl.stop();
       return;
     }
     if (widget.autoDialog) await _autoShowIfNew(tickers);
   }
+
+  /// بە زمانی ئێستای ئەپ — لە هەر build ـێکدا، بۆیە گۆڕینی زمان یەکسەر دەردەکەوێت
+  String get _text => _tickers
+      .map((t) => t.textFor(AppLang.code).trim())
+      .where((s) => s.isNotEmpty)
+      .join('      ◆      ');
 
   /// هەواڵی نوێ (یان گۆڕاو) → دایەلۆگ؛ هەمان هەواڵ → هیچ
   Future<void> _autoShowIfNew(List<NewsTicker> tickers) async {
@@ -317,6 +321,9 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
 
   @override
   Widget build(BuildContext context) {
+    // گۆڕینی زمان locale ی ئەپ دەگۆڕێت؛ ئەم پەیوەندییە وا دەکات توڵەکە
+    // (کە const ـە) دووبارە build بکرێت و دەقی زمانە نوێیەکە پیشان بدات
+    Localizations.maybeLocaleOf(context);
     if (_text.isEmpty) return const SizedBox.shrink();
 
     return GestureDetector(
