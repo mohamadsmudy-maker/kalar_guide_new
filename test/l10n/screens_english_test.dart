@@ -17,6 +17,7 @@ import 'package:kalar_guide_new/screens/fuel/fuel_calculator_screen.dart';
 import 'package:kalar_guide_new/screens/home/home_screen.dart';
 import 'package:kalar_guide_new/screens/neighborhoods/neighborhoods_screen.dart';
 import 'package:kalar_guide_new/screens/news/all_news_screen.dart';
+import 'package:kalar_guide_new/screens/news/news_details.dart';
 import 'package:kalar_guide_new/screens/onboarding/onboarding_screen.dart';
 import 'package:kalar_guide_new/screens/prayer/adhan_settings_screen.dart';
 import 'package:kalar_guide_new/screens/prayer/prayer_weekly_view.dart';
@@ -82,6 +83,8 @@ void main() {
     'Emergency': () => const EmergencyScreen(),
     'All news': () => const AllNewsScreen(),
     'Onboarding': () => OnboardingScreen(onComplete: () {}),
+    'News details': () => const NewsDetailsScreen(
+        newsItem: {'id': '1', 'title': 'Test', 'description': 'Body'}),
     'Weather': () => const WeatherScreen(),
     'Events': () => const EventsScreen(),
     'Departments': () => const DepartmentsScreen(),
