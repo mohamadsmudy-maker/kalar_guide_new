@@ -2117,4 +2117,10 @@ const Map<String, String> stringsEn = {
   "ناوی دامەزراوە (بۆ نموونە: شارەوانیی کەلار)": "Organization name (e.g. Kalar Municipality)",
   "⚠️ تەنها دوای وەرگرتنی نووسراوی فەرمی (بە مۆر و واژۆ) چالاکی بکە. Google Play ئەپێک کە بێ بەڵگە بڵێت فەرمییە ڕەت دەکاتەوە یان لای دەبات.": "⚠️ Turn this on only after you receive an official stamped and signed letter. Google Play rejects or removes apps that claim to be official without proof.",
   "شارەوانیی کەلار": "Kalar Municipality",
+  "پێشنیارکراو": "Featured",
+  "شوێنی پێشنیارکراو": "Featured places",
+  "ئێستا پێشنیارکراوە تا {0}": "Featured until {0}",
+  "لە سەرەوەی لیست و گەڕان دەردەکەوێت لەگەڵ نیشانەی «پێشنیارکراو». کاتێک ماوەکە تەواو بوو، خۆکار دەگەڕێتەوە.": "Shown at the top of lists and search with a \"Featured\" badge. It returns to normal automatically when the period ends.",
+  "⚠️ تایبەتمەندیی «شوێنی پێشنیارکراو» لە ناوەندی کۆنترۆڵ کوژاوەتەوە، بۆیە ئێستا بۆ بەکارهێنەران دەرناکەوێت.": "⚠️ The \"Featured places\" feature is turned off in the control center, so users do not see it right now.",
+  "لابردنی پێشنیارکراو": "Remove featured",
 };

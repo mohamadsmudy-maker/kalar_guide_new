@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/featured_places.dart';
+import '../../widgets/featured_badge.dart';
+import 'featured_place_sheet.dart';
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
 import '../../widgets/common/auto_translate.dart';
@@ -572,6 +575,25 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
                       label: tr('مامەڵەکان'),
                       color: const Color(0xFF4F5BD5),
                       onTap: () => _openStoreServices(store),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 30,
+                    color: Colors.grey.shade300,
+                  ),
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: FeaturedPlaces.isFeatured(store, enabled: true)
+                          ? Icons.star_rounded
+                          : Icons.star_border_rounded,
+                      label: tr('پێشنیارکراو'),
+                      color: FeaturedBadge.gold,
+                      onTap: () async {
+                        if (await showFeaturedPlaceSheet(context, store) && mounted) {
+                          setState(() {});
+                        }
+                      },
                     ),
                   ),
                   Container(
