@@ -67,6 +67,8 @@
 🌍 بە چوار زمان: کوردی، عەرەبی، فارسی و ئینگلیزی — لەگەڵ دۆخی تاریک.
 
 ئەپەکە بێبەرامبەرە و هیچ ڕیکلامێکی تێدا نییە.
+
+تێبینی: ئەمە ئەپێکی سەربەخۆیە و ئەپی فەرمیی حکومەت یان شارەوانیی کەلار نییە.
 ```
 
 ---
@@ -119,6 +121,8 @@
 🌍 بأربع لغات: الكردية والعربية والفارسية والإنجليزية — مع الوضع الداكن.
 
 التطبيق مجاني وبدون إعلانات.
+
+ملاحظة: هذا تطبيق مستقل، وليس تطبيقاً رسمياً للحكومة أو لبلدية كلار.
 ```
 
 ---
@@ -171,4 +175,6 @@ Kalar Guide is the app for the city of Kalar: everything you need every day, in 
 🌍 In four languages: Kurdish, Arabic, Persian and English — with dark mode.
 
 Free, with no ads.
+
+Note: this is an independent app. It is not an official app of the government or of Kalar municipality.
 ```

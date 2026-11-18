@@ -272,6 +272,36 @@ class _AboutScreenState extends State<AboutScreen>
                   _buildVersionCard(isDark, 7, textTheme, successColor),
                   const SizedBox(height: 10),
                   _buildReportCard(isDark, 8, textTheme),
+                  const SizedBox(height: 14),
+                  // ⚖️ Google Play: ئەپەکە نوێنەرایەتیی حکومەت ناکات
+                  Container(
+                    key: const ValueKey('unofficial-disclaimer'),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: (isDark ? Colors.white : AppColors.primary)
+                          .withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline_rounded,
+                            size: 18,
+                            color: isDark ? Colors.white54 : AppColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            tr('ئەم ئەپە ئەپێکی سەربەخۆیە و ئەپی فەرمیی حکومەت یان شارەوانیی کەلار نییە. هەواڵ و زانیارییەکان لە سەرچاوە گشتییەکان و خاوەن شوێنەکانەوە کۆکراونەتەوە.'),
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              height: 1.6,
+                              color: isDark ? Colors.white60 : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 18),
                   // ODbL: هەندێک شوێن لە OpenStreetMap ـەوە هاتوون
                   Text(

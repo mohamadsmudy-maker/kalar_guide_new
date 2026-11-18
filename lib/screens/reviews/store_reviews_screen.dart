@@ -8,6 +8,7 @@ import '../../services/review_service.dart';
 import '../../widgets/reviews/rating_stars.dart';
 import 'add_review_screen.dart';
 import '../../l10n/tr.dart';
+import 'report_review_sheet.dart';
 
 /// ⭐ شاشەی کۆمێنت و هەڵسەنگاندنەکان
 class StoreReviewsScreen extends StatefulWidget {
@@ -502,6 +503,19 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                     color: Colors.red.shade400,
                   ),
                   onPressed: () => _confirmDelete(review),
+                ),
+              // 🚩 ڕاپۆرتکردن (بۆ کۆمێنتی کەسانی تر)
+              if (!isOwner && review.id != null)
+                IconButton(
+                  key: ValueKey('report-${review.id}'),
+                  tooltip: tr('ڕاپۆرتکردنی کۆمێنت'),
+                  icon: Icon(
+                    Icons.flag_outlined,
+                    size: 20,
+                    color: isDark ? Colors.white38 : Colors.grey.shade500,
+                  ),
+                  onPressed: () =>
+                      showReportReviewSheet(context, reviewId: review.id!),
                 ),
             ],
           ),
