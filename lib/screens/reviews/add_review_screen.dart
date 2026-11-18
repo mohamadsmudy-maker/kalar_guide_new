@@ -558,7 +558,8 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              tr('کۆمێنتی ڕاستەقینە و بەسوود یارمەتی بەکارهێنەرانی تر دەدات بۆ هەڵبژاردنی باشترین شوێن.'),
+              '${tr('کۆمێنتی ڕاستەقینە و بەسوود یارمەتی بەکارهێنەرانی تر دەدات بۆ هەڵبژاردنی باشترین شوێن.')}\n'
+              '${tr('بە ناردنی کۆمێنت، ڕازی دەبیت جنێو، ڕیکلام، درۆ یان زانیاریی کەسیی خەڵکی تر نەنووسیت. کۆمێنتی وا دەسڕێتەوە.')}',
               style: const TextStyle(
                 fontSize: 11,
                 color: Color(0xFFD9822B),

@@ -30,6 +30,7 @@
 | 22 | `20261128_complaint_status_push.sql` | ئاگادارکردنەوەی هاوڵاتی کاتی گۆڕانی دۆخی سکاڵاکەی (complaints.status_notified) | ✅ |
 | 23 | `20261129_neighborhood_alerts.sql` | ئاگاداریی گەڕەک (خشتەی neighborhood_alerts) | ✅ |
 | 24 | `20261130_news_shares.sql` | ژمارەی شێری هەواڵ (news.shares + increment_news_shares) | ✅ |
+| 25 | `20261201_review_reports.sql` | ڕاپۆرتکردنی کۆمێنت (review_reports + app_report_review) — Google Play پێویستی پێیەتی | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -69,7 +70,8 @@ select
           and table_name = 'complaints' and column_name = 'status_notified')     as m22_complaint_status_push,
   to_regclass('public.neighborhood_alerts')                                      is not null as m23_neighborhood_alerts,
   exists (select 1 from information_schema.columns where table_schema = 'public'
-          and table_name = 'news' and column_name = 'shares')                     as m24_news_shares;
+          and table_name = 'news' and column_name = 'shares')                     as m24_news_shares,
+  to_regclass('public.review_reports')                                           is not null as m25_review_reports;
 ```
 
 ## Edge Functions (جیا لە SQL)

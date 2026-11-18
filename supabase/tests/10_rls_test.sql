@@ -215,6 +215,27 @@ select app_login('07500000001', 'adminpass');
 select t.check((select count(*) from reviews) = 3, 'admin sees all reviews');
 select t.check(t.rows($$delete from reviews where is_approved = false$$) = 1, 'admin deletes reviews');
 
+-- ── review reports (Google Play UGC) ─────────────────────────────
+create temp table rr as select id::text as rid from reviews where store_id = 1 and user_id = '999';
+grant select on rr to authenticated;
+select t.as_user('00000000-0000-0000-0000-0000000000a1');
+select t.check(app_report_review((select rid from rr), 'offensive', 'جنێو') = 'ok', 'guest reports a review');
+select t.check(app_report_review((select rid from rr), 'spam') = 'duplicate', 'same person cannot report twice');
+select t.check(app_report_review((select rid from rr), 'nonsense') = 'invalid', 'unknown reason rejected');
+select t.check(app_report_review('0', 'spam') = 'not_found', 'missing review rejected');
+select t.check((select count(*) from review_reports) = 0, 'reporters cannot read reports');
+select t.check(t.rows($$update review_reports set status = 'dismissed'$$) = 0, 'reporters cannot change reports');
+select t.as_user('00000000-0000-0000-0000-0000000000a2');
+select t.check(app_report_review((select rid from rr), 'false') = 'ok', 'second person reports');
+select t.check((select count(*) from reviews where store_id = 1) = 1, 'review still visible after 2 reports');
+select t.as_user('00000000-0000-0000-0000-0000000000a3');
+select t.check(app_report_review((select rid from rr), 'spam') = 'ok', 'third person reports');
+select t.check((select count(*) from reviews where store_id = 1) = 0, 'review hidden after 3 reports');
+select t.as_user('00000000-0000-0000-0000-00000000000d');
+select app_login('07500000001', 'adminpass');
+select t.check((select count(*) from review_reports where status = 'open') = 3, 'admin reads reports');
+select t.check(t.rows($$update review_reports set status = 'dismissed'$$) = 3, 'admin dismisses reports');
+
 -- ── prayer times (admin still logged in) ─────────────────────────
 select t.check(t.rows($$insert into prayer_times_official values
   ('07-11', '05:05', '06:30', '11:47', '14:37', '17:04', '18:15')$$) = 1, 'admin adds prayer day');
