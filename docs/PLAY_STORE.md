@@ -55,7 +55,8 @@ firebase crashlytics:symbols:upload --app=<FIREBASE_ANDROID_APP_ID> symbols\v1.0
 | ناوی ئەپ | ≤ 30 پیت |
 | وەسفی کورت | ≤ 80 پیت |
 | وەسفی تەواو | ≤ 4000 پیت |
-| ئایکۆن | PNG ٥١٢×٥١٢ (لە `assets/branding/app_icon_1024.png` بچووکی بکەوە) |
+| ناوی ئەپ (پێشنیار) | `ڕێبەری کەلار – Kalar Guide` |
+| ئایکۆن | `assets/branding/play_icon_512.png` (ئامادەیە؛ بۆ گۆڕین: `app_icon_1024.png` بگۆڕە و `python3 tool/make_icons.py` لێبدە) |
 | Feature graphic | ١٠٢٤×٥٠٠ |
 | وێنەی شاشە | کەمتر نەبێت لە ٢ (٤-٨ باشە)، تاقیکردنەوە لەسەر مۆبایل |
 
