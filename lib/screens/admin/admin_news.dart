@@ -7,6 +7,7 @@ import '../../config/app_colors.dart';
 import '../../providers/news_providers.dart' show refreshNewsFeed;
 import '../../services/auth_service.dart';
 import '../../services/image_service.dart';
+import '../../services/share_intent_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../../l10n/tr.dart';
@@ -293,7 +294,10 @@ class AddNewsScreen extends StatefulWidget {
   final Map<String, dynamic>? newsToEdit;
   final String? forcedStoreId; // ✅ پارامەتری نوێ بۆ ناچارکردنی شوێن
 
-  const AddNewsScreen({super.key, this.newsToEdit, this.forcedStoreId});
+  /// 📤 هەواڵی ئامادە لە شێرێکەوە (Facebook...): ناونیشان، وەسف + سەرچاوە، وێنە
+  final SharedNewsDraft? draft;
+
+  const AddNewsScreen({super.key, this.newsToEdit, this.forcedStoreId, this.draft});
 
   @override
   State<AddNewsScreen> createState() => _AddNewsScreenState();
@@ -342,6 +346,12 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       }
     } else {
       _selectedNewsType = 'هەواڵ';
+      final d = widget.draft;
+      if (d != null) {
+        _titleCtrl.text = d.title;
+        _descCtrl.text = d.description;
+        _newsImages.addAll(d.imagePaths.take(_maxImages).map(XFile.new));
+      }
     }
     _fetchStores();
   }

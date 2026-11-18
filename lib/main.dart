@@ -38,6 +38,8 @@ import 'services/translation_service.dart';
 // ═══════════════════════════════════════════════════════════
 import 'screens/about/about_screen.dart';
 import 'screens/admin/admin_dashboard.dart';
+import 'screens/admin/admin_news.dart';
+import 'services/share_intent_service.dart';
 import 'screens/vendor/vendor_panel_screen.dart';
 import 'screens/admin/admin_fuel_stations.dart';
 import 'screens/admin/admin_gallery.dart';
@@ -717,6 +719,7 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
   late int _currentIndex;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   DateTime? _lastBackPress;
+  StreamSubscription<SharedNewsDraft>? _shareSub;
 
   late final List<Widget Function()> _builders;
   final List<Widget?> _cache = List<Widget?>.filled(_tabCount, null);
@@ -740,6 +743,32 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
       () => DailyScreen(onMenuTap: _openDrawer),
       () => const ProfileScreen(),
     ];
+
+    // 📤 شێر لە Facebook و ئەپەکانی تر → فۆرمی هەواڵی پڕکراو (تەنها ئەدمین)
+    _shareSub = ShareIntentService.stream.listen(_openSharedNews);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final d = await ShareIntentService.initial();
+      if (d != null) _openSharedNews(d);
+    });
+  }
+
+  @override
+  void dispose() {
+    _shareSub?.cancel();
+    super.dispose();
+  }
+
+  void _openSharedNews(SharedNewsDraft draft) {
+    if (!mounted) return;
+    if (!AuthSessionManager.isAdmin) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('تەنها ئەدمین دەتوانێت هەواڵ لە ڕێگەی شێرەوە بڵاو بکاتەوە')),
+      ));
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => AddNewsScreen(draft: draft),
+    ));
   }
 
   Widget _pageAt(int i) {
