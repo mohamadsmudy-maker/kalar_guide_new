@@ -8,6 +8,7 @@ import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
 import '../../services/ticker_service.dart';
 import '../../services/translation_service.dart';
+import 'translate_languages_dialog.dart';
 
 class AdminTickersScreen extends StatefulWidget {
   const AdminTickersScreen({super.key});
@@ -302,10 +303,16 @@ class _TickerEditSheetState extends State<_TickerEditSheet> {
   Future<void> _translate() async {
     final ku = _kuCtrl.text.trim();
     if (ku.isEmpty) return;
+    final fields = {'ar': _arCtrl, 'en': _enCtrl, 'fa': _faCtrl};
+    final langs = await pickTranslateLanguages(context, filled: {
+      for (final e in fields.entries)
+        if (e.value.text.trim().isNotEmpty) e.key,
+    });
+    if (langs == null || langs.isEmpty || !mounted) return;
     setState(() => _translating = true);
     var failed = false;
-    for (final (lang, ctrl) in [('ar', _arCtrl), ('en', _enCtrl), ('fa', _faCtrl)]) {
-      if (ctrl.text.trim().isNotEmpty) continue;
+    for (final lang in translateTargets.where(langs.contains)) {
+      final ctrl = fields[lang]!;
       final t = await TranslationService.tryTranslate(text: ku, targetLanguage: lang);
       if (!mounted) return;
       if (t == null || t.trim().isEmpty || t.trim() == ku) {
@@ -430,7 +437,7 @@ class _TickerEditSheetState extends State<_TickerEditSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFB71C1C)),
                       )
                     : const Icon(Icons.translate_rounded, size: 18),
-                label: Text(tr('وەرگێڕانی خانە بەتاڵەکان بە Gemini'),
+                label: Text(tr('وەرگێڕان بە Gemini'),
                     style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 14),
