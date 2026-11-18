@@ -1071,6 +1071,7 @@ class _ControlsTabState extends State<_ControlsTab> {
                 ('gallery', 'گەلەری', Icons.photo_library_rounded),
                 ('videos', 'ڤیدیۆکان', Icons.play_circle_rounded),
                 ('events', 'ڕووداو و بۆنەکان', Icons.event_rounded),
+                ('featured_places', 'شوێنی پێشنیارکراو', Icons.star_rounded),
               ])
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

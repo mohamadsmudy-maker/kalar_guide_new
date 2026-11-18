@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../services/featured_places.dart';
+import '../../widgets/featured_badge.dart';
 import '../../widgets/common/optimized_network_image.dart';
 import '../stores/store_details_dialog.dart';
 import '../../l10n/tr.dart';
@@ -248,6 +250,7 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                           .contains(_searchQuery.toLowerCase());
                   return matchesSub && matchesSearch;
                 }).toList();
+                final sortedStores = FeaturedPlaces.featuredFirst(filteredStores);
 
                 if (filteredStores.isEmpty) {
                   return SliverFillRemaining(
@@ -262,11 +265,11 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
                           (context, index) => FadeTransition(
                         opacity: _fadeAnimation,
                         child: _buildStoreCard(
-                          filteredStores[index],
+                          sortedStores[index],
                           isDark,
                         ),
                       ),
-                      childCount: filteredStores.length,
+                      childCount: sortedStores.length,
                     ),
                   ),
                 );
@@ -554,6 +557,18 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
   }
 
   Widget _buildStoreCard(Map<String, dynamic> store, bool isDark) {
+    if (FeaturedPlaces.isFeatured(store)) {
+      return Stack(
+        children: [
+          _storeCardBody(store, isDark),
+          const PositionedDirectional(top: 6, end: 10, child: FeaturedBadge(compact: true)),
+        ],
+      );
+    }
+    return _storeCardBody(store, isDark);
+  }
+
+  Widget _storeCardBody(Map<String, dynamic> store, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Material(

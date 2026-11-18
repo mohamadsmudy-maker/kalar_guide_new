@@ -119,6 +119,8 @@ select t.check(t.rows($$delete from dukan where id = 1$$) = 0, 'vendor cannot de
 select t.check(app_update_fuel_price(1, 'normal', 1500, 'n') = 'ok', 'vendor saves fuel price via RPC');
 select t.check(t.rows($$update dukan set prices_active = false where id = 1$$) = 1, 'vendor update of own station runs');
 select t.check((select prices_active from dukan where id = 1), 'vendor cannot deactivate station prices');
+select t.check(t.rows($$update dukan set featured_until = now() + interval '30 days' where id = 1$$) = 1, 'vendor update with featured_until runs');
+select t.check((select featured_until is null from dukan where id = 1), 'vendor cannot feature own store');
 select t.check(t.rows($$insert into app_settings(key, value) values ('general_fuel_prices', '{"normal": 1}')$$) = -1, 'vendor cannot set general prices');
 select t.check((select (fuel_prices->>'normal')::numeric from dukan where id = 1) = 1500, 'fuel price stored');
 select t.check(app_update_fuel_price(2, 'normal', 1500) = 'forbidden', 'vendor cannot price other station');
@@ -155,6 +157,9 @@ select t.check(t.rows($$insert into neighborhood_alerts(neighborhood_id, title) 
 select t.check((select notified_at is null from neighborhood_alerts where neighborhood_id = 2), 'new neighborhood alert is waiting for its push');
 select t.check(t.rows($$update dukan set prices_active = false where id = 2$$) = 1, 'admin deactivates station prices');
 select t.check(not (select prices_active from dukan where id = 2), 'station prices are inactive');
+select t.check(t.rows($$update dukan set featured_until = now() + interval '30 days' where id = 2$$) = 1, 'admin features a store');
+select t.check((select featured_until > now() from dukan where id = 2), 'store is featured');
+select t.check(t.rows($$update dukan set featured_until = null where id = 2$$) = 1, 'admin unfeatures a store');
 select t.check(t.rows($$insert into app_settings(key, value) values ('general_fuel_prices', '{"normal": 1000}')$$) = 1, 'admin sets general prices');
 select t.check(t.rows($$update app_users set is_approved = false where phone = '07500000002'$$) = 1, 'admin revokes vendor');
 select t.check((app_admin_stats(7)->>'days')::int = 7, 'admin stats days');

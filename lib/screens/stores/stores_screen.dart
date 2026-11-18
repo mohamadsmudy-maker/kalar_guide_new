@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../config/app_colors.dart';
+import '../../services/featured_places.dart';
+import '../../widgets/featured_badge.dart';
 import '../../config/settings_provider.dart';
 import '../../services/cache_service.dart';
 import '../../services/location_service.dart';
@@ -323,7 +325,7 @@ class _StoresScreenState extends State<StoresScreen>
     }
 
     setState(() {
-      _filteredStores = list;
+      _filteredStores = FeaturedPlaces.featuredFirst(list);
       _displayCount = _pageSize;
     });
   }

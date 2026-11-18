@@ -64,6 +64,7 @@ class AppControlState {
     'gallery',
     'videos',
     'events',
+    'featured_places',
   ];
 
   bool feature(String key) => features[key] ?? true;

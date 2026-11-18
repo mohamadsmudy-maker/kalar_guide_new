@@ -288,6 +288,12 @@ extension _StoresScreenStateWidgets on _StoresScreenState {
                                 color: accentColor, size: 40),
                           ),
                   ),
+                  if (FeaturedPlaces.isFeatured(store))
+                    const PositionedDirectional(
+                      top: 8,
+                      start: 8,
+                      child: FeaturedBadge(compact: true),
+                    ),
                 ],
               ),
             ),
