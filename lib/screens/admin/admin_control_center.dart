@@ -884,6 +884,10 @@ class _ControlsTabState extends State<_ControlsTab> {
   late final _updMsg = TextEditingController(text: _initial.updateMessage);
   late final _updUrl = TextEditingController(text: _initial.updateUrl);
 
+  late bool _official = _initial.official;
+  late final _officialOrg = TextEditingController(
+      text: _initial.officialOrg.isEmpty ? 'شارەوانیی کەلار' : _initial.officialOrg);
+
   late final Map<String, bool> _features = {
     for (final k in AppControlState.featureKeys) k: _initial.feature(k),
   };
@@ -907,6 +911,8 @@ class _ControlsTabState extends State<_ControlsTab> {
         _minVer.text = s.minVersion;
         _updMsg.text = s.updateMessage;
         _updUrl.text = s.updateUrl;
+        _official = s.official;
+        if (s.officialOrg.isNotEmpty) _officialOrg.text = s.officialOrg;
         for (final k in AppControlState.featureKeys) {
           _features[k] = s.feature(k);
         }
@@ -916,7 +922,7 @@ class _ControlsTabState extends State<_ControlsTab> {
 
   @override
   void dispose() {
-    for (final c in [_maintMsg, _annText, _minVer, _updMsg, _updUrl]) {
+    for (final c in [_maintMsg, _annText, _minVer, _updMsg, _updUrl, _officialOrg]) {
       c.dispose();
     }
     super.dispose();
@@ -1025,6 +1031,31 @@ class _ControlsTabState extends State<_ControlsTab> {
                 () => _save('upd', 'min_version',
                     {'version': _minVer.text.trim(), 'message': _updMsg.text.trim(), 'url': _updUrl.text.trim()}),
               ),
+            ],
+          ),
+        ),
+        _Card(
+          icon: Icons.verified_rounded,
+          color: const Color(0xFF0F9D7A),
+          title: tr('ئەپی فەرمی'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tr('⚠️ تەنها دوای وەرگرتنی نووسراوی فەرمی (بە مۆر و واژۆ) چالاکی بکە. Google Play ئەپێک کە بێ بەڵگە بڵێت فەرمییە ڕەت دەکاتەوە یان لای دەبات.'),
+                style: TextStyle(fontSize: 12, height: 1.5, color: _sub(d)),
+              ),
+              SwitchListTile(
+                key: const ValueKey('official-switch'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(tr('ئەپی فەرمییە'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                value: _official,
+                activeThumbColor: const Color(0xFF0F9D7A),
+                onChanged: (v) => setState(() => _official = v),
+              ),
+              _field(tr('ناوی دامەزراوە (بۆ نموونە: شارەوانیی کەلار)'), _officialOrg),
+              _saveBtn('official', tr('پاشەکەوتکردن'),
+                  () => _save('official', 'official_status', {'official': _official, 'org': _officialOrg.text.trim()})),
             ],
           ),
         ),
