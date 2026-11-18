@@ -106,4 +106,58 @@ void main() {
     expect(find.byType(Dialog), findsOneWidget);
     await close();
   });
+
+  testWidgets('گۆڕینی زمان یەکسەر دەقەکە دەگۆڕێت (بێ داخستنی ئەپ)', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    // هەمان نموونە لە هەردوو pump ـدا، وەک const لە پەیجی سەرەکی
+    final ticker = TickerBannerWidget(
+      autoDialog: false,
+      loader: () async => [_t('بڕینی ئاو', en: 'Water cut')],
+    );
+    Future<void> pumpIn(String lang) async {
+      AppLang.setCode(lang);
+      await tester.pumpWidget(MaterialApp(
+        home: Builder(
+          builder: (c) => Localizations.override(
+            context: c,
+            locale: Locale(lang),
+            child: Scaffold(body: Column(children: [const Spacer(), ticker])),
+          ),
+        ),
+      ));
+      await tester.pump();
+    }
+
+    await pumpIn('ku');
+    expect(tester.widget<Text>(text).data, contains('بڕینی ئاو'));
+    await pumpIn('en');
+    expect(tester.widget<Text>(text).data, contains('Water cut'));
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('پچڕانی ئینتەرنێت توڵەکە ون ناکات', (tester) async {
+    var calls = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Column(children: [
+          const Spacer(),
+          TickerBannerWidget(
+            autoDialog: false,
+            loader: () async {
+              if (calls++ == 0) return [_t('هەواڵی گرنگ')];
+              throw Exception('offline');
+            },
+          ),
+        ]),
+      ),
+    ));
+    await tester.pump();
+    expect(text, findsOneWidget);
+
+    await tester.pump(const Duration(minutes: 2, seconds: 1)); // نوێکردنەوەی خۆکار
+    await tester.pump();
+    expect(calls, 2);
+    expect(text, findsOneWidget, reason: 'the ticker stays after a failed refresh');
+    await tester.pumpWidget(const SizedBox());
+  });
 }
