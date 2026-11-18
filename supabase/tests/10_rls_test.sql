@@ -84,6 +84,7 @@ select t.check(app_role() = 'customer', 'session bound as customer');
 select t.check(t.rows($$insert into banners(title) values ('x')$$) = -1, 'customer cannot add banners');
 
 select t.check(t.rows($$insert into price_types(kind, key, name_ku, grp) values ('fuel', 'x', 'x', 'fuel')$$) = -1, 'customer cannot add price types');
+select t.check(t.rows($$insert into pharmacy_duty(duty_date, name) values (current_date, 'x')$$) = -1, 'customer cannot add on-duty pharmacies');
 select t.check(t.rows($$delete from price_types$$) = 0, 'customer cannot delete price types');
 select t.check((select count(*) from price_types) >= 17, 'everyone can read price types');
 do $$ begin
@@ -144,6 +145,8 @@ select t.check((select count(*) from complaints) = 2, 'admin reads all complaint
 select t.check(t.rows($$update complaints set status = 'done'$$) = 2, 'admin updates complaints');
 select t.check(t.rows($$insert into banners(title) values ('a')$$) = 1, 'admin adds banners');
 select t.check(app_update_currency_price(2, 'EUR', 1, 2) = 'ok', 'admin saves any station price');
+select t.check(t.rows($$insert into pharmacy_duty(duty_date, name, dukan_id) values (current_date, 'دەرمانخانەی شیفا', 1)$$) = 1, 'admin adds an on-duty pharmacy');
+select t.check((select count(*) from pharmacy_duty) = 1, 'everyone can read on-duty pharmacies');
 select t.check(t.rows($$update dukan set prices_active = false where id = 2$$) = 1, 'admin deactivates station prices');
 select t.check(not (select prices_active from dukan where id = 2), 'station prices are inactive');
 select t.check(t.rows($$insert into app_settings(key, value) values ('general_fuel_prices', '{"normal": 1000}')$$) = 1, 'admin sets general prices');

@@ -11,6 +11,7 @@ import '../events/events_screen.dart';
 import '../gallery/gallery_screen.dart';
 import '../map_screen.dart';
 import '../neighborhoods/neighborhoods_screen.dart';
+import '../pharmacy/on_duty_pharmacy_screen.dart';
 import '../stores/suggest_place_screen.dart';
 import '../videos/user_videos.dart';
 
@@ -95,6 +96,13 @@ class ServicesScreen extends StatelessWidget {
           icon: Icons.emergency_rounded,
           color: AppColors.red,
           onTap: (c) => _open(c, const EmergencyScreen()),
+        ),
+        _Service(
+          title: tr('دەرمانخانەی ئێشکگر'),
+          subtitle: tr('کام دەرمانخانە ئەمشەو کراوەیە'),
+          icon: Icons.local_pharmacy_rounded,
+          color: const Color(0xFF059669),
+          onTap: (c) => _open(c, const OnDutyPharmacyScreen()),
         ),
         _Service(
           feature: 'complaints',
