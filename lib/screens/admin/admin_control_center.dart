@@ -1111,6 +1111,7 @@ class _ControlsTabState extends State<_ControlsTab> {
                 ('neighborhood_alerts', 'ئاگاداریی گەڕەکەکان', Icons.notifications_active_rounded),
                 ('prayer', 'کاتی نوێژ و قیبلە', Icons.mosque_rounded),
                 ('weather', 'کەشوهەوا', Icons.cloud_rounded),
+                ('waste_schedule', 'کاتی ئۆتۆمبێلی خۆڵ', Icons.local_shipping_rounded),
               ])
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

@@ -84,6 +84,7 @@ class AppControlState {
     'neighborhood_alerts',
     'prayer',
     'weather',
+    'waste_schedule',
   ];
 
   bool feature(String key) => features[key] ?? true;

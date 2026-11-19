@@ -89,6 +89,7 @@ select t.check(t.rows($$insert into banners(title) values ('x')$$) = -1, 'custom
 select t.check(t.rows($$insert into price_types(kind, key, name_ku, grp) values ('fuel', 'x', 'x', 'fuel')$$) = -1, 'customer cannot add price types');
 select t.check(t.rows($$insert into pharmacy_duty(duty_date, name) values (current_date, 'x')$$) = -1, 'customer cannot add on-duty pharmacies');
 select t.check(t.rows($$insert into neighborhood_alerts(neighborhood_id, title) values (1, 'x')$$) = -1, 'customer cannot send neighborhood alerts');
+select t.check(t.rows($$insert into waste_schedule(neighborhood_id, weekdays) values (1, '{1}')$$) = -1, 'customer cannot set collection days');
 select t.check(t.rows($$delete from price_types$$) = 0, 'customer cannot delete price types');
 select t.check((select count(*) from price_types) >= 17, 'everyone can read price types');
 do $$ begin
@@ -155,6 +156,9 @@ select t.check(t.rows($$insert into pharmacy_duty(duty_date, name, dukan_id) val
 select t.check((select count(*) from pharmacy_duty) = 1, 'everyone can read on-duty pharmacies');
 select t.check(t.rows($$insert into neighborhood_alerts(neighborhood_id, title) values (2, 'بڕینی ئاو')$$) = 1, 'admin adds a neighborhood alert');
 select t.check((select notified_at is null from neighborhood_alerts where neighborhood_id = 2), 'new neighborhood alert is waiting for its push');
+select t.check(t.rows($$insert into waste_schedule(neighborhood_id, neighborhood_name, weekdays, time_text) values (2, 'شۆڕش', '{6,1,3}', '07:00')$$) = 1, 'admin sets collection days');
+select t.check(t.rows($$insert into waste_schedule(neighborhood_id, weekdays) values (3, '{9}')$$) = -2, 'invalid weekday rejected');
+select t.check((select count(*) from waste_schedule) = 1, 'everyone can read collection days');
 select t.check(t.rows($$update dukan set prices_active = false where id = 2$$) = 1, 'admin deactivates station prices');
 select t.check(not (select prices_active from dukan where id = 2), 'station prices are inactive');
 select t.check(t.rows($$update dukan set featured_until = now() + interval '30 days' where id = 2$$) = 1, 'admin features a store');

@@ -32,6 +32,7 @@
 | 24 | `20261130_news_shares.sql` | ژمارەی شێری هەواڵ (news.shares + increment_news_shares) | ✅ |
 | 25 | `20261201_review_reports.sql` | ڕاپۆرتکردنی کۆمێنت (review_reports + app_report_review) — Google Play پێویستی پێیەتی | ✅ |
 | 26 | `20261202_featured_places.sql` | شوێنی پێشنیارکراو (dukan.featured_until، تەنها ئەدمین) | ✅ |
+| 27 | `20261203_waste_schedule.sql` | کاتی هاتنی ئۆتۆمبێلی خۆڵ بۆ هەر گەڕەکێک (waste_schedule) | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -74,7 +75,8 @@ select
           and table_name = 'news' and column_name = 'shares')                     as m24_news_shares,
   to_regclass('public.review_reports')                                           is not null as m25_review_reports,
   exists (select 1 from information_schema.columns where table_schema = 'public'
-          and table_name = 'dukan' and column_name = 'featured_until')            as m26_featured_places;
+          and table_name = 'dukan' and column_name = 'featured_until')            as m26_featured_places,
+  to_regclass('public.waste_schedule')                                           is not null as m27_waste_schedule;
 ```
 
 ## Edge Functions (جیا لە SQL)

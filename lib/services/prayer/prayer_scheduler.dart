@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../prayer_notification_service.dart';
+import '../waste_schedule_service.dart';
 import 'kalar_prayer_times.dart';
 import 'prayer_reminders.dart';
 import 'prayer_times_repository.dart';
@@ -140,6 +141,8 @@ class PrayerScheduler with WidgetsBindingObserver {
       debugPrint('⚠️ prayer reschedule: $e');
     } finally {
       _running = false;
+      // ئاگادارکردنەوەی خۆڵ (cancelAll ـی بانگ دەیانسڕێتەوە)
+      unawaited(WasteScheduleService.resync());
     }
   }
 }
