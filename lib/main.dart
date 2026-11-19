@@ -41,6 +41,7 @@ import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/admin_news.dart';
 import 'services/share_intent_service.dart';
 import 'services/complaint_queue.dart';
+import 'services/network_status.dart';
 import 'services/waste_schedule_service.dart';
 import 'screens/vendor/vendor_panel_screen.dart';
 import 'screens/admin/admin_fuel_stations.dart';
@@ -140,6 +141,7 @@ Future<void> main() async {
 
       _installErrorHandlers();
       _configureSystemUi();
+      await NetworkStatus.start(); // 📡 بێ ئینتەرنێت → بێ چاوەڕوانی سێرڤەر
 
       await _start();
     },
@@ -378,7 +380,7 @@ Future<void> _refreshPushToken() async {
 Future<void> _initSession() async {
   if (!_supabaseReady) return;
   try {
-    if (Supabase.instance.client.auth.currentUser == null) {
+    if (Supabase.instance.client.auth.currentUser == null && !NetworkStatus.offline) {
       try {
         await Supabase.instance.client.auth
             .signInAnonymously()

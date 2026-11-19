@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'network_status.dart';
 
 /// 🗄️ خزمەتگوزاری کاش
 class CacheService {
@@ -74,13 +77,24 @@ class CacheService {
 
   /// لیستی نەخشەکان لە سێرڤەر دەهێنێت و هەڵیدەگرێت؛ ئەگەر ئینتەرنێت نەبوو
   /// دوایین لیستی هەڵگیراو دەگەڕێنێتەوە (و تەنها ئەگەر هەرگیز نەبووبێت هەڵە دەدات).
+  /// زۆرترین چاوەڕوانی بۆ سێرڤەر پێش ئەوەی داتای هەڵگیراو بەکاربێت
+  /// (بۆ WiFi ـی بێ ئینتەرنێت یان ئینتەرنێتی زۆر لاواز)
+  static Duration networkTimeout = const Duration(seconds: 10);
+
   static Future<List<Map<String, dynamic>>> fetchList(
     String key,
     Future<List<Map<String, dynamic>>> Function() fetch, {
     Duration keepFor = const Duration(minutes: 30),
   }) async {
+    // 📡 هیچ تۆڕێک نییە → یەکسەر داتای هەڵگیراو، بێ چاوەڕوانی
+    if (NetworkStatus.offline) {
+      final stale = await getStale(key);
+      if (stale is List) {
+        return [for (final m in stale) Map<String, dynamic>.from(m as Map)];
+      }
+    }
     try {
-      final list = await fetch();
+      final list = await fetch().timeout(networkTimeout);
       if (list.isNotEmpty) await save(key, list, duration: keepFor);
       return list;
     } catch (e) {
@@ -99,8 +113,12 @@ class CacheService {
     Future<dynamic> Function() fetch, {
     Duration keepFor = const Duration(days: 7),
   }) async {
+    if (NetworkStatus.offline) {
+      final stale = await getStale(key);
+      if (stale != null) return stale;
+    }
     try {
-      final data = await fetch();
+      final data = await fetch().timeout(networkTimeout);
       if (data != null) await save(key, data, duration: keepFor);
       return data;
     } catch (e) {

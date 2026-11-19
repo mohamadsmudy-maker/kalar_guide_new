@@ -1,3 +1,4 @@
+import 'dart:io';
 // lib/services/pharmacy_duty_service.dart
 //
 // 💊 دەرمانخانەی ئێشکگر — خشتەی pharmacy_duty لە Supabase.
@@ -6,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'cache_service.dart';
+import 'network_status.dart';
 
 class PharmacyDuty {
   final int id;
@@ -65,6 +67,7 @@ class PharmacyDutyService {
     final to = DateTime(from.year, from.month, from.day + days - 1);
     List<Map<String, dynamic>> rows;
     try {
+      if (NetworkStatus.offline) throw const SocketException('offline');
       // ١٤ شەو دەهێنرێت و هەڵدەگیرێت، بۆ ئەوەی بەیانیش بێ ئینتەرنێت کار بکات
       final until = DateTime(from.year, from.month, from.day + (days > 14 ? days : 14) - 1);
       rows = List<Map<String, dynamic>>.from(await _db
@@ -73,7 +76,8 @@ class PharmacyDutyService {
           .gte('duty_date', dateKey(from))
           .lte('duty_date', dateKey(until))
           .order('duty_date')
-          .order('name') as List);
+          .order('name')
+          .timeout(CacheService.networkTimeout) as List);
       await CacheService.save(_cacheKey, rows, duration: const Duration(days: 14));
     } catch (e) {
       final stale = await CacheService.getStale(_cacheKey);
