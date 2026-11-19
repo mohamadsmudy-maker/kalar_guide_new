@@ -884,6 +884,8 @@ class _ControlsTabState extends State<_ControlsTab> {
   late final _updMsg = TextEditingController(text: _initial.updateMessage);
   late final _updUrl = TextEditingController(text: _initial.updateUrl);
 
+  late bool _wasteOnly = _initial.wasteOnlyComplaints;
+  late final _wasteAuthority = TextEditingController(text: _initial.wasteAuthority);
   late bool _official = _initial.official;
   late final _officialOrg = TextEditingController(
       text: _initial.officialOrg.isEmpty ? 'شارەوانیی کەلار' : _initial.officialOrg);
@@ -911,6 +913,8 @@ class _ControlsTabState extends State<_ControlsTab> {
         _minVer.text = s.minVersion;
         _updMsg.text = s.updateMessage;
         _updUrl.text = s.updateUrl;
+        _wasteOnly = s.wasteOnlyComplaints;
+        _wasteAuthority.text = s.wasteAuthority;
         _official = s.official;
         if (s.officialOrg.isNotEmpty) _officialOrg.text = s.officialOrg;
         for (final k in AppControlState.featureKeys) {
@@ -922,7 +926,7 @@ class _ControlsTabState extends State<_ControlsTab> {
 
   @override
   void dispose() {
-    for (final c in [_maintMsg, _annText, _minVer, _updMsg, _updUrl, _officialOrg]) {
+    for (final c in [_maintMsg, _annText, _minVer, _updMsg, _updUrl, _officialOrg, _wasteAuthority]) {
       c.dispose();
     }
     super.dispose();
@@ -1035,6 +1039,31 @@ class _ControlsTabState extends State<_ControlsTab> {
           ),
         ),
         _Card(
+          icon: Icons.delete_rounded,
+          color: const Color(0xFF0F9D7A),
+          title: tr('جۆری سکاڵاکان'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tr('کاتێک چالاکە، هاوڵاتی تەنها سکاڵای خۆڵ و خاشاک دەنێرێت (بە جۆرە وردەکانییەوە). بیکوژێنەوە بۆ گەڕاندنەوەی هەموو جۆرەکانی تر.'),
+                style: TextStyle(fontSize: 12, height: 1.5, color: _sub(d)),
+              ),
+              SwitchListTile(
+                key: const ValueKey('waste-only-switch'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(tr('تەنها خۆڵ و خاشاک'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                value: _wasteOnly,
+                activeThumbColor: const Color(0xFF0F9D7A),
+                onChanged: (v) => setState(() => _wasteOnly = v),
+              ),
+              _field(tr('ناوی لایەنی وەرگر'), _wasteAuthority),
+              _saveBtn('waste', tr('پاشەکەوتکردن'),
+                  () => _save('waste', 'complaint_mode', {'waste_only': _wasteOnly, 'authority': _wasteAuthority.text.trim()})),
+            ],
+          ),
+        ),
+        _Card(
           icon: Icons.verified_rounded,
           color: const Color(0xFF0F9D7A),
           title: tr('ئەپی فەرمی'),
@@ -1072,6 +1101,16 @@ class _ControlsTabState extends State<_ControlsTab> {
                 ('videos', 'ڤیدیۆکان', Icons.play_circle_rounded),
                 ('events', 'ڕووداو و بۆنەکان', Icons.event_rounded),
                 ('featured_places', 'شوێنی پێشنیارکراو', Icons.star_rounded),
+                ('news', 'هەواڵەکان', Icons.newspaper_rounded),
+                ('breaking_news', 'هەواڵی بەپەلە', Icons.bolt_rounded),
+                ('fuel_prices', 'نرخی سووتەمەنی', Icons.local_gas_station_rounded),
+                ('currency_prices', 'نرخی دراو', Icons.currency_exchange_rounded),
+                ('pharmacy_duty', 'دەرمانخانەی ئێشکگر', Icons.local_pharmacy_rounded),
+                ('departments', 'فەرمانگە و مامەڵەکان', Icons.account_balance_rounded),
+                ('emergency', 'فریاکەوتن', Icons.emergency_rounded),
+                ('neighborhood_alerts', 'ئاگاداریی گەڕەکەکان', Icons.notifications_active_rounded),
+                ('prayer', 'کاتی نوێژ و قیبلە', Icons.mosque_rounded),
+                ('weather', 'کەشوهەوا', Icons.cloud_rounded),
               ])
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

@@ -56,6 +56,7 @@ class ServicesScreen extends StatelessWidget {
           onTap: (c) => _open(c, const NeighborhoodsScreen()),
         ),
         _Service(
+          feature: 'departments',
           title: tr('فەرمانگە و مامەڵەکان'),
           subtitle: tr('پێداویستی و تێچووی مامەڵەکان'),
           icon: Icons.account_balance_rounded,
@@ -91,6 +92,7 @@ class ServicesScreen extends StatelessWidget {
       ]),
       _Section(tr('هاوکاری و پەیوەندی'), [
         _Service(
+          feature: 'emergency',
           title: tr('فریاکەوتن'),
           subtitle: tr('ژمارە گرنگەکانی کەلار'),
           icon: Icons.emergency_rounded,
@@ -98,6 +100,7 @@ class ServicesScreen extends StatelessWidget {
           onTap: (c) => _open(c, const EmergencyScreen()),
         ),
         _Service(
+          feature: 'pharmacy_duty',
           title: tr('دەرمانخانەی ئێشکگر'),
           subtitle: tr('کام دەرمانخانە ئەمشەو کراوەیە'),
           icon: Icons.local_pharmacy_rounded,

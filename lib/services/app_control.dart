@@ -37,7 +37,16 @@ class AppControlState {
     this.features = const {},
     this.official = false,
     this.officialOrg = '',
+    this.wasteOnlyComplaints = true,
+    this.wasteAuthority = defaultWasteAuthority,
   });
+
+  /// سکاڵا تەنها بۆ خۆڵ و خاشاک (بە بنەڕەت). ئەدمین دەتوانێت جۆرەکانی تر بگەڕێنێتەوە.
+  final bool wasteOnlyComplaints;
+
+  /// ناوی ئەو لایەنەی سکاڵای خۆڵ و خاشاک وەردەگرێت
+  final String wasteAuthority;
+  static const String defaultWasteAuthority = 'خزمەتگوزاری خۆڵ و خاشاکی کەلار';
 
   /// ئەپی فەرمیی [officialOrg] ـە؟ تەنها دوای نووسراوی فەرمی چالاک دەکرێت
   /// (Google Play: ئەپی حکومی بەڵگەی ڕێگەپێدانی پێویستە).
@@ -65,6 +74,16 @@ class AppControlState {
     'videos',
     'events',
     'featured_places',
+    'news',
+    'breaking_news',
+    'fuel_prices',
+    'currency_prices',
+    'pharmacy_duty',
+    'departments',
+    'emergency',
+    'neighborhood_alerts',
+    'prayer',
+    'weather',
   ];
 
   bool feature(String key) => features[key] ?? true;
@@ -115,6 +134,7 @@ class AppControlState {
     final u = obj('min_version');
     final f = obj('features');
     final o = obj('official_status');
+    final c = obj('complaint_mode');
 
     final level = switch (str(a['level'])) {
       'warning' => AnnounceLevel.warning,
@@ -143,6 +163,8 @@ class AppControlState {
       features: features,
       official: o['official'] == true && str(o['org']).isNotEmpty,
       officialOrg: str(o['org']),
+      wasteOnlyComplaints: c['waste_only'] != false,
+      wasteAuthority: str(c['authority']).isEmpty ? defaultWasteAuthority : str(c['authority']),
     );
   }
 }

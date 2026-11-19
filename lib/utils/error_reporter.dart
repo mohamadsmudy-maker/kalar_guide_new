@@ -55,6 +55,9 @@ class ErrorReporter {
     return !networkHints.any(s.contains);
   }
 
+  /// هەڵەی تۆڕە (ئینتەرنێت نییە، کاتی تەواوبوو...)؟
+  static bool isNetworkError(Object error) => !shouldReport(error);
+
   /// هەڵەی Flutter (لە کاتی وێنەکێشانی شاشە)
   static void recordFlutterError(FlutterErrorDetails details) {
     if (!_enabled || !shouldReport(details.exception)) return;
