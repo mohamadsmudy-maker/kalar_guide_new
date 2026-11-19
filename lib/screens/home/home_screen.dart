@@ -52,6 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
+    AppControl.state.addListener(_onControl); // بەشەکان بکرێنەوە/دابخرێن
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _precacheImages(ref.read(newsProvider).news);
@@ -61,9 +62,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void dispose() {
     _scroll.removeListener(_onScroll);
+    AppControl.state.removeListener(_onControl);
     _scroll.dispose();
     _showTop.dispose();
     super.dispose();
+  }
+
+  void _onControl() {
+    if (mounted) setState(() {});
   }
 
   void _onScroll() {
@@ -164,6 +170,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           slivers: [
             _buildAppBar(isDark, surfaceColor, iconColor, t),
             const SliverToBoxAdapter(child: AnnouncementBanner()),
+            if (AppControl.state.value.feature('news'))
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 4),
@@ -206,10 +213,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
 
             // 📺 توڵی هەواڵی بەپەلە — لەژێر دوگمەی سکاڵا
-            const SliverToBoxAdapter(child: TickerBannerWidget()),
+            SliverToBoxAdapter(
+              child: ValueListenableBuilder<AppControlState>(
+                valueListenable: AppControl.state,
+                builder: (context, control, _) => control.feature('breaking_news')
+                    ? const TickerBannerWidget()
+                    : const SizedBox.shrink(),
+              ),
+            ),
 
             // 📰 هەواڵەکانی تر
-            if (showOtherSection) ...[
+            if (showOtherSection && AppControl.state.value.feature('news')) ...[
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),

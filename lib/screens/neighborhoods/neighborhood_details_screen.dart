@@ -9,6 +9,7 @@ import '../../models/neighborhood.dart';
 import '../../utils/app_logger.dart';
 import '../stores/store_details_dialog.dart';
 import '../../widgets/neighborhoods/tap_to_open_map.dart';
+import '../../services/app_control.dart';
 import '../../widgets/neighborhoods/neighborhood_alerts_card.dart';
 import 'neighborhood_map_screen.dart';
 import '../../l10n/tr.dart';
@@ -171,7 +172,7 @@ class _NeighborhoodDetailsScreenState extends State<NeighborhoodDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildStatsCard(n, color, isDark),
-                      if (n.idAsInt != null) ...[
+                      if (n.idAsInt != null && AppControl.state.value.feature('neighborhood_alerts')) ...[
                         const SizedBox(height: 14),
                         NeighborhoodAlertsCard(neighborhoodId: n.idAsInt!, color: color),
                       ],

@@ -74,6 +74,16 @@ class AppControlState {
     'videos',
     'events',
     'featured_places',
+    'news',
+    'breaking_news',
+    'fuel_prices',
+    'currency_prices',
+    'pharmacy_duty',
+    'departments',
+    'emergency',
+    'neighborhood_alerts',
+    'prayer',
+    'weather',
   ];
 
   bool feature(String key) => features[key] ?? true;

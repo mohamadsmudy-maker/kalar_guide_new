@@ -1101,6 +1101,16 @@ class _ControlsTabState extends State<_ControlsTab> {
                 ('videos', 'ڤیدیۆکان', Icons.play_circle_rounded),
                 ('events', 'ڕووداو و بۆنەکان', Icons.event_rounded),
                 ('featured_places', 'شوێنی پێشنیارکراو', Icons.star_rounded),
+                ('news', 'هەواڵەکان', Icons.newspaper_rounded),
+                ('breaking_news', 'هەواڵی بەپەلە', Icons.bolt_rounded),
+                ('fuel_prices', 'نرخی سووتەمەنی', Icons.local_gas_station_rounded),
+                ('currency_prices', 'نرخی دراو', Icons.currency_exchange_rounded),
+                ('pharmacy_duty', 'دەرمانخانەی ئێشکگر', Icons.local_pharmacy_rounded),
+                ('departments', 'فەرمانگە و مامەڵەکان', Icons.account_balance_rounded),
+                ('emergency', 'فریاکەوتن', Icons.emergency_rounded),
+                ('neighborhood_alerts', 'ئاگاداریی گەڕەکەکان', Icons.notifications_active_rounded),
+                ('prayer', 'کاتی نوێژ و قیبلە', Icons.mosque_rounded),
+                ('weather', 'کەشوهەوا', Icons.cloud_rounded),
               ])
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

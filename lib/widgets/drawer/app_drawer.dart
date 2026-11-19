@@ -1,3 +1,4 @@
+import '../../services/app_control.dart';
 import 'package:flutter/material.dart';
 import '../common/language_flag.dart';
 import 'package:flutter/services.dart';
@@ -90,6 +91,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                         children: [
                           // 🚨 خزمەتگوزارییەکان (تەنها ئەوانەی لە پرۆفایل نین)
                           _buildSection(tr('🚨 فریاکەوتن و ڕووداوەکان'), isDark, 0),
+                          if (AppControl.state.value.feature('emergency'))
                           _buildItem(
                             context,
                             icon: Icons.emergency_rounded,
@@ -100,6 +102,7 @@ class _AppDrawerState extends State<AppDrawer> with TickerProviderStateMixin {
                             onTap: () => _push(context, const EmergencyScreen()),
                             itemIndex: 1,
                           ),
+                          if (AppControl.state.value.feature('events'))
                           _buildItem(
                             context,
                             icon: Icons.event_rounded,

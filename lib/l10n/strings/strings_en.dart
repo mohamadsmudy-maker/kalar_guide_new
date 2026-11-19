@@ -2138,4 +2138,5 @@ const Map<String, String> stringsEn = {
   "ناوی لایەنی وەرگر": "Receiving party name",
   "سکاڵاکەت هەڵگیرا": "Your complaint was saved",
   "ئێستا ئینتەرنێت نییە. سکاڵاکەت لەسەر مۆبایلەکەت هەڵگیرا و کاتێک ئینتەرنێت گەڕایەوە خۆکار دەنێردرێت.": "There is no internet right now. Your complaint was saved on your phone and will be sent automatically when the internet is back.",
+  "کاتی نوێژ و قیبلە": "Prayer times and Qibla",
 };

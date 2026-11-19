@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 
 import '../../config/app_colors.dart';
 import '../../config/settings_provider.dart';
+import '../../services/app_control.dart';
 import '../../services/weather_service.dart';
 
 import '../currency/currency_rates_screen.dart';
@@ -138,6 +139,7 @@ class _DailyScreenState extends State<DailyScreen>
   @override
   void initState() {
     super.initState();
+    AppControl.state.addListener(_onControl);
 
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
@@ -161,8 +163,13 @@ class _DailyScreenState extends State<DailyScreen>
     });
   }
 
+  void _onControl() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    AppControl.state.removeListener(_onControl);
     _clockTimer.cancel();
     _now.dispose();
     super.dispose();
@@ -355,6 +362,7 @@ class _DailyScreenState extends State<DailyScreen>
         subtitle: _t('prayer_sub'),
         icon: Icons.mosque_rounded,
         color: AppColors.toneIndigo,
+        feature: 'prayer',
         onTap: () => _open(const PrayerTimesScreen()),
       ),
       _ServiceData(
@@ -363,6 +371,7 @@ class _DailyScreenState extends State<DailyScreen>
         icon: Icons.currency_exchange_rounded,
         color: AppColors.toneTeal,
         isLive: true,
+        feature: 'currency_prices',
         onTap: () => _open(const CurrencyRatesScreen()),
       ),
       _ServiceData(
@@ -370,6 +379,7 @@ class _DailyScreenState extends State<DailyScreen>
         subtitle: _t('qibla_sub'),
         icon: Icons.explore_rounded,
         color: AppColors.toneAmber,
+        feature: 'prayer',
         onTap: () => _open(const QiblaFinderScreen()),
       ),
       _ServiceData(
@@ -378,6 +388,7 @@ class _DailyScreenState extends State<DailyScreen>
         icon: Icons.local_gas_station_rounded,
         color: AppColors.toneAmber,
         isLive: true,
+        feature: 'fuel_prices',
         onTap: () => _open(const FuelTypesScreen()),
       ),
       _ServiceData(
@@ -390,9 +401,10 @@ class _DailyScreenState extends State<DailyScreen>
           lang: _lang,
           liveLabel: _t('live'),
         ),
+        feature: 'weather',
         onTap: () => _open(const WeatherScreen()),
       ),
-    ];
+    ].where((s) => s.feature == null || AppControl.state.value.feature(s.feature!)).toList();
 
     return Directionality(
       textDirection: _isRtl ? TextDirection.rtl : TextDirection.ltr,
@@ -830,7 +842,11 @@ class _ServiceData {
   final bool isLive;
   final Widget? trailing;
 
+  /// کلیلی تایبەتمەندی (ناوەندی کۆنترۆڵ)؛ کوژاوە = نیشان نادرێت
+  final String? feature;
+
   const _ServiceData({
+    this.feature,
     required this.title,
     required this.subtitle,
     required this.icon,
