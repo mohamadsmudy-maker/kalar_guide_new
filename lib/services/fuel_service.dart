@@ -7,6 +7,7 @@ import 'price_save_result.dart';
 
 import 'auth_service.dart';
 import 'cache_service.dart';
+import 'network_status.dart';
 import '../l10n/tr.dart';
 
 /// 📊 بارودۆخی بازاڕ بۆ یەک جۆری سووتەمەنی
@@ -96,8 +97,13 @@ class FuelService {
     }
 
     List res;
+    // 📡 هیچ تۆڕێک نییە → یەکسەر دوایین نرخە هەڵگیراوەکان
+    if (phone == null && NetworkStatus.offline) {
+      final stale = await CacheService.getStale(_cacheKey(columns));
+      if (stale is List) return [for (final m in stale) Map<String, dynamic>.from(m as Map)];
+    }
     try {
-      res = await run(stationFilter);
+      res = await run(stationFilter).timeout(CacheService.networkTimeout);
     } on PostgrestException catch (e) {
       if (_hasActiveColumn && e.message.contains('prices_active')) {
         _hasActiveColumn = false;

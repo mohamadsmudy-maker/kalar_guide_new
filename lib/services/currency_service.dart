@@ -9,6 +9,7 @@ import 'price_save_result.dart';
 
 import 'auth_service.dart';
 import 'cache_service.dart';
+import 'network_status.dart';
 import '../l10n/tr.dart';
 
 /// 📊 بارودۆخی بازاڕ بۆ یەک جۆری دراو
@@ -205,6 +206,10 @@ class CurrencyService {
     String? phone,
   }) async {
     final cols = _hasActiveColumn ? columns : columns.replaceAll(', prices_active', '');
+    if (phone == null && NetworkStatus.offline) {
+      final stale = await CacheService.getStale(_cacheKey(columns));
+      if (stale is List) return [for (final m in stale) Map<String, dynamic>.from(m as Map)];
+    }
     try {
       var q1 = _client.from('dukan').select(cols).eq('sub_category', _subCategory);
       if (phone != null) q1 = q1.eq('phone', phone);

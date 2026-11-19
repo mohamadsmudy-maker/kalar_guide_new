@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kalar_guide_new/services/cache_service.dart';
+import 'package:kalar_guide_new/services/network_status.dart';
 import 'package:kalar_guide_new/services/pharmacy_duty_service.dart';
 import 'package:kalar_guide_new/widgets/offline_banner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +23,34 @@ void main() {
       () => CacheService.fetchList('never', () async => throw const SocketException('offline')),
       throwsA(isA<SocketException>()),
     );
+  });
+
+  test('بێ تۆڕ: یەکسەر داتای هەڵگیراو، بێ چاوەڕوانی سێرڤەر', () async {
+    await CacheService.clear();
+    await CacheService.fetchList('t_fast', () async => [{'id': 7}]);
+    NetworkStatus.offlineForTest = true;
+    addTearDown(() => NetworkStatus.offlineForTest = false);
+    var called = false;
+    final sw = Stopwatch()..start();
+    final r = await CacheService.fetchList('t_fast', () async {
+      called = true;
+      await Future<void>.delayed(const Duration(seconds: 30)); // سێرڤەری وەستاو
+      return [];
+    });
+    expect(r, [{'id': 7}]);
+    expect(called, isFalse, reason: 'the server is not even tried');
+    expect(sw.elapsed, lessThan(const Duration(seconds: 1)));
+  });
+
+  test('سێرڤەری وەستاو (WiFi بێ ئینتەرنێت): دوای کاتی دیاریکراو داتای هەڵگیراو', () async {
+    await CacheService.clear();
+    await CacheService.fetchList('t_slow', () async => [{'id': 1}]);
+    final old = CacheService.networkTimeout;
+    CacheService.networkTimeout = const Duration(milliseconds: 200);
+    addTearDown(() => CacheService.networkTimeout = old);
+    final r = await CacheService.fetchList(
+        't_slow', () => Completer<List<Map<String, dynamic>>>().future);
+    expect(r, [{'id': 1}]);
   });
 
   test('fetchJson: Map و null', () async {

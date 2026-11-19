@@ -28,7 +28,11 @@
     <application
         android:label="ڕێبەری کەلار"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="false">
+        android:usesCleartextTraffic="false"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        tools:replace="android:allowBackup">
         <!-- Firebase Analytics: بێ ناسنامەی ڕیکلام و بێ کەسایەتیکردنی ڕیکلام -->
         <meta-data
             android:name="google_analytics_adid_collection_enabled"

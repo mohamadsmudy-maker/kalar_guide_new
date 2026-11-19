@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'network_status.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/app_logger.dart';
@@ -84,7 +86,10 @@ class AuthSessionManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       _cachedPhone = prefs.getString('logged_phone');
-      if (_cachedPhone != null && _cachedPhone!.isNotEmpty) {
+      if (_cachedPhone != null && _cachedPhone!.isNotEmpty && NetworkStatus.offline) {
+        // 📡 بێ ئینتەرنێت: دوایین پرۆفایلی هەڵگیراو، بێ چاوەڕوانی سێرڤەر
+        _restoreCachedProfile(prefs);
+      } else if (_cachedPhone != null && _cachedPhone!.isNotEmpty) {
         // ✅ پشکنینی ئەوەی کە ئایا بەکارهێنەرەکە بە شێوەیەکی نهێنی چووەتە ژوورەوە
         if (Supabase.instance.client.auth.currentSession == null) {
           await Supabase.instance.client.auth.signInAnonymously();
@@ -124,6 +129,9 @@ class AuthSessionManager {
         _currentId = userData['id']?.toString();
         _storeId = userData['store_id'];
         userNotifier.value = userData;
+        try {
+          await prefs.setString(_profileKey, jsonEncode(userData));
+        } catch (_) {}
 
         AppLogger.i('✅ fetchUserProfile: $_userName ($_userRole) - Store: $_storeId');
         return userData;
@@ -134,8 +142,29 @@ class AuthSessionManager {
       }
     } catch (e, st) {
       AppLogger.e('⚠️ fetchUserProfile error', e, st);
-      _userRole = 'customer';
+      // تۆڕ نییە: دوایین پرۆفایل (پیشاندان)؛ سێرڤەر هەر دەسەڵاتەکان دەپشکنێت
+      final prefs = await SharedPreferences.getInstance();
+      if (!_restoreCachedProfile(prefs)) _userRole = 'customer';
       return null;
+    }
+  }
+
+  static const String _profileKey = 'cached_user_profile_v1';
+
+  /// دوایین پرۆفایلی سەرکەوتوو (بۆ بێ ئینتەرنێت). true = دۆزرایەوە
+  static bool _restoreCachedProfile(SharedPreferences prefs) {
+    try {
+      final raw = prefs.getString(_profileKey);
+      if (raw == null) return false;
+      final userData = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      _userRole = userData['role']?.toString() ?? 'customer';
+      _userName = userData['name']?.toString();
+      _currentId = userData['id']?.toString();
+      _storeId = userData['store_id'];
+      userNotifier.value = userData;
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -215,6 +244,7 @@ class AuthSessionManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('logged_phone');
+      await prefs.remove(_profileKey);
     } catch (e) {
       AppLogger.w('⚠️ remove logged_phone: $e');
     }
