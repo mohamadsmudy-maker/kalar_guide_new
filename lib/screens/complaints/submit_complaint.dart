@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
@@ -11,7 +12,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/app_colors.dart';
+import '../../services/app_control.dart';
 import '../../services/auth_service.dart';
+import '../../services/complaint_queue.dart';
+import '../../utils/error_reporter.dart';
 import '../../services/image_service.dart';
 import '../../services/location_service.dart';
 import '../../services/audio_service.dart';
@@ -31,16 +35,44 @@ class _ComplaintType {
   final Color color;
   final bool cameraOnly;
 
+  /// وەسف یان دەنگ پێویستە (بۆ «کێشەی تر»)
+  final bool needsDescription;
+
   const _ComplaintType(
       this.name,
       this.authority,
       this.icon,
       this.color, {
         this.cameraOnly = false,
+        this.needsDescription = false,
       });
 }
 
-const List<_ComplaintType> _kTypes = [
+/// 🗑️ جۆرە وردەکانی خۆڵ و خاشاک (کاتێک ئەدمین «تەنها خۆڵ و خاشاک»ی چالاک کردبێت)
+List<_ComplaintType> _wasteTypes(String authority) => [
+      _ComplaintType('خۆڵ کۆنەکراوەتەوە', authority, Icons.delete_rounded, const Color(0xFF0F9D7A),
+          cameraOnly: true),
+      _ComplaintType('تەنەکەی خۆڵ پڕ بووە', authority, Icons.delete_sweep_rounded, const Color(0xFF0F9D7A),
+          cameraOnly: true),
+      _ComplaintType('فڕێدانی خۆڵ لە شوێنی نایاسایی', authority, Icons.do_not_disturb_on_rounded,
+          const Color(0xFFD9822B),
+          cameraOnly: true),
+      _ComplaintType('گیانلەبەری مردوو', authority, Icons.pets_rounded, const Color(0xFFDC3545),
+          cameraOnly: true),
+      _ComplaintType('پاککردنەوەی شەقام و کۆڵان', authority, Icons.cleaning_services_rounded,
+          const Color(0xFF1E88E5),
+          cameraOnly: true),
+      _ComplaintType('کێشەی تری خۆڵ و خاشاک', authority, Icons.report_problem_rounded, const Color(0xFF546E7A),
+          cameraOnly: true, needsDescription: true),
+    ];
+
+/// جۆرەکانی ئێستا بە پێی ڕێکخستنی ئەدمین (ناوەندی کۆنترۆڵ ← جۆری سکاڵاکان)
+List<_ComplaintType> get _kTypes {
+  final s = AppControl.state.value;
+  return s.wasteOnlyComplaints ? _wasteTypes(s.wasteAuthority) : _kAllTypes;
+}
+
+const List<_ComplaintType> _kAllTypes = [
   _ComplaintType('خۆڵ و خاشاک و ژینگە', 'شارەوانی کەلار',
       Icons.delete_rounded, Color(0xFF0F9D7A),
       cameraOnly: true),
@@ -59,7 +91,7 @@ const List<_ComplaintType> _kTypes = [
       'بەڕێوەبەرایەتی تەندروستی گەرمیان', Icons.local_hospital_rounded,
       Color(0xFFDC3545)),
   _ComplaintType('کێشەی تر', 'گشتی', Icons.report_problem_rounded,
-      Color(0xFF546E7A)),
+      Color(0xFF546E7A), needsDescription: true),
 ];
 
 enum _LocIssue { none, serviceOff, denied, deniedForever, mocked, error }
@@ -415,7 +447,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (_, i) {
                       final t = _kTypes[i];
-                      final selected = _type == t;
+                      final selected = _type?.name == t.name;
                       return InkWell(
                         borderRadius: BorderRadius.circular(16),
                         onTap: () {
@@ -665,7 +697,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
     }
 
     final desc = _descCtrl.text.trim();
-    if (_type!.name == 'کێشەی تر' &&
+    if (_type!.needsDescription &&
         desc.length < _minDescForOther &&
         _voicePath == null) {
       _fail('بۆ «کێشەی تر» تکایە وەسفێکی کورت بنووسە یان دەنگ تۆمار بکە ✍',
@@ -688,11 +720,32 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
 
     var voiceFailed = false;
 
+    final supabaseUser = Supabase.instance.client.auth.currentUser;
+    final sessionUser = AuthSessionManager.currentUser;
+    final String? userId =
+        sessionUser?['id']?.toString() ?? supabaseUser?.id;
+
+    // ستوونە سەرەکییەکان (بێ وێنە و دەنگ) — بۆ ناردن یان هەڵگرتن بێ ئینتەرنێت
+    final base = <String, dynamic>{
+      if (userId != null && userId.isNotEmpty) 'user_id': userId,
+      'title': _type!.name,
+      'description': desc,
+      'category': _type!.name,
+      'responsible_authority': _type!.authority,
+      'latitude': _lat,
+      'longitude': _lng,
+      'status': 'pending',
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+      if (_neighborhoodName != null) 'neighborhood_name': _neighborhoodName,
+      if (_neighborhoodId != null && _neighborhoodId! > 0) 'neighborhood_id': _neighborhoodId,
+    };
+
     try {
-      final supabaseUser = Supabase.instance.client.auth.currentUser;
-      final sessionUser = AuthSessionManager.currentUser;
-      final String? userId =
-          sessionUser?['id']?.toString() ?? supabaseUser?.id;
+      // 📮 بێ ئینتەرنێت: هەڵدەگیرێت و دواتر خۆکار دەنێردرێت
+      if (!await _isOnline()) {
+        await _queueOffline(base);
+        return;
+      }
 
       // ═══ ١. وێنەکان (هاوکات) ═══
       _setStage('بارکردنی وێنەکان...', 0.05);
@@ -746,16 +799,8 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
       // ═══ ٤. پاشەکەوتکردن ═══
       _setStage('تۆمارکردنی سکاڵا...', 0.9);
       final data = <String, dynamic>{
-        if (userId != null && userId.isNotEmpty) 'user_id': userId,
-        'title': _type!.name,
-        'description': desc,
-        'category': _type!.name,
-        'responsible_authority': _type!.authority,
-        'latitude': _lat,
-        'longitude': _lng,
+        ...base,
         'images': uploadedUrls,
-        'status': 'pending',
-        'created_at': DateTime.now().toUtc().toIso8601String(),
         'neighborhood_name': neighborhoodName,
         if (neighborhoodId != null && neighborhoodId > 0)
           'neighborhood_id': neighborhoodId,
@@ -796,17 +841,65 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
         _showSnackBar(tr('هەڵەی داتابەیس، تکایە دووبارە هەوڵبدەرەوە'), const Color(0xFFDC3545));
       }
     } on TimeoutException {
-      _showSnackBar(
-          tr('پەیوەندی زۆر هێواشە — تکایە ئینتەرنێت بپشکنە و دووبارە هەوڵبدەرەوە ⏱'),
-          const Color(0xFFDC3545));
+      // ئینتەرنێتی لاواز: هەڵدەگیرێت و دواتر دەنێردرێت
+      await _queueOffline(base);
     } on SocketException {
-      _showSnackBar(tr('ئینتەرنێت نییە — پەیوەندییەکەت بپشکنە 📡'), const Color(0xFFDC3545));
+      await _queueOffline(base);
     } catch (e) {
       debugPrint('❌ Submit error: $e');
-      _showSnackBar(tr('هەڵەیەک ڕووی دا، تکایە دووبارە هەوڵبدەرەوە'), const Color(0xFFDC3545));
+      if (ErrorReporter.isNetworkError(e)) {
+        await _queueOffline(base); // هەڵەی تۆڕ (ClientException...)
+      } else {
+        _showSnackBar(tr('هەڵەیەک ڕووی دا، تکایە دووبارە هەوڵبدەرەوە'), const Color(0xFFDC3545));
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<bool> _isOnline() async {
+    try {
+      final r = await Connectivity().checkConnectivity();
+      return r.any((e) => e != ConnectivityResult.none);
+    } catch (_) {
+      return true; // نازانرێت → هەوڵ دەدرێت
+    }
+  }
+
+  /// 📮 سکاڵاکە لەسەر مۆبایل هەڵدەگیرێت و کاتێک ئینتەرنێت گەڕایەوە دەنێردرێت
+  Future<void> _queueOffline(Map<String, dynamic> base) async {
+    try {
+      await ComplaintQueue.enqueue(
+        data: base,
+        images: [for (final i in _images) i.path],
+        voice: _voicePath,
+      );
+    } catch (e) {
+      debugPrint('❌ queue complaint: $e');
+      _showSnackBar(tr('ئینتەرنێت نییە — پەیوەندییەکەت بپشکنە 📡'), const Color(0xFFDC3545));
+      return;
+    }
+    _submitted = true;
+    _draftDebounce?.cancel();
+    await _clearDraft();
+    if (!mounted) return;
+    HapticFeedback.heavyImpact();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => Directionality(
+        textDirection: AppLang.direction,
+        child: AlertDialog(
+          key: const ValueKey('complaint-queued'),
+          icon: const Icon(Icons.cloud_upload_rounded, color: Color(0xFF0F9D7A), size: 40),
+          title: Text(tr('سکاڵاکەت هەڵگیرا')),
+          content: Text(tr('ئێستا ئینتەرنێت نییە. سکاڵاکەت لەسەر مۆبایلەکەت هەڵگیرا و کاتێک ئینتەرنێت گەڕایەوە خۆکار دەنێردرێت.')),
+          actions: [
+            FilledButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('باشە'))),
+          ],
+        ),
+      ),
+    );
+    if (mounted) Navigator.of(context).maybePop();
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -1101,7 +1194,7 @@ class _SubmitComplaintScreenState extends State<SubmitComplaintScreen>
                             children: [
                               _buildStepHeader(
                                   '٥',
-                                  _type!.name == 'کێشەی تر'
+                                  _type!.needsDescription
                                       ? 'وەسفی کێشە (پێویستە)'
                                       : 'وەسفی کێشە (ئارەزوومەندانە)'),
                               const SizedBox(height: 10),
