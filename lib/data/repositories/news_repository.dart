@@ -1,3 +1,4 @@
+import '../../services/cache_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,13 +32,18 @@ class NewsRepository {
       final from = page * pageSize;
       final to = from + pageSize - 1;
 
-      final res = await _client
+      Future<List<Map<String, dynamic>>> load() async => List<Map<String, dynamic>>.from(await _client
           .from('news')
           .select(_hasTypeColumn ? _columns : _columns.replaceAll('news_type, ', ''))
           .order('id', ascending: false)
-          .range(from, to);
+          .range(from, to) as List);
 
-      return (res as List)
+      // 📰 لاپەڕەی یەکەم بێ ئینتەرنێتیش دەردەکەوێت
+      final res = page == 0
+          ? await CacheService.fetchList('news_repo_page0_$pageSize', load, keepFor: const Duration(days: 7))
+          : await load();
+
+      return res
           .map((e) => News.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     } on PostgrestException catch (e) {

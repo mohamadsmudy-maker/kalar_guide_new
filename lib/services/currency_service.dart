@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'price_types.dart';
 import 'dart:ui' show Color;
 
@@ -7,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'price_save_result.dart';
 
 import 'auth_service.dart';
+import 'cache_service.dart';
 import '../l10n/tr.dart';
 
 /// 📊 بارودۆخی بازاڕ بۆ یەک جۆری دراو
@@ -213,15 +215,26 @@ class CurrencyService {
         if (phone != null) q2 = q2.eq('phone', phone);
         res = await q2.order('name');
       }
-      return List<Map<String, dynamic>>.from(res as List);
+      final rows = List<Map<String, dynamic>>.from(res as List);
+      if (phone == null && rows.isNotEmpty) {
+        unawaited(CacheService.save(_cacheKey(columns), rows, duration: const Duration(days: 7)));
+      }
+      return rows;
     } on PostgrestException catch (e) {
       if (_hasActiveColumn && e.message.contains('prices_active')) {
         _hasActiveColumn = false;
         return _fetchStations(columns: columns, phone: phone);
       }
       rethrow;
+    } catch (e) {
+      // 💱 بێ ئینتەرنێت: دوایین نرخە هەڵگیراوەکان
+      final stale = phone == null ? await CacheService.getStale(_cacheKey(columns)) : null;
+      if (stale is! List) rethrow;
+      return [for (final m in stale) Map<String, dynamic>.from(m as Map)];
     }
   }
+
+  static String _cacheKey(String columns) => 'currency_stations_${columns.hashCode}';
 
   // ═══════════════════════════════════════════════════════════
   // 🔘 چالاک/ناچالاک + نرخی گشتی (تەنها ئەدمین)
@@ -247,7 +260,9 @@ class CurrencyService {
   /// {"usd": {"buy": .., "sell": .., "updated_at": ..}, ...}
   static Future<Map<String, dynamic>> getGeneralPrices() async {
     try {
-      final row = await _client.from('app_settings').select('value').eq('key', _generalKey).maybeSingle();
+      final row = await CacheService.fetchJson(
+          'currency_general_v1',
+          () => _client.from('app_settings').select('value').eq('key', _generalKey).maybeSingle());
       final v = row?['value'];
       return v is Map ? Map<String, dynamic>.from(v) : {};
     } catch (e) {

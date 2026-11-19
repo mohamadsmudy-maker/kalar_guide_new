@@ -2124,4 +2124,5 @@ const Map<String, String> stringsEn = {
   "⚠️ تایبەتمەندیی «شوێنی پێشنیارکراو» لە ناوەندی کۆنترۆڵ کوژاوەتەوە، بۆیە ئێستا بۆ بەکارهێنەران دەرناکەوێت.": "⚠️ The \"Featured places\" feature is turned off in the control center, so users do not see it right now.",
   "لابردنی پێشنیارکراو": "Remove featured",
   "تەنها ئەدمین دەتوانێت هەواڵ لە ڕێگەی شێرەوە بڵاو بکاتەوە": "Only an admin can publish news by sharing",
+  "بێ ئینتەرنێت — زانیارییە هەڵگیراوەکان پیشان دەدرێن": "Offline — showing saved information",
 };

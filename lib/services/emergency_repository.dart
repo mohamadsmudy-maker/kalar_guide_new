@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/emergency_service.dart';
+import 'cache_service.dart';
 
 /// 🚑 Repository بۆ فریاکەوتن
 class EmergencyServiceRepository {
@@ -8,12 +9,17 @@ class EmergencyServiceRepository {
 
   static Future<List<EmergencyService>> getAll() async {
     try {
-      final res = await _client
-          .from('emergency_services')
-          .select()
-          .order('display_order');
+      // 🚑 بێ ئینتەرنێتیش: دوایین لیستی هەڵگیراو
+      final res = await CacheService.fetchList(
+        'emergency_services_v1',
+        () async => List<Map<String, dynamic>>.from(await _client
+            .from('emergency_services')
+            .select()
+            .order('display_order') as List),
+        keepFor: const Duration(days: 30),
+      );
 
-      return (res as List)
+      return res
           .map((e) => EmergencyService.fromJson(
         Map<String, dynamic>.from(e as Map),
       ))

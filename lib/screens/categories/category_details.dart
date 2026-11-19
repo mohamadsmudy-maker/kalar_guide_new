@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
+import '../../services/cache_service.dart';
 import '../../services/featured_places.dart';
 import '../../widgets/featured_badge.dart';
 import '../../widgets/common/optimized_network_image.dart';
@@ -53,7 +54,12 @@ class _CategoryDetailsScreenState extends State<CategoryDetailsScreen>
         .eq('parent', widget.categoryName);
 
     // هەمان ڕێسای ژمارەکردنی شاشەی بەشەکان (PlaceDisplay.inCategory)
-    _storesFuture = Supabase.instance.client.from('dukan').select().then(
+    // هەمان کاشی شاشەی شوێنەکان: بێ ئینتەرنێتیش کار دەکات
+    _storesFuture = CacheService.fetchList(
+      'stores_list_v3',
+      () async => List<Map<String, dynamic>>.from(
+          await Supabase.instance.client.from('dukan').select().order('name') as List),
+    ).then(
           (rows) => [
             for (final r in rows)
               if (PlaceDisplay.inCategory(r, widget.categoryName)) r,

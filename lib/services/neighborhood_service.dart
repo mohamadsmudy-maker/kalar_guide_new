@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/neighborhood.dart';
 import 'boundary_service.dart';
+import 'cache_service.dart';
 
 /// 🏘️ خزمەتگوزاری گەڕەکەکان
 class NeighborhoodService {
@@ -12,13 +13,17 @@ class NeighborhoodService {
   // ═══════════════════════════════════════════════════════════
   static Future<List<Neighborhood>> getAll() async {
     try {
-      final res = await _client
-          .from('neighborhoods')
-          .select()
-          .eq('is_active', true)
-          .order('display_order');
+      final res = await CacheService.fetchList(
+        'neighborhoods_v1',
+        () async => List<Map<String, dynamic>>.from(await _client
+            .from('neighborhoods')
+            .select()
+            .eq('is_active', true)
+            .order('display_order') as List),
+        keepFor: const Duration(days: 30),
+      );
 
-      final list = (res as List)
+      final list = res
           .map((e) => Neighborhood.fromJson(Map<String, dynamic>.from(e)))
           .toList();
 
@@ -82,13 +87,15 @@ class NeighborhoodService {
       int neighborhoodId,
       ) async {
     try {
-      final res = await _client
-          .from('dukan')
-          .select()
-          .eq('neighborhood_id', neighborhoodId)
-          .order('name');
-
-      return List<Map<String, dynamic>>.from(res as List);
+      return await CacheService.fetchList(
+        'neighborhood_places_$neighborhoodId',
+        () async => List<Map<String, dynamic>>.from(await _client
+            .from('dukan')
+            .select()
+            .eq('neighborhood_id', neighborhoodId)
+            .order('name') as List),
+        keepFor: const Duration(days: 7),
+      );
     } catch (e) {
       debugPrint('❌ getStoresInNeighborhood error: $e');
       return [];

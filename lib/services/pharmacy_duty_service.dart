@@ -5,6 +5,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'cache_service.dart';
+
 class PharmacyDuty {
   final int id;
   final DateTime dutyDate;
@@ -61,16 +63,35 @@ class PharmacyDutyService {
   /// [days] شەو، لە [from] ـەوە
   static Future<List<PharmacyDuty>> fetchRange(DateTime from, int days) async {
     final to = DateTime(from.year, from.month, from.day + days - 1);
-    final res = await _db
-        .from('pharmacy_duty')
-        .select()
-        .gte('duty_date', dateKey(from))
-        .lte('duty_date', dateKey(to))
-        .order('duty_date')
-        .order('name');
-    return (res as List)
-        .map((e) => PharmacyDuty.fromMap(Map<String, dynamic>.from(e as Map)))
-        .toList();
+    List<Map<String, dynamic>> rows;
+    try {
+      // ١٤ شەو دەهێنرێت و هەڵدەگیرێت، بۆ ئەوەی بەیانیش بێ ئینتەرنێت کار بکات
+      final until = DateTime(from.year, from.month, from.day + (days > 14 ? days : 14) - 1);
+      rows = List<Map<String, dynamic>>.from(await _db
+          .from('pharmacy_duty')
+          .select()
+          .gte('duty_date', dateKey(from))
+          .lte('duty_date', dateKey(until))
+          .order('duty_date')
+          .order('name') as List);
+      await CacheService.save(_cacheKey, rows, duration: const Duration(days: 14));
+    } catch (e) {
+      final stale = await CacheService.getStale(_cacheKey);
+      if (stale is! List) rethrow;
+      rows = [for (final m in stale) Map<String, dynamic>.from(m as Map)];
+    }
+    return inRange(rows.map(PharmacyDuty.fromMap), from, to);
+  }
+
+  static const String _cacheKey = 'pharmacy_duty_v1';
+
+  /// تەنها ئەو شەوانەی لە نێوان [from] و [to] ـدان (بۆ کاشی بێ ئینتەرنێت)
+  static List<PharmacyDuty> inRange(Iterable<PharmacyDuty> all, DateTime from, DateTime to) {
+    final a = dateKey(from), b = dateKey(to);
+    return [
+      for (final d in all)
+        if (dateKey(d.dutyDate).compareTo(a) >= 0 && dateKey(d.dutyDate).compareTo(b) <= 0) d,
+    ];
   }
 
   /// وشەکانی «دەرمانخانە» بە شێوازە جیاوازەکانی نووسین (ە/ه، عەرەبی، ئینگلیزی)

@@ -1,3 +1,4 @@
+import 'dart:async';
 // lib/services/fuel_service.dart
 import 'price_types.dart';
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'price_save_result.dart';
 
 import 'auth_service.dart';
+import 'cache_service.dart';
 import '../l10n/tr.dart';
 
 /// 📊 بارودۆخی بازاڕ بۆ یەک جۆری سووتەمەنی
@@ -103,8 +105,17 @@ class FuelService {
       }
       debugPrint('⚠️ fuel stations (sub_category?): ${e.message}');
       res = await run(_categoryOnlyFilter);
+    } catch (e) {
+      // ⛽ بێ ئینتەرنێت: دوایین نرخە هەڵگیراوەکان (تەنها لیستی گشتی)
+      final stale = phone == null ? await CacheService.getStale(_cacheKey(columns)) : null;
+      if (stale is! List) rethrow;
+      res = stale;
     }
-    return List<Map<String, dynamic>>.from(res);
+    final rows = List<Map<String, dynamic>>.from(res.map((e) => Map<String, dynamic>.from(e as Map)));
+    if (phone == null && rows.isNotEmpty) {
+      unawaited(CacheService.save(_cacheKey(columns), rows, duration: const Duration(days: 7)));
+    }
+    return rows;
   }
 
   /// بۆ پشکنینی شوێنێک کە پێشتر هێنراوە
@@ -236,10 +247,13 @@ class FuelService {
   }
 
   /// {"normal": 1000, ...}
+  static String _cacheKey(String columns) => 'fuel_stations_${columns.hashCode}';
+
   static Future<Map<String, dynamic>> getGeneralPrices() async {
     try {
-      final row =
-          await _client.from('app_settings').select('value, updated_at').eq('key', _generalKey).maybeSingle();
+      final row = await CacheService.fetchJson(
+          'fuel_general_v1',
+          () => _client.from('app_settings').select('value, updated_at').eq('key', _generalKey).maybeSingle());
       final v = row?['value'];
       _generalUpdatedAt = row?['updated_at']?.toString();
       return v is Map ? Map<String, dynamic>.from(v) : {};

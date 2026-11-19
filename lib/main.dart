@@ -78,12 +78,14 @@ import 'utils/kurdish_localizations.dart';
 // ✅ Widgets
 // ═══════════════════════════════════════════════════════════
 import 'widgets/pro_bottom_nav.dart';
+import 'widgets/offline_banner.dart';
 
 // ═══════════════════════════════════════════════════════════
 // ⚙️ App config (one place to tweak behaviour)
 // ═══════════════════════════════════════════════════════════
 
-const bool _kClearCacheOnStartup = true;
+// false: کاشەکە دەمێنێتەوە بۆ ئەوەی ئەپەکە بێ ئینتەرنێتیش کار بکات
+const bool _kClearCacheOnStartup = false;
 const Duration _kInitTimeout = Duration(seconds: 5);
 const Duration _kExitConfirmWindow = Duration(seconds: 2);
 const double _kMinFontScale = 0.8;
@@ -577,7 +579,7 @@ class KalarGuideApp extends StatelessWidget {
             // ✅ ئاراستە بەپێی زمان: کوردی/عەرەبی ڕاست-بۆ-چەپ، ئینگلیزی چەپ-بۆ-ڕاست
             child: Directionality(
               textDirection: AppLang.direction,
-              child: AppGate(child: child ?? const SizedBox.shrink()),
+              child: OfflineBanner(child: AppGate(child: child ?? const SizedBox.shrink())),
             ),
           ),
         );
