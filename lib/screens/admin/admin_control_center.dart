@@ -1112,6 +1112,7 @@ class _ControlsTabState extends State<_ControlsTab> {
                 ('prayer', 'کاتی نوێژ و قیبلە', Icons.mosque_rounded),
                 ('weather', 'کەشوهەوا', Icons.cloud_rounded),
                 ('waste_schedule', 'کاتی ئۆتۆمبێلی خۆڵ', Icons.local_shipping_rounded),
+                ('sponsored_slides', 'سلایدی ڕیکلام', Icons.campaign_rounded),
               ])
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

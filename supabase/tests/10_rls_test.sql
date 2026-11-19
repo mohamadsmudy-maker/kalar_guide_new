@@ -90,6 +90,7 @@ select t.check(t.rows($$insert into price_types(kind, key, name_ku, grp) values 
 select t.check(t.rows($$insert into pharmacy_duty(duty_date, name) values (current_date, 'x')$$) = -1, 'customer cannot add on-duty pharmacies');
 select t.check(t.rows($$insert into neighborhood_alerts(neighborhood_id, title) values (1, 'x')$$) = -1, 'customer cannot send neighborhood alerts');
 select t.check(t.rows($$insert into waste_schedule(neighborhood_id, weekdays) values (1, '{1}')$$) = -1, 'customer cannot set collection days');
+select t.check(t.rows($$insert into sponsored_slides(title, image_url) values ('x', 'u')$$) = -1, 'customer cannot add sponsored slides');
 select t.check(t.rows($$delete from price_types$$) = 0, 'customer cannot delete price types');
 select t.check((select count(*) from price_types) >= 17, 'everyone can read price types');
 do $$ begin
@@ -159,6 +160,10 @@ select t.check((select notified_at is null from neighborhood_alerts where neighb
 select t.check(t.rows($$insert into waste_schedule(neighborhood_id, neighborhood_name, weekdays, time_text) values (2, 'شۆڕش', '{6,1,3}', '07:00')$$) = 1, 'admin sets collection days');
 select t.check(t.rows($$insert into waste_schedule(neighborhood_id, weekdays) values (3, '{9}')$$) = -2, 'invalid weekday rejected');
 select t.check((select count(*) from waste_schedule) = 1, 'everyone can read collection days');
+select t.check(t.rows($$insert into sponsored_slides(title, image_url) values ('Live ad', 'https://x/1.jpg')$$) = 1, 'admin adds a sponsored slide');
+select t.check(t.rows($$insert into sponsored_slides(title, image_url, starts_on, ends_on) values ('Old ad', 'u', current_date - 60, current_date - 30)$$) = 1, 'admin adds an expired slide');
+select t.check(t.rows($$insert into sponsored_slides(title, image_url, is_active) values ('Paused ad', 'u', false)$$) = 1, 'admin adds a paused slide');
+select t.check((select count(*) from sponsored_slides) = 3, 'admin sees all slides');
 select t.check(t.rows($$update dukan set prices_active = false where id = 2$$) = 1, 'admin deactivates station prices');
 select t.check(not (select prices_active from dukan where id = 2), 'station prices are inactive');
 select t.check(t.rows($$update dukan set featured_until = now() + interval '30 days' where id = 2$$) = 1, 'admin features a store');
@@ -228,6 +233,10 @@ select t.check(t.rows($$delete from reviews where is_approved = false$$) = 1, 'a
 create temp table rr as select id::text as rid from reviews where store_id = 1 and user_id = '999';
 grant select on rr to authenticated;
 select t.as_user('00000000-0000-0000-0000-0000000000a1');
+select t.check((select count(*) from sponsored_slides) = 1, 'guests see only live slides');
+select app_sponsored_event((select id from sponsored_slides), 'view');
+select app_sponsored_event((select id from sponsored_slides), 'click');
+select t.check(t.rows($$update sponsored_slides set views = 999$$) = 0, 'guests cannot change counters directly');
 select t.check(app_report_review((select rid from rr), 'offensive', 'جنێو') = 'ok', 'guest reports a review');
 select t.check(app_report_review((select rid from rr), 'spam') = 'duplicate', 'same person cannot report twice');
 select t.check(app_report_review((select rid from rr), 'nonsense') = 'invalid', 'unknown reason rejected');
@@ -244,6 +253,8 @@ select t.as_user('00000000-0000-0000-0000-00000000000d');
 select app_login('07500000001', 'adminpass');
 select t.check((select count(*) from review_reports where status = 'open') = 3, 'admin reads reports');
 select t.check(t.rows($$update review_reports set status = 'dismissed'$$) = 3, 'admin dismisses reports');
+select t.check((select views = 1 and clicks = 1 from sponsored_slides where title = 'Live ad'), 'view and click counted');
+select t.check((select views = 0 from sponsored_slides where title = 'Old ad'), 'expired slide not counted');
 
 -- ── prayer times (admin still logged in) ─────────────────────────
 select t.check(t.rows($$insert into prayer_times_official values

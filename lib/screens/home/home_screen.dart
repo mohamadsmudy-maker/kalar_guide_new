@@ -1,4 +1,5 @@
 // lib/screens/home/home_screen.dart
+import '../../services/sponsored_slides_service.dart';
 import '../../services/app_control.dart';
 import '../../widgets/announcement_banner.dart';
 import '../search/global_search_screen.dart';
@@ -53,6 +54,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.initState();
     _scroll.addListener(_onScroll);
     AppControl.state.addListener(_onControl); // بەشەکان بکرێنەوە/دابخرێن
+    _loadAds();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _precacheImages(ref.read(newsProvider).news);
@@ -69,7 +71,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _onControl() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    _loadAds(); // ڕیکلام کرایەوە/داخرا
+  }
+
+  /// 📢 ڕیکلامە چالاکەکان بۆ سلاید
+  List<SponsoredSlide> _ads = const [];
+  Future<void> _loadAds() async {
+    final ads = await SponsoredSlidesService.live();
+    if (mounted) setState(() => _ads = ads);
   }
 
   void _onScroll() {
@@ -95,6 +106,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
+    unawaited(_loadAds());
     await ref.read(newsProvider.notifier).refresh().catchError((e) {
       debugPrint('⚠️ news refresh error: $e');
     });
@@ -147,8 +159,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final surfaceColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
-    final carouselItems =
-        news.take(_kCarouselCount).map((n) => n.toDisplayMap()).toList();
+    final newsOn = AppControl.state.value.feature('news');
+    // 📢 ڕیکلامەکان لە نێوان هەواڵەکاندا (دوای هەر ٢ هەواڵ یەک ڕیکلام، زۆرترین ٣)
+    final carouselItems = SponsoredSlidesService.interleave(
+      newsOn ? news.take(_kCarouselCount).map((n) => n.toDisplayMap()).toList() : const [],
+      _ads,
+    );
     final List<dynamic> otherNews = news.length > _kCarouselCount
         ? news.skip(_kCarouselCount).take(_kListCount).toList()
         : const <dynamic>[];
@@ -170,11 +186,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           slivers: [
             _buildAppBar(isDark, surfaceColor, iconColor, t),
             const SliverToBoxAdapter(child: AnnouncementBanner()),
-            if (AppControl.state.value.feature('news'))
+            if (newsOn || carouselItems.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8, bottom: 4),
-                child: news.isNotEmpty
+                child: carouselItems.isNotEmpty
                     ? NewsCarousel(
                         newsList: carouselItems, onTap: _openNewsDetails)
                     : isLoading
