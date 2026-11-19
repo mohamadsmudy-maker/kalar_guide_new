@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'cache_service.dart';
+
 class NewsService {
   static SupabaseClient get _client => Supabase.instance.client;
 
@@ -21,13 +23,15 @@ class NewsService {
     required int to,
   }) async {
     try {
-      final res = await _client
+      Future<List<Map<String, dynamic>>> load() async => List<Map<String, dynamic>>.from(await _client
           .from('news')
           .select(_hasTypeColumn ? _columns : _columns.replaceAll('news_type, ', ''))
           .order('id', ascending: false)
-          .range(from, to);  // ✅ Pagination
+          .range(from, to)); // ✅ Pagination
 
-      return List<Map<String, dynamic>>.from(res);
+      // 📰 لاپەڕەی یەکەم بێ ئینتەرنێتیش دەردەکەوێت
+      if (from != 0) return await load();
+      return await CacheService.fetchList('news_page0_$to', load, keepFor: const Duration(days: 7));
     } on PostgrestException catch (e) {
       if (_hasTypeColumn && e.message.contains('news_type')) {
         _hasTypeColumn = false;

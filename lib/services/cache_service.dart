@@ -92,6 +92,24 @@ class CacheService {
     }
   }
 
+  /// وەک [fetchList] بەڵام بۆ هەر داتایەکی JSON (Map، لیست...).
+  /// سەرکەوتوو → هەڵدەگیرێت؛ هەڵەی تۆڕ → دوایین داتای هەڵگیراو.
+  static Future<dynamic> fetchJson(
+    String key,
+    Future<dynamic> Function() fetch, {
+    Duration keepFor = const Duration(days: 7),
+  }) async {
+    try {
+      final data = await fetch();
+      if (data != null) await save(key, data, duration: keepFor);
+      return data;
+    } catch (e) {
+      final stale = await getStale(key);
+      if (stale != null) return stale;
+      rethrow;
+    }
+  }
+
   static Future<void> remove(String key) async {
     _memoryCache.remove(key);
     try {
