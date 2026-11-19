@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../config/app_colors.dart';
 import '../../l10n/tr.dart';
+import '../../services/sponsored_slides_service.dart';
+import 'sponsored_slide_card.dart';
 
 /// 📰 کاروسێلی هەواڵەکان — Full Ultra Pro Max V2
 class NewsCarousel extends StatefulWidget {
@@ -46,6 +48,7 @@ class _NewsCarouselState extends State<NewsCarousel>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _prefetchStores();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _countAdView(_currentIndex));
     _scheduleNext();
   }
 
@@ -268,6 +271,7 @@ class _NewsCarouselState extends State<NewsCarousel>
               itemCount: widget.newsList.length,
               onPageChanged: (index) {
                 setState(() => _currentIndex = index);
+                _countAdView(index);
                 _scheduleNext();
               },
               itemBuilder: (context, index) {
@@ -303,7 +307,16 @@ class _NewsCarouselState extends State<NewsCarousel>
     );
   }
 
+  /// ڕیکلام کاتێک دەبینرێت دەژمێردرێت (یەکجار لە هەر کردنەوەیەک)
+  void _countAdView(int index) {
+    if (index < 0 || index >= widget.newsList.length) return;
+    final ad = widget.newsList[index][SponsoredSlide.mapKey];
+    if (ad is SponsoredSlide) SponsoredSlidesService.recordView(ad);
+  }
+
   Widget _buildNewsCard(Map<String, dynamic> news, bool isDark) {
+    final ad = news[SponsoredSlide.mapKey];
+    if (ad is SponsoredSlide) return SponsoredSlideCard(slide: ad);
     final imageUrl = _extractImage(news);
     final title = news['title']?.toString() ?? '';
     final newsType = news['news_type']?.toString() ?? 'هەواڵ';

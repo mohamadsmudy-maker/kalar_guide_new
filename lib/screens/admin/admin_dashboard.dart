@@ -34,6 +34,7 @@ import 'admin_pharmacy_duty.dart';
 import 'admin_neighborhood_alerts.dart';
 import 'admin_review_reports.dart';
 import 'admin_waste_schedule.dart';
+import 'admin_sponsored_slides.dart';
 import 'admin_database_viewer.dart';
 import 'admin_videos.dart';
 // ✅ گەلەری ئەدمین
@@ -621,6 +622,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: tr('ئاگاداریی گەڕەکەکان'),
           subtitle: tr('بڕینی ئاو، کارەبا... بۆ گەڕەکێک'),
           screen: () => const AdminNeighborhoodAlertsScreen(),
+        ),
+        _DashItem(
+          id: 'sponsored_slides',
+          icon: Icons.campaign_rounded,
+          color: const Color(0xFFE67E22),
+          title: tr('سلایدی ڕیکلام'),
+          subtitle: tr('ڕیکلامی بازرگانی لە سلایدی پەیجی سەرەکی'),
+          screen: () => const AdminSponsoredSlidesScreen(),
         ),
         _DashItem(
           id: 'waste_schedule',
