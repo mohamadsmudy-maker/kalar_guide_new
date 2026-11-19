@@ -41,6 +41,7 @@ import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/admin_news.dart';
 import 'services/share_intent_service.dart';
 import 'services/complaint_queue.dart';
+import 'services/waste_schedule_service.dart';
 import 'screens/vendor/vendor_panel_screen.dart';
 import 'screens/admin/admin_fuel_stations.dart';
 import 'screens/admin/admin_gallery.dart';
@@ -212,6 +213,7 @@ Future<void> _start() async {
   // (پێشتر تا ١٠ چرکە زیاتر شاشەی سپلاش دەمایەوە لە ئینتەرنێتی خراپدا)
   unawaited(_initPushLate());
   ComplaintQueue.start(); // 📮 سکاڵا هەڵگیراوەکانی بێ ئینتەرنێت
+  unawaited(WasteScheduleService.resync()); // 🗑️ ئاگادارکردنەوەی ئۆتۆمبێلی خۆڵ
   _trackCrashContext();
   unawaited(LocalFavorites.ensureLoaded());
   unawaited(PresenceService.start()); // بەکارهێنەرانی چالاک

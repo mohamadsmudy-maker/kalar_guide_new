@@ -33,6 +33,7 @@ import 'admin_tickers.dart';
 import 'admin_pharmacy_duty.dart';
 import 'admin_neighborhood_alerts.dart';
 import 'admin_review_reports.dart';
+import 'admin_waste_schedule.dart';
 import 'admin_database_viewer.dart';
 import 'admin_videos.dart';
 // ✅ گەلەری ئەدمین
@@ -620,6 +621,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: tr('ئاگاداریی گەڕەکەکان'),
           subtitle: tr('بڕینی ئاو، کارەبا... بۆ گەڕەکێک'),
           screen: () => const AdminNeighborhoodAlertsScreen(),
+        ),
+        _DashItem(
+          id: 'waste_schedule',
+          icon: Icons.local_shipping_rounded,
+          color: const Color(0xFF0F9D7A),
+          title: tr('کاتی ئۆتۆمبێلی خۆڵ'),
+          subtitle: tr('ڕۆژەکانی کۆکردنەوەی خۆڵ بۆ هەر گەڕەکێک'),
+          screen: () => const AdminWasteScheduleScreen(),
         ),
         _DashItem(
           id: 'review_reports',
