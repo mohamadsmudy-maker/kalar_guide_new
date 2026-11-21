@@ -8,6 +8,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../l10n/tr.dart';
 import '../../services/image_service.dart';
 import '../../services/sponsored_slides_service.dart';
@@ -218,6 +220,14 @@ class _SponsoredSlideEditorState extends State<SponsoredSlideEditor> {
   late final _subtitle = TextEditingController(text: widget.slide?.subtitle ?? '');
   late final _value = TextEditingController(text: widget.slide?.actionValue ?? '');
   late String _action = widget.slide?.actionType ?? 'phone';
+
+  /// سەرچاوەی ڕیکلام: place (شوێنی تۆمارکراو) | news (هەواڵ) | custom (تایبەت)
+  late String _source = switch (widget.slide?.actionType) {
+    'place' => 'place',
+    'news' => 'news',
+    _ => 'custom',
+  };
+  late String _linkedName = widget.slide?.title ?? '';
   late bool _active = widget.slide?.isActive ?? true;
   late DateTime _start = widget.slide?.startsOn ?? _today();
   late DateTime _end = widget.slide?.endsOn ?? _today().add(const Duration(days: 30));
@@ -236,6 +246,44 @@ class _SponsoredSlideEditorState extends State<SponsoredSlideEditor> {
     _subtitle.dispose();
     _value.dispose();
     super.dispose();
+  }
+
+  void _setSource(String s) {
+    setState(() {
+      _source = s;
+      if (s == 'custom') {
+        if (!SponsoredSlide.customActionTypes.contains(_action)) _action = 'phone';
+        if (_action == 'phone') _value.clear();
+      } else {
+        _action = s;
+        _value.clear();
+        _linkedName = '';
+      }
+    });
+  }
+
+  /// شوێن یان هەواڵێک هەڵدەبژێرێت و خانەکان پڕ دەکاتەوە
+  Future<void> _pickLinked() async {
+    final row = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => SponsoredSourcePicker(kind: _source),
+    );
+    if (row == null || !mounted) return;
+    final f = SponsoredSourcePicker.fill(_source, row);
+    setState(() {
+      _linkedName = f.title;
+      _title.text = f.title;
+      if (f.subtitle.isNotEmpty) _subtitle.text = f.subtitle;
+      if (f.image.isNotEmpty) {
+        _imageUrl = f.image;
+        _picked = null;
+      }
+      _action = _source;
+      _value.text = f.id;
+    });
   }
 
   Future<void> _pickImage() async {
@@ -269,6 +317,11 @@ class _SponsoredSlideEditorState extends State<SponsoredSlideEditor> {
       };
 
   Future<void> _save() async {
+    if (_source != 'custom' && _value.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr(_source == 'place' ? 'تکایە شوێنێک هەڵبژێرە ⚠' : 'تکایە هەواڵێک هەڵبژێرە ⚠'))));
+      return;
+    }
     if (_title.text.trim().isEmpty || (_imageUrl.isEmpty && _picked == null)) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(tr('وێنە و ناونیشان پێویستن ⚠'))));
@@ -319,6 +372,42 @@ class _SponsoredSlideEditorState extends State<SponsoredSlideEditor> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // 🔀 سەرچاوە: شوێنی تۆمارکراو، هەواڵ، یان تایبەت
+            SegmentedButton<String>(
+              key: const ValueKey('ad-source'),
+              segments: [
+                ButtonSegment(value: 'place', icon: const Icon(Icons.storefront_rounded), label: Text(tr('شوێن'))),
+                ButtonSegment(value: 'news', icon: const Icon(Icons.newspaper_rounded), label: Text(tr('هەواڵ'))),
+                ButtonSegment(value: 'custom', icon: const Icon(Icons.brush_rounded), label: Text(tr('تایبەت'))),
+              ],
+              selected: {_source},
+              onSelectionChanged: (s) => _setSource(s.first),
+            ),
+            const SizedBox(height: 12),
+            if (_source != 'custom') ...[
+              Material(
+                color: _orange.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                child: ListTile(
+                  key: const ValueKey('pick-linked'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  leading: Icon(_source == 'place' ? Icons.storefront_rounded : Icons.newspaper_rounded,
+                      color: _orange),
+                  title: Text(
+                    _value.text.isEmpty
+                        ? tr(_source == 'place' ? 'شوێنێکی تۆمارکراو هەڵبژێرە' : 'هەواڵێک هەڵبژێرە')
+                        : tr(_linkedName),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: Text(tr(_source == 'place'
+                      ? 'کرتەکردن لە ڕیکلامەکە پەیجی شوێنەکە دەکاتەوە'
+                      : 'کرتەکردن لە ڕیکلامەکە هەواڵەکە دەکاتەوە')),
+                  trailing: const Icon(Icons.chevron_left_rounded),
+                  onTap: _pickLinked,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             GestureDetector(
               onTap: _pickImage,
               child: AspectRatio(
@@ -341,16 +430,19 @@ class _SponsoredSlideEditorState extends State<SponsoredSlideEditor> {
             const SizedBox(height: 14),
             TextField(controller: _title, maxLength: 80, decoration: deco(tr('ناونیشان'))),
             TextField(controller: _subtitle, maxLength: 160, decoration: deco(tr('دەقی کورت (ئارەزوومەندانە)'))),
+            if (_source == 'custom') ...[
             DropdownButtonFormField<String>(
-              initialValue: _action,
+              key: ValueKey('action-$_source'),
+              initialValue: SponsoredSlide.customActionTypes.contains(_action) ? _action : 'phone',
               decoration: deco(tr('دوگمە')),
               items: [
-                for (final t in SponsoredSlide.actionTypes)
+                for (final t in SponsoredSlide.customActionTypes)
                   DropdownMenuItem(value: t, child: Text(tr(SponsoredSlide.actionLabel(t)))),
               ],
               onChanged: (v) => setState(() => _action = v ?? 'none'),
             ),
-            if (_action != 'none') ...[
+            ],
+            if (_source == 'custom' && _action != 'none') ...[
               const SizedBox(height: 12),
               TextField(
                 controller: _value,
@@ -412,4 +504,151 @@ class _SponsoredSlideEditorState extends State<SponsoredSlideEditor> {
           ],
         ),
       );
+}
+
+
+/// 🔎 هەڵبژاردنی شوێنێکی تۆمارکراو یان هەواڵێک بۆ ڕیکلام
+class SponsoredSourcePicker extends StatefulWidget {
+  const SponsoredSourcePicker({super.key, required this.kind, this.loader});
+
+  /// place | news
+  final String kind;
+
+  /// بۆ تاقیکردنەوە: گەڕان بە دەق → ڕیزەکان
+  final Future<List<Map<String, dynamic>>> Function(String query)? loader;
+
+  /// ڕیزێک → خانەکانی ڕیکلام
+  static ({String id, String title, String subtitle, String image}) fill(String kind, Map<String, dynamic> r) {
+    String firstImage(Object? v) {
+      if (v is List && v.isNotEmpty) return '${v.first}';
+      if (v is String) {
+        final s = v.replaceAll(RegExp(r'[\[\]"\s]'), '').replaceAll("'", '');
+        return s.split(',').firstWhere((e) => e.startsWith('http'), orElse: () => '');
+      }
+      return '';
+    }
+
+    if (kind == 'news') {
+      return (
+        id: '${r['id']}',
+        title: '${r['title'] ?? ''}',
+        subtitle: '',
+        image: firstImage(r['images'] ?? r['img']),
+      );
+    }
+    return (
+      id: '${r['id']}',
+      title: '${r['name'] ?? ''}',
+      subtitle: '${r['address'] ?? ''}',
+      image: '${r['image'] ?? r['logo'] ?? ''}',
+    );
+  }
+
+  @override
+  State<SponsoredSourcePicker> createState() => _SponsoredSourcePickerState();
+}
+
+class _SponsoredSourcePickerState extends State<SponsoredSourcePicker> {
+  final _q = TextEditingController();
+  List<Map<String, dynamic>>? _rows;
+  int _seq = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _search('');
+  }
+
+  @override
+  void dispose() {
+    _q.dispose();
+    super.dispose();
+  }
+
+  Future<List<Map<String, dynamic>>> _load(String q) async {
+    final db = Supabase.instance.client;
+    if (widget.kind == 'news') {
+      var query = db.from('news').select('id, title, images, created_at');
+      if (q.isNotEmpty) query = query.ilike('title', '%$q%');
+      return List<Map<String, dynamic>>.from(await query.order('id', ascending: false).limit(40) as List);
+    }
+    var query = db.from('dukan').select('id, name, address, image, logo');
+    if (q.isNotEmpty) query = query.ilike('name', '%$q%');
+    return List<Map<String, dynamic>>.from(await query.order('name').limit(40) as List);
+  }
+
+  Future<void> _search(String q) async {
+    final seq = ++_seq;
+    try {
+      final rows = await (widget.loader ?? _load)(q.trim());
+      if (mounted && seq == _seq) setState(() => _rows = rows);
+    } catch (_) {
+      if (mounted && seq == _seq) setState(() => _rows = const []);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _rows;
+    final isNews = widget.kind == 'news';
+    return Directionality(
+      textDirection: AppLang.direction,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.75,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: TextField(
+                controller: _q,
+                onChanged: _search,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  hintText: tr(isNews ? 'گەڕان بە ناونیشانی هەواڵ' : 'گەڕان بە ناوی شوێن'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
+            Expanded(
+              child: rows == null
+                  ? const Center(child: CircularProgressIndicator(color: _orange))
+                  : rows.isEmpty
+                      ? Center(child: Text(tr('هیچ ئەنجامێک نییە')))
+                      : ListView.builder(
+                          itemCount: rows.length,
+                          itemBuilder: (_, i) {
+                            final f = SponsoredSourcePicker.fill(widget.kind, rows[i]);
+                            return Material(
+                              type: MaterialType.transparency,
+                              child: ListTile(
+                                key: ValueKey('source-${f.id}'),
+                                leading: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: SizedBox(
+                                    width: 52,
+                                    height: 52,
+                                    child: f.image.isEmpty
+                                        ? Container(
+                                            color: Colors.grey.shade200,
+                                            child: Icon(isNews ? Icons.newspaper_rounded : Icons.storefront_rounded,
+                                                color: Colors.grey))
+                                        : OptimizedNetworkImage(imageUrl: f.image, fit: BoxFit.cover),
+                                  ),
+                                ),
+                                title: Text(tr(f.title),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontWeight: FontWeight.w800)),
+                                subtitle: f.subtitle.isEmpty ? null : Text(tr(f.subtitle), maxLines: 1),
+                                onTap: () => Navigator.pop(context, rows[i]),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

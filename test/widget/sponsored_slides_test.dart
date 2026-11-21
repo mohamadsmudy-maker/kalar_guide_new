@@ -73,4 +73,55 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('ad-9')));
     expect(opened?.id, 9);
   });
+
+  test('هەڵبژاردنی شوێن/هەواڵ خانەکان پڕ دەکاتەوە', () {
+    final p = SponsoredSourcePicker.fill('place', {'id': 12, 'name': 'ئاریان', 'address': 'ئەندازیاران', 'image': 'https://x/a.jpg'});
+    expect([p.id, p.title, p.subtitle, p.image], ['12', 'ئاریان', 'ئەندازیاران', 'https://x/a.jpg']);
+    final n = SponsoredSourcePicker.fill('news', {'id': 5, 'title': 'هەواڵ', 'images': ['https://x/n.jpg', 'https://x/m.jpg']});
+    expect([n.id, n.title, n.image], ['5', 'هەواڵ', 'https://x/n.jpg']);
+    final s = SponsoredSourcePicker.fill('news', {'id': 6, 'title': 't', 'images': '["https://x/s.jpg","https://x/t.jpg"]'});
+    expect(s.image, 'https://x/s.jpg');
+    expect(SponsoredSlide.actionLabel('news'), 'خوێندنەوە');
+    expect(SponsoredSlide.customActionTypes, isNot(contains('place')));
+  });
+
+  testWidgets('لیستی هەڵبژاردن: گەڕان و هەڵبژاردن', (tester) async {
+    final queries = <String>[];
+    Map<String, dynamic>? picked;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (c) => TextButton(
+            onPressed: () async {
+              picked = await showModalBottomSheet<Map<String, dynamic>>(
+                context: c,
+                isScrollControlled: true,
+                builder: (_) => SponsoredSourcePicker(
+                  kind: 'place',
+                  loader: (q) async {
+                    queries.add(q);
+                    return [
+                      {'id': 1, 'name': 'ئاریان', 'address': 'کەلار', 'image': ''},
+                      {'id': 2, 'name': 'ڕزگاری', 'address': 'جادە', 'image': ''},
+                    ].where((r) => q.isEmpty || '${r['name']}'.contains(q)).toList();
+                  },
+                ),
+              );
+            },
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('source-1')), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'ڕزگ');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('source-1')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('source-2')));
+    await tester.pumpAndSettle();
+    expect(picked?['id'], 2);
+    expect(queries, ['', 'ڕزگ']);
+  });
 }

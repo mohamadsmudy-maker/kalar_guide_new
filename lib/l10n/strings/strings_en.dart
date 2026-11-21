@@ -2177,4 +2177,13 @@ const Map<String, String> stringsEn = {
   "دەستپێک: {0}": "Start: {0}",
   "کۆتایی: {0}": "End: {0}",
   "وێنەی ڕیکلام هەڵبژێرە (باشترین: پانی ١٦:٩)": "Pick the ad image (best: 16:9 wide)",
+  "شوێنێکی تۆمارکراو هەڵبژێرە": "Choose a registered place",
+  "هەواڵێک هەڵبژێرە": "Choose a news item",
+  "کرتەکردن لە ڕیکلامەکە پەیجی شوێنەکە دەکاتەوە": "Tapping the ad opens the place page",
+  "کرتەکردن لە ڕیکلامەکە هەواڵەکە دەکاتەوە": "Tapping the ad opens the news item",
+  "تکایە شوێنێک هەڵبژێرە ⚠": "Please choose a place ⚠",
+  "تکایە هەواڵێک هەڵبژێرە ⚠": "Please choose a news item ⚠",
+  "گەڕان بە ناونیشانی هەواڵ": "Search news by title",
+  "گەڕان بە ناوی شوێن": "Search places by name",
+  "خوێندنەوە": "Read",
 };

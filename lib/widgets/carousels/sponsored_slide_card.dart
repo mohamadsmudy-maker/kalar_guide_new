@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../l10n/tr.dart';
+import '../../screens/news/news_details.dart';
 import '../../screens/stores/store_details_dialog.dart';
 import '../../services/sponsored_slides_service.dart';
 import '../common/optimized_network_image.dart';
@@ -20,6 +21,20 @@ class SponsoredSlideCard extends StatelessWidget {
   Future<void> _open(BuildContext context) async {
     HapticFeedback.lightImpact();
     if (onOpen != null) return onOpen!(slide);
+    if (slide.actionType == 'news') {
+      unawaitedClick();
+      try {
+        final row = await Supabase.instance.client
+            .from('news')
+            .select('*, dukan(name, logo, image)')
+            .eq('id', slide.actionValue.trim())
+            .maybeSingle();
+        if (row != null && context.mounted) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => NewsDetailsScreen(newsItem: row)));
+        }
+      } catch (_) {}
+      return;
+    }
     if (slide.actionType == 'place') {
       unawaitedClick();
       final id = int.tryParse(slide.actionValue.trim());
