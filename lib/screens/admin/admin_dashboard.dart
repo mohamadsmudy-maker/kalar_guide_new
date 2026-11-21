@@ -1,3 +1,4 @@
+import '../../widgets/stale_prices_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,6 +26,7 @@ import 'admin_prayer_times.dart';
 import 'admin_translations.dart';
 import 'admin_osm_import.dart';
 import 'admin_place_suggestions.dart';
+import 'admin_place_claims.dart';
 import 'admin_vendor_requests.dart';
 import 'admin_live_users.dart';
 import 'admin_complaint_instructions.dart';
@@ -709,6 +711,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           screen: () => const AdminTranslationsScreen(),
         ),
         _DashItem(
+          id: 'place_claims',
+          icon: Icons.verified_user_rounded,
+          color: const Color(0xFF1E88E5),
+          title: tr('داوای خاوەنداریەتی'),
+          subtitle: tr('«ئەم شوێنە هی منە» لە خاوەن شوێنەکانەوە'),
+          adminOnly: true,
+          screen: () => const AdminPlaceClaimsScreen(),
+        ),
+        _DashItem(
           id: 'vendor_requests',
           icon: Icons.assignment_ind_rounded,
           color: red,
@@ -812,6 +823,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       _buildLiveUsersCard(itemIndex: 0),
                       const SizedBox(height: 12),
                       _buildAttentionBanner(p, isAdmin),
+                      if (isAdmin) ...[
+                        const SizedBox(height: 12),
+                        const StalePricesBanner(),
+                      ],
                       const SizedBox(height: 20),
                       _buildStatsStrip(p, isAdmin),
                       const SizedBox(height: 16),

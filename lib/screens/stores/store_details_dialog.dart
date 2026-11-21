@@ -1,3 +1,5 @@
+import 'claim_place_sheet.dart';
+import '../../config/app_links.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -184,7 +186,9 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
     if (lat != null && lng != null) {
       b.write('\nhttps://www.google.com/maps/search/?api=1&query=$lat,$lng');
     }
-    b.write('\n\n— ${tr('ئەپی ڕێبەری کەلار')}');
+    b.write('\n\n📲 ${tr('ئەپی ڕێبەری کەلار')}');
+    final id = widget.store['id'];
+    b.write('\n${(id == null ? null : AppLinks.openUrl('place', id)) ?? AppLinks.downloadUrl}');
     Share.share(b.toString());
   }
 
@@ -704,7 +708,7 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                 ),
               // ✅ «سەردانی شوێن» — هەمیشە دیارە، شاشەی هەواڵەکانی شوێن دەکاتەوە
               Padding(
-                padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
+                padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
                 child: _PrimaryButton(
                   onTap: _openStoreNews,
                   child: Row(
@@ -737,6 +741,22 @@ class _StoreDetailsDialogContentState extends State<_StoreDetailsDialogContent> 
                   ),
                 ),
               ),
+              // 🏪 «ئەم شوێنە هی منە؟» — بۆ خاوەن شوێن (نەک ئەدمین یان خاوەنی ئێستا)
+              if (!AuthSessionManager.isAdmin &&
+                  '${AuthSessionManager.storeId ?? ''}' != '${widget.store['id'] ?? ''}' &&
+                  widget.store['id'] != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+                  child: TextButton.icon(
+                    key: const ValueKey('claim-place'),
+                    onPressed: () => ClaimPlaceSheet.show(context,
+                        storeId: widget.store['id'] as Object, storeName: rawName),
+                    icon: const Icon(Icons.verified_user_outlined, size: 18),
+                    label: Text(tr('ئەم شوێنە هی تۆیە؟')),
+                  ),
+                )
+              else
+                const SizedBox(height: 14),
             ],
           ),
         ),

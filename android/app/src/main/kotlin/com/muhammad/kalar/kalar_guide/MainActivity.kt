@@ -17,6 +17,10 @@ class MainActivity : FlutterActivity() {
     private var channel: MethodChannel? = null
     private var pending: Map<String, Any?>? = null
 
+    // 🔗 kalarguide://place/12 یان kalarguide://news/5 (لە open.html ـەوە)
+    private var linkChannel: MethodChannel? = null
+    private var pendingLink: String? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "kalar/share").also {
@@ -31,10 +35,36 @@ class MainActivity : FlutterActivity() {
             }
         }
         pending = readShare(intent)
+
+        linkChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "kalar/link").also {
+            it.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getInitialLink" -> {
+                        result.success(pendingLink)
+                        pendingLink = null
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+        }
+        pendingLink = readLink(intent)
+    }
+
+    private fun readLink(intent: Intent?): String? {
+        if (intent?.action != Intent.ACTION_VIEW) return null
+        val data = intent.data ?: return null
+        if (data.scheme != "kalarguide") return null
+        intent.action = Intent.ACTION_MAIN // یەکجار
+        return data.toString()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        readLink(intent)?.let { link ->
+            val lc = linkChannel
+            if (lc != null) lc.invokeMethod("onLink", link) else pendingLink = link
+            return
+        }
         val share = readShare(intent) ?: return
         val ch = channel
         if (ch != null) ch.invokeMethod("onShare", share) else pending = share

@@ -81,6 +81,18 @@ class NeighborhoodAlertService {
     }
   }
 
+  /// کوژاندنەوەی هەموو ئاگادارییەکان؛ لیستی گەڕەکەکان دەمێنێتەوە بۆ
+  /// ئەوەی کاتێک دووبارە چالاک کرایەوە بگەڕێنەوە
+  static Future<void> unsubscribeAll() async {
+    for (final id in await subscribed()) {
+      try {
+        await _topic(topicFor(id), false);
+      } catch (e) {
+        debugPrint('⚠️ unsubscribe $id: $e');
+      }
+    }
+  }
+
   static Future<List<NeighborhoodAlert>> recent(int neighborhoodId, {int days = 30}) async {
     final since = DateTime.now().toUtc().subtract(Duration(days: days)).toIso8601String();
     final res = await _db

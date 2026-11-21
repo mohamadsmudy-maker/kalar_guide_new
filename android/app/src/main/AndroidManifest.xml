@@ -69,6 +69,15 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- 🔗 کردنەوەی شوێن/هەواڵی شێرکراو: kalarguide://place/12 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="kalarguide"/>
+            </intent-filter>
+            <!-- لینکەکان خۆمان بەڕێوەیان دەبەین (کەناڵی kalar/link)، نەک Navigator ـی Flutter -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
             <!-- 📤 شێرکردن بۆ ڕێبەری کەلار (لینک/دەق/وێنە لە Facebook و ئەپەکانی تر) -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>

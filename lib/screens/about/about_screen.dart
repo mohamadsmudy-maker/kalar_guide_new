@@ -1,3 +1,4 @@
+import '../../config/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,12 +31,9 @@ class _AboutScreenState extends State<AboutScreen>
   static const String _developerTitle = 'ئەندازیاری شارستانی';
   static const String _phone = '07701574997';
   static const String _whatsapp = '9647701574997';
-  static const String _playStoreUrl =
-      'https://play.google.com/store/apps/details?id=com.muhammad.kalar.kalar_guide';
-
-  /// ✅ QR و لینکی هاوبەشکردن ڕاستەوخۆ بۆ Play Store دەچن
-  ///    (kalar-guide.com/app نەپشکنرا — ئەگەر کار دەکات، دەتوانیت بیگەڕێنیتەوە)
-  static const String _appUrl = _playStoreUrl;
+  /// QR و لینکی هاوبەشکردن: لینکی داگرتنی ئەپ (ئەدمین دەتوانێت بیگۆڕێت)
+  static String get _appUrl => AppLinks.downloadUrl;
+  static String get _playStoreUrl => AppLinks.playStoreUrl;
 
   // 📊 ئاماری ڕاستەقینە لە بنکەدراوەوە — تا دەگات، ژمارە کۆنەکان نیشان دەدرێن
   int? _neighborhoodCount;

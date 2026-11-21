@@ -890,6 +890,9 @@ class _ControlsTabState extends State<_ControlsTab> {
   late final _officialOrg = TextEditingController(
       text: _initial.officialOrg.isEmpty ? 'شارەوانیی کەلار' : _initial.officialOrg);
 
+  late final _storeUrl = TextEditingController(text: _initial.storeUrl);
+  late final _shareBase = TextEditingController(text: _initial.shareBase);
+
   late final Map<String, bool> _features = {
     for (final k in AppControlState.featureKeys) k: _initial.feature(k),
   };
@@ -917,6 +920,8 @@ class _ControlsTabState extends State<_ControlsTab> {
         _wasteAuthority.text = s.wasteAuthority;
         _official = s.official;
         if (s.officialOrg.isNotEmpty) _officialOrg.text = s.officialOrg;
+        _storeUrl.text = s.storeUrl;
+        _shareBase.text = s.shareBase;
         for (final k in AppControlState.featureKeys) {
           _features[k] = s.feature(k);
         }
@@ -926,7 +931,7 @@ class _ControlsTabState extends State<_ControlsTab> {
 
   @override
   void dispose() {
-    for (final c in [_maintMsg, _annText, _minVer, _updMsg, _updUrl, _officialOrg, _wasteAuthority]) {
+    for (final c in [_maintMsg, _annText, _minVer, _updMsg, _updUrl, _officialOrg, _wasteAuthority, _storeUrl, _shareBase]) {
       c.dispose();
     }
     super.dispose();
@@ -1089,6 +1094,24 @@ class _ControlsTabState extends State<_ControlsTab> {
           ),
         ),
         _Card(
+          icon: Icons.link_rounded,
+          color: AppColors.primary,
+          title: tr('لینکەکانی ئەپ'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tr('لینکی داگرتن لە دەقی شێر و پەڕەی «دەربارە» بەکاردێت. ئەگەر بەتاڵ بێت لینکی Google Play دادەنرێت. لینکی کردنەوەی شێر (ئیختیاری) پەڕەی open.html ـە کە شوێن یان هەواڵەکە ڕاستەوخۆ لە ئەپدا دەکاتەوە.'),
+                style: TextStyle(fontSize: 12, height: 1.5, color: _sub(d)),
+              ),
+              _field(tr('لینکی داگرتن (https://...)'), _storeUrl),
+              _field(tr('لینکی کردنەوەی شێر (https://.../open.html)'), _shareBase),
+              _saveBtn('links', tr('پاشەکەوتکردن'),
+                  () => _save('links', 'app_links', {'store_url': _storeUrl.text.trim(), 'share_base': _shareBase.text.trim()})),
+            ],
+          ),
+        ),
+        _Card(
           icon: Icons.toggle_on_rounded,
           color: AppColors.green,
           title: tr('کردنەوە و داخستنی بەشەکان'),
@@ -1206,6 +1229,7 @@ class _SystemTabState extends State<_SystemTab> {
     'text_translations': '20261112_translations_cache.sql',
     'dukan.opening_hours': '20261120_presence_and_hours.sql',
     'get_presence_stats': '20261120_presence_and_hours.sql',
+    'place_claims': '20261206_place_claims.sql',
   };
 
   @override
@@ -1236,6 +1260,7 @@ class _SystemTabState extends State<_SystemTab> {
       ok(() => db.from('text_translations').select('*').limit(1)),
       ok(() => db.from('dukan').select('opening_hours').limit(1)),
       ok(() => db.rpc('get_presence_stats')),
+      ok(() => db.from('place_claims').select('id').limit(1)),
     ]);
     return {for (var i = 0; i < files.length; i++) files.keys.elementAt(i): r[i]};
   }

@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
 import 'auth_service.dart';
 import 'neighborhood_alert_service.dart';
+import 'notification_prefs.dart';
 import '../l10n/tr.dart';
 
 /// 🔔 خزمەتگوزاری ئاگادارکردنەوە
@@ -77,7 +78,9 @@ class NotificationService {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         AppLogger.i('📩 نامە گەیشت: ${message.notification?.title}');
         if (message.notification != null) {
-          _showLocalNotification(message);
+          NotificationPrefs.load().then((p) {
+            if (p.allows(message.data['type']?.toString())) _showLocalNotification(message);
+          });
         }
       });
 
@@ -96,17 +99,14 @@ class NotificationService {
         });
       }
 
-      // ٧. وەرگرتنی FCM Token — ✅ بێ هەڵە
-      await _updateFcmToken();
-
-      // ⚡ هەواڵی بەپەلە بۆ هەموو مۆبایلەکان، میوانیش (بێ چوونەژوورەوە)
-      await _subscribeBreakingNews();
-      await NeighborhoodAlertService.resubscribeAll();
+      // ٧. Token و topic ـەکان بەپێی ڕێکخستنی بەکارهێنەر
+      _ready = true;
+      await applyPrefs();
 
       // ٨. گوێگرتن لە گۆڕینی Token
-      _messaging.onTokenRefresh.listen((newToken) {
+      _messaging.onTokenRefresh.listen((newToken) async {
         AppLogger.i('🔑 Token نوێ: $newToken');
-        _saveTokenToSupabase(newToken);
+        if ((await NotificationPrefs.load()).wantsComplaints) _saveTokenToSupabase(newToken);
       });
 
       AppLogger.i('✅ Notification Service ئامادەیە');
@@ -118,11 +118,34 @@ class NotificationService {
   /// هەمان ناو لە supabase/functions/send-breaking-news دا
   static const String breakingNewsTopic = 'breaking_news';
 
-  static Future<void> _subscribeBreakingNews() async {
+  static bool _ready = false;
+
+  /// ڕێکخستنی ئاگادارکردنەوە جێبەجێ دەکات:
+  /// • هەواڵی بەپەلە → subscribe/unsubscribe لە topic
+  /// • ئاگاداریی گەڕەک → هەموو گەڕەکە هەڵبژێردراوەکان (یان هیچیان)
+  /// • سکاڵا → token لە سێرڤەر پاشەکەوت دەکرێت یان دەسڕێتەوە
+  /// هەرگیز هەڵە ناگەڕێنێتەوە؛ پێش initialize هیچ ناکات.
+  static Future<void> applyPrefs() async {
+    if (!_ready) return;
     try {
-      await _messaging.subscribeToTopic(breakingNewsTopic);
+      final p = await NotificationPrefs.load();
+      try {
+        p.wantsBreakingNews
+            ? await _messaging.subscribeToTopic(breakingNewsTopic)
+            : await _messaging.unsubscribeFromTopic(breakingNewsTopic);
+      } catch (e) {
+        AppLogger.w('⚠️ breaking news topic: $e');
+      }
+      p.wantsNeighborhoodAlerts
+          ? await NeighborhoodAlertService.resubscribeAll()
+          : await NeighborhoodAlertService.unsubscribeAll();
+      if (p.wantsComplaints) {
+        await _updateFcmToken();
+      } else if (AuthSessionManager.currentUser != null) {
+        await Supabase.instance.client.rpc('app_set_fcm_token', params: {'p_token': null});
+      }
     } catch (e) {
-      AppLogger.w('⚠️ breaking news topic: $e');
+      AppLogger.w('⚠️ apply notification prefs: $e');
     }
   }
 
@@ -187,7 +210,7 @@ class NotificationService {
 
   /// 🔄 دووبارە پاشەکەوتکردنی Token
   static Future<void> refreshToken() async {
-    await _updateFcmToken();
+    if ((await NotificationPrefs.load()).wantsComplaints) await _updateFcmToken();
   }
 
   // ═══════════════════════════════════════════════════════════

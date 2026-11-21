@@ -1,3 +1,4 @@
+import '../../config/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -82,6 +83,8 @@ class _NewsDetailsScreenState extends State<NewsDetailsScreen> {
       title: title,
       description: tr(item['description']?.toString() ?? ''),
       publisher: storeName == null ? null : tr(storeName),
+      // لینکی کردنەوە لە ئەپ (ئەگەر ئەدمین دایناوە)، ئەگینا لینکی داگرتن
+      link: (_newsId == null ? null : AppLinks.openUrl('news', _newsId!)) ?? AppLinks.downloadUrl,
     );
 
     final shared = await NewsShareService.share(

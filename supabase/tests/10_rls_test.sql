@@ -372,4 +372,23 @@ update complaints set status = 'completed' where user_id = 'push-test';
 select t.check((select status_notified is distinct from status from complaints where user_id = 'push-test'), 'a status change is waiting for its push');
 set role authenticated;
 
+-- ── place claims («ئەم شوێنە هی منە») ───────────────────────────
+select t.as_user('00000000-0000-0000-0000-0000000000e1');
+select t.check(app_claim_place('2') = 'login', 'guests must log in to claim');
+select app_login('07500000004', 'custpass1');                                       -- customer
+select t.check(app_claim_place('2', 'من خاوەنیم') = 'ok', 'customer claims a place');
+select t.check(app_claim_place('2') = 'duplicate', 'one pending claim per place');
+select t.check(app_claim_place('999') = 'not_found', 'unknown place');
+select t.check((select count(*) from place_claims) = 1, 'claimant sees own claim');
+select t.check(app_review_claim((select id from place_claims limit 1), true) = 'forbidden', 'only admin approves');
+select t.check((select count(*) from app_pending_claims()) = 0, 'non-admin cannot list claims');
+select t.as_user('00000000-0000-0000-0000-0000000000e2');
+select app_login('07500000001', 'adminpass');                                       -- admin
+select t.check((select store_name from app_pending_claims() limit 1) = 'B', 'admin lists claims with place name');
+select t.check(app_review_claim((select id from place_claims limit 1), true) = 'ok', 'admin approves');
+reset role;
+select t.check((select role = 'vendor' and is_approved and store_id = '2' from app_users where phone = '07500000004'),
+               'approved claimant becomes the vendor of that place');
+set role authenticated;
+
 \echo 'ALL RLS TESTS PASSED'
