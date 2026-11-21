@@ -34,6 +34,7 @@
 | 26 | `20261202_featured_places.sql` | شوێنی پێشنیارکراو (dukan.featured_until، تەنها ئەدمین) | ✅ |
 | 27 | `20261203_waste_schedule.sql` | کاتی هاتنی ئۆتۆمبێلی خۆڵ بۆ هەر گەڕەکێک (waste_schedule) | ✅ |
 | 28 | `20261204_sponsored_slides.sql` | سلایدی ڕیکلام لە پەیجی سەرەکی (sponsored_slides + app_sponsored_event) | ✅ |
+| 29 | `20261205_sponsored_news_action.sql` | ڕیکلام دەتوانێت هەواڵێک بکاتەوە (action_type = news) | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 
@@ -78,7 +79,9 @@ select
   exists (select 1 from information_schema.columns where table_schema = 'public'
           and table_name = 'dukan' and column_name = 'featured_until')            as m26_featured_places,
   to_regclass('public.waste_schedule')                                           is not null as m27_waste_schedule,
-  to_regclass('public.sponsored_slides')                                         is not null as m28_sponsored_slides;
+  to_regclass('public.sponsored_slides')                                         is not null as m28_sponsored_slides,
+  exists (select 1 from pg_constraint where conname = 'sponsored_slides_action_type_check'
+          and pg_get_constraintdef(oid) like '%news%')                           as m29_sponsored_news_action;
 ```
 
 ## Edge Functions (جیا لە SQL)

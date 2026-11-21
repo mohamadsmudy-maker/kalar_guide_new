@@ -41,13 +41,17 @@ class SponsoredSlide {
   final int views;
   final int clicks;
 
-  static const List<String> actionTypes = ['none', 'phone', 'whatsapp', 'url', 'place'];
+  static const List<String> actionTypes = ['none', 'phone', 'whatsapp', 'url', 'place', 'news'];
+
+  /// دوگمەکانی ڕیکلامی «تایبەت» (شوێن و هەواڵ لە هەڵبژاردنەکەوە دێن)
+  static const List<String> customActionTypes = ['none', 'phone', 'whatsapp', 'url'];
 
   static String actionLabel(String type) => switch (type) {
         'phone' => 'پەیوەندی',
         'whatsapp' => 'واتسئاپ',
         'url' => 'بینینی زیاتر',
         'place' => 'بینینی شوێن',
+        'news' => 'خوێندنەوە',
         _ => 'بێ دوگمە',
       };
 

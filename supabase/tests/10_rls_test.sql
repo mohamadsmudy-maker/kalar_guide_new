@@ -164,6 +164,8 @@ select t.check(t.rows($$insert into sponsored_slides(title, image_url) values ('
 select t.check(t.rows($$insert into sponsored_slides(title, image_url, starts_on, ends_on) values ('Old ad', 'u', current_date - 60, current_date - 30)$$) = 1, 'admin adds an expired slide');
 select t.check(t.rows($$insert into sponsored_slides(title, image_url, is_active) values ('Paused ad', 'u', false)$$) = 1, 'admin adds a paused slide');
 select t.check((select count(*) from sponsored_slides) = 3, 'admin sees all slides');
+select t.check(t.rows($$insert into sponsored_slides(title, image_url, action_type, action_value, is_active) values ('News ad', 'u', 'news', '5', false)$$) = 1, 'slide can open a news item');
+select t.check(t.rows($$insert into sponsored_slides(title, image_url, action_type) values ('x', 'u', 'sms')$$) = -2, 'unknown action rejected');
 select t.check(t.rows($$update dukan set prices_active = false where id = 2$$) = 1, 'admin deactivates station prices');
 select t.check(not (select prices_active from dukan where id = 2), 'station prices are inactive');
 select t.check(t.rows($$update dukan set featured_until = now() + interval '30 days' where id = 2$$) = 1, 'admin features a store');

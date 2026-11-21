@@ -64,14 +64,14 @@ void main() {
     expect(inserted.map((e) => e['title']), ['a', 'b']);
   });
 
-  test('complaint_mode: بە بنەڕەت تەنها خۆڵ و خاشاک', () {
+  test('complaint_mode: بە بنەڕەت هەموو کێشەکانی شار', () {
     final def = AppControlState.fromRows(const []);
-    expect(def.wasteOnlyComplaints, isTrue);
+    expect(def.wasteOnlyComplaints, isFalse);
     expect(def.wasteAuthority, AppControlState.defaultWasteAuthority);
     final off = AppControlState.fromRows(const [
-      {'key': 'complaint_mode', 'value': {'waste_only': false, 'authority': 'کۆمپانیای پاکی'}},
+      {'key': 'complaint_mode', 'value': {'waste_only': true, 'authority': 'کۆمپانیای پاکی'}},
     ]);
-    expect(off.wasteOnlyComplaints, isFalse);
+    expect(off.wasteOnlyComplaints, isTrue);
     expect(off.wasteAuthority, 'کۆمپانیای پاکی');
   });
 }
