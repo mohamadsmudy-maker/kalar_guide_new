@@ -17,6 +17,8 @@ class OsmPlace {
     required this.isGovernment,
     this.phone,
     this.address,
+    this.openingHours,
+    this.website,
   });
 
   /// `osm:node/123`, `osm:way/45`
@@ -30,6 +32,10 @@ class OsmPlace {
   final bool isGovernment;
   final String? phone;
   final String? address;
+
+  /// تاگی `opening_hours` ی OSM وەک خۆی (بۆ نموونە `Mo-Su 08:00-22:00`)
+  final String? openingHours;
+  final String? website;
 }
 
 /// 🗺️ هێنانی شوێنەکانی کەلار لە OpenStreetMap (Overpass API)
@@ -125,7 +131,9 @@ class OsmImportService {
         kind: kind,
         isGovernment: _isGovernment(tags),
         phone: tags['phone'] ?? tags['contact:phone'],
-        address: tags['addr:street'] ?? tags['addr:full'],
+        address: tags['addr:full'] ?? tags['addr:street'],
+        openingHours: tags['opening_hours'],
+        website: tags['website'] ?? tags['contact:website'],
       );
     }
     final list = out.values.toList()..sort((a, b) => a.name.compareTo(b.name));

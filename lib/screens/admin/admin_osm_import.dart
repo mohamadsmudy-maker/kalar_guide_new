@@ -246,6 +246,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
           'type': p.isGovernment ? 'حکومی' : 'ناحکومی',
           'source': 'osm',
           'external_id': p.externalId,
+          if (p.openingHours != null) 'opening_hours_osm': p.openingHours,
+          if (p.website != null) 'description': p.website,
         }),
       ),
     );

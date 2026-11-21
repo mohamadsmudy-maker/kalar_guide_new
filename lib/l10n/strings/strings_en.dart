@@ -2186,4 +2186,10 @@ const Map<String, String> stringsEn = {
   "گەڕان بە ناونیشانی هەواڵ": "Search news by title",
   "گەڕان بە ناوی شوێن": "Search places by name",
   "خوێندنەوە": "Read",
+  "هەموو ڕۆژێک ٨–١٠": "Every day 8–10",
+  "شەممە–پێنجشەممە": "Saturday–Thursday",
+  "دەوامی فەرمی ٨–٢": "Office hours 8–2",
+  "دیاری نەکراوە": "Not set",
+  "{0} ڕۆژ کراوەیە": "Open {0} days",
+  "مۆبایل (بۆ چوونەژوورەوەی خاوەن شوێن)": "Mobile (for the owner to sign in)",
 };
