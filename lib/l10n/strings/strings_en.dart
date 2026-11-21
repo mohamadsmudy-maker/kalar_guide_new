@@ -2192,4 +2192,13 @@ const Map<String, String> stringsEn = {
   "دیاری نەکراوە": "Not set",
   "{0} ڕۆژ کراوەیە": "Open {0} days",
   "مۆبایل (بۆ چوونەژوورەوەی خاوەن شوێن)": "Mobile (for the owner to sign in)",
+  "ناوە لاتینییەکان": "Latin names",
+  "ناوی ئینگلیزیی شوێنەکان بکە بە کوردی": "Turn English place names into Kurdish",
+  "پێشنیار سەرکەوتوو نەبوو. دواتر هەوڵبدەرەوە (سنووری Gemini).": "Suggestion failed. Try again later (Gemini limit).",
+  "✅ {0} ناو گۆڕدرا": "✅ {0} names changed",
+  "پێشنیاری کوردی (٢٠)": "Suggest Kurdish (20)",
+  "پاشەکەوت ({0})": "Save ({0})",
+  "✅ هەموو ناوەکان کوردین": "✅ All names are in Kurdish",
+  "{0} شوێن ناویان بە لاتینییە. «پێشنیاری کوردی» بکە، پێداچوونەوە بکە، پاشان پاشەکەوت. ناوە ئینگلیزییەکە بۆ زمانی ئینگلیزی دەمێنێتەوە.": "{0} places have Latin names. Tap «Suggest Kurdish», review, then save. The English name is kept for the English language.",
+  "ناوی کوردی": "Kurdish name",
 };
