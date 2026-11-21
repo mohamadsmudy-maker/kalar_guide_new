@@ -40,6 +40,9 @@ import 'screens/about/about_screen.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/admin_news.dart';
 import 'services/share_intent_service.dart';
+import 'services/deep_link_service.dart';
+import 'screens/news/news_details.dart';
+import 'screens/stores/store_details_dialog.dart';
 import 'services/complaint_queue.dart';
 import 'services/network_status.dart';
 import 'services/waste_schedule_service.dart';
@@ -758,11 +761,43 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
       final d = await ShareIntentService.initial();
       if (d != null) _openSharedNews(d);
     });
+
+    // 🔗 شوێن/هەواڵی شێرکراو → ڕاستەوخۆ لە ئەپدا
+    _linkSub = DeepLinkService.stream.listen(_openLink);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final l = await DeepLinkService.initial();
+      if (l != null) _openLink(l);
+    });
+  }
+
+  StreamSubscription<(String, String)>? _linkSub;
+
+  Future<void> _openLink((String, String) link) async {
+    final (type, id) = link;
+    try {
+      final db = Supabase.instance.client;
+      final table = type == 'place' ? 'dukan' : 'news';
+      final row = await db.from(table).select().eq('id', id).maybeSingle();
+      if (!mounted) return;
+      if (row == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('ئەم بابەتە نەدۆزرایەوە'))));
+        return;
+      }
+      if (type == 'place') {
+        _goTo(1);
+        StoreDetailsDialog.show(context, row);
+      } else {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => NewsDetailsScreen(newsItem: row)));
+      }
+    } catch (e) {
+      debugPrint('⚠️ open link $link: $e');
+    }
   }
 
   @override
   void dispose() {
     _shareSub?.cancel();
+    _linkSub?.cancel();
     super.dispose();
   }
 

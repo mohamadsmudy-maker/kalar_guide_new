@@ -674,7 +674,7 @@ extension _AboutScreenStateUi on _AboutScreenState {
                     color: AppColors.purple,
                     onTap: () {
                       Clipboard.setData(
-                        const ClipboardData(text: _AboutScreenState._appUrl),
+                        ClipboardData(text: _AboutScreenState._appUrl),
                       );
                       HapticFeedback.mediumImpact();
                       _showSnack(tr('✅ لینک کۆپی کرا'), AppColors.green);

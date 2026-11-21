@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ڕێبەری کەلار</title>
+<meta name="robots" content="noindex">
+<style>
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:#F4F6FA;color:#1E293B;
+       display:flex;min-height:100vh;align-items:center;justify-content:center}
+  .card{background:#fff;border-radius:20px;padding:28px 22px;max-width:360px;width:88%;text-align:center;
+        box-shadow:0 6px 24px rgba(15,42,85,.08)}
+  h1{font-size:22px;margin:8px 0 6px;color:#0D47A1}
+  p{font-size:15px;line-height:1.7;color:#475569;margin:0 0 20px}
+  a.btn{display:block;padding:14px;border-radius:14px;font-weight:800;text-decoration:none;font-size:16px;margin-top:10px}
+  .open{background:#1E88E5;color:#fff}
+  .get{background:#E3F2FD;color:#0D47A1}
+</style>
+</head>
+<body>
+<div class="card">
+  <div style="font-size:40px">📍</div>
+  <h1>ڕێبەری کەلار</h1>
+  <p id="msg">ئەم بابەتە لە ئەپی ڕێبەری کەلاردا بکەرەوە.</p>
+  <a id="open" class="btn open" href="#">کردنەوە لە ئەپ</a>
+  <a id="get" class="btn get" href="#">داگرتنی ئەپ</a>
+</div>
+<script>
+  // تەنها place/news و ژمارە یان UUID قبووڵ دەکرێت
+  var PKG = 'com.muhammad.kalar.kalar_guide';
+  var PLAY = 'https://play.google.com/store/apps/details?id=' + PKG;
+  var q = new URLSearchParams(location.search);
+  var type = q.get('type'), id = q.get('id') || '';
+  var ok = (type === 'place' || type === 'news') && /^[A-Za-z0-9-]{1,64}$/.test(id);
+  document.getElementById('get').href = PLAY;
+  var open = document.getElementById('open');
+  if (ok) {
+    var path = type + '/' + encodeURIComponent(id);
+    var isAndroid = /Android/i.test(navigator.userAgent);
+    open.href = isAndroid
+      ? 'intent://' + path + '#Intent;scheme=kalarguide;package=' + PKG +
+        ';S.browser_fallback_url=' + encodeURIComponent(PLAY) + ';end'
+      : 'kalarguide://' + path;
+    if (isAndroid) setTimeout(function () { location.href = open.href; }, 300);
+  } else {
+    open.style.display = 'none';
+  }
+</script>
+</body>
+</html>

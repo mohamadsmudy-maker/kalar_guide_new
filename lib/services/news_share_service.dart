@@ -24,6 +24,7 @@ class NewsShareService {
     String description = '',
     String? publisher,
     int maxSummary = summaryLength,
+    String? link,
   }) {
     final b = StringBuffer('📰 ${title.trim()}');
     final summary = _summary(description, maxSummary);
@@ -31,6 +32,8 @@ class NewsShareService {
     final p = publisher?.trim() ?? '';
     if (p.isNotEmpty) b.write('\n\n🏛️ $p');
     b.write('\n\n📲 ${tr('ئەپی ڕێبەری کەلار')}');
+    final l = link?.trim() ?? '';
+    if (l.isNotEmpty) b.write('\n$l');
     return b.toString();
   }
 

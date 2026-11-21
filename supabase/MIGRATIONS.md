@@ -35,6 +35,7 @@
 | 27 | `20261203_waste_schedule.sql` | کاتی هاتنی ئۆتۆمبێلی خۆڵ بۆ هەر گەڕەکێک (waste_schedule) | ✅ |
 | 28 | `20261204_sponsored_slides.sql` | سلایدی ڕیکلام لە پەیجی سەرەکی (sponsored_slides + app_sponsored_event) | ✅ |
 | 29 | `20261205_sponsored_news_action.sql` | ڕیکلام دەتوانێت هەواڵێک بکاتەوە (action_type = news) | ✅ |
+| 30 | `20261206_place_claims.sql` | «ئەم شوێنە هی منە»: داوای خاوەنداریەتی شوێن (place_claims + app_claim_place + app_review_claim) | ✅ |
 
 > ئەگەر نازانیت کامیان پێشتر جێبەجێ کراوە، ئەم پشکنینە لە SQL Editor بکە. `true` واتە کراوە:
 

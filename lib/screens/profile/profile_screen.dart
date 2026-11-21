@@ -1,3 +1,4 @@
+import '../../config/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -1207,7 +1208,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Future<void> _shareApp() async {
     try {
       await Share.share(
-        tr('🏙️ ئەپی ڕێبەری کەلار — ڕێبەری شاری کەلار\n\n✅ ٥٩ گەڕەک\n✅ ١٠٠+ شوێن\n✅ سکاڵا و ڕووداو\n✅ دراو و سووتەمەنی\n\nداگرتن: https://kalar-guide.com/app'),
+        trf('🏙️ ئەپی ڕێبەری کەلار — ڕێبەری شاری کەلار\n\n✅ شوێن، گەڕەک و نەخشە\n✅ هەواڵ و ئاگاداری\n✅ سکاڵا\n✅ دراو و سووتەمەنی\n\nداگرتن: {0}', [AppLinks.downloadUrl]),
         subject: tr('ڕێبەری کەلار — ئەپی شاری کەلار'),
       );
     } catch (e) {

@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import '../l10n/tr.dart';
+import '../services/notification_service.dart';
 import '../services/translation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -324,6 +325,7 @@ class SettingsProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications_enabled', value);
     notifyListeners();
+    unawaited(NotificationService.applyPrefs());
   }
 
   Future<void> setNewsNotifications(bool value) async {
@@ -332,6 +334,7 @@ class SettingsProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('news_notifications', value);
     notifyListeners();
+    unawaited(NotificationService.applyPrefs());
   }
 
   Future<void> setComplaintNotifications(bool value) async {
@@ -340,6 +343,7 @@ class SettingsProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('complaint_notifications', value);
     notifyListeners();
+    unawaited(NotificationService.applyPrefs());
   }
 
   Future<void> setOrderNotifications(bool value) async {

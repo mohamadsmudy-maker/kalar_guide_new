@@ -79,19 +79,18 @@ globalThis.fetch = async (url, init = {}) => {
 const { handle, TOPIC } = await import('../functions/send-breaking-news/index.ts');
 const call = (body) => handle(new Request('https://fn.test', { method: 'POST', body: JSON.stringify(body) }));
 
-test('webhook insert → topic + every unique token, once', async () => {
+test('webhook insert → topic only (users opt out by unsubscribing), once', async () => {
   const r = await call({ type: 'INSERT', table: 'news_tickers', record: { id: 7 } });
   const out = await r.json();
   assert.equal(r.status, 200, JSON.stringify(out));
   assert.equal(state.jwtOk, true, 'JWT is signed with the service account key');
-  assert.deepEqual(state.fcm.map((m) => m.topic ?? m.token).sort(), [TOPIC, 'tok-a', 'tok-b', 'tok-dead'].sort());
+  assert.deepEqual(state.fcm.map((m) => m.topic ?? m.token), [TOPIC]);
   for (const m of state.fcm) {
     assert.equal(m.notification.body, 'بڕینی ئاو لە گەڕەکی ئازادی');
     assert.equal(m.android.notification.tag, 'breaking-7');
     assert.equal(m.data.tag, 'breaking-7');
   }
-  assert.deepEqual(state.cleared, ['tok-dead'], 'unregistered token is removed');
-  assert.deepEqual(out, { sent: 3, failed: 1, removedTokens: 1 });
+  assert.deepEqual(out, { sent: 1, failed: 0 });
   assert.ok(state.ticker.notified_at);
 
   // دووبارە بانگکردن: هیچ ناردنێکی تر نییە

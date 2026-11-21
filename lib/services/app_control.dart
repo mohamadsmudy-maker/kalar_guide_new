@@ -39,7 +39,15 @@ class AppControlState {
     this.officialOrg = '',
     this.wasteOnlyComplaints = false,
     this.wasteAuthority = defaultWasteAuthority,
+    this.storeUrl = '',
+    this.shareBase = '',
   });
+
+  /// لینکی داگرتن (بەتاڵ = Play Store). بڕوانە AppLinks
+  final String storeUrl;
+
+  /// لاپەڕەی open.html بۆ کردنەوەی شێر لە ئەپ (بەتاڵ = نییە)
+  final String shareBase;
 
   /// سکاڵا تەنها بۆ خۆڵ و خاشاک؟ بە بنەڕەت نا: هەموو کێشەکانی شار، و لایەنی
   /// پەیوەندیدار بە پێی جۆرەکە خۆکار هەڵدەبژێردرێت. ئەدمین دەتوانێت بیگۆڕێت.
@@ -138,6 +146,11 @@ class AppControlState {
     final f = obj('features');
     final o = obj('official_status');
     final c = obj('complaint_mode');
+    final l = obj('app_links');
+    String url(dynamic v) {
+      final s = str(v);
+      return s.startsWith('https://') ? s : '';
+    }
 
     final level = switch (str(a['level'])) {
       'warning' => AnnounceLevel.warning,
@@ -168,6 +181,8 @@ class AppControlState {
       officialOrg: str(o['org']),
       wasteOnlyComplaints: c['waste_only'] == true,
       wasteAuthority: str(c['authority']).isEmpty ? defaultWasteAuthority : str(c['authority']),
+      storeUrl: url(l['store_url']),
+      shareBase: url(l['share_base']),
     );
   }
 }

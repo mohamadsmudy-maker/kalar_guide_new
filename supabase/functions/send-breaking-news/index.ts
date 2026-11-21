@@ -5,13 +5,11 @@
 // هەر هەواڵێک تەنها یەکجار دەنێردرێت: ستوونی notified_at وەک «قفڵ» بەکاردێت،
 // بۆیە بانگکردنی دووبارە (یان لە لایەن کەسێکی ترەوە) هیچ ئاگادارییەکی زیادە نانێرێت.
 //
-// دەنێردرێت بۆ:
-//   • topic ـی breaking_news (هەموو ئەو مۆبایلانەی وەشانی نوێی ئەپیان هەیە، میوانیش)
-//   • هەموو fcm_token ـەکانی app_users (وەشانی کۆن، تەنها ئەوانەی چوونەتە ژوورەوە)
-// android.notification.tag یەکسانە، بۆیە ئەگەر هەردووکیان گەیشتن تەنها یەکێک دەمێنێتەوە.
-import {
-  clearTokens, json, loadServiceAccount, recordId, sendFcm, supabaseRest, uniqueTokens,
-} from '../_shared/fcm.ts';
+// تەنها بۆ topic ـی breaking_news دەنێردرێت. ئەپەکە خۆی بەپێی ڕێکخستنی
+// بەکارهێنەر (ئاگادارکردنەوە ← هەواڵی بەپەلە) subscribe/unsubscribe دەکات،
+// بۆیە ئەوانەی کوژاندوویانەتەوە هیچ وەرناگرن. (پێشتر بۆ fcm_token ـەکانیش
+// دەنێردرا، کە وای دەکرد کوژاندنەوە کار نەکات.)
+import { json, loadServiceAccount, recordId, sendFcm, supabaseRest } from '../_shared/fcm.ts';
 
 export const TOPIC = 'breaking_news';
 const TITLE = '⚡ هەواڵی بەپەلە';
@@ -45,9 +43,6 @@ export async function handle(req: Request): Promise<Response> {
     db(`news_tickers?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ notified_at: null }) });
 
   try {
-    const usersRes = await db('app_users?select=fcm_token&fcm_token=not.is.null');
-    const tokens = uniqueTokens(usersRes.ok ? await usersRes.json() : []);
-
     const tag = `breaking-${ticker.id}`;
     const base = {
       notification: { title: TITLE, body },
@@ -57,17 +52,13 @@ export async function handle(req: Request): Promise<Response> {
         notification: { tag, channel_id: 'high_importance_channel', sound: 'default' },
       },
     };
-    const result = await sendFcm(sa, [
-      { ...base, topic: TOPIC },
-      ...tokens.map((token) => ({ ...base, token })),
-    ]);
-    await clearTokens(db, result.invalidTokens);
+    const result = await sendFcm(sa, [{ ...base, topic: TOPIC }]);
 
     if (result.sent === 0) {
       await unclaim();
       return json({ error: 'nothing was delivered', failed: result.failed }, 502);
     }
-    return json({ sent: result.sent, failed: result.failed, removedTokens: result.invalidTokens.length });
+    return json({ sent: result.sent, failed: result.failed });
   } catch (e) {
     console.error('send-breaking-news:', e);
     await unclaim();

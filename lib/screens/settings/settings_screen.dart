@@ -404,8 +404,8 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
         sw(
           icon: Icons.newspaper_rounded,
-          title: tr('هەواڵەکان'),
-          subtitle: tr('ئاگادارکردنەوە بۆ هەواڵی نوێ'),
+          title: tr('هەواڵی بەپەلە'),
+          subtitle: tr('ئاگادارکردنەوەی خێرا بۆ هەواڵی گرنگ'),
           color: const Color(0xFF1E88E5),
           value: settings.newsNotifications,
           onChanged: settings.setNewsNotifications,
@@ -417,14 +417,6 @@ class _SettingsScreenState extends State<SettingsScreen>
           color: const Color(0xFFDC3545),
           value: settings.complaintNotifications,
           onChanged: settings.setComplaintNotifications,
-        ),
-        sw(
-          icon: Icons.shopping_bag_rounded,
-          title: tr('داواکارییەکان'),
-          subtitle: tr('ئاگادارکردنەوە بۆ ئۆردەرەکانت'),
-          color: const Color(0xFF0F9D7A),
-          value: settings.orderNotifications,
-          onChanged: settings.setOrderNotifications,
         ),
         sw(
           icon: Icons.volume_up_rounded,
