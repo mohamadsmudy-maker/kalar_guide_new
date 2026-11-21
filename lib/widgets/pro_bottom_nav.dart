@@ -32,9 +32,9 @@ class ProBottomNav extends StatefulWidget {
   }) : assert(items.length >= 2, 'ProBottomNav needs at least 2 items');
 
   /// بەرزی بەشی سەرەوە کە بازنەکەی تێدا بەرز دەبێتەوە
-  static const double bumpHeight = 24;
-  static const double _baseBarHeight = 62;
-  static const double _circle = 64;
+  static const double bumpHeight = 20;
+  static const double _baseBarHeight = 58;
+  static const double _circle = 56;
   static const double _ring = 5; // ئەڵقەی ڕەنگی شریت لە دەوری بازنە
 
   @override
@@ -91,8 +91,9 @@ class _ProBottomNavState extends State<ProBottomNav> with SingleTickerProviderSt
     final active =
         widget.activeColor ?? (isDark ? const Color(0xFF8B5CF6) : const Color(0xFF1E88E5));
     // ڕەنگێکی جیاواز لە پاشبنەمای شاشە بۆ ئەوەی شریتەکە دیار بێت
-    final barColor = isDark ? const Color(0xFF1E2233) : const Color(0xFFEDF4FE);
-    final barColorBottom = isDark ? const Color(0xFF171A27) : const Color(0xFFDCE9FB);
+    // ڕووناک: شریتی سپی + سێبەرێکی نەرم لە سەرەوە (بێ هێڵی تیژ)
+    final barColor = isDark ? const Color(0xFF1E2233) : Colors.white;
+    final barColorBottom = isDark ? const Color(0xFF171A27) : Colors.white;
     final inactive = isDark ? const Color(0xFF8A90A8) : const Color(0xFF6B7A93);
 
     final scale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.4);
@@ -124,10 +125,8 @@ class _ProBottomNavState extends State<ProBottomNav> with SingleTickerProviderSt
                       top: bump,
                       color: barColor,
                       colorBottom: barColorBottom,
-                      shadow: Colors.black.withValues(alpha: isDark ? 0.55 : 0.10),
-                      border: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : const Color(0xFF1E88E5).withValues(alpha: 0.18),
+                      shadow: isDark ? Colors.black.withValues(alpha: 0.55) : const Color(0x330F2A55),
+                      border: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0x0F0F2A55),
                     ),
                   ),
                 ),
@@ -162,7 +161,7 @@ class _ProBottomNavState extends State<ProBottomNav> with SingleTickerProviderSt
                 // ─── بازنەی چالاک (ناوی تێدا نییە، وەک دوگمەی سەرەکی) ───
                 Positioned(
                   left: cx - outer / 2,
-                  top: bump + 16 - outer / 2,
+                  top: bump + 12 - outer / 2,
                   width: outer,
                   height: outer,
                   child: Transform.scale(
@@ -190,9 +189,9 @@ class _ProBottomNavState extends State<ProBottomNav> with SingleTickerProviderSt
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: active.withValues(alpha: 0.45),
-                                blurRadius: 18,
-                                offset: const Offset(0, 8),
+                                color: active.withValues(alpha: 0.30),
+                                blurRadius: 12,
+                                offset: const Offset(0, 5),
                               ),
                             ],
                           ),
@@ -232,7 +231,7 @@ class _ProBottomNavState extends State<ProBottomNav> with SingleTickerProviderSt
                                   current.activeIcon,
                                   key: ValueKey(widget.currentIndex),
                                   color: Colors.white,
-                                  size: 30,
+                                  size: 26,
                                 ),
                               ),
                             ],
@@ -271,7 +270,7 @@ class _BarPainter extends CustomPainter {
 
   Size _size = Size.zero;
 
-  static const double _halfWidth = 84; // نیوەی پانی چەماوە
+  static const double _halfWidth = 74; // نیوەی پانی چەماوە
 
   Path _path(Size size) {
     final w = size.width;
@@ -422,7 +421,7 @@ class _NavTile extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
         ),
       ),
