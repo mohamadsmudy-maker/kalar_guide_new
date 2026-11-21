@@ -37,11 +37,12 @@ class AppControlState {
     this.features = const {},
     this.official = false,
     this.officialOrg = '',
-    this.wasteOnlyComplaints = true,
+    this.wasteOnlyComplaints = false,
     this.wasteAuthority = defaultWasteAuthority,
   });
 
-  /// سکاڵا تەنها بۆ خۆڵ و خاشاک (بە بنەڕەت). ئەدمین دەتوانێت جۆرەکانی تر بگەڕێنێتەوە.
+  /// سکاڵا تەنها بۆ خۆڵ و خاشاک؟ بە بنەڕەت نا: هەموو کێشەکانی شار، و لایەنی
+  /// پەیوەندیدار بە پێی جۆرەکە خۆکار هەڵدەبژێردرێت. ئەدمین دەتوانێت بیگۆڕێت.
   final bool wasteOnlyComplaints;
 
   /// ناوی ئەو لایەنەی سکاڵای خۆڵ و خاشاک وەردەگرێت
@@ -165,7 +166,7 @@ class AppControlState {
       features: features,
       official: o['official'] == true && str(o['org']).isNotEmpty,
       officialOrg: str(o['org']),
-      wasteOnlyComplaints: c['waste_only'] != false,
+      wasteOnlyComplaints: c['waste_only'] == true,
       wasteAuthority: str(c['authority']).isEmpty ? defaultWasteAuthority : str(c['authority']),
     );
   }
