@@ -358,10 +358,10 @@ class _AboutScreenState extends State<AboutScreen>
     try {
       await Share.share(
         trf(
-          '🏙️ ئەپی ڕێبەری کەلار — ڕێبەری فەرمی شاری کەلار\n\n✅ {0} گەڕەک\n✅ {1} شوێن\n✅ سکاڵا و ڕووداو\n✅ دراو و سووتەمەنی\n\nداگرتن: {2}',
+          '🏙️ ئەپی ڕێبەری کەلار — ڕێبەری شاری کەلار\n\n✅ {0} گەڕەک\n✅ {1} شوێن\n✅ سکاڵا و ڕووداو\n✅ دراو و سووتەمەنی\n\nداگرتن: {2}',
           [_neighborhoodsText, _storesText, _appUrl],
         ),
-        subject: tr('ڕێبەری کەلار — ئەپی فەرمی شاری کەلار'),
+        subject: tr('ڕێبەری کەلار — ئەپی شاری کەلار'),
       );
     } catch (e) {
       debugPrint('❌ Share error: $e');

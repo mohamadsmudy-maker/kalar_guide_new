@@ -1,3 +1,4 @@
+import '../../config/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' show DateFormat;
@@ -97,7 +98,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
         appBar: AppBar(
           title: Text(tr(_station?['name']?.toString() ?? ''),
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-          backgroundColor: const Color(0xFF0F172A),
+          backgroundColor: AppColors.heroDark,
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
@@ -178,7 +179,7 @@ class _CurrencyStationDetailsScreenState extends State<CurrencyStationDetailsScr
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF064E3B), Color(0xFF0F9D7A)],
+          colors: [Color(0xFF0D47A1), Color(0xFF1E88E5)],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),

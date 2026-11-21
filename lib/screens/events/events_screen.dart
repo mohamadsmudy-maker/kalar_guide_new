@@ -1,3 +1,4 @@
+import '../../config/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -161,7 +162,7 @@ class _EventsScreenState extends State<EventsScreen>
     return SliverAppBar(
       expandedHeight: 160,
       pinned: true,
-      backgroundColor: const Color(0xFF4F5BD5),
+      backgroundColor: AppColors.heroDark,
       foregroundColor: Colors.white,
       elevation: 0,
       leading: IconButton(
@@ -177,7 +178,7 @@ class _EventsScreenState extends State<EventsScreen>
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF4F5BD5), Color(0xFFC2557A)],
+              colors: [Color(0xFF0D47A1), Color(0xFF1E88E5)],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),

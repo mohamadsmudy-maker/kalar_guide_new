@@ -874,7 +874,8 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
       },
       child: Scaffold(
         key: _scaffoldKey,
-        extendBody: true,
+        // ناوەڕۆک لە سەرووی شریتەکەوە کۆتایی دێت، بۆیە بازنەکە دوایین کارت دانابۆشێت
+        extendBody: false,
         drawer: _AppDrawer(lang: lang, isDark: isDark),
         body: IndexedStack(
           index: _currentIndex,

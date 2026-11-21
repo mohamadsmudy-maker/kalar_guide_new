@@ -217,7 +217,7 @@ class ComplaintsPdfService {
           child: pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              text('ڕێبەری کەلار — ئەپی فەرمی شاری کەلار',
+              text('ڕێبەری کەلار — ئەپی شاری کەلار',
                   size: 8, color: _grey),
               text('لاپەڕە ${ku(ctx.pageNumber)} لە ${ku(ctx.pagesCount)}',
                   size: 8, color: _grey),

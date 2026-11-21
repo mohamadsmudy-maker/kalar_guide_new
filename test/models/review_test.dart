@@ -32,7 +32,7 @@ void main() {
         rating: 5,
         createdAt: now.subtract(const Duration(minutes: 30)),
       );
-      expect(minutesAgo.getTimeAgo(), contains('30 خولەک'));
+      expect(minutesAgo.getTimeAgo(), contains('٣٠ خولەک'));
 
       final hoursAgo = Review(
         storeId: 1,
@@ -40,7 +40,7 @@ void main() {
         rating: 5,
         createdAt: now.subtract(const Duration(hours: 5)),
       );
-      expect(hoursAgo.getTimeAgo(), contains('5 کاتژمێر'));
+      expect(hoursAgo.getTimeAgo(), contains('٥ کاتژمێر'));
 
       final daysAgo = Review(
         storeId: 1,
@@ -48,7 +48,7 @@ void main() {
         rating: 5,
         createdAt: now.subtract(const Duration(days: 3)),
       );
-      expect(daysAgo.getTimeAgo(), contains('3 ڕۆژ'));
+      expect(daysAgo.getTimeAgo(), contains('٣ ڕۆژ'));
     });
   });
 

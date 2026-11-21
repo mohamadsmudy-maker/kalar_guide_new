@@ -79,7 +79,7 @@ void main() {
         createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
       );
 
-      expect(news.getTimeAgo(), contains('5 دەقیقە'));
+      expect(news.getTimeAgo(), contains('٥ دەقیقە'));
     });
 
     test('getTimeAgo بۆ کاتی null', () {

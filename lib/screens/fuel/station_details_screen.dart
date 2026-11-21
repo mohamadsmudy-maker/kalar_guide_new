@@ -1,3 +1,4 @@
+import '../../config/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -105,7 +106,7 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
         backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
         appBar: AppBar(
           title: Text(tr(_station?['name']?.toString() ?? ''), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-          backgroundColor: const Color(0xFF0F172A),
+          backgroundColor: AppColors.heroDark,
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
@@ -187,12 +188,12 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFD9822B), Color(0xFFD9822B)],
+          colors: [Color(0xFF0D47A1), Color(0xFF1E88E5)],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: const Color(0xFFD9822B).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))],
+        boxShadow: [BoxShadow(color: const Color(0xFF1E88E5).withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

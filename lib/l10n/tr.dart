@@ -48,6 +48,15 @@ class AppLang {
     return s.replaceAllMapped(_digit, (m) => set[int.parse(m[0]!)]);
   }
 
+  /// ژمارەی دەیی: وەک [localDigits]، بەڵام خاڵی دەیی دەبێتە «٫» تا لە
+  /// نووسینی ڕاست-بۆ-چەپدا «٠.٤٦» وەک «.٤٦» تێک نەچێت.
+  static String localDecimal(String s, [String? lang]) {
+    final l = lang ?? _code;
+    if (l == 'en') return s;
+    final withSep = s.replaceAllMapped(RegExp(r'(\d)\.(\d)'), (m) => '${m[1]}\u066B${m[2]}');
+    return localDigits(withSep, l);
+  }
+
   /// `ku`, `ar`, `fa` یان `en`
   static String get code => _code;
   static bool get isKurdish => _code == 'ku';
@@ -159,7 +168,10 @@ String tr(String ku) {
 String trf(String template, List<Object?> args) {
   var s = tr(template);
   for (var i = 0; i < args.length; i++) {
-    s = s.replaceAll('{$i}', '${args[i]}');
+    final v = args[i];
+    // ژمارەکان (int/double) خۆکار دەبنە ژمارەی کوردی/فارسی بەپێی زمان
+    final text = v is int ? AppLang.localDigits('$v') : v is double ? AppLang.localDecimal('$v') : '$v';
+    s = s.replaceAll('{$i}', text);
   }
   return s;
 }

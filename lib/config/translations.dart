@@ -90,7 +90,7 @@ class AppTranslations {
   // ═══════════════════════════════════════════════════════════
   static const Map<String, String> _ku = {
     'app_name': 'ڕێبەری کەلار',
-    'app_subtitle': 'ڕێبەری فەرمی شاری کەلار',
+    'app_subtitle': 'ڕێبەری شاری کەلار',
     'welcome_guest': 'میوانی خۆشەویست',
     'loading': 'خەریکی بارکردن...',
     'error': 'هەڵە',
@@ -277,7 +277,7 @@ class AppTranslations {
   // ═══════════════════════════════════════════════════════════
   static const Map<String, String> _ar = {
     'app_name': 'دليل كلار',
-    'app_subtitle': 'الدليل الرسمي لمدينة كلار',
+    'app_subtitle': 'دليل مدينة كلار',
     'welcome_guest': 'ضيفنا العزيز',
     'loading': 'جاري التحميل...',
     'error': 'خطأ',
@@ -464,7 +464,7 @@ class AppTranslations {
   // ═══════════════════════════════════════════════════════════
   static const Map<String, String> _en = {
     'app_name': 'Kalar Guide',
-    'app_subtitle': 'Official Guide for Kalar City',
+    'app_subtitle': 'Guide to Kalar City',
     'welcome_guest': 'Dear Guest',
     'loading': 'Loading...',
     'error': 'Error',

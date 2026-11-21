@@ -17,7 +17,7 @@ void main() {
   });
 
   test('هەڵەکان بە ژمارەی دێڕ', () {
-    expect(parseMonth('7 05:05 06:30', 11, 2028).error, contains('دێڕی 1'));
+    expect(parseMonth('7 05:05 06:30', 11, 2028).error, contains('دێڕی ١'));
     expect(parseMonth('31 05:05 06:30 11:47 02:37 05:04 06:15', 11, 2028).error, contains('ڕۆژی هەڵە'));
     expect(parseMonth('7 06:40 06:30 11:47 02:37 05:04 06:15', 11, 2028).error, contains('ڕیز'));
     expect(parseMonth('', 11, 2028).error, isNotNull);

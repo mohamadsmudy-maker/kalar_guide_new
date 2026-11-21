@@ -1235,8 +1235,8 @@ class _ComplaintBannerState extends State<_ComplaintBanner>
       child: Material(
         borderRadius: BorderRadius.circular(_radius),
         clipBehavior: Clip.antiAlias,
-        elevation: 6,
-        shadowColor: const Color(0xFF0F9D7A).withValues(alpha: 0.45),
+        elevation: 2,
+        shadowColor: const Color(0xFF0F9D7A).withValues(alpha: 0.35),
         child: Ink(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -1255,7 +1255,7 @@ class _ComplaintBannerState extends State<_ComplaintBanner>
               foregroundPainter: _BeamPainter(_beam, _radius),
               child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                 child: Row(
                   children: [
                     Container(

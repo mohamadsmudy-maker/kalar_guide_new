@@ -82,6 +82,14 @@ class AppColors {
     end: Alignment.bottomRight,
   );
 
+  /// سەرپەڕەی هەموو بەشەکان (یەک ڕەنگ بۆ هەموو ئەپەکە)
+  static const LinearGradient heroGradient = LinearGradient(
+    colors: [Color(0xFF0D47A1), Color(0xFF1E88E5)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+  static const Color heroDark = Color(0xFF0D47A1);
+
   static const LinearGradient blueGradient = LinearGradient(
     colors: [Color(0xFF1E88E5), Color(0xFF64B5F6)],
     begin: Alignment.topLeft,

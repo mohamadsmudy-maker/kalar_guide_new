@@ -337,7 +337,8 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
             SliverToBoxAdapter(child: _buildSearchBar(isDark, filter)),
             SliverToBoxAdapter(child: _buildFilters(isDark, filter)),
             SliverToBoxAdapter(child: _buildSortBar(isDark, filter)),
-            if (rows.isNotEmpty || servicesAsync.hasValue)
+            // ژمارەی ژمارەکان لە سەرپەڕەکەدا هەیە؛ تەنها کاتێک بەپێی دووری ڕیز کراوە ئاماژە دەدرێت
+            if (position != null && filter.sort == EmergencySort.distance && rows.isNotEmpty)
               SliverToBoxAdapter(
                 child: _buildStatsCard(isDark, filter, rows.length, position),
               ),

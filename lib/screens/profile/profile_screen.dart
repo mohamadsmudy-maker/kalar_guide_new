@@ -1207,8 +1207,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   Future<void> _shareApp() async {
     try {
       await Share.share(
-        tr('🏙️ ئەپی ڕێبەری کەلار — ڕێبەری فەرمی شاری کەلار\n\n✅ ٥٩ گەڕەک\n✅ ١٠٠+ شوێن\n✅ سکاڵا و ڕووداو\n✅ دراو و سووتەمەنی\n\nداگرتن: https://kalar-guide.com/app'),
-        subject: tr('ڕێبەری کەلار — ئەپی فەرمی شاری کەلار'),
+        tr('🏙️ ئەپی ڕێبەری کەلار — ڕێبەری شاری کەلار\n\n✅ ٥٩ گەڕەک\n✅ ١٠٠+ شوێن\n✅ سکاڵا و ڕووداو\n✅ دراو و سووتەمەنی\n\nداگرتن: https://kalar-guide.com/app'),
+        subject: tr('ڕێبەری کەلار — ئەپی شاری کەلار'),
       );
     } catch (e) {
       debugPrint('❌ Share error: $e');

@@ -451,8 +451,8 @@ class _AdminOsmImportScreenState extends State<AdminOsmImportScreen> {
             children: [
               Expanded(
                 child: Text(
-                  '${trf('{0} لە {1} شوێن', [rows.length, _rows.length])} • '
-                  '${trf('{0} پێشتر هەن', [same])}',
+                  '${trf('{0} لە {1} شوێن', [AppLang.localDigits('${rows.length}'), AppLang.localDigits('${_rows.length}')])} • '
+                  '${trf('{0} پێشتر هەن', [AppLang.localDigits('$same')])}',
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5),
                 ),
               ),

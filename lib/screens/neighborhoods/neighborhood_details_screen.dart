@@ -237,7 +237,8 @@ class _NeighborhoodDetailsScreenState extends State<NeighborhoodDetailsScreen> {
   Widget _buildHeader(Neighborhood n, Color color, bool isDark) {
     final hasCover = n.coverUrl != null && n.coverUrl!.isNotEmpty;
     return SliverAppBar(
-      expandedHeight: 230,
+      // بێ وێنەی بەرگ، سەرپەڕەیەکی گەورەی بەتاڵ پێویست نییە
+      expandedHeight: hasCover ? 230 : 160,
       pinned: true,
       stretch: true,
       backgroundColor: color,
@@ -332,7 +333,7 @@ class _NeighborhoodDetailsScreenState extends State<NeighborhoodDetailsScreen> {
       if (n.areaKm2 > 0)
         _buildStatItem(
           Icons.landscape_rounded,
-          PlaceDisplay.digits(n.areaKm2.toStringAsFixed(2)),
+          AppLang.localDecimal(n.areaKm2.toStringAsFixed(2)),
           'کم²',
           AppColors.toneAmber,
           isDark,

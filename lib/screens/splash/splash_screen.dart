@@ -143,11 +143,11 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // 🎨 پاشبنەمای سەرمەیی → شینی دەریایی، هاوڕەنگی ناوەوەی لۆگۆکە
-    //    (نەخشەی تۆخ + هێڵی کەسک) تاکو بازنە کەسک و بینا زێڕینەکە بدرەوشێنەوە
+    // 🎨 شینی تۆخی ئەپەکە (هەمان ڕەنگی سەرپەڕەکان)، تاکو لە شاشەی سەرەتاوە
+    //    بۆ ناو ئەپەکە یەک ڕەنگ هەست پێ بکرێت
     final colors = isDark
         ? const [Color(0xFF0F0F14), Color(0xFF1A1B2E)]
-        : const [Color(0xFF0B2644), Color(0xFF0F3A4A)];
+        : const [Color(0xFF0B2E6B), Color(0xFF1565C0)];
 
     return PopScope(
       // The splash must not be dismissible with the back button
@@ -229,7 +229,7 @@ class _SplashScreenState extends State<SplashScreen>
                     FadeTransition(
                       opacity: _textFade,
                       child: Text(
-                        tr('ڕێبەری فەرمی شاری کەلار'),
+                        tr('ڕێبەری شاری کەلار'),
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
