@@ -252,11 +252,12 @@ class TickerBannerWidget extends StatefulWidget {
 
 class _TickerBannerWidgetState extends State<TickerBannerWidget>
     with SingleTickerProviderStateMixin {
-  static const _height = 44.0;
+  static const _height = 38.0;
   static const _pixelsPerSecond = 55.0;
+  // پاشبنەمای کاڵ + نووسینی سووری تۆخ: کۆنتراستی بەرز، و کەمتر قورس لە شاشەی سەرەکی
   static const _style = TextStyle(
-    color: Colors.white,
-    fontSize: 15,
+    color: Color(0xFF8B1414),
+    fontSize: 14,
     fontWeight: FontWeight.w800,
     height: 1.1,
   );
@@ -333,19 +334,9 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
         margin: const EdgeInsets.fromLTRB(12, 10, 12, 2),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [_redDark, _red, Color(0xFFC62828)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: _red.withValues(alpha: 0.35),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: const Color(0xFFFDECEC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFF5C2C2)),
         ),
         child: Row(
           children: [
@@ -354,13 +345,7 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
               height: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: _redDark,
-                border: Border(
-                  right: BorderSide(color: Color(0x55FFFFFF), width: 1),
-                  left: BorderSide(color: Color(0x55FFFFFF), width: 1),
-                ),
-              ),
+              decoration: const BoxDecoration(color: _red),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -369,7 +354,7 @@ class _TickerBannerWidgetState extends State<TickerBannerWidget>
                   Text(
                     tr('بەپەلە'),
                     textDirection: AppLang.direction,
-                    style: _style.copyWith(fontSize: 14, fontWeight: FontWeight.w900),
+                    style: _style.copyWith(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900),
                   ),
                 ],
               ),

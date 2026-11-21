@@ -83,7 +83,7 @@ class NeighborhoodInfoSheet extends StatelessWidget {
 
     String distance(double m) => m < 1000
         ? '${digits('${m.round()}')} ${t('m')}'
-        : '${digits((m / 1000).toStringAsFixed(1))} ${t('km')}';
+        : '${AppLang.localDecimal((m / 1000).toStringAsFixed(1), lang)} ${t('km')}';
 
     final name = () {
       final ar = n.nameAr?.trim() ?? '';
@@ -236,7 +236,7 @@ class NeighborhoodInfoSheet extends StatelessWidget {
                         child: _StatChip(
                           icon: Icons.square_foot_rounded,
                           value:
-                          '${digits(n.areaKm2.toStringAsFixed(n.areaKm2 < 1 ? 3 : 1))} ${lang == 'en' ? 'km²' : 'کم²'}',
+                          '${AppLang.localDecimal(n.areaKm2.toStringAsFixed(n.areaKm2 < 1 ? 3 : 1), lang)} ${lang == 'en' ? 'km²' : 'کم²'}',
                           label: t('area'),
                           color: const Color(0xFFD9822B),
                           isDark: isDark,

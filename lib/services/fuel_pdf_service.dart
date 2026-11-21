@@ -216,7 +216,7 @@ class FuelPdfService {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text('🏙️ ڕێبەری کەلار — ئەپی فەرمی شاری کەلار', style: pw.TextStyle(font: fontBold, fontSize: 9, color: _primaryDark)),
+          pw.Text('🏙️ ڕێبەری کەلار — ئەپی شاری کەلار', style: pw.TextStyle(font: fontBold, fontSize: 9, color: _primaryDark)),
           pw.Text('لاپەڕە ${context.pageNumber} لە ${context.pagesCount}', style: pw.TextStyle(font: font, fontSize: 8, color: _grey)),
         ],
       ),

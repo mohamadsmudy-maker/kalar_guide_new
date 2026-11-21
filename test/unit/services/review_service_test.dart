@@ -31,7 +31,7 @@ void main() {
         createdAt: DateTime.now().subtract(const Duration(minutes: 2)),
       );
 
-      expect(review.getTimeAgo(), '2 خولەک لەمەوبەر');
+      expect(review.getTimeAgo(), '٢ خولەک لەمەوبەر');
     });
 
     test('rating دەبێت لە نێوان ١ و ٥ بێت', () {

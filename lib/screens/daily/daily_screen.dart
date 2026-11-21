@@ -370,7 +370,6 @@ class _DailyScreenState extends State<DailyScreen>
         subtitle: _t('currency_sub'),
         icon: Icons.currency_exchange_rounded,
         color: AppColors.toneTeal,
-        isLive: true,
         feature: 'currency_prices',
         onTap: () => _open(const CurrencyRatesScreen()),
       ),
@@ -387,7 +386,6 @@ class _DailyScreenState extends State<DailyScreen>
         subtitle: _t('fuel_sub'),
         icon: Icons.local_gas_station_rounded,
         color: AppColors.toneAmber,
-        isLive: true,
         feature: 'fuel_prices',
         onTap: () => _open(const FuelTypesScreen()),
       ),
@@ -601,142 +599,45 @@ class _DailyScreenState extends State<DailyScreen>
     );
   }
 
+  /// کارتی بچووکی بەروار و کات (پێشتر دەقێکی ڕیکلامیی گەورەی تێدا بوو)
   Widget _buildWelcomeCard(bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0D47A1), Color(0xFF1565C0), Color(0xFF1E88E5)],
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1565C0).withValues(alpha: 0.22),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        gradient: AppColors.heroGradient,
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Stack(
-        children: [
-          PositionedDirectional(
-            top: -55,
-            end: -35,
-            child: _GlowCircle(
-                size: 170, color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          PositionedDirectional(
-            bottom: -85,
-            start: 80,
-            child: _GlowCircle(
-                size: 160, color: Colors.white.withValues(alpha: 0.06)),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: ValueListenableBuilder<DateTime>(
+        valueListenable: _now,
+        builder: (context, now, _) {
+          return Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.auto_awesome_rounded,
-                            color: Color(0xFFFDE68A), size: 14),
-                        const SizedBox(width: 6),
-                        Text(
-                          _t('hub'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.wb_sunny_rounded,
-                      color: Color(0xFFFDE68A), size: 26),
-                ],
-              ),
-              const SizedBox(height: 19),
-              Text(
-                _t('hero'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  height: 1.2,
-                  fontWeight: FontWeight.w900,
+              const Icon(Icons.wb_sunny_rounded, color: Color(0xFFFDE68A), size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  tr(_dateLabel(now)),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, height: 1.4),
                 ),
               ),
-              const SizedBox(height: 7),
-              Text(
-                _t('hero_sub'),
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.78),
-                  fontSize: 13,
-                  height: 1.5,
-                  fontWeight: FontWeight.w500,
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              const SizedBox(height: 22),
-              ValueListenableBuilder<DateTime>(
-                valueListenable: _now,
-                builder: (context, now, _) {
-                  return Row(
-                    children: [
-                      const Icon(Icons.calendar_today_rounded,
-                          size: 14, color: Colors.white70),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          tr(_dateLabel(now)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          tr(_timeLabel(now)),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                child: Text(
+                  tr(_timeLabel(now)),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
+                ),
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -786,23 +687,6 @@ class _DailyScreenState extends State<DailyScreen>
             ],
           ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.07)
-                : AppColors.primary.withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            tr(_digits('$count')),
-            style: TextStyle(
-              color: isDark ? Colors.white70 : AppColors.primary,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -839,7 +723,6 @@ class _ServiceData {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final bool isLive;
   final Widget? trailing;
 
   /// کلیلی تایبەتمەندی (ناوەندی کۆنترۆڵ)؛ کوژاوە = نیشان نادرێت
@@ -852,7 +735,6 @@ class _ServiceData {
     required this.icon,
     required this.color,
     required this.onTap,
-    this.isLive = false,
     this.trailing,
   });
 }
@@ -963,8 +845,6 @@ class _ServiceCard extends StatelessWidget {
                         const Spacer(),
                         if (service.trailing != null)
                           service.trailing!
-                        else if (service.isLive)
-                          _LivePill(color: color, label: liveLabel)
                         else
                           Container(
                             width: 30,
@@ -1023,24 +903,6 @@ class _ServiceCard extends StatelessWidget {
 // -----------------------------------------------------------------------------
 // Promotional cards
 // -----------------------------------------------------------------------------
-
-class _GlowCircle extends StatelessWidget {
-  final double size;
-  final Color color;
-
-  const _GlowCircle({required this.size, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      ),
-    );
-  }
-}
 
 class _LivePill extends StatelessWidget {
   final Color color;

@@ -3,28 +3,38 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// ئاڵای زمان. ئاڵای کوردستان ئیمۆجی نییە، بۆیە بە دەست دەکێشرێت.
+/// نیشانەی زمان: پیتی یەکەمی ناوی زمانەکە بە خۆی (نەک ئاڵای وڵات).
+/// ئاڵا بۆ زمان هەڵەیەکی ناسراوی دیزاینە و هەستیاریی سیاسیشی هەیە.
 class LanguageFlag extends StatelessWidget {
-  const LanguageFlag({super.key, required this.languageId, required this.emoji, this.width = 34});
+  const LanguageFlag({super.key, required this.languageId, this.emoji = '', this.width = 34});
 
   final String languageId;
+
+  /// کۆن؛ ئێستا بەکارنایەت
   final String emoji;
   final double width;
 
+  static const _labels = {'ku': 'کو', 'ar': 'ع', 'fa': 'ف', 'en': 'En'};
+  static const _colors = {
+    'ku': Color(0xFF1E88E5),
+    'ar': Color(0xFF0F9D7A),
+    'fa': Color(0xFF7C3AED),
+    'en': Color(0xFFD9822B),
+  };
+
   @override
   Widget build(BuildContext context) {
-    if (languageId != 'ku') {
-      return Text(emoji, style: TextStyle(fontSize: width * 0.76));
-    }
+    final color = _colors[languageId] ?? const Color(0xFF64748B);
     return Container(
       width: width,
-      height: width * 2 / 3,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
-        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 2, offset: Offset(0, 1))],
+      height: width,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+      child: Text(
+        _labels[languageId] ?? languageId.toUpperCase(),
+        textDirection: languageId == 'en' ? TextDirection.ltr : TextDirection.rtl,
+        style: TextStyle(color: color, fontSize: width * 0.38, fontWeight: FontWeight.w900, height: 1),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: const CustomPaint(painter: KurdistanFlagPainter()),
     );
   }
 }

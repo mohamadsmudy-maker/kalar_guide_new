@@ -118,7 +118,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                               children: [
                                 _pill(
                                   icon: Icons.phone_rounded,
-                                  label: trf('{0} ژمارە', [count]),
+                                  label: trf('{0} ژمارە', [AppLang.localDigits('$count')]),
                                 ),
                                 const SizedBox(width: 8),
                                 _pill(
@@ -282,12 +282,12 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: selected
-                        ? const Color(0xFFDC3545).withValues(alpha: 0.15)
+                        ? const Color(0xFF1E88E5).withValues(alpha: 0.15)
                         : (isDark ? const Color(0xFF1A1A22) : Colors.white),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: selected
-                          ? const Color(0xFFDC3545)
+                          ? const Color(0xFF1E88E5)
                           : Colors.transparent,
                     ),
                   ),
@@ -298,7 +298,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                         sort.icon,
                         size: 12,
                         color: selected
-                            ? const Color(0xFFDC3545)
+                            ? const Color(0xFF1E88E5)
                             : (isDark ? Colors.white54 : Colors.grey),
                       ),
                       const SizedBox(width: 4),
@@ -308,7 +308,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           color: selected
-                              ? const Color(0xFFDC3545)
+                              ? const Color(0xFF1E88E5)
                               : (isDark ? Colors.white54 : Colors.grey),
                         ),
                       ),
@@ -373,7 +373,7 @@ extension _EmergencyScreenStateUi on _EmergencyScreenState {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    trf('{0} ژمارە بەردەستە', [count]),
+                    trf('{0} ژمارە بەردەستە', [AppLang.localDigits('$count')]),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w900,

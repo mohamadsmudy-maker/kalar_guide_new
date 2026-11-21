@@ -1,3 +1,5 @@
+import '../../config/app_colors.dart';
+import '../../widgets/live_badge.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -186,7 +188,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
       pinned: true,
       stretch: true,
       expandedHeight: 285,
-      backgroundColor: _dark,
+      backgroundColor: AppColors.heroDark,
       foregroundColor: Colors.white,
       centerTitle: true,
       title: Text(t('title'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
@@ -211,11 +213,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
         collapseMode: CollapseMode.parallax,
         background: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF064E3B)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            gradient: AppColors.heroGradient,
           ),
           child: SafeArea(
             child: Padding(
@@ -229,7 +227,7 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
                       Text('🇺🇸  ${CurrencyService.getNameByLang('usd', lang)}',
                           style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold)),
                       const Spacer(),
-                      _LiveBadge(label: t('live'), flash: _liveFlash || _refreshing),
+                      LiveBadge(updated: updated, flash: _liveFlash || _refreshing),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -362,6 +360,10 @@ class _CurrencyRatesScreenState extends State<CurrencyRatesScreen> {
       if (ha != hb) return ha ? -1 : 1;
       return CurrencyService.getOrder(a['key']!).compareTo(CurrencyService.getOrder(b['key']!));
     });
+    // ئەو دراوانەی هیچ نرخێکیان نییە پیشان نادرێن (ئەگەر لانیکەم یەکێک نرخی هەبێت)
+    if (types.any((t) => markets[t['key']]?.hasData ?? false)) {
+      types.removeWhere((t) => !(markets[t['key']]?.hasData ?? false));
+    }
 
     return [
       SliverPadding(
@@ -640,40 +642,6 @@ class _ChangeChip extends StatelessWidget {
             tr(CurrencyService.formatPrice(change.abs(), lang)),
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: onDark ? Colors.white : color),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LiveBadge extends StatelessWidget {
-  final String label;
-  final bool flash;
-
-  const _LiveBadge({required this.label, required this.flash});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: flash ? const Color(0xFF0F9D7A) : Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: flash ? Colors.white : const Color(0xFF0F9D7A),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(tr(label), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
         ],
       ),
     );
