@@ -53,6 +53,67 @@ class OpeningHours {
         },
       };
 
+  /// کاتی کارکردن لە تاگی `opening_hours` ـی OpenStreetMap. شێوە باوەکان:
+  /// `24/7` · `Mo-Su 08:00-22:00` · `Sa-Th 08:00-14:00; Fr off` ·
+  /// `Mo,We 09:00-12:00,16:00-21:00` (یەکەم کردنەوە تا دوایین داخستن) ·
+  /// `08:00-22:00` (هەموو ڕۆژێک). ئەگەر نەناسرایەوە → null.
+  static OpeningHours? fromOsm(String? raw) {
+    final s = (raw ?? '').trim();
+    if (s.isEmpty) return null;
+    if (s == '24/7') return const OpeningHours(is24h: true);
+    const osmDays = ['Sa', 'Su', 'Mo', 'Tu', 'We', 'Th', 'Fr']; // هەمان ڕیزی dayKeys
+    final time = RegExp(r'(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})');
+    String hm(String h, String m) => '${h.padLeft(2, '0')}:$m';
+    final days = <String, DayHours?>{};
+    var understood = false;
+    for (final part in s.split(';')) {
+      final rule = part.trim();
+      if (rule.isEmpty) continue;
+      final m = RegExp(r'^((?:[A-Z][a-z](?:\s*-\s*[A-Z][a-z])?\s*,?\s*)+)?\s*(.*)$').firstMatch(rule);
+      if (m == null) continue;
+      final daySpec = (m.group(1) ?? '').trim();
+      final rest = (m.group(2) ?? '').trim();
+      // ڕۆژەکان
+      final idx = <int>{};
+      if (daySpec.isEmpty) {
+        idx.addAll(List.generate(7, (i) => i));
+      } else {
+        for (final tok in daySpec.split(',')) {
+          final r = tok.trim().split(RegExp(r'\s*-\s*'));
+          final a = osmDays.indexOf(r.first.trim());
+          if (a < 0) continue;
+          final b = r.length > 1 ? osmDays.indexOf(r.last.trim()) : a;
+          if (b < 0) continue;
+          for (var i = a;; i = (i + 1) % 7) {
+            idx.add(i);
+            if (i == b) break;
+          }
+        }
+      }
+      if (idx.isEmpty) continue;
+      if (rest == 'off' || rest == 'closed') {
+        for (final i in idx) {
+          days[dayKeys[i]] = null;
+        }
+        understood = true;
+        continue;
+      }
+      final times = time.allMatches(rest).toList();
+      if (times.isEmpty) continue;
+      final open = hm(times.first.group(1)!, times.first.group(2)!);
+      var close = hm(times.last.group(3)!, times.last.group(4)!);
+      if (close == '24:00') close = '00:00';
+      if (!DayHours._hm.hasMatch(open) || !DayHours._hm.hasMatch(close)) continue;
+      for (final i in idx) {
+        days[dayKeys[i]] = DayHours(open, close);
+      }
+      understood = true;
+    }
+    if (!understood) return null;
+    final h = OpeningHours(days: days);
+    return h.isEmpty ? null : h;
+  }
+
   OpeningHours copyWith({bool? is24h, Map<String, DayHours?>? days}) =>
       OpeningHours(is24h: is24h ?? this.is24h, days: days ?? this.days);
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/tr.dart';
 import '../models/opening_hours.dart';
@@ -180,24 +181,72 @@ class _OpeningHoursEditorState extends State<OpeningHoursEditor> {
     _emit();
   }
 
+  /// 🪄 شێوە ئامادەکان: بە یەک کرتە هەموو ڕۆژەکان پڕ دەکاتەوە
+  void _preset(String id) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _all24 = id == '24h';
+      for (final k in OpeningHours.dayKeys) {
+        _days[k] = switch (id) {
+          'daily' => const DayHours('08:00', '22:00'),
+          'week' => k == 'fri' ? null : const DayHours('08:00', '21:00'),
+          'office' => (k == 'fri' || k == 'sat') ? null : const DayHours('08:00', '14:00'),
+          _ => null,
+        };
+      }
+    });
+    _emit();
+  }
+
+  int get _openDays => _all24 ? 7 : _days.values.where((d) => d != null).length;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final muted = isDark ? Colors.white54 : Colors.grey.shade600;
+    const blue = Color(0xFF1E88E5);
+    Widget chip(String id, IconData icon, String label) => ActionChip(
+          key: ValueKey('hours-$id'),
+          avatar: Icon(icon, size: 16, color: blue),
+          label: Text(tr(label), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          backgroundColor: blue.withValues(alpha: 0.08),
+          side: BorderSide.none,
+          visualDensity: VisualDensity.compact,
+          onPressed: () => _preset(id),
+        );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.schedule_rounded, size: 18, color: Color(0xFF1E88E5)),
+            const Icon(Icons.schedule_rounded, size: 18, color: blue),
             const SizedBox(width: 8),
             Expanded(
               child: Text(tr('کاتی کارکردن'),
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: fg)),
             ),
-            TextButton(onPressed: _copyFirst, child: Text(tr('هەموو ڕۆژەکان وەک یەکەم'))),
+            Text(
+              _all24
+                  ? tr('٢٤ سەعات')
+                  : _openDays == 0
+                      ? tr('دیاری نەکراوە')
+                      : trf('{0} ڕۆژ کراوەیە', [PlaceDisplay.digits(_openDays)]),
+              key: const ValueKey('hours-summary'),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: muted),
+            ),
           ],
         ),
+        const SizedBox(height: 8),
+        // 🪄 شێوە ئامادەکان
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          chip('daily', Icons.wb_sunny_rounded, 'هەموو ڕۆژێک ٨–١٠'),
+          chip('week', Icons.calendar_view_week_rounded, 'شەممە–پێنجشەممە'),
+          chip('office', Icons.account_balance_rounded, 'دەوامی فەرمی ٨–٢'),
+          chip('24h', Icons.all_inclusive_rounded, '٢٤ سەعات'),
+          chip('clear', Icons.clear_rounded, 'پاککردنەوە'),
+        ]),
+        const SizedBox(height: 4),
         SwitchListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
@@ -208,37 +257,56 @@ class _OpeningHoursEditorState extends State<OpeningHoursEditor> {
             _emit();
           },
         ),
-        if (!_all24)
+        if (!_all24) ...[
           for (final k in OpeningHours.dayKeys)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 3),
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 4, 4, 4),
+              decoration: BoxDecoration(
+                color: _days[k] == null
+                    ? (isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF7F8FA))
+                    : blue.withValues(alpha: isDark ? 0.12 : 0.06),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 children: [
+                  SizedBox(
+                    width: 84,
+                    child: Text(tr(OpeningHours.dayNames[k]!),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: fg)),
+                  ),
+                  Expanded(
+                    child: _days[k] == null
+                        ? Text(tr('داخراوە'), style: const TextStyle(fontSize: 12.5, color: Color(0xFFDC3545)))
+                        : Row(children: [
+                            _timeBtn(_days[k]!.open, () => _pick(k, true)),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 6),
+                              child: Text('—'),
+                            ),
+                            _timeBtn(_days[k]!.close, () => _pick(k, false)),
+                          ]),
+                  ),
                   Switch(
+                    key: ValueKey('day-$k'),
                     value: _days[k] != null,
                     onChanged: (v) {
                       setState(() => _days[k] = v ? _def : null);
                       _emit();
                     },
                   ),
-                  SizedBox(
-                    width: 84,
-                    child: Text(tr(OpeningHours.dayNames[k]!),
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: fg)),
-                  ),
-                  if (_days[k] == null)
-                    Text(tr('داخراوە'), style: const TextStyle(fontSize: 12.5, color: Color(0xFFDC3545)))
-                  else ...[
-                    _timeBtn(_days[k]!.open, () => _pick(k, true)),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6),
-                      child: Text('—'),
-                    ),
-                    _timeBtn(_days[k]!.close, () => _pick(k, false)),
-                  ],
                 ],
               ),
             ),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton.icon(
+              onPressed: _copyFirst,
+              icon: const Icon(Icons.copy_all_rounded, size: 18),
+              label: Text(tr('هەموو ڕۆژەکان وەک یەکەم')),
+            ),
+          ),
+        ],
       ],
     );
   }

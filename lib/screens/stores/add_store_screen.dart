@@ -108,6 +108,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       _existingLogo = widget.storeToEdit!['logo']?.toString();
     } else {
       _generateRandomVendorCode();
+      _storeType = 'ناحکومی'; // زۆربەی شوێنە نوێکان ناحکومین
       final p = widget.prefill;
       if (p != null) {
         String str(String k) => '${p[k] ?? ''}'.trim();
@@ -117,6 +118,12 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         _descController.text = str('description');
         if (str('category').isNotEmpty) _selectedMainCategory = str('category');
         if (str('type').isNotEmpty) _storeType = str('type');
+        // 🕒 کاتی کارکردن لە OpenStreetMap (ئەگەر هەبێت)
+        final osmHours = OpeningHours.fromOsm(p['opening_hours_osm']?.toString());
+        if (osmHours != null) {
+          _hours = osmHours;
+          _hoursTouched = true;
+        }
         _latitude = (p['latitude'] as num?)?.toDouble();
         _longitude = (p['longitude'] as num?)?.toDouble();
         if (_latitude != null && _longitude != null) {
@@ -159,6 +166,14 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
               .toSet()
               .toList();
 
+          // ناوی بەش لە پێشنیار/OSM ڕەنگە کەمێک جیاواز بنووسرابێت (ی/ي، ە/ه، بۆشایی)
+          final want = _selectedMainCategory;
+          if (want != null && !_mainCategories.contains(want)) {
+            final k = AppLang.looseKey(want);
+            _selectedMainCategory = _mainCategories
+                .where((c) => AppLang.looseKey(c) == k)
+                .firstOrNull;
+          }
           if (_selectedMainCategory != null &&
               _mainCategories.contains(_selectedMainCategory)) {
             _fetchSubCategories(_selectedMainCategory!);
@@ -361,10 +376,8 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
       _showSnackBar(tr('تکایە شوێنەکە دیاری بکە (GPS یان نەخشە) ⚠'), const Color(0xFFD9822B));
       return;
     }
-    if (_phoneController.text.trim().isEmpty) {
-      _showSnackBar(tr('ژمارەی مۆبایل پێویستە بۆ کۆدی نهێنی ⚠'), const Color(0xFFD9822B));
-      return;
-    }
+    // مۆبایل ئارەزوومەندانەیە (زۆر شوێنی حکومی یان OSM ژمارەیان نییە)؛
+    // بێ ئەوە خاوەن شوێن ناتوانێت بە کۆدی نهێنی بچێتە ژوورەوە.
 
     setState(() => _loading = true);
 
@@ -809,7 +822,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
           const SizedBox(height: 10),
           _buildTextField(
             _phoneController,
-            'مۆبایل *',
+            'مۆبایل (بۆ چوونەژوورەوەی خاوەن شوێن)',
             keyboard: TextInputType.phone,
             isDark: isDark,
           ),
@@ -1079,7 +1092,7 @@ class _AddStoreScreenState extends State<AddStoreScreen> {
         color: isDark ? Colors.white : Colors.black87,
       ),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: tr(label),
         labelStyle: TextStyle(
           color: isDark ? Colors.white54 : Colors.grey.shade700,
         ),

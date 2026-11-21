@@ -34,6 +34,7 @@ import 'admin_pharmacy_duty.dart';
 import 'admin_neighborhood_alerts.dart';
 import 'admin_review_reports.dart';
 import 'admin_waste_schedule.dart';
+import 'admin_latin_names.dart';
 import 'admin_sponsored_slides.dart';
 import 'admin_database_viewer.dart';
 import 'admin_videos.dart';
@@ -622,6 +623,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
           title: tr('ئاگاداریی گەڕەکەکان'),
           subtitle: tr('بڕینی ئاو، کارەبا... بۆ گەڕەکێک'),
           screen: () => const AdminNeighborhoodAlertsScreen(),
+        ),
+        _DashItem(
+          id: 'latin_names',
+          icon: Icons.translate_rounded,
+          color: const Color(0xFF7C3AED),
+          title: tr('ناوە لاتینییەکان'),
+          subtitle: tr('ناوی ئینگلیزیی شوێنەکان بکە بە کوردی'),
+          screen: () => const AdminLatinNamesScreen(),
         ),
         _DashItem(
           id: 'sponsored_slides',

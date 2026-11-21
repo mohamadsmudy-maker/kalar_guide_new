@@ -9,6 +9,10 @@
 //
 // Request:  { "text": "...", "targetLanguage": "en" | "ar" | "fa" }
 // Response: { "translation": "..." }
+//
+// ناوی شوێن بۆ کوردی (ئەدمین ← «ناوە لاتینییەکان»):
+// Request:  { "names": ["Kalar Hospital", ...], "mode": "to_kurdish" }
+// Response: { "kurdish": ["نەخۆشخانەی کەلار", ...] }   (کاش ناکرێت)
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
 const corsHeaders = {
@@ -150,11 +154,61 @@ async function translateBatch(texts: string[], lang: string, target: string): Pr
   return json({ translations: out });
 }
 
+/// ناوی شوێنەکان (ئینگلیزی/لاتینی/عەرەبی) ← کوردیی سۆرانی، وەک خەڵکی کەلار دەینووسن
+async function toKurdish(names: string[]): Promise<Response> {
+  const apiKey = Deno.env.get('GEMINI_API_KEY');
+  if (!apiKey) return json({ error: 'GEMINI_API_KEY is not set' }, 500);
+  const apiVersion = Deno.env.get('GEMINI_API_VERSION') ?? 'v1beta';
+  const prompt =
+    `Rewrite every place name in the JSON array below in Central Kurdish (Sorani, Arabic script) ` +
+    `the way people in Kalar, Kurdistan Region, Iraq write it on signs.\n` +
+    `Rules:\n` +
+    `- Translate generic words: Hospital = نەخۆشخانە, Pharmacy = دەرمانخانە, School = قوتابخانە, ` +
+    `Mosque = مزگەوت, Restaurant = چێشتخانە, Market/Supermarket = مارکێت, Bank = بانک, ` +
+    `Hotel = هوتێل, Clinic = نۆرینگە, Bakery = نانەواخانە, Fuel/Gas station = بەنزینخانە, ` +
+    `Directorate = بەڕێوەبەرایەتی, Municipality = شارەوانی.\n` +
+    `- Write proper names, brands and people's names with Kurdish letters (transliterate, do not translate them).\n` +
+    `- Kurdish word order: «نەخۆشخانەی کەلار», not «کەلار نەخۆشخانە». "Kalar" is "کەلار".\n` +
+    `- If a name is already in Kurdish, return it unchanged. Keep numbers.\n` +
+    `- Reply with ONLY a JSON array of strings: the same number of items (${names.length}), in the same order.\n\n` +
+    JSON.stringify(names);
+  const res = await callGemini(apiKey, apiVersion, prompt, true);
+  if (!res.ok) {
+    console.error('Gemini to_kurdish error:', res.status, await res.text());
+    return json({ error: `Gemini error: ${res.status}` }, res.status === 429 ? 429 : 502);
+  }
+  const data = await res.json();
+  const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text ?? '').trim();
+  let arr: unknown;
+  try {
+    arr = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, ''));
+  } catch {
+    arr = null;
+  }
+  if (!Array.isArray(arr) || arr.length !== names.length) {
+    console.error('to_kurdish: bad reply', raw.slice(0, 300));
+    return json({ error: 'bad reply' }, 502);
+  }
+  return json({ kurdish: arr.map((v) => (typeof v === 'string' ? v.trim() : '')) });
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { text, texts, targetLanguage } = await req.json();
+    const body = await req.json();
+    const { text, texts, targetLanguage } = body;
+
+    // ── ناوی شوێن ← کوردی ──
+    if (body.mode === 'to_kurdish') {
+      const names = Array.isArray(body.names)
+        ? (body.names as unknown[]).filter((n): n is string => typeof n === 'string' && !!n.trim())
+        : [];
+      if (names.length === 0 || names.length > MAX_BATCH || names.some((n) => n.length > 200)) {
+        return json({ error: 'names: 1-50 non-empty strings' }, 400);
+      }
+      return await toKurdish(names.map((n) => n.trim()));
+    }
     const target = LANGS[targetLanguage];
 
     // ── بە کۆمەڵ: { texts: [...], targetLanguage } → { translations: [...] } ──
